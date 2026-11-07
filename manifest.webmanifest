@@ -1,0 +1,25 @@
+{
+  "id": "./",
+  "name": "#1 SUPER VISÃO",
+  "short_name": "SUPER VISÃO",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#202226",
+  "theme_color": "#202226",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "./super-visao-icon-192-v2.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./super-visao-icon-512-v2.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
