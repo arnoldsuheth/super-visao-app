@@ -183,9 +183,21 @@ const marcarDia=()=>{S.dias[hoje()]=1;salvar()};
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const IC={home:'<path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',search:'<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>',plus:'<path d="M12 5v14M5 12h14"/>',bolt:'<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>',heart:'<path d="M12 21s-7.5-4.6-9.5-9.2C1 8.3 3.4 5 6.6 5c2 0 3.6 1.1 5.4 3 1.8-1.9 3.4-3 5.4-3 3.2 0 5.6 3.3 4.1 6.8C19.5 16.4 12 21 12 21z"/>',com:'<path d="M21 12a8.5 8.5 0 0 1-12.6 7.4L3 21l1.7-5A8.5 8.5 0 1 1 21 12z"/>',send:'<path d="M22 3L11 13M22 3l-7 18-4-8-8-4 19-6z"/>',save:'<path d="M6 3h12v18l-6-4-6 4z"/>',sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',spark:'<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/>',back:'<path d="M15 18l-6-6 6-6"/>',msg:'<path d="M4 5h16v11H9l-5 4z"/>'};
 const I=k=>`<svg class="ic" viewBox="0 0 24 24">${IC[k]}</svg>`;
-const curso=id=>CURSOS.find(c=>c.id===id);
+S.edit=S.edit||{};
+const curso=id=>{const c=CURSOS.find(c=>c.id===id);return c&&S.edit[id]?Object.assign({},c,S.edit[id]):c};
 S.fotos=S.fotos||{};
 const AV=(id)=>{if(S.fotos[id])return `<b style="background:url(${S.fotos[id]}) center/cover;color:transparent">.</b>`;if(id==='me')return `<b style="background:linear-gradient(135deg,#6b5a4a,#2a2420);color:#fff">A</b>`;const c=curso(id);return `<b style="background:${c.cor||'var(--chip)'};color:#fff">${c.sigla}</b>`};
+function editarPerfil(id){const c=id==='me'?Object.assign({nome:'Arnold Suheth',user:'arnold.suheth',bio:'Supervisor · Ciência da Computação · fundador do Studio Evolution Tech'},S.edit.me||{}):curso(id);const m=$('#modal'),sh=m.querySelector('.sheet');
+ sh.innerHTML=`<h4>Editar perfil</h4><div style="display:flex;align-items:center;gap:14px;margin:6px 0 14px"><div class="big" style="width:72px;height:72px">${AV(id)}</div><button class="ef" style="padding:10px 14px;border-radius:10px;border:0;background:var(--g);color:#fff;font:800 13px inherit;font-family:inherit">📷 Escolher foto da galeria</button></div>
+ <label style="font-size:12px;color:var(--mu)">Nome</label><input class="en" value="${esc(c.nome)}" style="width:100%;margin:4px 0 10px;padding:11px;border-radius:10px;border:1.5px solid var(--ln);background:var(--chip);color:var(--tx);font:15px inherit;font-family:inherit">
+ <label style="font-size:12px;color:var(--mu)">Usuário</label><input class="eu" value="${esc(c.user)}" style="width:100%;margin:4px 0 10px;padding:11px;border-radius:10px;border:1.5px solid var(--ln);background:var(--chip);color:var(--tx);font:15px inherit;font-family:inherit">
+ <label style="font-size:12px;color:var(--mu)">Bio</label><textarea class="eb" style="min-height:80px;margin-top:4px">${esc(c.bio)}</textarea>
+ <div class="row"><button>Cancelar</button><button class="gr">Salvar</button></div>${S.fotos[id]?'<button class="er" style="margin-top:10px;background:none;border:0;color:var(--mu);font-size:12px;text-decoration:underline">Tirar a foto</button>':''}`;
+ m.classList.add('on');
+ sh.querySelector('.ef').onclick=()=>trocarFoto(id,()=>{editarPerfil(id)});
+ const er=sh.querySelector('.er');if(er)er.onclick=()=>{delete S.fotos[id];salvar();editarPerfil(id);montarStories();montarFeed()};
+ sh.querySelector('.row button').onclick=()=>m.classList.remove('on');
+ sh.querySelector('.row .gr').onclick=()=>{S.edit[id]=Object.assign({},S.edit[id]||{},{nome:sh.querySelector('.en').value.trim()||c.nome,user:sh.querySelector('.eu').value.trim()||c.user,bio:sh.querySelector('.eb').value.trim()||c.bio});salvar();m.classList.remove('on');toast('Perfil salvo ✓');montarStories();montarFeed();montarPerfil(id)}}
 function trocarFoto(id,depois){const inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.onchange=()=>{const f=inp.files[0];if(!f)return;const img=new Image();img.onload=()=>{const cv=document.createElement('canvas'),T=240;cv.width=cv.height=T;const x=cv.getContext('2d');const m=Math.min(img.width,img.height);x.drawImage(img,(img.width-m)/2,(img.height-m)/2,m,m,0,0,T,T);S.fotos[id]=cv.toDataURL('image/jpeg',.85);salvar();if(id==='me')navMe();toast('Foto trocada 📸');depois&&depois();montarStories();montarFeed()};img.src=URL.createObjectURL(f)};inp.click()}
 const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(e.t);e.t=setTimeout(()=>e.classList.remove('on'),1800)}
@@ -305,15 +317,15 @@ function montarOfc(){const feitas=MISSOES.filter(m=>S.miss[m.id]).length;const a
 // ---------------- perfis ----------------
 function montarPerfil(id){const t=$('#t-pf');
  if(id==='me'){const seq=sequencia();const feitas=Object.keys(S.miss).length;
-  t.innerHTML=`<div class="hd">arnold.suheth<span class="sp"><button class="btn" id="pfTema">${I('sun')}</button></span></div>
+  t.innerHTML=`<div class="hd">${esc((S.edit.me||{}).user||'arnold.suheth')}<span class="sp"><button class="btn" id="pfTema">${I('sun')}</button></span></div>
   <div class="pf"><div class="big" id="bigFoto" style="position:relative;cursor:pointer">${AV('me')}<span class="cam">📷</span></div><div class="nums"><div><b>${Object.keys(S.vistos).length}</b><small>estudados</small></div><div><b id="segN">0</b><small>seguidores</small></div><div><b>${Object.keys(S.seg).length}</b><small>seguindo</small></div></div></div>
-  <div class="bio"><b>Arnold Suheth</b>Supervisor · Ciência da Computação · fundador do Studio Evolution Tech<br><span>🔥 ${seq} ${seq===1?'dia seguido':'dias seguidos'} · meta do mês: meu site no ar</span></div>
+  <div class="bio"><b>${esc((S.edit.me||{}).nome||'Arnold Suheth')}</b>${esc((S.edit.me||{}).bio||'Supervisor · Ciência da Computação · fundador do Studio Evolution Tech')}<br><span>🔥 ${seq} ${seq===1?'dia seguido':'dias seguidos'} · meta do mês: meu site no ar</span></div>
   <div class="pbar"><i style="width:${Math.round(feitas/16*100)}%"></i></div><div class="pbl"><span>Mês 1 · ${feitas} de 16 missões</span><span>projeto: site pessoal</span></div>
-  <div class="btns"><button id="pfOfc" class="gr">Abrir a Oficina</button><button id="pfPerg">Minhas perguntas</button></div>
+  <div class="btns"><button id="pfEd">Editar perfil</button><button id="pfOfc" class="gr">Abrir a Oficina</button><button id="pfPerg">Perguntas</button></div>
   <div class="hl">${CURSOS.filter(c=>!c.vazio).map(c=>`<div><i class="${cursoPct(c.id)>=100?'done':''}">${{site:'🌐',logica:'🧠',ia:'🤖',design:'🎨',bastidores:'👁️'}[c.id]||'📚'}</i>${c.nome.split(' ')[0]}</div>`).join('')}</div>
   <div class="tabs"><button class="on" data-tb="g">Guardados</button><button data-tb="p">Projetos</button><button data-tb="c">Conquistas</button></div><div id="pfTab"></div>`;
   const n=seguidores();let v=0;const f=()=>{v=Math.min(n,v+Math.max(1,Math.ceil(n/30)));const e=$('#segN');if(e){e.textContent=v;if(v<n)requestAnimationFrame(f)}};f();
-  $('#pfTema').onclick=()=>$('#bTema').click();$('#bigFoto').onclick=()=>trocarFoto('me',()=>montarPerfil('me'));$('#pfOfc').onclick=()=>ir('ofc');$('#pfPerg').onclick=()=>$('#bPerg').click();
+  $('#pfTema').onclick=()=>$('#bTema').click();$('#bigFoto').onclick=()=>trocarFoto('me',()=>montarPerfil('me'));$('#pfEd').onclick=()=>editarPerfil('me');$('#pfOfc').onclick=()=>ir('ofc');$('#pfPerg').onclick=()=>$('#bPerg').click();
   const tab=k=>{$$('#t-pf .tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tb===k));const box=$('#pfTab');
    if(k==='g'){const gs=POSTS.filter(p=>S.guard[p.id]);box.innerHTML=gs.length?`<div class="grid">${gs.map(p=>`<div data-id="${p.id}">${esc((p.titulo||p.q||p.frente).slice(0,46))}</div>`).join('')}</div>`:'<div class="vazio">Toque duas vezes num post para guardar.<br>Os guardados voltam para você revisar.</div>';box.querySelectorAll('[data-id]').forEach(e=>e.onclick=()=>abrirPost(e.dataset.id))}
    if(k==='p')box.innerHTML=`<div class="grid"><div style="grid-column:span 3;aspect-ratio:auto;padding:22px">📌 Projeto 1 · Site pessoal<br><span style="font-weight:600;font-size:12px;opacity:.9">${feitas} de 16 missões · fica fixado aqui e vira portfólio</span></div><div class="lk">Projeto 2<br>Painel</div><div class="lk">Projeto 3<br>SUPER VISÃO gerentes</div><div class="lk">…</div></div>`;
@@ -325,11 +337,11 @@ function montarPerfil(id){const t=$('#t-pf');
  <div class="pf"><div class="big" id="bigFoto" style="position:relative;cursor:pointer">${AV(c.id)}<span class="cam">📷</span></div><div class="nums"><div><b>${c.aulas||'—'}</b><small>aulas</small></div><div><b>${c.modulos.length}</b><small>módulos</small></div><div><b>${ps.filter(p=>S.vistos[p.id]).length}</b><small>vistos</small></div></div></div>
  <div class="bio"><b>${c.nome}</b>${c.bio}<br><span>Explicado com futebol, desenho, família e receita 😄</span></div>
  ${c.vazio?'':`<div class="pbar"><i style="width:${pct}%"></i></div><div class="pbl"><span>${pct}% dos posts desta semana</span><span>módulo 1 · ${c.modulos[0]}</span></div>`}
- <div class="btns"><button class="gr" id="pfCont">${c.id==='site'?'Abrir a Oficina ▶':'Continuar ▶'}</button><button id="pfSeg">${S.seg[id]?'Seguindo ✓':'Seguir'}</button></div>
+ <div class="btns"><button class="gr" id="pfCont">${c.id==='site'?'Abrir a Oficina ▶':'Continuar ▶'}</button><button id="pfSeg">${S.seg[id]?'Seguindo ✓':'Seguir'}</button><button id="pfEd" style="flex:0 0 auto;padding:9px 14px">Editar</button></div>
  <div class="hl">${c.modulos.map((m,i)=>`<div><i class="${i===0&&pct>=100?'done':''}">${i+1}</i>${m}</div>`).join('')}</div>
  <div class="tabs"><button class="on">Posts</button></div>
  ${c.vazio?'<div class="vazio">'+(id==='faculdade'?'Me mande as matérias e o plano de aulas do semestre e este perfil enche de conteúdo. 📚':'Os posts deste curso chegam conforme a sua trilha avança. 🚀<br><br>Toque na foto lá em cima para colocar a imagem que quiser.')+'</div>':`<div class="grid">${ps.map(p=>`<div data-id="${p.id}">${esc((p.titulo||p.q||p.frente).slice(0,46))}${p.tipo==='desafio'?`<span class="tp">${S.resp[p.id]==='ok'?'✓':'⚡'}</span>`:''}</div>`).join('')}${Array.from({length:(3-ps.length%3)%3+3},()=>'<div class="lk">🔒</div>').join('')}</div>`}`;
- $('#pfBack').onclick=()=>ir('feed');$('#bigFoto').onclick=()=>trocarFoto(id,()=>montarPerfil(id));$('#pfSeg').onclick=()=>{S.seg[id]=S.seg[id]?0:1;if(!S.seg[id])delete S.seg[id];salvar();montarPerfil(id)};
+ $('#pfBack').onclick=()=>ir('feed');$('#bigFoto').onclick=()=>trocarFoto(id,()=>montarPerfil(id));$('#pfEd').onclick=()=>editarPerfil(id);$('#pfSeg').onclick=()=>{S.seg[id]=S.seg[id]?0:1;if(!S.seg[id])delete S.seg[id];salvar();montarPerfil(id)};
  $('#pfCont').onclick=()=>{if(id==='site')return ir('ofc');const p=ps.find(p=>!S.vistos[p.id])||ps[0];if(p)abrirPost(p.id)};
  $$('#t-pf .grid [data-id]').forEach(e=>e.onclick=()=>abrirPost(e.dataset.id))}
 // ---------------- badges ----------------
