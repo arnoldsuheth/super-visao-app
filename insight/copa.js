@@ -18,9 +18,12 @@ const FUNDO_CODIGO={ // o prêmio: código do fundo vivo explicado
 
 // ---------- robôs e imagens ----------
 const RG=new Map();let g=0;EQUIPES.forEach(e=>e.robos.forEach(r=>RG.set(r,g++)));const rb=(r,e)=>window.robo(r,e,RG.get(r)||0);
-try{const im=JSON.parse(localStorage.getItem('copa_img')||'{}');EQUIPES.forEach(e=>{if(im[e.id])e.imagem=im[e.id]})}catch{}
+function lerImgs(){let im={};try{im=JSON.parse(localStorage.getItem('copa_img')||'{}')}catch{}EQUIPES.forEach(e=>{const v=im[e.id];if(!v){delete e.imagem;return}if(typeof v==='string'){e.imagem=v;e.imgLarga=false;e.imgFundo='#ffffff'}else{e.imagem=v.src;e.imgLarga=!!v.larga;e.imgFundo=v.fundo||'#ffffff'}});return im}lerImgs();
+function salvarImg(e,v){const im=lerImgs();if(v)im[e.id]=v;else delete im[e.id];try{localStorage.setItem('copa_img',JSON.stringify(im))}catch{toast('Imagem grande demais')}lerImgs()}
 // ---------- estado ----------
-function C(){if(!S.copa){S.copa={div:'mun',ini:hoje(),xp0:xpTotal(),hist:{},tit:[],fundos:[],msgs:[],vistas:{},temporadas:0};salvar()}return S.copa}
+function C(){if(!S.copa){S.copa={div:'mun',ini:hoje(),xp0:xpTotal(),xpIni:xpTotal(),hist:{},tit:[],fundos:[],msgs:[],vistas:{},temporadas:0};salvar()}return S.copa}
+function geral(){const c=C();if(c.xpIni==null){c.xpIni=c.xp0;salvar()}const BASE={mw:500,con:440,bra:380,sb:320,sc:270,sd:220,reg:170,est:120,mun:70};const d=Math.min(dias(c.ini0||c.ini,hoje()),365);
+ const L=EQUIPES.map(e=>e.voce?{e,xp:Math.max(0,xpTotal()-c.xpIni),eu:true}:{e,xp:BASE[e.div]+Math.round(semente(e.id+'g')*40)+(e.div===c.div?xpRobo(e):Math.round(d*2.4*(.7+semente(e.id)*.5)))});return L.sort((a,b)=>b.xp-a.xp)}
 function xpTotal(){return Object.keys(S.miss||{}).length*3+acertos()+Math.floor(Object.keys(S.vistos||{}).length/2)}
 function bugs(){return Object.values(S.resp||{}).filter(r=>r==='ok').length}
 function dias(a,b){return Math.round((new Date(b)-new Date(a))/864e5)}
@@ -50,7 +53,7 @@ function provocar(){const c=C(),T=tabela(),eu=T.findIndex(x=>x.eu);const d=hoje(
  const fala=(eu===0)?'Aproveita a liderança. Amanhã ela é minha.':(r.fr&&semente(d)>.5?r.fr:DURAS[Math.floor(semente(d+'p')*DURAS.length)]);
  c.vistas[d]=1;c.msgs.unshift({d,eq:quem.id,r:r.n,f:fala});c.msgs=c.msgs.slice(0,40);salvar();
  setTimeout(()=>avisoRival(quem,r,fala),3200)}
-function avisoRival(e,r,f){const a=document.createElement('div');a.className='cp-aviso';a.innerHTML=`<div class="cp-av">${rb(r,e)}</div><div><b>${r.n} · ${e.nome}</b><span>${f}</span></div>`;document.body.appendChild(a);requestAnimationFrame(()=>a.classList.add('on'));a.onclick=()=>{a.remove();abrirCopa('msgs')};setTimeout(()=>{a.classList.remove('on');setTimeout(()=>a.remove(),400)},7000)}
+function avisoRival(e,r,f){const a=document.createElement('div');a.className='cp-aviso';a.innerHTML=`<div class="cp-av">${rb(r,e)}</div><div><b>${r.n} · ${e.nome}</b><span>${esc(f)}</span></div>`;document.body.appendChild(a);requestAnimationFrame(()=>a.classList.add('on'));a.onclick=()=>{a.remove();abrirCopa('msgs')};setTimeout(()=>{a.classList.remove('on');setTimeout(()=>a.remove(),400)},7000)}
 
 // ---------- fundo vivo ----------
 let anim=0;
@@ -69,7 +72,7 @@ function abrirCopa(aba='tab'){registrar();const fim=checarFim();const c=C(),inf=
   <div class="cp-top"><button class="cp-x" aria-label="Fechar">×</button><span>COPA DO INSIGHT</span><span class="cp-pos">${pos}º</span></div>
   <div class="cp-capa">${medalhaGrande(c.div)}<small>${inf.nome.toUpperCase()} · ${inf.etapa.toUpperCase()}</small><h2>${inf.taca}</h2>
    <div class="cp-bar"><i style="width:${Math.min(100,lider.xp/inf.meta*100)}%"></i></div><p>${lider.eu?'Você lidera! ':`${lider.e.nome} lidera com ${lider.xp} XP. `}Campeão é quem chega primeiro a <b>${inf.meta} XP</b>.${falta?` Faltam <b>${falta} XP</b> para você.`:''}</p></div>
-  <div class="cp-abas">${[['tab','Tabela'],['msgs','Provocações'],['car','Carreira'],['pre','Prêmios']].map(([k,n])=>`<button data-a="${k}" class="${k===aba?'on':''}">${n}</button>`).join('')}</div>
+  <div class="cp-abas">${[['tab','Tabela'],['rk','Ranking geral'],['msgs','Provocações'],['car','Carreira'],['pre','Prêmios']].map(([k,n])=>`<button data-a="${k}" class="${k===aba?'on':''}">${n}</button>`).join('')}</div>
   <div class="cp-corpo"></div>
   <p class="cp-leg">XP: missão = 3 · desafio certo = 1 · 2 posts estudados = 1 · BUGS = erros corrigidos<br>1º sobe · 2º fica · 3º para baixo cai</p></div>`;
  o.classList.add('on');document.body.style.overflow='hidden';ligarFundo(o.querySelector('.cp-bg'),c.div);
@@ -77,7 +80,8 @@ function abrirCopa(aba='tab'){registrar();const fim=checarFim();const c=C(),inf=
  const corpo=o.querySelector('.cp-corpo');
  const mostra=k=>{$$('#copa .cp-abas button').forEach(b=>b.classList.toggle('on',b.dataset.a===k));
   if(k==='tab')corpo.innerHTML=`<div class="cp-tab">${T.map((x,i)=>`<div class="cp-lin${x.eu?' eu':''}${i===0?' sobe':i>=2?' cai':''}" data-e="${x.e.id}"><span class="n">${i+1}</span><div class="em">${brasao(x.e,'mini')}</div><div class="q"><b>${x.e.nome}</b><div class="pr"><i style="width:${Math.min(100,x.xp/inf.meta*100)}%;background:${x.eu?'linear-gradient(90deg,#3B82F6,#22D3EE)':x.e.c2}"></i></div></div><span class="xp">${x.xp}<small>XP</small></span><span class="bg">${x.bugs}<small>BUGS</small></span></div>`).join('')}</div>`;
-  if(k==='msgs'){const M=C().msgs;corpo.innerHTML=M.length?M.map(m=>{const e=EQUIPES.find(x=>x.id===m.eq)||EQUIPES[1],r=e.robos.find(r=>r.n===m.r)||e.robos[0];return `<div class="cp-msg"><div class="av">${rb(r,e)}</div><div><small>${r.n.toUpperCase()} · ${e.nome.toUpperCase()} · ${m.d.split('-').reverse().slice(0,2).join('/')}</small><p>${m.f}</p></div></div>`}).join(''):'<p class="cp-vz">Ainda ninguém te provocou. Espera até amanhã… 😏</p>'}
+  if(k==='rk'){const G=geral();corpo.innerHTML=`<p class="cp-vz" style="padding:4px 4px 10px">Todas as ${G.length} equipes. Toque numa equipe para ver os robôs e colocar a logo.</p><div class="cp-tab">${G.map((x,i)=>`<div class="cp-lin${x.eu?' eu':''}" data-e="${x.e.id}"><span class="n">${i+1}</span><div class="em">${brasao(x.e,'mini')}</div><div class="q"><b>${x.e.nome}</b><small style="font-size:10px;opacity:.75;letter-spacing:.06em;color:${INFO[x.e.div].cor}">${INFO[x.e.div].nome.toUpperCase()}</small></div><span class="xp">${x.xp}<small>XP</small></span><span class="bg">${x.e.robos.length}<small>ROBÔS</small></span></div>`).join('')}</div>`}
+  if(k==='msgs'){const M=C().msgs;corpo.innerHTML=M.length?M.map(m=>{const e=EQUIPES.find(x=>x.id===m.eq)||EQUIPES[1],r=e.robos.find(r=>r.n===m.r)||e.robos[0];return `<div class="cp-msg"><div class="av">${rb(r,e)}</div><div><small>${r.n.toUpperCase()} · ${e.nome.toUpperCase()} · ${m.d.split('-').reverse().slice(0,2).join('/')}</small><p>${esc(m.f)}</p></div></div>`}).join(''):'<p class="cp-vz">Ainda ninguém te provocou. Espera até amanhã… 😏</p>'}
   if(k==='car')corpo.innerHTML=ORDEM.map((d,i)=>{const at=d===c.div,ok=ORDEM.indexOf(c.div)>i,t=c.tit.filter(x=>x===d).length;return `<div class="cp-deg${at?' at':ok?' ok':''}" style="--dc:${INFO[d].cor}"><span>${i+1}</span><div><b>${INFO[d].nome}</b><small>${INFO[d].taca} · ${INFO[d].etapa}</small></div><em>${t?'🏆×'+t:at?'EM DISPUTA':ok?'✓':'🔒'}</em></div>`}).join('');
   if(k==='pre')corpo.innerHTML=`<p class="cp-vz" style="text-align:left">Cada título desbloqueia o <b>fundo vivo</b> daquele campeonato, com o código pronto para você aprender e usar nos seus sites.</p>`+ORDEM.filter((d,i,a)=>a.indexOf(d)===i&&!['sc','sb'].includes(d)).map(d=>{const tem=c.fundos.includes(d)||(d==='sd'&&(c.fundos.includes('sc')||c.fundos.includes('sb')));return `<div class="cp-pre${tem?' tem':''}"><b>${FUNDO_CODIGO[d]}</b><small>${INFO[d].nome}</small><em>${tem?'DESBLOQUEADO · ver código':'🔒 ganhe o '+INFO[d].nome}</em></div>`}).join('')};
  $$('#copa .cp-abas button').forEach(b=>b.onclick=()=>mostra(b.dataset.a));mostra(aba);
@@ -85,7 +89,15 @@ function abrirCopa(aba='tab'){registrar();const fim=checarFim();const c=C(),inf=
  if(fim)setTimeout(()=>festa(fim),400);
  atualizarBotao()}
 function fecharCopa(){const o=$('#copa');if(o)o.classList.remove('on');cancelAnimationFrame(anim);document.body.style.overflow=''}
-function verEquipe(e){const m=$('#modal'),sh=m.querySelector('.sheet');sh.style.padding='';sh.innerHTML=`<div style="display:flex;gap:12px;align-items:center">${brasao(e,'mini')}<div><h4 style="margin:0">${e.nome}</h4><small style="color:var(--mu)">"${e.lema}"</small></div></div>${e.robos.map(r=>`<div style="display:flex;gap:10px;align-items:center;margin-top:12px"><div style="width:52px;flex:0 0 52px">${rb(r,e)}</div><div><b>${r.n}</b> <small style="color:var(--mu)">${r.f}${r.rival?' · RIVAL':''}</small><p style="font-size:14px;margin-top:2px">${r.voce?'Você é o capitão.':'“'+r.fr+'”'}</p></div></div>`).join('')}<div class="row"><button class="gr" id="veOk">Fechar</button></div>`;m.classList.add('on');$('#veOk').onclick=()=>m.classList.remove('on')}
+function escolherLogo(e,depois){const inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.onchange=()=>{const fr=new FileReader();fr.onload=()=>{const img=new Image();img.onload=()=>{const k=Math.min(1,480/Math.max(img.width,img.height));const cv=document.createElement('canvas');cv.width=Math.round(img.width*k);cv.height=Math.round(img.height*k);cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);
+ // detecta se o fundo da imagem é escuro (canto) para escolher a placa
+ const px=cv.getContext('2d').getImageData(1,1,1,1).data,escuro=(px[3]>200)&&(px[0]+px[1]+px[2]<300);
+ salvarImg(e,{src:cv.toDataURL('image/png'),larga:img.width/img.height>1.35,fundo:escuro?'#0b0b0f':'#ffffff'});depois&&depois()};img.src=fr.result};fr.readAsDataURL(inp.files[0])};inp.click()}
+function verEquipe(e){const m=$('#modal'),sh=m.querySelector('.sheet');sh.style.padding='';sh.innerHTML=`<div style="display:flex;gap:12px;align-items:center">${brasao(e,'mini')}<div><h4 style="margin:0">${e.nome}</h4><small style="color:var(--mu)">"${e.lema}"</small></div></div>${e.robos.map(r=>`<div style="display:flex;gap:10px;align-items:center;margin-top:12px"><div style="width:52px;flex:0 0 52px">${rb(r,e)}</div><div><b>${r.n}</b> <small style="color:var(--mu)">${r.f}${r.rival?' · RIVAL':''}</small><p style="font-size:14px;margin-top:2px">${r.voce?'Você é o capitão.':'“'+esc(r.fr)+'”'}</p></div></div>`).join('')}<div class="row"><button id="veLogo">🖼️ ${e.imagem?'Trocar':'Colocar'} logo</button>${e.imagem?'<button id="veFundo">Placa '+(e.imgFundo==='#0b0b0f'?'clara':'escura')+'</button><button id="veTira">Tirar</button>':''}<button class="gr" id="veOk">Fechar</button></div><p style="font-size:11.5px;color:var(--mu);margin-top:8px">Logo quadrada fica no círculo. Logo comprida (com o nome escrito) fica numa placa larga, sem cortar.</p>`;m.classList.add('on');
+ const re=()=>{verEquipe(e);const cp=$('#copa .cp-abas .on');if(cp)cp.click();atualizarBotao()};
+ $('#veOk').onclick=()=>m.classList.remove('on');$('#veLogo').onclick=()=>escolherLogo(e,re);
+ const vf=$('#veFundo');if(vf)vf.onclick=()=>{salvarImg(e,{src:e.imagem,larga:e.imgLarga,fundo:e.imgFundo==='#0b0b0f'?'#ffffff':'#0b0b0f'});re()};
+ const vt=$('#veTira');if(vt)vt.onclick=()=>{salvarImg(e,null);re()}}
 function festa(f){const o=document.createElement('div');o.className='cp-festa';const inf=INFO[f.antes];
  const txt={campeao:[`É CAMPEÃO!`,`O Studio Evolution Tech levanta o ${inf.taca}! Você subiu de divisão e ganhou o fundo vivo "${FUNDO_CODIGO[f.antes]}".`],fica:['2º lugar',`Ficou no ${inf.nome}. Nova temporada começa agora. Bora buscar o título.`],cai:['Rebaixado…',`Você terminou em ${f.pos}º e caiu de divisão. Os robôs estão rindo. Volta mais forte.`]}[f.res];
  o.innerHTML=`${f.res==='campeao'?medalhaGrande(f.antes):''}<h2>${txt[0]}</h2><p>${txt[1]}</p><button>Continuar</button>`;document.body.appendChild(o);
@@ -113,7 +125,7 @@ const css=`
 @keyframes cpGira{from{transform:rotateX(6deg) rotateY(0)}to{transform:rotateX(6deg) rotateY(360deg)}}
 .cp-med .gira>i{position:absolute;inset:0;clip-path:var(--c);-webkit-clip-path:var(--c);background:linear-gradient(90deg,var(--e1),var(--e2) 30%,var(--e3) 50%,var(--e2) 70%,var(--e1))}
 .cp-med .face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden}.cp-med .face svg{width:100%;height:100%;display:block}.cp-med .fr{transform:translateZ(7px)}.cp-med .bk{transform:rotateY(180deg) translateZ(7px)}
-.cp-abas{display:flex;gap:6px;margin:14px 0 10px;overflow-x:auto}.cp-abas button{flex:1;white-space:nowrap;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.05);color:#fff;border-radius:12px;padding:9px 10px;font:800 12.5px Inter,Arial}.cp-abas button.on{background:var(--cc);color:#05050a;border-color:transparent}
+.cp-abas{display:flex;gap:6px;margin:14px 0 10px;overflow-x:auto}.cp-abas button{flex:0 0 auto;white-space:nowrap;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.05);color:#fff;border-radius:12px;padding:9px 10px;font:800 12.5px Inter,Arial}.cp-abas button.on{background:var(--cc);color:#05050a;border-color:transparent}
 .cp-tab{border-radius:18px;overflow:hidden;border:1px solid rgba(255,255,255,.1);background:rgba(5,5,10,.6);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
 .cp-lin{display:grid;grid-template-columns:20px 46px 1fr 44px 40px;gap:8px;align-items:center;padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.07);position:relative;cursor:pointer}.cp-lin:last-child{border:0}
 .cp-lin .n{font:900 15px Inter,Arial;text-align:center}.cp-lin .em svg{width:46px;height:54px}.cp-lin .q b{font-size:14px}.cp-lin .pr{height:4px;background:rgba(255,255,255,.1);border-radius:9px;margin-top:5px;overflow:hidden}.cp-lin .pr i{display:block;height:100%;border-radius:9px}
@@ -129,6 +141,7 @@ const css=`
 .cp-aviso .cp-av{width:44px;flex:0 0 44px}.cp-aviso b{display:block;font-size:11px;letter-spacing:.06em;color:#ff7a6b}.cp-aviso span{font-size:14px;line-height:1.35}
 .cp-festa{position:fixed;inset:0;z-index:95;background:radial-gradient(circle at 50% 35%,#2a1a4a,#05050a 70%);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px}.cp-festa h2{font:900 36px Inter,Arial;margin:14px 0 8px}.cp-festa p{opacity:.85;font-size:15px;line-height:1.45;max-width:340px}.cp-festa button{margin-top:22px;border:0;border-radius:14px;padding:13px 24px;font:900 15px Inter,Arial;background:linear-gradient(90deg,#3B82F6,#22D3EE);color:#05050a}
 svg.mini{width:64px;height:76px;flex:0 0 64px}
+.modal.on{z-index:96}
 `;
 const st=document.createElement('style');st.textContent=css;document.head.appendChild(st);
 window.abrirCopa=abrirCopa;

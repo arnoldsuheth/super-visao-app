@@ -57,8 +57,10 @@ let pidx=0;
 window.brasao=function(e,cls='em'){const id='b'+(uid++),c1=e.c1,c2=e.c2,eu=!!e.voce;if(e._p===undefined)e._p=(pidx++);
  const sat=e.gigante?'#fde68a':c2;
  let ic=ICO[e.icone]||'';
- if(e.icone==='mono'){const fs=e.sigla.length>1?20:38;ic=`<circle cx="50" cy="56" r="27" fill="${c1}" stroke="${c2}" stroke-width="2"/><text x="50" y="${56+fs*.36}" text-anchor="middle" font-family="Inter,Arial" font-weight="900" font-size="${fs}" fill="#fff">${e.sigla}</text>`+(e.imagem?`<clipPath id="ci${id}"><circle cx="50" cy="56" r="26"/></clipPath><image href="${e.imagem}" x="24" y="30" width="52" height="52" clip-path="url(#ci${id})" preserveAspectRatio="xMidYMid slice"/>`:'')}
- if(e.imagem&&e.icone!=='mono')ic=`<clipPath id="ci${id}"><circle cx="50" cy="56" r="27"/></clipPath><image href="${e.imagem}" x="23" y="29" width="54" height="54" clip-path="url(#ci${id})" preserveAspectRatio="xMidYMid slice"/>`;
+ if(e.icone==='mono'){const fs=e.sigla.length>1?20:38;ic=`<circle cx="50" cy="56" r="27" fill="${c1}" stroke="${c2}" stroke-width="2"/><text x="50" y="${56+fs*.36}" text-anchor="middle" font-family="Inter,Arial" font-weight="900" font-size="${fs}" fill="#fff">${e.sigla}</text>`}
+ if(e.imagem){const fu=e.imgFundo||'#ffffff';
+  ic=e.imgLarga?`<rect x="14" y="40" width="72" height="32" rx="9" fill="${fu}" stroke="${c2}" stroke-width="2"/><image href="${e.imagem}" x="19" y="43" width="62" height="26" preserveAspectRatio="xMidYMid meet"/>`
+   :`<circle cx="50" cy="56" r="27" fill="${fu}" stroke="${c2}" stroke-width="2"/><image href="${e.imagem}" x="31" y="37" width="38" height="38" preserveAspectRatio="xMidYMid meet"/>`}
  const part=Array.from({length:8},(_,k)=>{const x=22+((k*37+e._p*13)%56),d=(k*.37+e._p*.21)%2.6;return `<circle cx="${x}" cy="${86-(k%3)*4}" r="${1+(k%3)*.5}" fill="${k%2?c2:'#fff'}" style="animation:sobeP ${2.2+(k%4)*.4}s ${d}s ease-out infinite;transform-box:fill-box"/>`}).join('');
  const nm=e.nome.toUpperCase(),fsn=Math.min(13,92/(nm.length*.66));
  return `<svg class="${cls}" viewBox="-6 -6 112 132"><defs><style>#${id} .i{transform-box:fill-box;transform-origin:center;animation:${ANIM[e.icone]||'resp 3s ease-in-out infinite'}}#${id} .an{transform-origin:50px 56px;animation:gira ${14+e._p%5*3}s linear infinite}#${id} .an2{transform-origin:50px 56px;animation:girai ${9+e._p%4*2}s linear infinite}#${id} .hl{transform-origin:50px 56px;animation:halo 2.6s ease-in-out infinite}#${id} .bt{animation:brilhoT 3.6s ease-in-out infinite}${KF}</style>
