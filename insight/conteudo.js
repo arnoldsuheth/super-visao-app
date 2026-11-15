@@ -2,7 +2,6 @@
 window.CURSOS = [
  {id:'site', ico:'🌐', nome:'Site do zero', user:'site.do.zero', sigla:'WEB', bio:'Mês 1: você vai construir o seu site pessoal, escrevendo cada letra. Do "o que é um site" até o link no ar.', modulos:['Tijolos','Bonito','Celular','No ar'], aulas:28, cor:'#fa7e1e'},
  {id:'logica', ico:'🧠', nome:'Lógica do zero', user:'logica.do.zero', sigla:'LÓG', bio:'A base de tudo, sem pressa. Pensar como programador usando futebol, receita e desenho.', modulos:['Variáveis','Decisões','Repetição','Funções'], aulas:32, cor:'#d62976'},
- {id:'ia', ico:'🤖', nome:'IA do zero', user:'ia.do.zero', sigla:'IA', bio:'Claude, ChatGPT, Gemini e as outras. Do "o que é" até criar as suas ferramentas.', modulos:['Básico','ChatGPT','Claude','Gemini','Prompts','Ferramentas'], aulas:48, cor:'#962fbf'},
  {id:'design', ico:'🎨', nome:'Design', user:'design.que.funciona', sigla:'UI', bio:'Cores, letras e telas. Treinar o olho para saber por que uma tela é boa.', modulos:['Hierarquia','Cores','Letras','Telas'], aulas:20, cor:'#4f5bd5'},
  {id:'bastidores', ico:'👁️', nome:'Bastidores', user:'bastidores.seus.apps', sigla:'SV', bio:'Pedaços reais dos SEUS apps (SUPER VISÃO, Gestão, Life Trail) explicados por dentro.', modulos:['SUPER VISÃO','Gestão','Life Trail'], aulas:12, cor:'#feda75'},
  {id:'faculdade', ico:'🎓', nome:'Faculdade', user:'ciencia.da.computacao', sigla:'CC', bio:'As matérias do semestre. Me mande o plano das aulas e eu encho este perfil.', modulos:['Em breve'], aulas:0, cor:'#4f5bd5', vazio:true}
@@ -41,13 +40,13 @@ window.POSTS = [
   leg:'"let" quer dizer "deixa": deixa capitão ser Fernandão.'},
  {id:'l2', curso:'logica', tipo:'desafio', q:'Em let gols = 3, qual é o NOME da variável?', code:'let gols = 3', ops:['let','gols','3'], ok:1, exp:'"gols" é o nome (a posição). 3 é o valor (o jogador). "let" é só a palavra que cria a variável.', dica:'O nome é a "posição".'},
  {id:'l3', curso:'logica', tipo:'curiosidade', emoji:'🦋', frente:'Por que erro em programa se chama "bug"?', verso:'Em 1947 uma mariposa de verdade (bug = inseto em inglês) travou o computador Mark II, em Harvard. A equipe da Grace Hopper colou o inseto no caderno com a nota "primeiro caso real de bug encontrado".'},
- {id:'i1', curso:'ia', tipo:'carrossel', titulo:'O que é uma IA?', slides:[
+ {id:'i1', curso:'claude', tipo:'carrossel', titulo:'O que é uma IA?', slides:[
   {emoji:'👨‍🍳', h:'A IA é um <i>cozinheiro</i>', p:'Ela já "provou" milhões de receitas (textos) e aprendeu os padrões. Quando você pede algo, ela monta a resposta mais provável, como um cozinheiro experiente.'},
   {emoji:'📝', h:'O prompt é a <i>comanda</i>', p:'O que você escreve é o pedido. Comanda bagunçada = prato errado. Comanda clara = prato certo.'},
   {emoji:'🏆', h:'Claude, ChatGPT, Gemini', p:'São cozinheiros de restaurantes diferentes. Cada um tem o seu jeito; você vai aprender a escalar o certo para cada jogo.'}],
   leg:'Você já usa IA todo dia comigo. Agora vai entender por dentro.'},
- {id:'i2', curso:'ia', tipo:'desafio', q:'Qual pedido vai dar uma resposta MELHOR?', ops:['"Faz um post"','"Escreva um post curto para o Instagram da BLESSAINT, tom jovem e cristão, sobre o lançamento da camiseta preta"'], ok:1, exp:'Quanto mais detalhe na comanda (para quem, onde, que tom, sobre o quê), melhor o prato. Isso é a base de um bom prompt.', dica:'Comanda clara = prato certo.'},
- {id:'i3', curso:'ia', tipo:'carrossel', titulo:'O que é um token?', slides:[
+ {id:'i2', curso:'chatgpt', tipo:'desafio', q:'Qual pedido vai dar uma resposta MELHOR?', ops:['"Faz um post"','"Escreva um post curto para o Instagram da BLESSAINT, tom jovem e cristão, sobre o lançamento da camiseta preta"'], ok:1, exp:'Quanto mais detalhe na comanda (para quem, onde, que tom, sobre o quê), melhor o prato. Isso é a base de um bom prompt.', dica:'Comanda clara = prato certo.'},
+ {id:'i3', curso:'claude', tipo:'carrossel', titulo:'O que é um token?', slides:[
   {h:'A IA não lê <i>palavras</i>', p:'Ela corta o texto em pedacinhos chamados tokens. Como cortar uma pizza em fatias antes de comer.'},
   {h:'Olha o corte:', code:'Super | Vis | ão | é | top', p:'5 tokens. Cada um vira um número, e a IA faz contas com esses números.'},
   {h:'Por que <i>importa</i>?', p:'Quanto mais tokens, mais caro e mais lento. Texto curto e claro = IA mais rápida e mais barata nos apps do Studio.'}],
@@ -60,6 +59,16 @@ window.POSTS = [
  {id:'b1', curso:'bastidores', tipo:'aovivo', titulo:'Como o olho do SUPER VISÃO pisca', code:'<style>\n.olho{width:120px;height:60px;border-radius:50%;\nbackground:#ff8a2a;margin:30px auto;\nanimation:pisca 2s infinite}\n@keyframes pisca{\n 0%,45%,55%,100%{transform:scaleY(1)}\n 50%{transform:scaleY(.06)}\n}\n</style>\n<div class="olho"></div>', nota:'O olho não "fecha": ele é <b>achatado</b> (scaleY) para 6% da altura por um instante e volta. Esse é o mesmo truque que está no seu app.'}
 ];
 
+window.POSTS.push(
+ {id:'g1', curso:'gemini', tipo:'carrossel', titulo:'Gemini mora no Google', slides:[
+  {emoji:'🏠', h:'O Gemini é o <i>vizinho</i> do Google', p:'Ele foi feito pelo Google. Por isso conversa direto com Gmail, Drive, Docs e Agenda, como um vizinho que tem a chave da casa.'},
+  {emoji:'📂', h:'Na prática', p:'Você pode pedir: "resuma os e-mails da semana" ou "ache no meu Drive a planilha da BLESSAINT". Ele busca lá dentro.'},
+  {emoji:'⚽', h:'Escalação certa', p:'Cada IA tem a sua posição. Gemini é ótimo quando o jogo é dentro do Google. Claude e ChatGPT brilham em outras jogadas. Você vai aprender quando escalar cada um.'}],
+  leg:'Cada plataforma tem o seu perfil. Siga as que você mais usa.'},
+ {id:'g2', curso:'gemini', tipo:'desafio', q:'Você quer achar um arquivo no seu Google Drive conversando com uma IA. Qual combina mais?', ops:['Gemini','Nenhuma IA consegue'], ok:0, exp:'O Gemini é do Google e conversa com o Drive. (Outras IAs também conseguem quando você conecta o Drive nelas, como você já faz comigo.)', dica:'Quem mora no Google?'},
+ {id:'c1', curso:'chatgpt', tipo:'curiosidade', emoji:'💬', frente:'O que quer dizer o "GPT" de ChatGPT?', verso:'Generative Pre-trained Transformer: um "transformador" (um tipo de cérebro de IA) pré-treinado que gera texto. Traduzindo para o nosso mundo: um cozinheiro que já provou milhões de receitas antes de abrir o restaurante.'}
+);
+
 window.STORIES = [
  {curso:'site', slides:[
   {emoji:'👋', h:'Bem-vindo ao <i>Mês 1</i>', p:'Meta: no fim do mês, o SEU site pessoal no ar, com link de verdade, escrito por você.'},
@@ -70,9 +79,13 @@ window.STORIES = [
   {emoji:'⚽', h:'O que é uma <i>variável</i>?', p:'Pensa na escalação: a posição "capitão" existe sempre. Quem usa a braçadeira é que muda.'},
   {h:'Posição = <i>nome</i><br>Jogador = <i>valor</i>', code:'let capitao = "Fernandão"', p:'Mesma posição, jogadores diferentes ao longo dos anos.'},
   {quiz:{q:'Em let capitao = "D\'Alessandro", qual é o NOME?', ops:['capitao','D\'Alessandro'], ok:0, exp:'"capitao" é o nome (a posição). D\'Alessandro é o valor (o jogador).'}}]},
- {curso:'ia', slides:[
-  {emoji:'👨‍🍳', h:'IA = <i>cozinheiro</i>', p:'Prompt = comanda. Comanda clara, prato certo.'},
+ {curso:'claude', slides:[
+  {emoji:'👨‍🍳', h:'IA = <i>cozinheiro</i>', p:'Você conversa com o Claude todo dia. Ele é um cozinheiro: prompt é a comanda. Comanda clara, prato certo.'},
   {quiz:{q:'"Faz um texto" é uma comanda…', ops:['Clara','Bagunçada'], ok:1, exp:'Faltou para quem, onde, que tom e sobre o quê.'}}]},
+ {curso:'chatgpt', slides:[
+  {emoji:'💬', h:'ChatGPT', p:'Outro cozinheiro famoso, de outro restaurante. Nesta trilha você vai aprender quando escalar cada um.'}]},
+ {curso:'gemini', slides:[
+  {emoji:'🏠', h:'Gemini', p:'O vizinho do Google: conversa com Gmail, Drive e Docs.'}]},
  {curso:'design', slides:[
   {emoji:'👀', h:'Regra do <i>1-1-1</i>', p:'1 coisa grande, 1 média e 1 ação clara.'}]}
 ];
@@ -86,9 +99,9 @@ window.MISSOES = [
 
 // Ferramentas (perfis novos; os posts chegam conforme a trilha)
 window.CURSOS.push(
- {id:'claude', site:'claude.ai', nome:'Claude', user:'curso.claude', sigla:'Cl', cor:'#d97757', bio:'Usar o Claude do zero ao avançado: conversas, projetos, artefatos e agentes.', modulos:['Básico','Projetos','Artefatos','Agentes'], aulas:0, vazio:true},
- {id:'chatgpt', site:'chatgpt.com', nome:'ChatGPT', user:'curso.chatgpt', sigla:'GPT', cor:'#10a37f', bio:'ChatGPT do zero: pedidos, GPTs personalizados, imagens e voz.', modulos:['Básico','GPTs','Imagens','Voz'], aulas:0, vazio:true},
- {id:'gemini', site:'gemini.google.com', nome:'Gemini', user:'curso.gemini', sigla:'Ge', cor:'#4f7df3', bio:'Gemini do zero e como ele conversa com Google Drive, Docs e Gmail.', modulos:['Básico','Google','Imagens'], aulas:0, vazio:true},
+ {id:'claude', site:'claude.ai', nome:'Claude', user:'curso.claude', sigla:'Cl', cor:'#d97757', bio:'Usar o Claude do zero ao avançado: conversas, projetos, artefatos e agentes.', modulos:['Básico','Projetos','Artefatos','Agentes'], aulas:24},
+ {id:'chatgpt', site:'chatgpt.com', nome:'ChatGPT', user:'curso.chatgpt', sigla:'GPT', cor:'#10a37f', bio:'ChatGPT do zero: pedidos, GPTs personalizados, imagens e voz.', modulos:['Básico','GPTs','Imagens','Voz'], aulas:24},
+ {id:'gemini', site:'gemini.google.com', nome:'Gemini', user:'curso.gemini', sigla:'Ge', cor:'#4f7df3', bio:'Gemini do zero e como ele conversa com Google Drive, Docs e Gmail.', modulos:['Básico','Google','Imagens'], aulas:24},
  {id:'vscode', site:'code.visualstudio.com', nome:'VS Code', user:'curso.vscode', sigla:'&lt;/&gt;', cor:'#2f80ed', bio:'O editor onde programadores escrevem código. Instalar, abrir projeto, atalhos.', modulos:['Instalar','Primeiro arquivo','Atalhos','Extensões'], aulas:0, vazio:true},
  {id:'github', site:'github.com', nome:'GitHub', user:'curso.github', sigla:'GH', cor:'#24292f', bio:'Onde ficam os seus projetos (SUPER VISÃO, Gestão...). Repositório, commit, publicar site.', modulos:['O que é','Repositório','Commit','Pages'], aulas:0, vazio:true},
  {id:'terminal', ico:'⌨️', nome:'Terminal', user:'curso.terminal', sigla:'&gt;_', cor:'#111111', bio:'A "tela preta" sem medo: comandos básicos explicados como ordens para a equipe.', modulos:['Primeiros comandos','Pastas','Git'], aulas:0, vazio:true},
