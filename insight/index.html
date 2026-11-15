@@ -44,6 +44,9 @@ body.claro .glow{background:radial-gradient(circle at 100% 0,rgba(214,41,118,.10
 .md{position:relative;width:100%;aspect-ratio:4/5;overflow:hidden;user-select:none;-webkit-user-select:none}
 .acts{display:flex;align-items:center;gap:20px;padding:12px 16px 6px}.acts .sv{margin-left:auto}
 .like.on svg{fill:url(#hg);stroke:url(#hg)}.save.on svg{fill:currentColor}
+.apoio{margin-top:10px;padding:10px;border-radius:14px;background:var(--chip);border:1px solid var(--ln)}.apoio small{display:block;font-weight:800;font-size:10.5px;letter-spacing:.1em;color:var(--mu);margin-bottom:6px}
+.apoio [data-post]{display:block;width:100%;text-align:left;border:0;background:var(--bg);color:var(--tx);border-radius:10px;padding:9px 11px;margin-bottom:6px;font:700 13.5px inherit;font-family:inherit;cursor:pointer}.apoio [data-post] i{font-style:normal;font-weight:600;color:var(--mu);font-size:12px}
+.apb{display:flex;gap:6px}.apb button{flex:1;border:1.5px solid var(--ln);background:var(--bg);color:var(--tx);border-radius:10px;padding:9px;font:800 13px inherit;font-family:inherit}.dica{margin-top:8px;font-size:14px;line-height:1.45;color:var(--tx);text-decoration:none}
 .cap{padding:2px 16px 10px;font-size:15px;line-height:1.45}.cap b{font-weight:800}
 .xtra{display:flex;gap:8px;padding:0 16px 12px;flex-wrap:wrap}.xtra button{border:1.5px solid var(--ln);background:var(--chip);color:var(--tx);border-radius:99px;padding:7px 12px;font:700 13px inherit;font-family:inherit;cursor:pointer}.xtra button.on{border-color:transparent;background:var(--g);color:#fff}
 .altbox{margin:0 16px 14px;padding:14px;border-radius:16px;background:var(--chip);border:1.5px solid var(--ln);font-size:15px;line-height:1.5;animation:altin .35s ease}.altbox small{display:block;font-weight:800;font-size:11px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px;background:var(--gt);-webkit-background-clip:text;color:transparent}
@@ -227,7 +230,7 @@ input,textarea,select{font-size:16px!important}
 <div class="modal" id="modal"><div class="sheet"></div></div>
 <div class="toast" id="toast"></div>
 <div id="ab"></div>
-<script src="./conteudo.js?v=12"></script>
+<script src="./conteudo.js?v=13"></script>
 <script>
 // ---------------- estado ----------------
 const KEY='insight_v1';const hoje=()=>new Date().toLocaleDateString('sv-SE',{timeZone:'America/Sao_Paulo'});
@@ -288,7 +291,7 @@ function midia(p){
  if(p.tipo==='aovivo')return `<div class="av2"><span class="lb" style="top:10px">VOCÊ ESCREVE</span><pre>${colorir(p.code)}</pre><span class="lb" style="top:calc(50% + 10px)">APARECE ASSIM</span><iframe sandbox="" srcdoc="${esc('<body style=\'font-family:-apple-system,Arial;padding:18px;margin:0\'>'+p.code)}"></iframe></div>`;
  if(p.tipo==='curiosidade')return `<div class="fl"><div class="in"><div class="fa"><div class="em">${p.emoji||'✨'}</div><small>VOCÊ SABIA? · TOQUE PARA VIRAR</small><h3>${p.frente}</h3><span class="tp">● ● ●</span></div><div class="fa b"><small>A RESPOSTA</small><p>${p.verso}</p></div></div></div>`;
 }
-function colorir(c){return esc(c).replace(/(&lt;\/?)([a-z0-9]+)/gi,'$1<span class="t">$2</span>').replace(/([a-z-]+)=(&quot;|")([^"&]*)(&quot;|")/gi,'<span class="a">$1</span>="$3"')}
+function colorir(c){return esc(c).replace(/([a-z-]+)="([^"]*)"/gi,'\u0001$1\u0002$2\u0003').replace(/(&lt;\/?)([a-z0-9]+)/gi,'$1<span class="t">$2</span>').replace(/\u0001([^\u0002]*)\u0002([^\u0003]*)\u0003/g,'<span class="a">$1</span>="$2"')}
 function postHTML(p){const c=curso(p.curso);const legenda=p.leg||p.nota||'';const titulo=p.titulo||(p.tipo==='desafio'?'Desafio':'Você sabia?');
  return `<article class="post" data-id="${p.id}"><div class="ph"><div class="av" data-c="${c.id}">${AV(c.id)}</div><div><strong data-c="${c.id}">${c.user}</strong><small>${c.nome}</small></div>${S.seg[c.id]?'':`<button class="seg" data-c="${c.id}">Seguir</button>`}<span class="mn"><i></i><i></i></span></div>
  <div class="md">${midia(p)}<svg class="bigh" viewBox="0 0 24 24"><path d="${IC.heart.match(/d="([^"]+)"/)[1]}" fill="url(#hg)"/></svg></div>
@@ -394,7 +397,7 @@ function montarDes(){const ds=POSTS.filter(p=>p.tipo==='desafio');const pend=ds.
 // ---------------- oficina ----------------
 function montarOfc(){const feitas=MISSOES.filter(m=>S.miss[m.id]).length;const atual=MISSOES.find(m=>!S.miss[m.id]);
  if(!S.code)S.code=MISSOES[0].inicio||'';
- $('#ofc').innerHTML=`<div class="miss"><small class="gtx">PROJETO DO MÊS 1 · SEU SITE PESSOAL</small><h4>${atual?'Semana '+atual.semana+' · Missão '+(MISSOES.indexOf(atual)+1)+': '+atual.titulo:'Tudo cumprido até aqui! 🏆'}</h4><p>${atual?esc(atual.pede):'Você terminou as missões liberadas. Logo chegam as da próxima semana.'}</p><p style="margin-top:6px;font-size:12px;color:var(--mu)">${atual?MISSOES.filter(m=>m.semana===atual.semana&&S.miss[m.id]).length+' de '+MISSOES.filter(m=>m.semana===atual.semana).length+' missões da semana '+atual.semana+' · ':''}${feitas} de ${MISSOES.length} no total</p></div>
+ $('#ofc').innerHTML=`<div class="miss"><small class="gtx">PROJETO DO MÊS 1 · SEU SITE PESSOAL</small><h4>${atual?'Semana '+atual.semana+' · Missão '+(MISSOES.indexOf(atual)+1)+': '+atual.titulo:'Tudo cumprido até aqui! 🏆'}</h4><p>${atual?esc(atual.pede):'Você terminou as missões liberadas. Logo chegam as da próxima semana.'}</p>${atual&&atual.estude?`<div class="apoio"><small>📚 ESTUDE ANTES</small>${atual.estude.map(id=>{const p=POSTS.find(x=>x.id===id);if(!p)return'';const c=curso(p.curso);return `<button data-post="${id}">${S.vistos[id]?'✓ ':''}${esc((p.titulo||p.q||p.frente).slice(0,34))} <i>@${c.user}</i></button>`}).join('')}<div class="apb"><button id="ofDica">💡 Dica</button><button id="ofDuv">💬 Tirar dúvida</button></div><p class="dica" id="ofDicaT" hidden>${esc(atual.dica||'')}</p></div>`:''}<p style="margin-top:6px;font-size:12px;color:var(--mu)">${atual?MISSOES.filter(m=>m.semana===atual.semana&&S.miss[m.id]).length+' de '+MISSOES.filter(m=>m.semana===atual.semana).length+' missões da semana '+atual.semana+' · ':''}${feitas} de ${MISSOES.length} no total</p></div>
  <div class="kb">${(atual&&atual.semana>=2?['<style>','</style>','{','}',';','color:','background:','font-size:','px','text-decoration: none','h1','p','a','body']:['<h1>','</h1>','<p>','</p>','<ul>','</ul>','<li>','</li>','<a href="">','</a>']).map(t=>`<button data-k="${esc(t)}">${esc(t)}</button>`).join('')}</div>
  <textarea class="ed" spellcheck="false" autocapitalize="off" autocorrect="off">${esc(S.code)}</textarea>
  <div class="prev"><div class="lbx">COMO O SEU SITE ESTÁ FICANDO</div><iframe sandbox=""></iframe></div><button class="retro" id="ofcPost" style="margin:12px 0 0;width:100%">📌 Postar no meu perfil</button>
@@ -403,6 +406,9 @@ function montarOfc(){const feitas=MISSOES.filter(m=>S.miss[m.id]).length;const a
  const att=()=>{S.code=ed.value;salvar();fr.srcdoc='<body style="font-family:-apple-system,Arial;padding:16px;margin:0">'+ed.value;
   const m=MISSOES.find(m=>!S.miss[m.id]);if(m&&m.testa(ed.value)){S.miss[m.id]=1;marcarDia();salvar();toast('Missão cumprida! +10 seguidores 🎉');confete(ed);setTimeout(montarOfc,1200)}};
  ed.oninput=att;att();
+ $$('#ofc .apoio [data-post]').forEach(b=>b.onclick=()=>abrirPost(b.dataset.post));
+ const od=$('#ofDica');if(od)od.onclick=()=>{const t=$('#ofDicaT');t.hidden=!t.hidden};
+ const ou=$('#ofDuv');if(ou){const at=MISSOES.find(m=>!S.miss[m.id]);ou.onclick=()=>perguntar({id:'miss_'+at.id,curso:'site',titulo:'Missão: '+at.titulo+' — '+at.pede})}
  $('#ofcPost').onclick=()=>{const c=ed.value.trim();if(c.length<8)return toast('Escreva um pouco mais antes de postar ✍️');S.meus=S.meus||[];if(S.meus[0]&&S.meus[0].code===c)return toast('Esse já está no seu perfil');S.meus.unshift({id:'m'+Date.now(),dia:hoje(),code:c});marcarDia();salvar();toast('Postado no seu perfil! 📌');confete($('#ofcPost'))};
  $$('#ofc .kb button').forEach(b=>b.onclick=()=>{const t=b.dataset.k.replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&');const s=ed.selectionStart,e=ed.selectionEnd;ed.value=ed.value.slice(0,s)+t+ed.value.slice(e);ed.focus();ed.selectionStart=ed.selectionEnd=s+t.length;att()})}
 // ---------------- perfis ----------------

@@ -181,3 +181,22 @@ window.MISSOES.push(
 window.ALT.s13=[{e:'🏠',t:'Jeito casa',x:'HTML são as paredes. CSS é a pintura, o piso e a decoração. A casa é a mesma, só fica bonita.'},{e:'🍩',t:'Jeito Simpsons',x:'O desenho do Homer sem cor é HTML. Pintar a pele amarela e a camisa branca é CSS.'}];
 window.ALT.s15=[{e:'🎨',t:'Jeito pintor',x:'background é a parede, color é a tinta da letra. Você escolhe a tinta escrevendo o nome da cor ou o código dela.'}];
 window.ALT.s16=[{e:'🍹',t:'Jeito suco',x:'É como fazer suco misturando 3 frutas: vermelha, verde e azul. O código diz quanto de cada uma vai no copo.'}];
+
+// ---------- apoio das missões: onde estudar antes + dica ----------
+window.POSTS.push(
+ {id:'s18', curso:'site', tipo:'carrossel', titulo:'Link com estilo', leg:'Para a Missão 8: o link do seu site com a sua cara.', slides:[
+  {emoji:'🔗', h:'O link já vem <i>azul e sublinhado</i>', p:'É o "uniforme padrão" que o navegador dá para todo link. Você pode trocar.'},
+  {emoji:'🎨', h:'Quem é o link? A tag <i>a</i>', p:'Então a regra começa com <b>a</b>. Dentro dela você pode mudar a cor (<b>color</b>) igual fez no h1.', code:'a { color: gold; }'},
+  {emoji:'✂️', h:'Tirar o <i>sublinhado</i>', p:'O sublinhado é uma "decoração" do texto. A propriedade é <b>text-decoration</b> e o valor para tirar é <b>none</b> (nenhuma).'}]}
+);
+window.ALT.s18=[{e:'👕',t:'Jeito uniforme',x:'O link vem com o uniforme padrão (azul com faixa embaixo). text-decoration: none tira a faixa; color troca a cor da camisa.'}];
+const APOIO={
+ m1:{estude:['s3','s4','s5'],dica:'Toda tag abre e fecha. O título grande usa a tag que começa com h.'},
+ m2:{estude:['s4','s10'],dica:'Parágrafo em inglês é paragraph. A tag é só a primeira letra.'},
+ m3:{estude:['s7'],dica:'Primeiro a lista (ul), e dentro dela cada item (li). Feche cada um.'},
+ m4:{estude:['s9','s11'],dica:'O endereço vai dentro de href, entre aspas. O texto que a pessoa clica fica entre <a ...> e </a>.'},
+ m5:{estude:['s13','s14','s15'],dica:'Tudo de CSS mora dentro de <style> e </style>. A regra tem 3 partes: quem { o quê: como; }'},
+ m6:{estude:['s15','s16'],dica:'Quem é a página inteira? Uma tag que começa com b. A propriedade de fundo também começa com b.'},
+ m7:{estude:['s17','s13'],dica:'A propriedade termina com size (tamanho). O número precisa da medida px no final.'},
+ m8:{estude:['s18','s9'],dica:'A regra é para a tag a. Uma propriedade troca a cor; a outra tira a decoração (o sublinhado).'}};
+window.MISSOES.forEach(m=>Object.assign(m,APOIO[m.id]||{}));
