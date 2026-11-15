@@ -220,7 +220,7 @@ window.POSTS.push(
 window.ALT.s19=[{e:'🪧',t:'Jeito placa',x:'O img é uma placa que diz "a foto está ali". O navegador vai buscar no endereço do src e pendura no seu site.'}];
 window.ALT.s23=[{e:'🥊',t:'Jeito ringue',x:'O ringue é a caixa. margin é a distância do ringue até a plateia. padding é o espaço entre as cordas e o lutador.'},{e:'🖼️',t:'Jeito quadro',x:'padding é o paspatur (a borda branca dentro do quadro). margin é o espaço entre um quadro e outro na parede.'}];
 window.MISSOES.push(
- {id:'m9', semana:3, titulo:'Sua foto', pede:'Coloque uma <img> com src e alt. Pode usar: https://arnoldsuheth.github.io/super-visao-app/arnold.jpeg', testa:c=>/<img\s[^>]*src\s*=\s*["'][^"']+["'][^>]*>/i.test(c)&&/<img\s[^>]*alt\s*=/i.test(c)},
+ {id:'m9', semana:3, titulo:'Sua foto', pede:'Coloque uma <img> com src e alt. Pode usar: https://arnoldsuheth.github.io/super-visao-app/arnold.jpeg', testa:c=>{c=c.replace(/<style[\s\S]*?(<\/style>|$)/gi,'');return /<img\s[^>]*src\s*=\s*["'][^"']+["'][^>]*>/i.test(c)&&/<img\s[^>]*alt\s*=/i.test(c)}},
  {id:'m10', semana:3, titulo:'Foto de perfil', pede:'Deixe a foto pequena e redonda: img { width: 150px; border-radius: 50%; }', testa:c=>/<style>[\s\S]*img\s*\{[^}]*width\s*:[^;}]+[^}]*\}/i.test(c)&&/img\s*\{[^}]*border-radius\s*:/i.test(c)},
  {id:'m11', semana:3, titulo:'No meio do campo', pede:'Centralize o site: body { max-width: 600px; margin: 0 auto; }', testa:c=>/body\s*\{[^}]*max-width\s*:[^}]*\}/i.test(c)&&/body\s*\{[^}]*margin\s*:[^;}]*auto/i.test(c)},
  {id:'m12', semana:3, titulo:'Respiro', pede:'Dê espaço por dentro e centralize o texto: padding: 20px; e text-align: center; (pode ser no body).', testa:c=>/<style>[\s\S]*padding\s*:\s*\d/i.test(c)&&/text-align\s*:\s*center/i.test(c)}
@@ -254,3 +254,15 @@ Object.assign(window.APOIO,{
  m15:{estude:['s27'],dica:'Escreva <footer>© 2026 Seu Nome</footer> no fim. No <style>: footer { font-size: 13px; }'},
  m16:{estude:['s27','s29'],dica:'É uma regra nova, separada da regra do a: a:hover { color: white; }'}});
 window.MISSOES.forEach(m=>Object.assign(m,window.APOIO[m.id]||{}));
+
+// ---------- Mês 1: revisão final e site no ar ----------
+window.MISSOES.push(
+ {id:'m17', semana:4, titulo:'Revisão final', pede:'Deixe o código com ZERO erros (❌) no botão Revisar, com todas as missões anteriores no lugar.', testa:c=>typeof revisar==='function'&&revisar(c).filter(x=>x.g==='erro').length===0&&window.MISSOES.filter(m=>m.semana<=4&&!/^m1[78]$/.test(m.id)).every(m=>m.testa(c)),
+  dica:'Toque em Revisar: ele mostra a linha de cada erro. Os mais comuns: uma tag escrita dentro do <style> e uma regra sem nome antes do { (ex.: { color: red } em vez de p { color: red }).'},
+ {id:'m18', semana:4, titulo:'No ar!', pede:'Coloque o seu site na internet e cole aqui o link dele.', testa:c=>!!(typeof S!=="undefined"&&S.siteNoAr&&/^https:\/\/[a-z0-9-]+\.github\.io\b/i.test(S.siteNoAr)),
+  dica:'O GitHub Pages deixa o site no ar de graça. O link fica parecido com https://arnoldsuheth.github.io',
+  painelExtra:()=>`<div class="apoio"><small>🚀 COMO COLOCAR NO AR</small><p class="dica" style="display:block">1) Termine a Revisão final (missão anterior).<br>2) No GitHub, crie um repositório PÚBLICO chamado <b>arnoldsuheth.github.io</b> e libere ele para o Claude.<br>3) Toque em "Pedir ao Claude": ele pega o seu código daqui e publica.<br>4) Quando abrir, cole o link abaixo.</p><div class="apb"><button id="ofPedeC">💬 Pedir ao Claude</button></div><input id="ofLink" placeholder="https://arnoldsuheth.github.io" style="width:100%;margin-top:8px;padding:10px;border-radius:10px;border:1px solid rgba(128,128,128,.4);font:15px inherit;background:transparent;color:inherit"><div class="apb"><button id="ofLinkOk">✅ Meu site está no ar</button></div></div>`,
+  ligar:(p,refaz)=>{const b=p.querySelector('#ofPedeC');if(b)b.onclick=()=>{try{navigator.clipboard.writeText('Claude, coloque no ar o meu site do INSIGHT (o código da Oficina, no insight.json) no repositório arnoldsuheth.github.io.')}catch{};window.open('https://claude.ai/new','_blank')};
+   const ok=p.querySelector('#ofLinkOk'),inp=p.querySelector('#ofLink');if(S.siteNoAr&&inp)inp.value=S.siteNoAr;
+   if(ok)ok.onclick=()=>{const v=(inp.value||'').trim();if(!/^https:\/\/[a-z0-9-]+\.github\.io\b/i.test(v)){toast('Cole o link completo, começando com https://');return}S.siteNoAr=v;S.miss.m18=1;marcarDia();salvar();toast('Site no ar! Mês 1 fechado 🏆');refaz()}}}
+);
