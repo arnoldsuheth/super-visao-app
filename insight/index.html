@@ -173,7 +173,7 @@ textarea.ed:focus{border-color:#d62976}
 <div class="modal" id="modal"><div class="sheet"></div></div>
 <div class="toast" id="toast"></div>
 <div id="ab"></div>
-<script src="./conteudo.js"></script>
+<script src="./conteudo.js?v=4"></script>
 <script>
 // ---------------- estado ----------------
 const KEY='insight_v1';const hoje=()=>new Date().toLocaleDateString('sv-SE',{timeZone:'America/Sao_Paulo'});
@@ -187,7 +187,7 @@ const I=k=>`<svg class="ic" viewBox="0 0 24 24">${IC[k]}</svg>`;
 S.edit=S.edit||{};
 const curso=id=>{const c=CURSOS.find(c=>c.id===id);return c&&S.edit[id]?Object.assign({},c,S.edit[id]):c};
 S.fotos=S.fotos||{};
-const AV=(id)=>{if(S.fotos[id])return `<b style="background:url(${S.fotos[id]}) center/cover;color:transparent">.</b>`;if(id==='me')return `<b style="background:linear-gradient(135deg,#6b5a4a,#2a2420);color:#fff">A</b>`;const c=curso(id);if(c.ico&&!c.site)return `<b class="avi" style="background:radial-gradient(circle at 30% 25%,${c.cor}66,${c.cor}22 65%),linear-gradient(var(--chip),var(--chip))"><span>${c.ico}</span></b>`;if(c.site)return `<b style="background:#fff;padding:18%"><img src="https://www.google.com/s2/favicons?domain=${c.site}&sz=128" alt="" style="width:100%;height:100%;object-fit:contain;border-radius:6px" onerror="this.parentNode.style.background='${c.cor}';this.parentNode.style.padding='0';this.parentNode.style.color='#fff';this.parentNode.innerHTML='${c.sigla}'"></b>`;return `<b style="background:${c.cor||'var(--chip)'};color:#fff">${c.sigla}</b>`};
+const AV=(id)=>{if(S.fotos[id])return `<b style="background:url(${S.fotos[id]}) center/cover;color:transparent">.</b>`;if(id==='me')return `<b style="background:url(https://arnoldsuheth.github.io/studio-evolution-gestao-app/arnold.jpg) center/cover;color:transparent">.</b>`;const c=curso(id);if(c.ico&&!c.site)return `<b class="avi" style="background:radial-gradient(circle at 30% 25%,${c.cor}66,${c.cor}22 65%),linear-gradient(var(--chip),var(--chip))"><span>${c.ico}</span></b>`;if(c.site)return `<b style="background:#fff;padding:18%"><img src="https://www.google.com/s2/favicons?domain=${c.site}&sz=128" alt="" style="width:100%;height:100%;object-fit:contain;border-radius:6px" onerror="this.parentNode.style.background='${c.cor}';this.parentNode.style.padding='0';this.parentNode.style.color='#fff';this.parentNode.innerHTML='${c.sigla}'"></b>`;return `<b style="background:${c.cor||'var(--chip)'};color:#fff">${c.sigla}</b>`};
 function editarPerfil(id){const c=id==='me'?Object.assign({nome:'Arnold Suheth',user:'arnold.suheth',bio:'Supervisor · Ciência da Computação · fundador do Studio Evolution Tech'},S.edit.me||{}):curso(id);const m=$('#modal'),sh=m.querySelector('.sheet');
  sh.innerHTML=`<h4>Editar perfil</h4><div style="display:flex;align-items:center;gap:14px;margin:6px 0 14px"><div class="big" style="width:72px;height:72px">${AV(id)}</div><button class="ef" style="padding:10px 14px;border-radius:10px;border:0;background:var(--g);color:#fff;font:800 13px inherit;font-family:inherit">📷 Escolher foto da galeria</button></div>
  <label style="font-size:12px;color:var(--mu)">Nome</label><input class="en" value="${esc(c.nome)}" style="width:100%;margin:4px 0 10px;padding:11px;border-radius:10px;border:1.5px solid var(--ln);background:var(--chip);color:var(--tx);font:15px inherit;font-family:inherit">
@@ -208,7 +208,7 @@ const seguidores=()=>acertos()*3+Object.keys(S.miss).length*10+Object.keys(S.vis
 const sequencia=()=>{let n=0;const d=new Date();for(;;){const k=d.toLocaleDateString('sv-SE',{timeZone:'America/Sao_Paulo'});if(S.dias[k]){n++;d.setDate(d.getDate()-1)}else break}return n};
 const cursoPct=id=>{const ps=POSTS.filter(p=>p.curso===id);return ps.length?Math.round(ps.filter(p=>S.vistos[p.id]&&(p.tipo!=='desafio'||S.resp[p.id]==='ok')).length/ps.length*100):0};
 // ---------------- ícones fixos ----------------
-$('#bTema').innerHTML=I('sun');const navMe=()=>{const i=document.querySelector('.nav .me i');if(S.fotos.me){i.style.background=`url(${S.fotos.me}) center/cover`;i.textContent=''}};setTimeout(navMe);$('#bPerg').innerHTML=I('msg');
+$('#bTema').innerHTML=I('sun');const navMe=()=>{const i=document.querySelector('.nav .me i');i.style.background=`url(${S.fotos.me||'https://arnoldsuheth.github.io/studio-evolution-gestao-app/arnold.jpg'}) center/cover`;i.textContent=''};setTimeout(navMe);$('#bPerg').innerHTML=I('msg');
 const navIc={feed:'home',exp:'search',ofc:'plus',des:'bolt'};$$('.nav .btn').forEach(b=>{if(navIc[b.dataset.t])b.innerHTML=I(navIc[b.dataset.t])});
 function aplicarTema(){document.body.className=S.tema;document.querySelector('meta[name=theme-color]').content=S.tema==='claro'?'#fafafa':'#0b0b0d'}
 $('#bTema').onclick=()=>{S.tema=S.tema==='claro'?'faisca':'claro';salvar();aplicarTema();toast(S.tema==='claro'?'☀ Tema claro':'✦ Tema faíscas')};
