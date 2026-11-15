@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="pt-BR"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#060a14">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>AI NOLD · Controle</title>
+<link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22AI%20NOLD%22%2C%22short_name%22%3A%22AI%20NOLD%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23060a14%22%2C%22theme_color%22%3A%22%23060a14%22%2C%22start_url%22%3A%22.%22%7D">
+<style>
+:root{--bg:#060a14;--card:rgba(255,255,255,.045);--ln:rgba(190,210,255,.13);--tx:#e9eefb;--mu:#8b97b3;--az:#3b82f6;--ci:#22d3ee;--pr:linear-gradient(135deg,#e8edf7,#9aa6bd 45%,#f4f7fc 70%,#8c97ad)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.45 Inter,system-ui,-apple-system,Segoe UI,sans-serif;overflow-x:clip}
+body::before{content:"";position:fixed;inset:0;z-index:-2;background:radial-gradient(900px 500px at 80% -10%,rgba(59,130,246,.28),transparent 60%),radial-gradient(700px 500px at -10% 30%,rgba(34,211,238,.14),transparent 60%),var(--bg)}
+body::after{content:"";position:fixed;inset:0;z-index:-1;background-image:linear-gradient(rgba(150,180,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(150,180,255,.05) 1px,transparent 1px);background-size:34px 34px;mask-image:linear-gradient(#000,transparent 75%)}
+main{max-width:560px;margin:0 auto;padding:calc(18px + env(safe-area-inset-top)) 16px calc(40px + env(safe-area-inset-bottom))}
+header{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+.logo{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(135deg,#0f1b38,#1a2b55);border:1px solid var(--ln);box-shadow:0 0 30px rgba(59,130,246,.35),inset 0 1px 0 rgba(255,255,255,.15);font:900 15px Inter,sans-serif;letter-spacing:-.5px}
+.logo span{background:var(--pr);-webkit-background-clip:text;background-clip:text;color:transparent}
+h1{margin:0;font:900 22px/1 Inter,sans-serif;letter-spacing:.06em;background:var(--pr);-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{color:var(--mu);font-size:12.5px;margin-top:3px}
+.pc{display:flex;align-items:center;gap:8px;margin:16px 0 18px;padding:11px 14px;border-radius:14px;background:var(--card);border:1px solid var(--ln);font-size:13px;color:var(--mu)}
+.pc i{width:9px;height:9px;border-radius:50%;background:#64748b;box-shadow:0 0 0 4px rgba(100,116,139,.18)}
+.pc.on i{background:#22c55e;box-shadow:0 0 0 4px rgba(34,197,94,.18),0 0 14px #22c55e}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.bt{position:relative;overflow:hidden;text-align:left;border:1px solid var(--ln);background:linear-gradient(160deg,rgba(255,255,255,.07),rgba(255,255,255,.02));color:var(--tx);border-radius:18px;padding:15px 14px 14px;min-height:108px;font:inherit;cursor:pointer;transition:transform .15s,border-color .2s}
+.bt:active{transform:scale(.97)}.bt:hover{border-color:rgba(34,211,238,.45)}
+.bt b{display:block;font-size:14.5px;margin-top:10px}.bt small{display:block;color:var(--mu);font-size:12px;margin-top:2px}
+.bt .ic{font-size:24px}
+.bt::after{content:"";position:absolute;inset:auto -30% -60% auto;width:120px;height:120px;border-radius:50%;background:radial-gradient(rgba(59,130,246,.22),transparent 70%)}
+.bt.larga{grid-column:1/-1;min-height:auto;display:flex;align-items:center;gap:12px}.bt.larga b{margin:0}
+.bt.larga .ic{font-size:22px}
+h2{font:800 11px Inter,sans-serif;letter-spacing:.22em;color:var(--mu);margin:26px 2px 10px}
+.log{display:grid;gap:8px}
+.it{border:1px solid var(--ln);background:var(--card);border-radius:14px;padding:11px 13px}
+.it .t{display:flex;justify-content:space-between;gap:8px;font-size:13.5px}.it .t span{color:var(--mu);font-size:12px;white-space:nowrap}
+.it pre{margin:8px 0 0;white-space:pre-wrap;word-break:break-word;font:12px/1.5 ui-monospace,Menlo,Consolas,monospace;color:#c7d2ea;background:rgba(0,0,0,.35);border-radius:10px;padding:10px;max-height:260px;overflow:auto}
+.st{font-weight:800}.st.p{color:#fbbf24}.st.r{color:var(--ci)}.st.f{color:#22c55e}.st.e{color:#f87171}
+.vazio{color:var(--mu);font-size:13px;text-align:center;padding:16px}
+.ov{position:fixed;inset:0;background:rgba(2,5,12,.7);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:none;align-items:flex-end;justify-content:center;z-index:9}
+.ov.on{display:flex}
+.sh{width:100%;max-width:560px;background:#0b1224;border:1px solid var(--ln);border-radius:22px 22px 0 0;padding:20px 18px calc(20px + env(safe-area-inset-bottom));animation:sobe .25s ease}
+@keyframes sobe{from{transform:translateY(40px);opacity:0}}
+.sh h3{margin:0 0 6px;font-size:18px}.sh p{color:var(--mu);font-size:13.5px;margin:0 0 12px}
+input,select{width:100%;font:16px Inter,sans-serif;padding:12px;border-radius:12px;border:1px solid var(--ln);background:#060a14;color:var(--tx);margin-bottom:10px}
+.row{display:flex;gap:8px}.row button{flex:1;border:1px solid var(--ln);background:transparent;color:var(--tx);border-radius:12px;padding:12px;font:700 15px Inter,sans-serif}
+.row .go{background:linear-gradient(90deg,var(--az),var(--ci));border:0;color:#04101f}
+.err{color:#f87171;font-size:13px;min-height:18px}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#e9eefb;color:#060a14;padding:10px 16px;border-radius:999px;font-weight:700;font-size:13.5px;opacity:0;transition:.25s;pointer-events:none;z-index:10}
+.toast.on{opacity:1}
+</style></head><body><main>
+<header><div class="logo"><span>AN</span></div><div><h1>AI NOLD</h1><div class="sub">Controle do seu PC pelo celular · sem token</div></div></header>
+<div class="pc" id="pc"><i></i><span id="pcTx">Conectando…</span></div>
+
+<div class="grid">
+  <button class="bt" data-a="sites"><span class="ic">🟢</span><b>Sites no ar?</b><small>Studio, BLESSAINT, clientes</small></button>
+  <button class="bt" data-a="atualizar"><span class="ic">🔄</span><b>Atualizar tudo</b><small>Projetos iguais ao GitHub</small></button>
+  <button class="bt" data-a="backup"><span class="ic">💾</span><b>Backup no Drive</b><small>Todos os projetos</small></button>
+  <button class="bt" data-a="relatorio"><span class="ic">📋</span><b>Relatório do PC</b><small>Espaço, programas, histórico</small></button>
+  <button class="bt" data-a="arrumar" data-c="Organizar a Área de Trabalho e os Downloads do PC?"><span class="ic">🧹</span><b>Arrumar o PC</b><small>Área de Trabalho e Downloads</small></button>
+  <button class="bt" data-a="publicar"><span class="ic">🚀</span><b>Publicar</b><small>Drive primeiro, depois GitHub</small></button>
+</div>
+
+<h2>PEDIDOS</h2>
+<div class="log" id="log"><div class="vazio">Carregando…</div></div>
+</main>
+
+<div class="ov" id="ov"><div class="sh" id="sh"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+(()=>{
+const OWNER='arnoldsuheth',REPO='super-visao-dados',ARQ='ainold-recados.json';
+const K='ainold_nuvem_v1';
+const PROJETOS=[["Site do Studio","studio-evolution-tech"],["Gestão do Studio (código)","studio-evolution-gestao"],["Gestão do Studio (site)","studio-evolution-gestao-app"],["INSIGHT + SUPER VISÃO","super-visao-app"],["Site da BLESSAINT","Blessaint"],["BLESSAINT Business","blessaint-business"],["Formulário do Studio","studio-evolution-formulario"],["Ju Intimates","ju-intimates"],["Evolution Lab","evolution-lab"],["Life Trail Juliana","app-lifetrail-juliana"],["Life Trail Katiúscia","app-lifetrail-katiuscia"],["Life Trail Ana Paula","app-lifetrail-ana-paula"],["Life Trail Adriana","life-trail-adriana"],["Life Trail Regiane","life-trail-regiane"],["Dra. Ana Luiza","dra-ana-luiza-app"]];
+const NOMES={sites:'🟢 Sites no ar?',atualizar:'🔄 Atualizar tudo',backup:'💾 Backup no Drive',relatorio:'📋 Relatório do PC',arrumar:'🧹 Arrumar o PC',publicar:'🚀 Publicar'};
+const $=s=>document.querySelector(s);
+const te=new TextEncoder(),td=new TextDecoder();
+const unb64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+const b64u=str=>{const a=te.encode(str);let s='';for(let i=0;i<a.length;i+=0x8000)s+=String.fromCharCode(...a.subarray(i,i+0x8000));return btoa(s)};
+const deb64u=s=>td.decode(unb64(s.replace(/\n/g,'')));
+const lsg=k=>{try{return JSON.parse(localStorage.getItem(k)||'null')}catch{return null}};
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function token(){for(const k of [K,'insight_nuvem_v1','super_visao_sessao_v1']){const v=lsg(k);if(v&&v.token)return v.token}return null}
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('on'),2200)}
+async function gh(path,opts={}){const r=await fetch('https://api.github.com'+path,{...opts,cache:'no-store',headers:{Accept:'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28',Authorization:'Bearer '+token(),...(opts.body?{'Content-Type':'application/json'}:{})}});if(!r.ok){const e=Error('GitHub '+r.status);e.status=r.status;throw e}return r.json()}
+let sha;
+async function ler(){try{const j=await gh(`/repos/${OWNER}/${REPO}/contents/${ARQ}?t=${Date.now()}`);sha=j.sha;let txt=j.content?deb64u(j.content):await (await fetch(j.download_url+'?t='+Date.now(),{cache:'no-store'})).text();return JSON.parse(txt.replace(/^﻿/,''))}
+ catch(e){if(e.status===404){sha=undefined;return {pedidos:[]}}throw e}}
+async function gravar(obj,msg){return gh(`/repos/${OWNER}/${REPO}/contents/${ARQ}`,{method:'PUT',body:JSON.stringify({message:msg,content:b64u(JSON.stringify(obj,null,1)),sha})})}
+
+async function pedir(acao,extra={}){
+  for(let tent=0;tent<3;tent++){
+    try{const d=await ler();d.pedidos=Array.isArray(d.pedidos)?d.pedidos:[];
+      d.pedidos.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),acao,projeto:extra.projeto||'',mensagem:extra.mensagem||'',quando:new Date().toISOString(),status:'pendente',resultado:'',feito_em:''});
+      d.pedidos=d.pedidos.slice(-30);
+      await gravar(d,'AI Nold: pedido '+acao);toast('Pedido enviado ao PC ⚡');desenhar(d);return}
+    catch(e){if(e.status===409||e.status===422)continue;if(e.status===401){localStorage.removeItem(K);conectar();return}toast('Não consegui enviar. Tente de novo.');return}
+  }
+}
+
+function quando(iso){if(!iso)return'';const d=new Date(iso),m=Math.round((Date.now()-d)/60000);if(m<1)return'agora';if(m<60)return`há ${m} min`;if(m<1440)return`há ${Math.round(m/60)} h`;return d.toLocaleDateString('pt-BR')}
+function desenhar(d){
+  const L=[...(d.pedidos||[])].reverse();
+  const ult=L.find(p=>p.feito_em);const pc=$('#pc');
+  if(ult&&Date.now()-new Date(ult.feito_em)<15*60000){pc.classList.add('on');$('#pcTx').textContent='PC respondeu '+quando(ult.feito_em)}
+  else{pc.classList.remove('on');$('#pcTx').textContent=L.some(p=>p.status==='pendente')?'Esperando o PC pegar o pedido (até 1 min)…':'O PC responde em até 1 minuto, se estiver ligado'}
+  if(!L.length){$('#log').innerHTML='<div class="vazio">Nenhum pedido ainda. Toque num botão acima ⚡</div>';return}
+  $('#log').innerHTML=L.map(p=>{const st={pendente:['p','⏳ aguardando'],rodando:['r','⚙️ fazendo'],feito:['f','✅ feito'],erro:['e','⚠️ erro']}[p.status]||['p',p.status];
+    return `<div class="it"><div class="t"><b>${esc(NOMES[p.acao]||p.acao)}${p.projeto?' · '+esc(p.projeto):''}</b><span><span class="st ${st[0]}">${st[1]}</span> · ${quando(p.feito_em||p.quando)}</span></div>${p.resultado?`<pre>${esc(p.resultado)}</pre>`:''}</div>`}).join('');
+}
+let ocupado=false;
+async function atualizar(){if(!token()||ocupado)return;ocupado=true;try{desenhar(await ler())}catch(e){if(e.status===401){localStorage.removeItem(K);conectar()}}ocupado=false}
+
+function abrir(html){$('#sh').innerHTML=html;$('#ov').classList.add('on')}
+function fechar(){$('#ov').classList.remove('on')}
+$('#ov').onclick=e=>{if(e.target.id==='ov')fechar()};
+
+function publicar(){
+  abrir(`<h3>🚀 Publicar um projeto</h3><p>O PC salva a cópia no Drive primeiro e depois publica no GitHub.</p>
+  <select id="pj">${PROJETOS.map(([n,r])=>`<option value="${r}">${esc(n)}</option>`).join('')}</select>
+  <input id="msg" placeholder="O que mudou? Ex.: troquei a foto do topo" maxlength="120">
+  <div class="row"><button id="ca">Cancelar</button><button class="go" id="ok">Publicar</button></div>`);
+  $('#ca').onclick=fechar;$('#ok').onclick=()=>{const m=$('#msg').value.trim()||'Atualização';pedir('publicar',{projeto:$('#pj').value,mensagem:m});fechar()}
+}
+document.querySelectorAll('.bt').forEach(b=>b.onclick=()=>{
+  if(!token()){conectar();return}
+  const a=b.dataset.a;if(a==='publicar')return publicar();
+  if(b.dataset.c){abrir(`<h3>${esc(NOMES[a])}</h3><p>${esc(b.dataset.c)}</p><div class="row"><button id="ca">Cancelar</button><button class="go" id="ok">Sim, pode</button></div>`);$('#ca').onclick=fechar;$('#ok').onclick=()=>{fechar();pedir(a)};return}
+  pedir(a)});
+
+function conectar(){
+  abrir(`<h3>🔐 Entrar no AI NOLD</h3><p>Use a <b>mesma senha do SUPER VISÃO</b>. A senha e a chave ficam só neste aparelho.</p>
+  <input id="pw" type="password" placeholder="Senha do SUPER VISÃO" autocomplete="current-password"><div class="err" id="er"></div>
+  <div class="row"><button class="go" id="ok">Entrar</button></div>`);
+  setTimeout(()=>$('#pw').focus(),50);
+  const ir=async()=>{const pw=$('#pw').value;if(!pw)return;$('#ok').textContent='Abrindo…';
+    try{let cf=null;try{const r=await fetch('../cofre.json?t='+Date.now(),{cache:'no-store'});if(r.ok)cf=await r.json()}catch{}
+      if(!cf)cf=lsg('super_visao_cofre_v1');if(!cf)throw Error('sem cofre');
+      const base=await crypto.subtle.importKey('raw',te.encode(pw),'PBKDF2',false,['deriveKey']);
+      const k=await crypto.subtle.deriveKey({name:'PBKDF2',salt:unb64(cf.salt),iterations:cf.iter||250000,hash:'SHA-256'},base,{name:'AES-GCM',length:256},false,['decrypt']);
+      const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(cf.box.iv)},k,unb64(cf.box.ct));
+      localStorage.setItem(K,JSON.stringify({token:JSON.parse(td.decode(pt)).token}));fechar();toast('Conectado 🔐');atualizar()}
+    catch(e){$('#ok').textContent='Entrar';$('#er').textContent=e.message==='sem cofre'?'Não achei o cofre do SUPER VISÃO.':'Senha incorreta.'}};
+  $('#ok').onclick=ir;$('#pw').onkeydown=e=>{if(e.key==='Enter')ir()}
+}
+
+if(token())atualizar();else{$('#pcTx').textContent='Entre com a senha do SUPER VISÃO';$('#log').innerHTML='<div class="vazio">Entre para ver os pedidos.</div>';conectar()}
+setInterval(()=>{if(document.visibilityState==='visible')atualizar()},12000);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')atualizar()});
+})();
+</script></body></html>
