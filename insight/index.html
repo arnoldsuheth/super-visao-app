@@ -204,8 +204,6 @@ input,textarea,select{font-size:16px!important}
  .nav .btn{position:relative;padding:13px 14px!important;margin:1px 0}
  .nav .btn .badge{position:absolute;left:30px;top:6px;right:auto}
 }
-@media(min-width:1800px){ body{zoom:1.25} }
-@media(min-width:2300px){ body{zoom:1.45} }
 
 .nav .lb,.nav .nwm,.nav .xtra-d{display:none}
 #side{display:none}
@@ -248,6 +246,36 @@ input,textarea,select{font-size:16px!important}
  #side .lk{margin-left:auto;border:0;background:none;color:#0095f6;font:700 12.5px inherit;font-family:inherit;cursor:pointer}
  #side .tt{display:flex;justify-content:space-between;margin:20px 0 6px;font-size:14px;font-weight:700;color:var(--mu)}
  #side .ft{margin-top:26px;font-size:12px;color:var(--mu);opacity:.7;line-height:1.6}
+}
+
+/* ====== computador v2: igual Instagram web atual ====== */
+.stseta,.cseta,.msgpill{display:none}
+@media(min-width:768px){
+ #app{margin-left:72px!important;padding:0 16px 40px}
+ .nav{width:72px!important;padding:24px 10px 18px!important}
+ .nav .lb,.nav .nwm span{display:none!important}
+ .nav .nwm{padding:4px 0 34px!important;justify-content:center}
+ .nav .btn{justify-content:center;padding:12px!important}
+ .nav .btn .badge{left:28px}
+ .nav .btn[title]:hover::after{content:attr(title);position:absolute;left:62px;top:50%;transform:translateY(-50%);background:var(--tx);color:var(--bg);font:700 12px inherit;font-family:inherit;padding:6px 9px;border-radius:7px;white-space:nowrap;z-index:50}
+ #t-feed.on{grid-template-columns:minmax(0,630px)!important;padding-top:20px}
+ .stwrap{position:relative;grid-column:1}
+ #t-feed .stories{gap:14px;padding:6px 4px 16px;scroll-behavior:smooth;justify-content:flex-start}
+ #t-feed .sto{width:76px;font-size:12px}#t-feed .ring{width:76px;height:76px;padding:2.5px}
+ #t-feed .sto span{max-width:76px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ .stseta{display:grid;place-items:center;position:absolute;top:30px;width:26px;height:26px;border-radius:50%;border:0;background:#fff;color:#111;box-shadow:0 1px 6px rgba(0,0,0,.3);font:900 16px/1 inherit;cursor:pointer;z-index:5}
+ .stseta.l{left:2px}.stseta.r{right:2px}.stseta[hidden]{display:none}
+ #feed{width:470px;max-width:100%;margin:0 auto}
+ .post{border:0!important;border-bottom:1px solid var(--ln)!important;border-radius:0!important;margin-bottom:18px!important;padding-bottom:14px;background:none!important}
+ .post .ph{padding:8px 0 10px}.post .md{border-radius:4px;border:1px solid var(--ln)}.post .acts{padding-left:0;padding-right:0}.post .cap,.post .xtra{padding-left:0;padding-right:0}
+ .cseta{display:grid;place-items:center;position:absolute;top:50%;transform:translateY(-50%);width:28px;height:28px;border-radius:50%;border:0;background:rgba(255,255,255,.85);color:#111;font:900 16px/1 inherit;z-index:4;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.25)}
+ .cseta.l{left:10px}.cseta.r{right:10px}
+ .msgpill{display:flex;align-items:center;gap:10px;position:fixed;right:24px;bottom:22px;z-index:40;border:0;border-radius:30px;padding:14px 22px;background:var(--card);color:var(--tx);font:800 15px inherit;font-family:inherit;box-shadow:0 4px 18px rgba(0,0,0,.18);cursor:pointer}
+ .msgpill .ic{width:22px;height:22px}
+}
+@media(min-width:1160px){
+ #t-feed.on{grid-template-columns:630px 320px!important;column-gap:64px!important}
+ #side{grid-row:1 / span 2}
 }
 </style></head><body class="claro">
 <svg width="0" height="0" style="position:absolute"><defs>
@@ -570,5 +598,18 @@ if('serviceWorker' in navigator&&location.protocol==='https:'){navigator.service
   $('#sdEd').onclick=()=>editarPerfil('me');sd.querySelectorAll('[data-c]').forEach(a=>a.onclick=()=>ir('pf',a.dataset.c));
   sd.querySelectorAll('[data-s]').forEach(a=>a.onclick=()=>{S.seg[a.dataset.s]=1;salvar();toast('Agora você segue '+curso(a.dataset.s).user);montarSide()})};
  montarSide()})();
+
+// ---- computador v2: setas dos stories, setas do carrossel, títulos e pílula de Perguntas ----
+(function(){const L={feed:'Página inicial',exp:'Explorar',ofc:'Oficina',des:'Desafios',me:'Perfil'};
+ $$('.nav .btn').forEach(b=>{const t=b.querySelector('.lb');b.title=L[b.dataset.t]||(t?t.textContent:'')});
+ const st=$('#stories');if(st&&!st.parentNode.classList.contains('stwrap')){const w=document.createElement('div');w.className='stwrap';st.parentNode.insertBefore(w,st);w.appendChild(st);
+  w.insertAdjacentHTML('beforeend','<button class="stseta l" aria-label="Voltar" hidden>‹</button><button class="stseta r" aria-label="Avançar">›</button>');
+  const l=w.querySelector('.l'),r=w.querySelector('.r');const upd=()=>{l.hidden=st.scrollLeft<5;r.hidden=st.scrollLeft+st.clientWidth>=st.scrollWidth-5};
+  l.onclick=()=>st.scrollBy({left:-st.clientWidth*.8,behavior:'smooth'});r.onclick=()=>st.scrollBy({left:st.clientWidth*.8,behavior:'smooth'});st.addEventListener('scroll',upd);setTimeout(upd,300);addEventListener('resize',upd)}
+ const pill=document.createElement('button');pill.className='msgpill';pill.innerHTML=I('com')+'Perguntas';pill.onclick=()=>$('#bPerg')&&$('#bPerg').click();document.body.appendChild(pill)})();
+// setas no carrossel (computador)
+let _lig=ligarPost;ligarPost=function(el){_lig(el);const md=el.querySelector('.md');if(!md||!md.querySelector('.car'))return;
+ md.insertAdjacentHTML('beforeend','<button class="cseta l" aria-label="Anterior">‹</button><button class="cseta r" aria-label="Próximo">›</button>');
+ md.querySelector('.cseta.l').onclick=e=>{e.stopPropagation();md.querySelector('.tapz.l').click()};md.querySelector('.cseta.r').onclick=e=>{e.stopPropagation();md.querySelector('.tapz.r').click()}};montarFeed();
 </script>
 <script src="./copa-dados.js?v=1"></script><script src="./brasoes.js?v=2"></script><script src="./copa-arte.js?v=1"></script><script src="./copa.js?v=2"></script></body></html>
