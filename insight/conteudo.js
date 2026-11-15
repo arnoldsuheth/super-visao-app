@@ -1,11 +1,11 @@
 // Conteúdo do INSIGHT · Trilha do Mês 1 (semana 1). Linguagem simples, comparações do mundo do Arnold.
 window.CURSOS = [
- {id:'site', nome:'Site do zero', user:'site.do.zero', sigla:'WEB', bio:'Mês 1: você vai construir o seu site pessoal, escrevendo cada letra. Do "o que é um site" até o link no ar.', modulos:['Tijolos','Bonito','Celular','No ar'], aulas:28, cor:'#fa7e1e'},
- {id:'logica', nome:'Lógica do zero', user:'logica.do.zero', sigla:'LÓG', bio:'A base de tudo, sem pressa. Pensar como programador usando futebol, receita e desenho.', modulos:['Variáveis','Decisões','Repetição','Funções'], aulas:32, cor:'#d62976'},
- {id:'ia', nome:'IA do zero', user:'ia.do.zero', sigla:'IA', bio:'Claude, ChatGPT, Gemini e as outras. Do "o que é" até criar as suas ferramentas.', modulos:['Básico','ChatGPT','Claude','Gemini','Prompts','Ferramentas'], aulas:48, cor:'#962fbf'},
- {id:'design', nome:'Design', user:'design.que.funciona', sigla:'UI', bio:'Cores, letras e telas. Treinar o olho para saber por que uma tela é boa.', modulos:['Hierarquia','Cores','Letras','Telas'], aulas:20, cor:'#4f5bd5'},
- {id:'bastidores', nome:'Bastidores', user:'bastidores.seus.apps', sigla:'SV', bio:'Pedaços reais dos SEUS apps (SUPER VISÃO, Gestão, Life Trail) explicados por dentro.', modulos:['SUPER VISÃO','Gestão','Life Trail'], aulas:12, cor:'#feda75'},
- {id:'faculdade', nome:'Faculdade', user:'ciencia.da.computacao', sigla:'CC', bio:'As matérias do semestre. Me mande o plano das aulas e eu encho este perfil.', modulos:['Em breve'], aulas:0, cor:'#4f5bd5', vazio:true}
+ {id:'site', ico:'🌐', nome:'Site do zero', user:'site.do.zero', sigla:'WEB', bio:'Mês 1: você vai construir o seu site pessoal, escrevendo cada letra. Do "o que é um site" até o link no ar.', modulos:['Tijolos','Bonito','Celular','No ar'], aulas:28, cor:'#fa7e1e'},
+ {id:'logica', ico:'🧠', nome:'Lógica do zero', user:'logica.do.zero', sigla:'LÓG', bio:'A base de tudo, sem pressa. Pensar como programador usando futebol, receita e desenho.', modulos:['Variáveis','Decisões','Repetição','Funções'], aulas:32, cor:'#d62976'},
+ {id:'ia', ico:'🤖', nome:'IA do zero', user:'ia.do.zero', sigla:'IA', bio:'Claude, ChatGPT, Gemini e as outras. Do "o que é" até criar as suas ferramentas.', modulos:['Básico','ChatGPT','Claude','Gemini','Prompts','Ferramentas'], aulas:48, cor:'#962fbf'},
+ {id:'design', ico:'🎨', nome:'Design', user:'design.que.funciona', sigla:'UI', bio:'Cores, letras e telas. Treinar o olho para saber por que uma tela é boa.', modulos:['Hierarquia','Cores','Letras','Telas'], aulas:20, cor:'#4f5bd5'},
+ {id:'bastidores', ico:'👁️', nome:'Bastidores', user:'bastidores.seus.apps', sigla:'SV', bio:'Pedaços reais dos SEUS apps (SUPER VISÃO, Gestão, Life Trail) explicados por dentro.', modulos:['SUPER VISÃO','Gestão','Life Trail'], aulas:12, cor:'#feda75'},
+ {id:'faculdade', ico:'🎓', nome:'Faculdade', user:'ciencia.da.computacao', sigla:'CC', bio:'As matérias do semestre. Me mande o plano das aulas e eu encho este perfil.', modulos:['Em breve'], aulas:0, cor:'#4f5bd5', vazio:true}
 ];
 
 // tipos: carrossel {slides:[{h,p,code?,emoji?}]} · desafio {q,code?,ops,ok,exp,dica} · aovivo {code,nota} · curiosidade {frente,verso,emoji}
@@ -91,7 +91,7 @@ window.CURSOS.push(
  {id:'gemini', site:'gemini.google.com', nome:'Gemini', user:'curso.gemini', sigla:'Ge', cor:'#4f7df3', bio:'Gemini do zero e como ele conversa com Google Drive, Docs e Gmail.', modulos:['Básico','Google','Imagens'], aulas:0, vazio:true},
  {id:'vscode', site:'code.visualstudio.com', nome:'VS Code', user:'curso.vscode', sigla:'&lt;/&gt;', cor:'#2f80ed', bio:'O editor onde programadores escrevem código. Instalar, abrir projeto, atalhos.', modulos:['Instalar','Primeiro arquivo','Atalhos','Extensões'], aulas:0, vazio:true},
  {id:'github', site:'github.com', nome:'GitHub', user:'curso.github', sigla:'GH', cor:'#24292f', bio:'Onde ficam os seus projetos (SUPER VISÃO, Gestão...). Repositório, commit, publicar site.', modulos:['O que é','Repositório','Commit','Pages'], aulas:0, vazio:true},
- {id:'terminal', nome:'Terminal', user:'curso.terminal', sigla:'&gt;_', cor:'#111111', bio:'A "tela preta" sem medo: comandos básicos explicados como ordens para a equipe.', modulos:['Primeiros comandos','Pastas','Git'], aulas:0, vazio:true},
+ {id:'terminal', ico:'⌨️', nome:'Terminal', user:'curso.terminal', sigla:'&gt;_', cor:'#111111', bio:'A "tela preta" sem medo: comandos básicos explicados como ordens para a equipe.', modulos:['Primeiros comandos','Pastas','Git'], aulas:0, vazio:true},
  {id:'figma', site:'figma.com', nome:'Figma', user:'curso.figma', sigla:'Fg', cor:'#a259ff', bio:'Desenhar telas antes de programar. Do zero até protótipo clicável.', modulos:['Básico','Telas','Componentes','Protótipo'], aulas:0, vazio:true},
  {id:'canva', site:'canva.com', nome:'Canva', user:'curso.canva', sigla:'Cv', cor:'#00c4cc', bio:'Posts, apresentações e artes para a BLESSAINT e o Studio.', modulos:['Básico','Posts','Marca'], aulas:0, vazio:true},
  {id:'lovable', site:'lovable.dev', nome:'Lovable', user:'curso.lovable', sigla:'Lv', cor:'#ff4f8b', bio:'Criar apps conversando com IA, e entender o que ela fez por baixo.', modulos:['Básico','Primeiro app','Banco de dados'], aulas:0, vazio:true},
