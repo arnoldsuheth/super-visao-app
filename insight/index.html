@@ -219,7 +219,7 @@ input,textarea,select{font-size:16px!important}
 <div class="modal" id="modal"><div class="sheet"></div></div>
 <div class="toast" id="toast"></div>
 <div id="ab"></div>
-<script src="./conteudo.js?v=10"></script>
+<script src="./conteudo.js?v=11"></script>
 <script>
 // ---------------- estado ----------------
 const KEY='insight_v1';const hoje=()=>new Date().toLocaleDateString('sv-SE',{timeZone:'America/Sao_Paulo'});
@@ -260,13 +260,14 @@ function aplicarTema(){document.body.className=S.tema;document.querySelector('me
 $('#bTema').onclick=()=>{S.tema=S.tema==='claro'?'faisca':'claro';salvar();aplicarTema();toast(S.tema==='claro'?'☀ Tema claro':'✦ Tema faíscas')};
 // ---------------- navegação ----------------
 let telaAtual='feed';
-function ir(t,arg){telaAtual=t;$$('.tela').forEach(s=>s.classList.remove('on'));$$('.nav .btn').forEach(b=>b.classList.toggle('on',b.dataset.t===t||(t==='pf'&&arg==='me'&&b.dataset.t==='me')));
+function topo(suave){const o={top:0,behavior:suave?'smooth':'auto'};[window,document.documentElement,document.body,...document.querySelectorAll('.tela.on')].forEach(e=>{try{e.scrollTo(o)}catch(_){e.scrollTop=0}})}
+function ir(t,arg){const mesma=telaAtual===t;telaAtual=t;$$('.tela').forEach(s=>s.classList.remove('on'));$$('.nav .btn').forEach(b=>b.classList.toggle('on',b.dataset.t===t||(t==='pf'&&arg==='me'&&b.dataset.t==='me')));
  if(t==='feed')$('#t-feed').classList.add('on');
  if(t==='exp'){montarExp();$('#t-exp').classList.add('on')}
  if(t==='ofc'){montarOfc();$('#t-ofc').classList.add('on')}
  if(t==='des'){montarDes();$('#t-des').classList.add('on')}
  if(t==='me'||t==='pf'){montarPerfil(arg||'me');$('#t-pf').classList.add('on')}
- scrollTo(0,0)}
+ topo(mesma);if(t==='feed'&&mesma)$('.stories')?.scrollTo({left:0,behavior:'smooth'})}
 $$('.nav .btn').forEach(b=>b.onclick=()=>ir(b.dataset.t));
 // ---------------- posts ----------------
 function midia(p){
