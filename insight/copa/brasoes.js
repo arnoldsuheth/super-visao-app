@@ -60,13 +60,13 @@ window.brasao=function(e,cls='em'){const id='b'+(uid++),c1=e.c1,c2=e.c2,eu=!!e.v
  if(e.icone==='mono'){const fs=e.sigla.length>1?20:38;ic=`<circle cx="50" cy="56" r="27" fill="${c1}" stroke="${c2}" stroke-width="2"/><text x="50" y="${56+fs*.36}" text-anchor="middle" font-family="Inter,Arial" font-weight="900" font-size="${fs}" fill="#fff">${e.sigla}</text>`+(e.imagem?`<clipPath id="ci${id}"><circle cx="50" cy="56" r="26"/></clipPath><image href="${e.imagem}" x="24" y="30" width="52" height="52" clip-path="url(#ci${id})" preserveAspectRatio="xMidYMid slice"/>`:'')}
  if(e.imagem&&e.icone!=='mono')ic=`<clipPath id="ci${id}"><circle cx="50" cy="56" r="27"/></clipPath><image href="${e.imagem}" x="23" y="29" width="54" height="54" clip-path="url(#ci${id})" preserveAspectRatio="xMidYMid slice"/>`;
  const part=Array.from({length:8},(_,k)=>{const x=22+((k*37+e._p*13)%56),d=(k*.37+e._p*.21)%2.6;return `<circle cx="${x}" cy="${86-(k%3)*4}" r="${1+(k%3)*.5}" fill="${k%2?c2:'#fff'}" style="animation:sobeP ${2.2+(k%4)*.4}s ${d}s ease-out infinite;transform-box:fill-box"/>`}).join('');
- const nm=e.nome.toUpperCase(),fsn=nm.length>16?10.5:13;
+ const nm=e.nome.toUpperCase(),fsn=Math.min(13,92/(nm.length*.66));
  return `<svg class="${cls}" viewBox="-6 -6 112 132"><defs><style>#${id} .i{transform-box:fill-box;transform-origin:center;animation:${ANIM[e.icone]||'resp 3s ease-in-out infinite'}}#${id} .an{transform-origin:50px 56px;animation:gira ${14+e._p%5*3}s linear infinite}#${id} .an2{transform-origin:50px 56px;animation:girai ${9+e._p%4*2}s linear infinite}#${id} .hl{transform-origin:50px 56px;animation:halo 2.6s ease-in-out infinite}#${id} .bt{animation:brilhoT 3.6s ease-in-out infinite}${KF}</style>
   <radialGradient id="h${id}"><stop offset="0" stop-color="${c2}" stop-opacity=".75"/><stop offset=".55" stop-color="${c2}" stop-opacity=".18"/><stop offset="1" stop-color="${c2}" stop-opacity="0"/></radialGradient>
   <radialGradient id="d${id}" cx="50%" cy="40%"><stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="#05050a"/></radialGradient>
   <linearGradient id="w${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset=".55" stop-color="${sat}"/><stop offset="1" stop-color="${eu?'#3B82F6':c2}"/></linearGradient>
   <linearGradient id="sv${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".5"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".35"/></linearGradient>
-  <clipPath id="tx${id}"><text x="50" y="${110}" text-anchor="middle" font-family="Inter,Arial" font-weight="900" font-style="italic" font-size="${fsn}" textLength="${Math.min(104,nm.length*7.4)}" lengthAdjust="spacingAndGlyphs">${nm}</text></clipPath>
+  
   <filter id="o${id}" x="-40%" y="-40%" width="180%" height="180%"><feMorphology in="SourceAlpha" operator="dilate" radius="1.3" result="a"/><feFlood flood-color="#05050a"/><feComposite in2="a" operator="in" result="b"/><feGaussianBlur in="SourceAlpha" stdDeviation="3" result="c"/><feFlood flood-color="${c2}"/><feComposite in2="c" operator="in" result="d"/><feMerge><feMergeNode in="d"/><feMergeNode in="d"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
   <g id="${id}">
    <circle class="hl" cx="50" cy="56" r="50" fill="url(#h${id})"/>
@@ -76,9 +76,9 @@ window.brasao=function(e,cls='em'){const id='b'+(uid++),c1=e.c1,c2=e.c2,eu=!!e.v
    ${part}
    <g filter="url(#o${id})"><g class="i" transform="translate(50 56) scale(${e.icone==='mono'?1:1.25}) translate(-50 -56)">${ic.replace(/url\(#MT\)/g,`url(#w${id})`)}</g></g>
    <circle cx="50" cy="56" r="33" fill="url(#sv${id})" opacity=".35" pointer-events="none"/>
-   <text x="50" y="110" text-anchor="middle" font-family="Inter,Arial" font-weight="900" font-style="italic" font-size="${fsn}" textLength="${Math.min(104,nm.length*7.4)}" lengthAdjust="spacingAndGlyphs" fill="#05050a" stroke="#05050a" stroke-width="4" stroke-linejoin="round">${nm}</text>
-   <text x="50" y="110" text-anchor="middle" font-family="Inter,Arial" font-weight="900" font-style="italic" font-size="${fsn}" textLength="${Math.min(104,nm.length*7.4)}" lengthAdjust="spacingAndGlyphs" fill="url(#w${id})">${nm}</text>
-   <g clip-path="url(#tx${id})"><rect class="bt" x="0" y="96" width="14" height="20" fill="#fff" opacity=".8" transform="skewX(-20)"/></g>
+   <text x="50" y="110" text-anchor="middle" font-family="Inter,Arial" font-weight="900" font-style="italic" font-size="${fsn.toFixed(1)}" fill="#05050a" stroke="#05050a" stroke-width="4" stroke-linejoin="round">${nm}</text>
+   <text x="50" y="110" text-anchor="middle" font-family="Inter,Arial" font-weight="900" font-style="italic" font-size="${fsn.toFixed(1)}" fill="url(#w${id})">${nm}</text>
+   
    <text x="50" y="121" text-anchor="middle" font-family="Inter,Arial" font-weight="800" font-size="5.6" letter-spacing="3" fill="${c2}" opacity=".9">${e.sigla} · EST. 2026</text>
   </g></svg>`};
 // medalha mini do campeonato (aparece girando em cima do emblema quando a equipe é campeã)
