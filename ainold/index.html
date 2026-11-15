@@ -118,6 +118,8 @@ input,select{width:100%;font:16px Inter,sans-serif;padding:12px;border-radius:12
 <section class="aba" data-t="cfg">
   <div class="grid">
     <button class="bt" data-a="ferramentas"><span class="ic">🧰</span><b>Ferramentas</b><small>O que está instalado e ligado</small></button>
+    <button class="bt" data-a="viagem" data-c="Ligar ou desligar o Modo viagem? Ligado, o PC não suspende nem hiberna, para o celular sempre alcançar ele. Desligado, volta como era antes."><span class="ic">✈️</span><b>Modo viagem</b><small>PC sem dormir · liga/desliga</small></button>
+    <button class="bt" data-a="energia"><span class="ic">🔋</span><b>O PC dorme?</b><small>Ver energia agora</small></button>
     <button class="bt" data-a="lembrete" data-c="Ligar ou desligar o INSIGHT abrindo sozinho no PC (seg, ter e qui às 20:30)?"><span class="ic">⏰</span><b>Lembrete de estudo</b><small>Liga / desliga</small></button>
   </div>
 </section>
@@ -137,7 +139,7 @@ const PROJETOS=[["Site do Studio","studio-evolution-tech"],["Gestão do Studio (
 const NOMES={sites:'🟢 Sites no ar?',atualizar:'🔄 Atualizar tudo',backup:'💾 Backup de todos',relatorio:'📋 Relatório do PC',arrumar:'🧹 Arrumar o PC',publicar:'🚀 Publicar',
  arrumar_area:'🖥️ Arrumar Área de Trabalho',arrumar_downloads:'📥 Arrumar Downloads',fotos:'🖼️ Fotos para posts',anotar:'✍️ Anotação',cerebro:'🧠 Anotações',historico_pws:'🗒️ O que o PC fez',aula:'🎓 Aula de PWS',
  lembrete:'⏰ Lembrete de estudo',noturno:'🌙 Backup noturno',ferramentas:'🧰 Ferramentas',proj_atualizar:'🔄 Atualizar',proj_mudou:'🔍 O que mudou',proj_historico:'📜 Histórico',backup_um:'💾 Backup',
- backup_ver:'📦 Cópias',backup_restaurar:'⏪ Restaurar',cliente_codigo:'🔑 Código de acesso'};
+ backup_ver:'📦 Cópias',backup_restaurar:'⏪ Restaurar',cliente_codigo:'🔑 Código de acesso',viagem:'✈️ Modo viagem',energia:'🔋 Energia do PC'};
 const APPS=[["INSIGHT","https://arnoldsuheth.github.io/super-visao-app/insight/"],["SUPER VISÃO","https://arnoldsuheth.github.io/super-visao-app/"],["Gestão do Studio","https://arnoldsuheth.github.io/studio-evolution-gestao-app/"],["Site do Studio","https://www.studioevolutiontech.com.br/"],["Site da BLESSAINT","https://www.blessaint.com.br/"]];
 const CLIENTES=[["Katiúscia","katiu","https://arnoldsuheth.github.io/app-lifetrail-katiuscia/"],["Juliana","juliana","https://arnoldsuheth.github.io/app-lifetrail-juliana/"],["Ana Paula","ana paula","https://arnoldsuheth.github.io/app-lifetrail-ana-paula/"],["Adriana","adriana","https://arnoldsuheth.github.io/life-trail-adriana/"],["Regiane","regiane","https://arnoldsuheth.github.io/life-trail-regiane/"],["Dra. Ana Luiza","luiza",""],["Ju Intimates","ju intim",""],["Amanda","amanda",""],["Michele","michele",""]];
 const $=s=>document.querySelector(s);
