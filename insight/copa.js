@@ -83,8 +83,9 @@ function abrirCopa(aba='tab'){registrar();const fim=checarFim();const c=C(),inf=
   if(k==='rk'){const G=geral();corpo.innerHTML=`<p class="cp-vz" style="padding:4px 4px 10px">Todas as ${G.length} equipes. Toque numa equipe para ver os robôs e colocar a logo.</p><div class="cp-tab">${G.map((x,i)=>`<div class="cp-lin${x.eu?' eu':''}" data-e="${x.e.id}"><span class="n">${i+1}</span><div class="em">${brasao(x.e,'mini')}</div><div class="q"><b>${x.e.nome}</b><small style="font-size:10px;opacity:.75;letter-spacing:.06em;color:${INFO[x.e.div].cor}">${INFO[x.e.div].nome.toUpperCase()}</small></div><span class="xp">${x.xp}<small>XP</small></span><span class="bg">${x.e.robos.length}<small>ROBÔS</small></span></div>`).join('')}</div>`}
   if(k==='msgs'){const M=C().msgs;corpo.innerHTML=M.length?M.map(m=>{const e=EQUIPES.find(x=>x.id===m.eq)||EQUIPES[1],r=e.robos.find(r=>r.n===m.r)||e.robos[0];return `<div class="cp-msg"><div class="av">${rb(r,e)}</div><div><small>${r.n.toUpperCase()} · ${e.nome.toUpperCase()} · ${m.d.split('-').reverse().slice(0,2).join('/')}</small><p>${esc(m.f)}</p></div></div>`}).join(''):'<p class="cp-vz">Ainda ninguém te provocou. Espera até amanhã… 😏</p>'}
   if(k==='car')corpo.innerHTML=ORDEM.map((d,i)=>{const at=d===c.div,ok=ORDEM.indexOf(c.div)>i,t=c.tit.filter(x=>x===d).length;return `<div class="cp-deg${at?' at':ok?' ok':''}" style="--dc:${INFO[d].cor}"><span>${i+1}</span><div><b>${INFO[d].nome}</b><small>${INFO[d].taca} · ${INFO[d].etapa}</small></div><em>${t?'🏆×'+t:at?'EM DISPUTA':ok?'✓':'🔒'}</em></div>`}).join('');
-  if(k==='pre')corpo.innerHTML=`<p class="cp-vz" style="text-align:left">Cada título desbloqueia o <b>fundo vivo</b> daquele campeonato, com o código pronto para você aprender e usar nos seus sites.</p>`+ORDEM.filter((d,i,a)=>a.indexOf(d)===i&&!['sc','sb'].includes(d)).map(d=>{const tem=c.fundos.includes(d)||(d==='sd'&&(c.fundos.includes('sc')||c.fundos.includes('sb')));return `<div class="cp-pre${tem?' tem':''}"><b>${FUNDO_CODIGO[d]}</b><small>${INFO[d].nome}</small><em>${tem?'DESBLOQUEADO · ver código':'🔒 ganhe o '+INFO[d].nome}</em></div>`}).join('')};
+  if(k==='pre')corpo.innerHTML=`<p class="cp-vz" style="text-align:left">Cada título desbloqueia o <b>fundo vivo</b> daquele campeonato, com o código pronto para você aprender e usar nos seus sites.</p>`+ORDEM.filter((d,i,a)=>a.indexOf(d)===i&&!['sc','sb'].includes(d)).map(d=>{const tem=c.fundos.includes(d)||(d==='sd'&&(c.fundos.includes('sc')||c.fundos.includes('sb')));return `<div class="cp-pre${tem?' tem':''}" data-pr="${tem?d:''}"><b>${FUNDO_CODIGO[d]}</b><small>${INFO[d].nome}</small><em>${tem?'DESBLOQUEADO · ver código':'🔒 ganhe o '+INFO[d].nome}</em></div>`}).join('')};
  $$('#copa .cp-abas button').forEach(b=>b.onclick=()=>mostra(b.dataset.a));mostra(aba);
+ corpo.addEventListener('click',ev=>{const p=ev.target.closest('[data-pr]');if(p&&p.dataset.pr)abrirPremio(p.dataset.pr)});
  corpo.addEventListener('click',ev=>{const l=ev.target.closest('.cp-lin');if(!l)return;const e=EQUIPES.find(x=>x.id===l.dataset.e);if(e)verEquipe(e)});
  if(fim)setTimeout(()=>festa(fim),400);
  atualizarBotao()}
@@ -103,6 +104,54 @@ function festa(f){const o=document.createElement('div');o.className='cp-festa';c
  o.innerHTML=`${f.res==='campeao'?medalhaGrande(f.antes):''}<h2>${txt[0]}</h2><p>${txt[1]}</p><button>Continuar</button>`;document.body.appendChild(o);
  if(f.res==='campeao'){confete(o.querySelector('h2'));try{falar('É campeão! '+txt[1])}catch{}}
  o.querySelector('button').onclick=()=>{o.remove();abrirCopa()}}
+
+
+// ---------- prêmio: fundo vivo + código + aula de opacidade ----------
+const CORFUNDO={mun:'#1a0d05',est:'#021208',reg:'#02121a',sd:'#03060c',sc:'#03060c',sb:'#03060c',bra:'#011a0c',con:'#000006',mw:'#000000'};
+function codigoPremio(d){const inf=INFO[d],k=inf.cena==='ouro'?null:inf.cena;
+ if(!k){return `<!-- Fundo vivo: ${FUNDO_CODIGO[d]} · prêmio do ${inf.nome} -->
+<style>
+  /* 1) OPACIDADE: 0 = invisível · 1 = forte. Mude o número e veja! */
+  #fundo{position:fixed;inset:0;width:100%;height:100%;z-index:-1;opacity:0.55}
+  body{margin:0;background:#000}
+</style>
+<canvas id="fundo"></canvas>
+<script>
+// 2) Este fundo usa a placa de vídeo (WebGL, "shader"). Cada pontinho da tela é calculado como ouro de verdade.
+const COPA_OURO=${window.COPA_OURO.toString()};
+COPA_OURO(document.getElementById('fundo'));
+</script>`}
+ return `<!-- Fundo vivo: ${FUNDO_CODIGO[d]} · prêmio do ${inf.nome} -->
+<style>
+  /* 1) OPACIDADE: 0 = invisível · 1 = forte. Mude o número e veja! */
+  #fundo{position:fixed;inset:0;width:100%;height:100%;z-index:-1;opacity:0.4}
+  /* 2) COR DE FUNDO da página, atrás do desenho */
+  body{margin:0;background:${CORFUNDO[d]}}
+</style>
+<canvas id="fundo"></canvas>
+<script>
+// 3) O DESENHO: uma função que desenha um quadro (frame) da animação
+const R=Math.random,TAU=Math.PI*2;
+const desenhar=${(f=>/^function/.test(f)?f:'function '+f)(COPA_CENA[k].toString())};
+// 4) O LOOP: chama o desenho 60 vezes por segundo (igual desenho animado)
+const cv=document.getElementById('fundo'),x=cv.getContext('2d'),memoria={};
+function tamanho(){cv.width=innerWidth;cv.height=innerHeight}tamanho();addEventListener('resize',tamanho);
+function quadro(t){desenhar.call(memoria,x,cv.width,cv.height,t);requestAnimationFrame(quadro)}
+requestAnimationFrame(quadro);
+</script>`}
+window.codigoPremio=codigoPremio;function abrirPremio(d){const inf=INFO[d],cod=codigoPremio(d);let o=document.createElement('div');o.className='cp-pr';
+ o.innerHTML=`<div class="cp-prv"><canvas></canvas><div class="cp-prc"><small>PRÊMIO · ${inf.nome.toUpperCase()}</small><h3>${FUNDO_CODIGO[d]}</h3>
+  <label>Opacidade <b id="prOv">0.40</b></label><input type="range" min="0" max="1" step="0.05" value="0.4" id="prOp">
+  <p>👆 Arraste e veja a <b>opacidade</b> mudar. É uma linha só de CSS: <code>opacity: 0.4;</code> · 0 some · 1 fica forte.</p></div><button class="cp-prx" aria-label="Fechar">×</button></div>
+  <div class="cp-prb"><div class="cp-prt"><b>📄 O código do seu prêmio</b><span><button id="prCp">📋 Copiar</button><button id="prUsa" class="gr">🧱 Usar no meu site</button></span></div>
+  <ol><li><b>Opacidade:</b> o quanto o fundo aparece.</li><li><b>Cor de fundo:</b> a cor atrás do desenho.</li><li><b>O desenho:</b> uma função que pinta um quadro.</li><li><b>O loop:</b> repete o desenho 60× por segundo, como um desenho animado.</li></ol>
+  <pre>${esc(cod)}</pre></div>`;
+ document.body.appendChild(o);const cv=o.querySelector('canvas');requestAnimationFrame(()=>ligarFundo(cv,d===('sc')||d==='sb'?'sd':d));
+ const op=o.querySelector('#prOp');op.oninput=()=>{cv.style.opacity=op.value;o.querySelector('#prOv').textContent=(+op.value).toFixed(2)};op.oninput();
+ const fecha=()=>{cancelAnimationFrame(anim);o.remove();const c=$('#copa');if(c&&c.classList.contains('on'))ligarFundo(c.querySelector('.cp-bg'),C().div)};
+ o.querySelector('.cp-prx').onclick=fecha;
+ o.querySelector('#prCp').onclick=()=>{const t=cod.replace(/opacity:0\.\d+/,'opacity:'+op.value);try{navigator.clipboard.writeText(t);toast('Código copiado 📋')}catch{toast('Não consegui copiar')}};
+ o.querySelector('#prUsa').onclick=()=>{const t=cod.replace(/opacity:0\.\d+/,'opacity:'+op.value);S.code=(S.code||'')+'\n\n'+t;salvar();toast('Fundo colocado no seu site! Veja na Oficina 🧱');fecha();fecharCopa();try{ir('ofc')}catch{}}}
 
 // ---------- botão no topo ----------
 function atualizarBotao(){const b=$('#bCopa');if(!b)return;const T=tabela(),p=T.findIndex(x=>x.eu)+1;b.querySelector('.dt').textContent=p+'º';b.classList.toggle('lider',p===1)}
@@ -141,6 +190,30 @@ const css=`
 .cp-aviso .cp-av{width:44px;flex:0 0 44px}.cp-aviso b{display:block;font-size:11px;letter-spacing:.06em;color:#ff7a6b}.cp-aviso span{font-size:14px;line-height:1.35}
 .cp-festa{position:fixed;inset:0;z-index:95;background:radial-gradient(circle at 50% 35%,#2a1a4a,#05050a 70%);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px}.cp-festa h2{font:900 36px Inter,Arial;margin:14px 0 8px}.cp-festa p{opacity:.85;font-size:15px;line-height:1.45;max-width:340px}.cp-festa button{margin-top:22px;border:0;border-radius:14px;padding:13px 24px;font:900 15px Inter,Arial;background:linear-gradient(90deg,#3B82F6,#22D3EE);color:#05050a}
 svg.mini{width:64px;height:76px;flex:0 0 64px}
+.cp-pre.tem{cursor:pointer;transition:transform .15s}.cp-pre.tem:hover{transform:translateY(-2px)}.cp-pre.tem em{color:#fff;background:var(--cc);display:inline-block;padding:3px 8px;border-radius:6px;color:#05050a}
+.cp-pr{position:fixed;inset:0;z-index:97;background:#05050a;color:#fff;display:flex;flex-direction:column;overflow:auto}
+.cp-prv{position:relative;height:56vh;min-height:300px;flex:0 0 auto;overflow:hidden;border-bottom:1px solid rgba(255,255,255,.1)}.cp-prv canvas{position:absolute;inset:0;width:100%;height:100%}
+.cp-prc{position:absolute;left:0;right:0;bottom:0;padding:18px;background:linear-gradient(transparent,rgba(0,0,0,.85));max-width:720px;margin:0 auto}
+.cp-prc small{font:900 10.5px Inter,Arial;letter-spacing:.2em;color:#9ca3af}.cp-prc h3{font:900 26px Inter,Arial;margin:4px 0 10px;text-transform:uppercase}
+.cp-prc label{display:flex;justify-content:space-between;font:800 13px Inter,Arial}.cp-prc input{width:100%;accent-color:#22D3EE;margin:6px 0}.cp-prc p{font-size:13px;opacity:.85;line-height:1.4}.cp-prc code{background:rgba(255,255,255,.12);padding:1px 6px;border-radius:5px}
+.cp-prx{position:absolute;right:12px;top:calc(10px + env(safe-area-inset-top));width:40px;height:40px;border-radius:50%;border:0;background:rgba(0,0,0,.5);color:#fff;font-size:26px}
+.cp-prb{max-width:900px;width:100%;margin:0 auto;padding:16px 14px 40px}.cp-prt{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.cp-prt button{border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:#fff;border-radius:10px;padding:9px 12px;font:800 13px Inter,Arial;margin-left:6px}.cp-prt button.gr{background:linear-gradient(90deg,#3B82F6,#22D3EE);color:#05050a;border:0}
+.cp-prb ol{margin:0 0 12px 20px;font-size:14px;line-height:1.6;opacity:.9}
+.cp-prb pre{background:#0d1117;border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:14px;font:12.5px/1.5 Menlo,Consolas,monospace;overflow:auto;max-height:50vh;white-space:pre-wrap;word-break:break-word;color:#c9d1d9}
+@media(min-width:900px){
+ #copa .cp-in{max-width:1180px;display:grid;grid-template-columns:400px 1fr;column-gap:48px;align-content:start;padding:22px 32px 40px}
+ #copa .cp-top{grid-column:1 / -1;margin-bottom:10px}
+ #copa .cp-capa{grid-column:1;grid-row:2 / span 3;position:sticky;top:20px;align-self:start;background:rgba(5,5,10,.55);border:1px solid rgba(255,255,255,.08);border-radius:24px;padding:24px 20px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+ #copa .cp-med{width:240px;height:240px}
+ #copa .cp-capa h2{font-size:32px}
+ #copa .cp-abas{grid-column:2;margin-top:0}#copa .cp-corpo{grid-column:2}#copa .cp-leg{grid-column:2;text-align:left}
+ #copa .cp-abas button{flex:1;padding:12px}
+ #copa .cp-pre{padding:16px;margin-bottom:10px}
+ #copa .cp-corpo>.cp-pre{display:inline-block;width:calc(50% - 6px);vertical-align:top;margin-right:8px}#copa .cp-corpo>.cp-pre:nth-of-type(2n){margin-right:0}
+ #copa .cp-bg{opacity:.3}
+}
+
 .modal.on{z-index:96}
 `;
 const st=document.createElement('style');st.textContent=css;document.head.appendChild(st);
