@@ -170,6 +170,21 @@ input,textarea,select{font-size:16px!important}
 .rgo{display:block;text-align:center;padding:14px;border-radius:14px;background:#fff;color:#111;font:800 15px inherit;font-family:inherit;text-decoration:none;border:0;width:100%}
 .rx{position:fixed;top:calc(12px + env(safe-area-inset-top));right:16px;z-index:3;width:40px;height:40px;border-radius:50%;border:0;background:rgba(0,0,0,.35);color:#fff;font-size:26px;backdrop-filter:blur(6px)}
 .rhint{position:fixed;left:0;right:0;top:calc(22px + env(safe-area-inset-top));text-align:center;color:#fff;font-size:12px;opacity:.7;pointer-events:none;animation:pul 2s 3}
+/* capas no estilo post de marca */
+.reels{grid-template-columns:repeat(3,1fr)}
+.pc{position:relative;aspect-ratio:3/4;overflow:hidden;cursor:pointer;padding:9px 9px 8px;display:flex;flex-direction:column;gap:5px}
+.pc.dark{background:radial-gradient(circle at 80% 100%,color-mix(in srgb,var(--c) 45%,transparent),transparent 60%),#121316;color:#fff}
+.pc.navy{background:radial-gradient(circle at 85% 95%,rgba(59,130,246,.45),transparent 55%),linear-gradient(160deg,#16205a,#0b1236);color:#fff}
+.pc.light{background:#fff;color:#0f172a;box-shadow:inset 0 0 0 1px #e9ebf0}
+.pch{display:flex;align-items:center;gap:5px;font-size:7.5px;padding-right:14px;letter-spacing:.3px}
+.pch img{width:18px;height:18px;border-radius:5px;object-fit:cover}.pch span{font-size:13px;line-height:1}.pch b{font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pc small{font:800 6.5px Menlo,monospace;letter-spacing:1px;color:var(--c);margin-top:4px;filter:brightness(1.25)}
+.pc.light small{filter:none}
+.pc h5{font-size:14px;line-height:1.08;font-weight:900;letter-spacing:-.3px;margin:0}
+.pc h5 em{font-style:normal;color:var(--c);filter:brightness(1.3)}.pc.light h5 em{filter:none}
+.pc .pcl{display:block;width:16px;height:2px;background:var(--c);margin-top:2px}
+.pc .pcf{margin-top:auto;font-size:6.5px;opacity:.6}
+.pc .rpl{position:absolute;top:7px;right:6px;width:13px;height:13px;fill:currentColor;opacity:.75}
 </style></head><body class="claro">
 <svg width="0" height="0" style="position:absolute"><defs>
 <linearGradient id="hg" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#feda75"/><stop offset=".3" stop-color="#fa7e1e"/><stop offset=".6" stop-color="#d62976"/><stop offset="1" stop-color="#962fbf"/></linearGradient>
@@ -204,7 +219,7 @@ input,textarea,select{font-size:16px!important}
 <div class="modal" id="modal"><div class="sheet"></div></div>
 <div class="toast" id="toast"></div>
 <div id="ab"></div>
-<script src="./conteudo.js?v=9"></script>
+<script src="./conteudo.js?v=10"></script>
 <script>
 // ---------------- estado ----------------
 const KEY='insight_v1';const hoje=()=>new Date().toLocaleDateString('sv-SE',{timeZone:'America/Sao_Paulo'});
@@ -351,7 +366,7 @@ function montarOfc(){const feitas=MISSOES.filter(m=>S.miss[m.id]).length;const a
  $$('#ofc .kb button').forEach(b=>b.onclick=()=>{const t=b.dataset.k.replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&');const s=ed.selectionStart,e=ed.selectionEnd;ed.value=ed.value.slice(0,s)+t+ed.value.slice(e);ed.focus();ed.selectionStart=ed.selectionEnd=s+t.length;att()})}
 // ---------------- perfis ----------------
 let filtro='todos';
-function capa(p,modo){return `<div class="rc ${modo}" data-pj="${p.id}" style="--c:${p.cor}"><div class="rbg"></div><div class="rlogo">${p.img?`<img src="${p.img}" alt="">`:`<span>${p.emoji||'✦'}</span>`}</div><div class="rtx"><b>${esc(p.nome)}</b>${modo==='mini'?'':`<span>${esc(p.tag||'')}</span>`}</div>${modo==='mini'?'<svg class="rpl" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" fill="#fff"/></svg>':''}</div>`}
+function capa(p,modo){if(modo==='mini')return `<div class="pc ${p.est||'dark'}" data-pj="${p.id}" style="--c:${p.ac||p.cor}"><div class="pch">${p.img?`<img src="${p.img}" alt="">`:`<span>${p.emoji||'✦'}</span>`}<b>${esc(p.nome)}</b></div><small>${esc(p.kick||'')}</small><h5>${p.hl||esc(p.nome)}</h5><i class="pcl"></i><span class="pcf">@arnold.suheth</span><svg class="rpl" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>`;return `<div class="rc ${modo}" data-pj="${p.id}" style="--c:${p.cor}"><div class="rbg"></div><div class="rlogo">${p.img?`<img src="${p.img}" alt="">`:`<span>${p.emoji||'✦'}</span>`}</div><div class="rtx"><b>${esc(p.nome)}</b>${modo==='mini'?'':`<span>${esc(p.tag||'')}</span>`}</div>${modo==='mini'?'<svg class="rpl" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" fill="#fff"/></svg>':''}</div>`}
 function abrirReels(L,id){const v=document.getElementById('rv');let k=L.findIndex(p=>p.id===id);
  v.innerHTML=`<div class="rvs">${L.map(p=>`<section class="rv1" style="--c:${p.cor}">${capa(p,'full')}<div class="rinfo"><span class="rst">${esc(p.status)}</span><p>${esc(p.desc)}</p>${p.link?`<a class="rgo" href="${p.link}" target="_blank" rel="noopener">Abrir ${esc(p.nome)} ↗</a>`:p.oficina?'<button class="rgo" data-of>Abrir a Oficina</button>':''}</div></section>`).join('')}</div><button class="rx" aria-label="Fechar">×</button><div class="rhint">deslize para cima ↑</div>`;
  v.classList.add('on');document.body.style.overflow='hidden';const box=v.querySelector('.rvs');box.scrollTop=k*box.clientHeight;
