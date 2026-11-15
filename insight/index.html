@@ -143,8 +143,8 @@ textarea.ed:focus{border-color:#d62976}
 .vsc{position:relative;border-radius:12px;background:#1e1e1e;border:1px solid #2b2b2b;overflow:hidden}
 .vsc .vtop{display:flex;align-items:center;gap:6px;padding:7px 10px;background:#252526;border-bottom:1px solid #2b2b2b;font:12px Menlo,ui-monospace,monospace;color:#cccccc}
 .vsc .vtop i{width:9px;height:9px;border-radius:50%;background:#e44d26;display:inline-block}
-.vsc .vbox{position:relative}
-.vsc pre,.vsc textarea{margin:0;border:0;padding:12px 12px 14px 46px;font:16px/1.55 Menlo,ui-monospace,SFMono-Regular,monospace;font-variant-ligatures:none;tab-size:2;letter-spacing:0;white-space:pre-wrap;overflow-wrap:anywhere;word-break:normal;min-height:240px;box-sizing:border-box;width:100%}
+.vsc .vbox{position:relative;overflow:hidden}.vsc pre{will-change:transform}
+.vsc pre,.vsc textarea{margin:0;border:0;padding:12px 12px 14px 46px;font:16px/1.55 Menlo,ui-monospace,SFMono-Regular,monospace;font-variant-ligatures:none;tab-size:2;letter-spacing:0;white-space:pre-wrap;overflow-wrap:break-word;word-wrap:break-word;word-break:normal;min-height:240px;box-sizing:border-box;width:100%}
 .vsc pre{color:#d4d4d4;counter-reset:ln;pointer-events:none}
 .vsc textarea{position:absolute;inset:0;height:100%;background:transparent;color:transparent;-webkit-text-fill-color:transparent;caret-color:#aeafad;resize:none;outline:none;overflow:hidden;-webkit-appearance:none;appearance:none;border-radius:0}
 .vsc textarea::selection{background:rgba(38,79,120,.85);-webkit-text-fill-color:transparent}
@@ -154,6 +154,14 @@ textarea.ed:focus{border-color:#d62976}
 .vs-pn{color:#808080}.vs-tg{color:#569cd6}.vs-at{color:#9cdcfe}.vs-st{color:#ce9178}.vs-cm{color:#6a9955;font-style:italic}.vs-sl{color:#d7ba7d}.vs-pr{color:#9cdcfe}.vs-nu{color:#b5cea8}.vs-vl{color:#ce9178}.vs-br{color:#ffd700}
 .ofp .prev{margin-top:0}.ofp .prev iframe{height:62vh}
 body.digitando .nav{display:none}
+.ofbar .kb .kcor{background:var(--g);color:#fff;border:0}
+.ofcor{display:none;margin-top:8px;max-height:42vh;overflow:auto;padding:10px;border-radius:14px;background:var(--card);border:1px solid var(--ln)}.ofcor.on{display:block}
+.ofcor small{display:block;font:800 10px Menlo,monospace;letter-spacing:1.5px;color:var(--mu);margin-bottom:8px}
+.ofcor .cg{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.ofcor .cg button{display:flex;flex-direction:column;align-items:center;gap:3px;border:1px solid var(--ln);background:var(--bg);color:var(--tx);border-radius:10px;padding:6px 2px;font:700 10.5px inherit;font-family:inherit;cursor:pointer}
+.ofcor .cg i{width:26px;height:26px;border-radius:50%;border:1px solid rgba(128,128,128,.4)}
+.ofcor .cg code{font:10px Menlo,monospace;color:var(--mu)}
+.ofcor label{display:flex;align-items:center;gap:8px;margin-top:8px;font:700 13px inherit;font-family:inherit}.ofcor input[type=color]{width:44px;height:30px;border:0;background:none;padding:0}
 @media(min-width:900px){.ofc .ofgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}.ofc .ofp[hidden]{display:block}.oftabs{display:none}.ofp .prev{position:sticky;top:180px}}
 /* story viewer */
 #sv{position:fixed;inset:0;z-index:60;background:#000;color:#fff;display:none}#sv.on{display:block}
@@ -536,23 +544,33 @@ function montarDes(){const ds=POSTS.filter(p=>p.tipo==='desafio');const pend=ds.
  $$('#desLista .post').forEach(ligarPost)}
 // ---------------- oficina ----------------
 let ofAba='cod',ofAberta=false;
+const OFCORES=[['Preto','#000000'],['Branco','#ffffff'],['Grafite','#1a1a1a'],['Cinza','#808080'],['Vermelho','#ff0000'],['Laranja','#ff7a00'],['Amarelo','#ffd400'],['Dourado','#d4af37'],['Verde','#22c55e'],['Azul','#2563eb'],['Azul-claro','#38bdf8'],['Roxo','#8b5cf6'],['Rosa','#ec4899'],['Marrom','#8b5a2b'],['Vinho','#7f1d1d'],['Bege','#f5e6c8']];
 if(window.visualViewport){const vvf=()=>document.documentElement.style.setProperty('--vvt',Math.max(0,visualViewport.offsetTop)+'px');visualViewport.addEventListener('scroll',vvf);visualViewport.addEventListener('resize',vvf)}
 function montarOfc(){const feitas=MISSOES.filter(m=>S.miss[m.id]).length;const atual=MISSOES.find(m=>!S.miss[m.id]);
  if(!S.code)S.code=MISSOES[0].inicio||'';
  $('#ofc').innerHTML=`<div class="ofbar${ofAberta?' aberta':''}"><button class="ofmis" id="ofMis"><small><span>${atual?'MISSÃO '+(MISSOES.indexOf(atual)+1)+' · SEMANA '+atual.semana:'PROJETO DO MÊS 1'}</span><span>${atual?MISSOES.filter(m=>m.semana===atual.semana&&S.miss[m.id]).length+'/'+MISSOES.filter(m=>m.semana===atual.semana).length:feitas+'/'+MISSOES.length} · ${ofAberta?'fechar ▴':'ver tudo ▾'}</span></small><b>${atual?esc(atual.titulo):'Tudo cumprido até aqui! 🏆'}</b><p>${atual?esc(atual.pede):'Você terminou as missões liberadas. Logo chegam as da próxima semana.'}</p></button><div class="ofmais">${atual&&atual.estude?`<div class="apoio"><small>📚 ESTUDE ANTES</small>${atual.estude.map(id=>{const p=POSTS.find(x=>x.id===id);if(!p)return'';const c=curso(p.curso);return `<button data-post="${id}">${S.vistos[id]?'✓ ':''}${esc((p.titulo||p.q||p.frente).slice(0,34))} <i>@${c.user}</i></button>`}).join('')}<div class="apb"><button id="ofDica">💡 Dica</button><button id="ofDuv">💬 Tirar dúvida</button></div><p class="dica" id="ofDicaT" hidden>${esc(atual.dica||'')}</p></div>`:''}</div>
  <div class="oftabs"><button data-ab="cod" class="${ofAba==='cod'?'on':''}">✍️ Código</button><button data-ab="site" class="${ofAba==='site'?'on':''}">👁️ Site</button></div>
- <div class="kb">${(atual&&atual.semana>=2?['<style>','</style>','{','}',';','color:','background:','font-size:','px','text-decoration: none','h1','p','a','body']:['<h1>','</h1>','<p>','</p>','<ul>','</ul>','<li>','</li>','<a href="">','</a>']).map(t=>`<button data-k="${esc(t)}">${esc(t)}</button>`).join('')}</div></div>
+ <div class="kb"><button class="kcor" id="ofCorB">🎨 cores</button>${(atual&&atual.semana>=2?['<style>','</style>','{','}',';','color:','background:','font-size:','px','text-decoration: none','h1','p','a','body']:['<h1>','</h1>','<p>','</p>','<ul>','</ul>','<li>','</li>','<a href="">','</a>']).map(t=>`<button data-k="${esc(t)}">${esc(t)}</button>`).join('')}</div>
+ <div class="ofcor" id="ofCor"><small>TOQUE PARA COLOCAR NO CÓDIGO</small><div class="cg">${OFCORES.map(([n,h])=>`<button data-cor="${h}"><i style="background:${h}"></i>${n}<code>${h}</code></button>`).join('')}</div><label>Outra cor: <input type="color" id="ofCorX" value="#ff0000"><code id="ofCorXv">#ff0000</code></label></div></div>
  <div class="ofgrid"><div class="ofp" data-p="cod" ${ofAba==='cod'?'':'hidden'}><div class="vsc"><div class="vtop"><i></i>index.html</div><div class="vbox"><pre aria-hidden="true"></pre><textarea class="ed" spellcheck="false" autocapitalize="off" autocorrect="off" autocomplete="off">${esc(S.code)}</textarea></div></div></div>
  <div class="ofp" data-p="site" ${ofAba==='site'?'':'hidden'}><div class="prev"><div class="lbx">COMO O SEU SITE ESTÁ FICANDO</div><iframe sandbox=""></iframe></div></div></div><button class="retro" id="ofcPost" style="margin:12px 0 0;width:100%">📌 Postar no meu perfil</button>
  <div class="lista" style="padding:12px 0 0">${MISSOES.map((m,i)=>`${i===0||MISSOES[i-1].semana!==m.semana?`<small class="gtx" style="display:block;font-weight:800;font-size:11px;letter-spacing:.08em;margin:10px 0 2px">SEMANA ${m.semana} · ${['','OS TIJOLOS (HTML)','DEIXAR BONITO (CSS)','CELULAR','NO AR'][m.semana]}</small>`:''}<div class="it" style="padding:8px 0"><span style="font-size:18px">${S.miss[m.id]?'✅':'⬜'}</span><div><b style="font-size:13px">${i+1}. ${m.titulo}</b><small>${esc(m.pede)}</small></div></div>`).join('')}</div>`;
  const ed=$('#ofc .ed'),fr=$('#ofc iframe'),pre=$('#ofc .vsc pre'),vsc=$('#ofc .vsc');
- const pinta=()=>{pre.innerHTML=realce(ed.value);const ln=ed.value.slice(0,ed.selectionStart).split('\n').length-1;const L=pre.children[ln];if(L)L.classList.add('at')};
+ const vbox=$('#ofc .vsc .vbox');
+ const alinha=()=>{pre.style.transform=`translate(${-ed.scrollLeft}px,${-ed.scrollTop}px)`};
+ const ajusta=()=>{vbox.style.height='';const h=Math.max(pre.scrollHeight,ed.scrollHeight);vbox.style.height=h+'px';alinha()};
+ ed.addEventListener('scroll',alinha);
+ const pinta=()=>{pre.innerHTML=realce(ed.value);requestAnimationFrame(ajusta);const ln=ed.value.slice(0,ed.selectionStart).split('\n').length-1;const L=pre.children[ln];if(L)L.classList.add('at')};
  ed.addEventListener('input',pinta);['keyup','click','select'].forEach(e=>ed.addEventListener(e,pinta));
  ed.onfocus=()=>{vsc.classList.add('foco');document.body.classList.add('digitando');pinta()};ed.onblur=()=>{vsc.classList.remove('foco');setTimeout(()=>{if(document.activeElement!==ed)document.body.classList.remove('digitando')},150)};
  $('#ofMis').onclick=()=>{ofAberta=!ofAberta;$('#ofc .ofbar').classList.toggle('aberta',ofAberta);montarOfcTxt()};
  const montarOfcTxt=()=>{const sp=$('#ofMis small span:last-child');if(sp)sp.textContent=sp.textContent.replace(/(ver tudo ▾|fechar ▴)/,ofAberta?'fechar ▴':'ver tudo ▾')};
  $$('#ofc .oftabs button').forEach(b=>b.onclick=()=>{ofAba=b.dataset.ab;$$('#ofc .oftabs button').forEach(x=>x.classList.toggle('on',x===b));$$('#ofc .ofp').forEach(p=>p.hidden=p.dataset.p!==ofAba)});
  pinta();
+ const poe=t=>{const a=ed.selectionStart,e=ed.selectionEnd;ed.value=ed.value.slice(0,a)+t+ed.value.slice(e);ed.focus();ed.selectionStart=ed.selectionEnd=a+t.length;att();pinta()};
+ $('#ofCorB').onclick=()=>$('#ofCor').classList.toggle('on');
+ $$('#ofCor [data-cor]').forEach(b=>{b.onpointerdown=e=>e.preventDefault();b.onclick=()=>{poe(b.dataset.cor);$('#ofCor').classList.remove('on')}});
+ const cx=$('#ofCorX');cx.oninput=()=>$('#ofCorXv').textContent=cx.value;cx.onchange=()=>poe(cx.value);
  const att=()=>{S.code=ed.value;salvar();fr.srcdoc='<body style="font-family:-apple-system,Arial;padding:16px;margin:0">'+ed.value;
   const m=MISSOES.find(m=>!S.miss[m.id]);if(m&&m.testa(ed.value)){S.miss[m.id]=1;marcarDia();salvar();toast('Missão cumprida! +10 seguidores 🎉');confete(ed);setTimeout(montarOfc,1200)}};
  ed.oninput=att;att();
@@ -560,7 +578,7 @@ function montarOfc(){const feitas=MISSOES.filter(m=>S.miss[m.id]).length;const a
  const od=$('#ofDica');if(od)od.onclick=()=>{const t=$('#ofDicaT');t.hidden=!t.hidden};
  const ou=$('#ofDuv');if(ou){const at=MISSOES.find(m=>!S.miss[m.id]);ou.onclick=()=>perguntar({id:'miss_'+at.id,curso:'site',titulo:'Missão: '+at.titulo+' — '+at.pede})}
  $('#ofcPost').onclick=()=>{const c=ed.value.trim();if(c.length<8)return toast('Escreva um pouco mais antes de postar ✍️');S.meus=S.meus||[];if(S.meus[0]&&S.meus[0].code===c)return toast('Esse já está no seu perfil');S.meus.unshift({id:'m'+Date.now(),dia:hoje(),code:c});marcarDia();salvar();toast('Postado no seu perfil! 📌');confete($('#ofcPost'))};
- $$('#ofc .kb button').forEach(b=>b.onmousedown=b.onpointerdown=e=>e.preventDefault());$$('#ofc .kb button').forEach(b=>b.onclick=()=>{const t=b.dataset.k.replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&');const s=ed.selectionStart,e=ed.selectionEnd;ed.value=ed.value.slice(0,s)+t+ed.value.slice(e);ed.focus();ed.selectionStart=ed.selectionEnd=s+t.length;att();pinta()})}
+ $$('#ofc .kb button').forEach(b=>b.onmousedown=b.onpointerdown=e=>e.preventDefault());$$('#ofc .kb button[data-k]').forEach(b=>b.onclick=()=>{const t=b.dataset.k.replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&');const s=ed.selectionStart,e=ed.selectionEnd;ed.value=ed.value.slice(0,s)+t+ed.value.slice(e);ed.focus();ed.selectionStart=ed.selectionEnd=s+t.length;att();pinta()})}
 // ---------------- perfis ----------------
 let filtro='todos';
 function capa(p,modo){if(modo==='mini')return `<div class="pc ${p.est||'dark'}" data-pj="${p.id}" style="--c:${p.ac||p.cor}"><div class="pch">${p.img?`<img src="${p.img}" alt="">`:`<span>${p.emoji||'✦'}</span>`}<b>${esc(p.nome)}</b></div><small>${esc(p.kick||'')}</small><h5>${p.hl||esc(p.nome)}</h5><i class="pcl"></i><span class="pcf">@arnold.suheth</span><svg class="rpl" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>`;return `<div class="rc ${modo}" data-pj="${p.id}" style="--c:${p.cor}"><div class="rbg"></div><div class="rlogo">${p.img?`<img src="${p.img}" alt="">`:`<span>${p.emoji||'✦'}</span>`}</div><div class="rtx"><b>${esc(p.nome)}</b>${modo==='mini'?'':`<span>${esc(p.tag||'')}</span>`}</div>${modo==='mini'?'<svg class="rpl" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" fill="#fff"/></svg>':''}</div>`}
