@@ -45,6 +45,13 @@ body.claro .glow{background:radial-gradient(circle at 100% 0,rgba(214,41,118,.10
 .acts{display:flex;align-items:center;gap:20px;padding:12px 16px 6px}.acts .sv{margin-left:auto}
 .like.on svg{fill:url(#hg);stroke:url(#hg)}.save.on svg{fill:currentColor}
 .cap{padding:2px 16px 10px;font-size:15px;line-height:1.45}.cap b{font-weight:800}
+.xtra{display:flex;gap:8px;padding:0 16px 12px;flex-wrap:wrap}.xtra button{border:1.5px solid var(--ln);background:var(--chip);color:var(--tx);border-radius:99px;padding:7px 12px;font:700 13px inherit;font-family:inherit;cursor:pointer}.xtra button.on{border-color:transparent;background:var(--g);color:#fff}
+.altbox{margin:0 16px 14px;padding:14px;border-radius:16px;background:var(--chip);border:1.5px solid var(--ln);font-size:15px;line-height:1.5;animation:altin .35s ease}.altbox small{display:block;font-weight:800;font-size:11px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px;background:var(--gt);-webkit-background-clip:text;color:transparent}
+@keyframes altin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.estudo{margin:4px 14px 12px;padding:12px 14px;border-radius:16px;display:flex;align-items:center;gap:12px;background:var(--chip);border:1.5px solid var(--ln);font-size:14px;line-height:1.35}.estudo.ao{background:var(--g);color:#fff;border-color:transparent}.estudo .e{font-size:26px}.estudo b{display:block;font-size:15px}
+#sv .who .voz{background:rgba(255,255,255,.12);border:0;color:#fff;border-radius:99px;padding:5px 10px;font:700 12px inherit;font-family:inherit;margin-left:auto}#sv .who .voz+.x{margin-left:6px}
+.mgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px}.mgrid div{position:relative;aspect-ratio:3/4;overflow:hidden;background:#fff;cursor:pointer}.mgrid iframe{position:absolute;left:0;top:0;width:300%;height:300%;transform:scale(.3334);transform-origin:0 0;border:0;pointer-events:none}.mgrid small{position:absolute;left:6px;bottom:6px;background:rgba(0,0,0,.6);color:#fff;font-size:10px;padding:2px 6px;border-radius:6px}
+.retro{margin:0 16px 10px;width:calc(100% - 32px);padding:12px;border:0;border-radius:14px;background:var(--g);color:#fff;font:800 15px inherit;font-family:inherit;cursor:pointer}
 .bigh{position:absolute;left:50%;top:50%;width:110px;height:110px;margin:-55px;opacity:0;pointer-events:none;z-index:5}
 .bigh.go{animation:hb .85s ease-out}@keyframes hb{0%{opacity:0;transform:scale(.3)}30%{opacity:1;transform:scale(1.15)}100%{opacity:0;transform:translateY(-24px)}}
 /* carrossel */
@@ -247,6 +254,10 @@ function editarPerfil(id){const c=id==='me'?Object.assign({nome:'Arnold Suheth',
  sh.querySelector('.row button').onclick=()=>m.classList.remove('on');
  sh.querySelector('.row .gr').onclick=()=>{S.edit[id]=Object.assign({},S.edit[id]||{},{nome:sh.querySelector('.en').value.trim()||c.nome,user:sh.querySelector('.eu').value.trim()||c.user,bio:sh.querySelector('.eb').value.trim()||c.bio});salvar();m.classList.remove('on');toast('Perfil salvo ✓');montarStories();montarFeed();montarPerfil(id)}}
 function trocarFoto(id,depois){const inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.onchange=()=>{const f=inp.files[0];if(!f)return;const img=new Image();img.onload=()=>{const cv=document.createElement('canvas'),T=240;cv.width=cv.height=T;const x=cv.getContext('2d');const m=Math.min(img.width,img.height);x.drawImage(img,(img.width-m)/2,(img.height-m)/2,m,m,0,0,T,T);S.fotos[id]=cv.toDataURL('image/jpeg',.85);salvar();if(id==='me')navMe();toast('Foto trocada 📸');depois&&depois();montarStories();montarFeed()};img.src=URL.createObjectURL(f)};inp.click()}
+const limpa=t=>String(t||'').replace(/<br\s*\/?>/g,'. ').replace(/<[^>]+>/g,'').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'e');
+function falar(txt,fim){try{const sy=speechSynthesis;sy.cancel();const u=new SpeechSynthesisUtterance(limpa(txt));u.lang='pt-BR';u.rate=1.05;const v=sy.getVoices().filter(v=>/pt[-_]BR/i.test(v.lang));if(v.length)u.voice=v.find(v=>/Luciana|Google/i.test(v.name))||v[0];u.onend=u.onerror=()=>fim&&fim();sy.speak(u)}catch{fim&&fim()}}
+const calar=()=>{try{speechSynthesis.cancel()}catch{}};
+setInterval(()=>{if(document.visibilityState==='visible'){S.min=S.min||{};S.min[hoje()]=(S.min[hoje()]||0)+1;salvar()}},60000);
 const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(e.t);e.t=setTimeout(()=>e.classList.remove('on'),1800)}
 // números do perfil
@@ -282,13 +293,17 @@ function postHTML(p){const c=curso(p.curso);const legenda=p.leg||p.nota||'';cons
  return `<article class="post" data-id="${p.id}"><div class="ph"><div class="av" data-c="${c.id}">${AV(c.id)}</div><div><strong data-c="${c.id}">${c.user}</strong><small>${c.nome}</small></div>${S.seg[c.id]?'':`<button class="seg" data-c="${c.id}">Seguir</button>`}<span class="mn"><i></i><i></i></span></div>
  <div class="md">${midia(p)}<svg class="bigh" viewBox="0 0 24 24"><path d="${IC.heart.match(/d="([^"]+)"/)[1]}" fill="url(#hg)"/></svg></div>
  <div class="acts"><button class="btn like${S.curt[p.id]?' on':''}">${I('heart')}</button><button class="btn com">${I('com')}</button><button class="btn shr">${I('send')}</button><button class="btn sv save${S.guard[p.id]?' on':''}">${I('save')}</button></div>
- <div class="cap"><b>${titulo}</b> ${legenda}</div></article>`}
+ <div class="cap"><b>${titulo}</b> ${legenda}</div><div class="xtra">${p.tipo!=='desafio'?'<button class="alt">🔄 Explica de outro jeito</button>':''}<button class="ouv">🔊 Ouvir</button></div></article>`}
+function textoPost(p){if(p.slides)return (p.titulo||'')+'. '+p.slides.map(x=>x.h+'. '+(x.p||'')).join('. ');if(p.tipo==='desafio')return p.q+'. Opções: '+p.ops.join('; ');return [p.titulo,p.frente,p.verso,p.leg,p.nota,p.p].filter(Boolean).join('. ')}
 function ligarPost(el){const p=POSTS.find(x=>x.id===el.dataset.id);const md=el.querySelector('.md'),big=el.querySelector('.bigh');
  const lk=el.querySelector('.like'),sv=el.querySelector('.save');
  const guardar=on=>{S.curt[p.id]=on?1:0;S.guard[p.id]=on?1:0;if(!on){delete S.curt[p.id];delete S.guard[p.id]}lk.classList.toggle('on',on);sv.classList.toggle('on',on);salvar();if(on){toast('Guardado para revisar 💾');burst(lk)}};
  lk.onclick=()=>guardar(!lk.classList.contains('on'));sv.onclick=()=>guardar(!sv.classList.contains('on'));
  let lt=0;md.addEventListener('pointerup',e=>{if(e.target.closest('button'))return;const n=Date.now();if(n-lt<300){guardar(true);big.classList.remove('go');void big.offsetWidth;big.classList.add('go')}lt=n});
  el.querySelector('.com').onclick=()=>perguntar(p);
+ const ob=el.querySelector('.ouv');ob.onclick=()=>{if(ob.classList.contains('on')){calar();ob.classList.remove('on');ob.textContent='🔊 Ouvir';return}$$('.xtra .ouv.on').forEach(b=>{b.classList.remove('on');b.textContent='🔊 Ouvir'});ob.classList.add('on');ob.textContent='⏸ Parar';const box=el.querySelector('.altbox');falar(box?box.textContent:textoPost(p),()=>{ob.classList.remove('on');ob.textContent='🔊 Ouvir'})};
+ const ab=el.querySelector('.alt');if(ab){let ai=-1;ab.onclick=()=>{const L=(window.ALT||{})[p.id];if(!L||ai>=L.length-1){const q=`Estou estudando programação do zero no meu app INSIGHT. Me explica de novo, bem fácil e curto, com outra comparação (futebol do Inter, Simpsons, Dragon Ball Z, luta ou receita): ${limpa(textoPost(p))}`;try{navigator.clipboard.writeText(q)}catch{}if(L){ai=-1;toast('Acabaram as minhas. Perguntando ao Claude ✨')}window.open('https://claude.ai/new?q='+encodeURIComponent(q),'_blank');return}
+  ai++;const a=L[ai];let box=el.querySelector('.altbox');if(!box){box=document.createElement('div');box.className='altbox';el.querySelector('.xtra').after(box)}box.innerHTML=`<small>${a.e} ${a.t}</small>${a.x}`;box.style.animation='none';void box.offsetWidth;box.style.animation='';ab.textContent=ai<L.length-1?'🔄 Outro jeito':'✨ Pedir ao Claude outro jeito';S.vistos[p.id]=1;marcarDia();salvar()}}
  el.querySelector('.shr').onclick=async()=>{const t=`${p.titulo||'Post do insight'} — estou aprendendo no meu app insight`;try{await navigator.share({title:'insight',text:t})}catch{try{await navigator.clipboard.writeText(t);toast('Texto copiado')}catch{}}};
  el.querySelectorAll('[data-c]').forEach(a=>{if(a.classList.contains('seg'))a.onclick=e=>{e.stopPropagation();S.seg[a.dataset.c]=1;salvar();a.textContent='Seguindo';a.classList.add('on');toast('Agora você segue '+curso(a.dataset.c).user)};else a.onclick=()=>ir('pf',a.dataset.c)});
  if(p.tipo==='carrossel'){let k=0;const car=md.querySelector('.car'),ds=[...md.querySelectorAll('.dots i')],cn=md.querySelector('.cnt');const go=d=>{k=Math.max(0,Math.min(p.slides.length-1,k+d));car.style.transform=`translateX(${-k*100}%)`;ds.forEach((x,i)=>x.classList.toggle('on',i===k));cn.textContent=(k+1)+'/'+p.slides.length};
@@ -307,7 +322,26 @@ function confete(el){const r=el.getBoundingClientRect();for(let k=0;k<26;k++){co
 // ---------------- feed ----------------
 function ordemFeed(){const novos=POSTS.filter(p=>!S.vistos[p.id]),velhos=POSTS.filter(p=>S.vistos[p.id]);const seguidos=p=>S.seg[p.curso]?0:1;
  novos.sort((a,b)=>seguidos(a)-seguidos(b));return [...novos,...velhos]}
-function montarFeed(){const f=$('#feed');f.innerHTML=ordemFeed().map(postHTML).join('')+`<div class="fim">✦ Você viu tudo de hoje.<br>Amanhã cedo tem post novo. Que tal praticar na <b>Oficina</b>?</div>`;
+function horaEstudo(){const d=new Date(new Date().toLocaleString('en-US',{timeZone:'America/Sao_Paulo'}));const dia=d.getDay(),m=d.getHours()*60+d.getMinutes();const aula=[1,2,4];
+ const novos=STORIES.filter(st=>S.stories[st.curso]!==hoje()).length;
+ if(aula.includes(dia)&&m>=1140&&m<1230)return `<div class="estudo ao"><span class="e">🎓</span><div><b>Hora da Faculdade</b>Até 20:30. Foco total, depois tem INSIGHT.</div></div>`;
+ if(aula.includes(dia)&&m>=1230&&m<1320)return `<div class="estudo ao"><span class="e">✨</span><div><b>Hora do INSIGHT</b>${novos?novos+' stories novos esperando você · até 22:00':'Stories vistos! Agora um desafio ou a Oficina · até 22:00'}</div></div>`;
+ let n=new Date(d);for(let i=0;i<8;i++){const dd=n.getDay();if(aula.includes(dd)&&(i>0||m<1140))break;n.setDate(n.getDate()+1)}
+ const nm=['domingo','segunda','terça','quarta','quinta','sexta','sábado'][n.getDay()];const qd=n.toDateString()===d.toDateString()?'hoje':nm;
+ return `<div class="estudo"><span class="e">📅</span><div><b>Próximo estudo: ${qd} às 19:00</b>Faculdade 19:00–20:30 · INSIGHT 20:30–22:00</div></div>`}
+function retrospectiva(){const mes=hoje().slice(0,7);const nomeMes=new Date().toLocaleDateString('pt-BR',{month:'long',timeZone:'America/Sao_Paulo'});
+ const dias=Object.keys(S.dias).filter(d=>d.startsWith(mes)).length;const min=Object.entries(S.min||{}).filter(([d])=>d.startsWith(mes)).reduce((a,[,v])=>a+v,0);
+ const vistos=Object.keys(S.vistos).length,ac=acertos(),mi=Object.keys(S.miss).length,meus=(S.meus||[]).length;
+ const cont={};POSTS.forEach(p=>{if(S.vistos[p.id])cont[p.curso]=(cont[p.curso]||0)+1});const fav=Object.entries(cont).sort((a,b)=>b[1]-a[1])[0];
+ const tempo=min>=60?Math.floor(min/60)+'h'+String(min%60).padStart(2,'0'):min+' min';
+ const sl=[{emoji:'✨',h:`Sua retrospectiva de <i>${nomeMes}</i>`,p:'Segura o dedo para pausar. Bora ver o que você construiu.'},
+  {emoji:'📅',h:`<i>${dias}</i> ${dias===1?'dia':'dias'} estudando`,p:`Foram ${tempo} com o INSIGHT aberto. ${dias>=12?'Isso é ritmo de titular! ⚽':'Cada dia conta. Bora subir esse número.'}`},
+  {emoji:'📚',h:`<i>${vistos}</i> posts estudados`,p:fav?`Seu curso favorito: <b>${curso(fav[0]).nome}</b> (${fav[1]} posts).`:'Abra o feed e comece pelo primeiro post.'},
+  {emoji:'⚡',h:`<i>${ac}</i> desafios acertados`,p:ac>=5?'Kamehameha carregado. 🐉':'Os desafios são o treino da sala do tempo. Vale a pena.'},
+  {emoji:'🧱',h:`<i>${mi}</i> missões e <i>${meus}</i> códigos postados`,p:meus?'Seu perfil já mostra sua evolução de verdade.':'Na Oficina, poste seu código: ele vira post no seu perfil.'},
+  {emoji:'🔥',h:`Sequência: <i>${sequencia()}</i>`,p:'Meta do mês: seu site pessoal no ar. Você está no caminho. 🚀'}];
+ abrirStory(0,[{c:{id:'me',user:'sua.retrospectiva',nome:'Retrospectiva'},so:1,slides:sl}])}
+function montarFeed(){const f=$('#feed');f.innerHTML=horaEstudo()+ordemFeed().map(postHTML).join('')+`<div class="fim">✦ Você viu tudo de hoje.<br>Amanhã cedo tem post novo. Que tal praticar na <b>Oficina</b>?</div>`;
  f.querySelectorAll('.post').forEach(ligarPost);
  const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting&&e.intersectionRatio>.6){const id=e.target.dataset.id;const p=POSTS.find(x=>x.id===id);if(!S.vistos[id]&&p.tipo!=='desafio'){setTimeout(()=>{S.vistos[id]=1;marcarDia();salvar()},1500)}}}),{threshold:[.6]});
  f.querySelectorAll('.post').forEach(e=>io.observe(e))}
@@ -315,23 +349,24 @@ function montarFeed(){const f=$('#feed');f.innerHTML=ordemFeed().map(postHTML).j
 function montarStories(){$('#stories').innerHTML=`<div class="sto" id="stMe"><div class="ring vis">${AV('me')}<span class="add">+</span></div><span>Sua anotação</span></div>`+STORIES.map((s,i)=>{const c=curso(s.curso);const visto=S.stories[c.id]===hoje();return `<div class="sto" data-i="${i}"><div class="ring${visto?' vis':''}">${AV(c.id)}</div><span>${c.nome}</span></div>`}).join('');
  $$('.sto[data-i]').forEach(e=>e.onclick=()=>abrirStory(+e.dataset.i));$('#stMe').onclick=()=>ir('ofc')}
 let stT=null;
-function abrirStory(i){const st=STORIES[i];if(!st)return fecharStory();const c=curso(st.curso);const sv=$('#sv'),w=sv.querySelector('.wrap');let k=0,prog=0,ult=0,pausa=false,segura=false,segurou=false,tmS=null;const DUR=6500;
+function abrirStory(i,L=STORIES){const st=L[i];if(!st)return fecharStory();const c=st.c||curso(st.curso);let falando=false;const sv=$('#sv'),w=sv.querySelector('.wrap');let k=0,prog=0,ult=0,pausa=false,segura=false,segurou=false,tmS=null;const DUR=6500;
  sv.classList.add('on');document.body.style.overflow='hidden';
- const render=()=>{const s=st.slides[k];w.innerHTML=`<div class="bars">${st.slides.map((_,j)=>`<i><b style="width:${j<k?100:0}%"></b></i>`).join('')}</div><div class="who"><div class="av">${AV(c.id)}</div><b>${c.user}</b><small>hoje</small><button class="x" aria-label="Fechar">×</button></div>
+ const render=()=>{const s=st.slides[k];w.innerHTML=`<div class="bars">${st.slides.map((_,j)=>`<i><b style="width:${j<k?100:0}%"></b></i>`).join('')}</div><div class="who"><div class="av">${AV(c.id)}</div><b>${c.user}</b><small>${st.c?'':'hoje'}</small><button class="voz">${S.voz?'🔊 Voz':'🔇 Voz'}</button><button class="x" aria-label="Fechar">×</button></div>
   <div class="ss">${s.quiz?`<div class="em">⚡</div><h3>${esc(s.quiz.q)}</h3><div class="ops">${s.quiz.ops.map((o,j)=>`<button data-j="${j}">${esc(o)}</button>`).join('')}</div><p class="fbq"></p>`:`${s.emoji?`<div class="em">${s.emoji}</div>`:''}<h3>${s.h}</h3>${s.code?`<div class="code">${s.code}</div>`:''}${s.p?`<p>${s.p}</p>`:''}`}</div><div class="tz l"></div><div class="tz r"></div>`;
-  prog=0;pausa=!!s.quiz;
+  prog=0;pausa=!!s.quiz;calar();falando=false;if(S.voz){falando=true;falar(s.quiz?s.quiz.q:(s.h+'. '+(s.p||'')),()=>falando=false)}
+  w.querySelector('.voz').onclick=e=>{e.stopPropagation();S.voz=!S.voz;salvar();e.target.textContent=S.voz?'🔊 Voz':'🔇 Voz';if(S.voz){falando=true;falar(s.quiz?s.quiz.q:(s.h+'. '+(s.p||'')),()=>falando=false)}else{calar();falando=false}};
   w.querySelector('.x').onclick=fecharStory;
   if(s.quiz)w.querySelectorAll('.ops button').forEach(b=>b.onclick=()=>{const fb=w.querySelector('.fbq');w.querySelectorAll('.ops button').forEach(x=>x.className='');const qid='st_'+c.id+'_'+k;
    if(+b.dataset.j===s.quiz.ok){b.className='ok';fb.innerHTML='<b style="color:#5be39a">Isso!</b> '+esc(s.quiz.exp);if(S.resp[qid]!=='ok'){S.resp[qid]='ok';marcarDia();salvar();toast('+3 seguidores 🎉');confete(b)}setTimeout(()=>prox(1),2600)}
    else{b.className='no';fb.innerHTML='<b style="color:#ff8a7a">Quase!</b> Tenta a outra 😉'}})};
- const prox=d=>{k+=d;if(k<0)k=0;if(k>=st.slides.length){S.stories[c.id]=hoje();salvar();montarStories();return abrirStory(i+1)}render()};
+ const prox=d=>{k+=d;if(k<0)k=0;if(k>=st.slides.length){if(st.so)return fecharStory();S.stories[c.id]=hoje();salvar();montarStories();return abrirStory(i+1,L)}render()};
  cancelAnimationFrame(stT);render();
- ult=performance.now();const tick=()=>{const ag=performance.now(),dt=ag-ult;ult=ag;const b=w.querySelectorAll('.bars b')[k];if(b&&!pausa&&!segura){prog=Math.min(1,prog+dt/DUR);b.style.width=(prog*100)+'%';if(prog>=1)prox(1)}if(sv.classList.contains('on'))stT=requestAnimationFrame(tick)};stT=requestAnimationFrame(tick);
+ ult=performance.now();const tick=()=>{const ag=performance.now(),dt=ag-ult;ult=ag;const b=w.querySelectorAll('.bars b')[k];if(b&&!pausa&&!segura){prog=Math.min(falando?.97:1,prog+dt/DUR);b.style.width=(prog*100)+'%';if(prog>=1)prox(1)}if(sv.classList.contains('on'))stT=requestAnimationFrame(tick)};stT=requestAnimationFrame(tick);
  let px=0,py=0;w.ontouchstart=e=>{if(!e.target.closest('button'))e.preventDefault()};
- w.onpointerdown=e=>{if(e.target.closest('button'))return;px=e.clientX;py=e.clientY;segurou=false;segura=true;clearTimeout(tmS);tmS=setTimeout(()=>{segurou=true;sv.classList.add('seg')},220)};
- const solta=e=>{if(!segura)return;clearTimeout(tmS);segura=false;sv.classList.remove('seg');if(e.type!=='pointerup'||segurou)return;const dy=e.clientY-py,dx=e.clientX-px;if(dy>90)return fecharStory();if(Math.abs(dx)>30||Math.abs(dy)>30)return;const r=w.getBoundingClientRect(),xr=(e.clientX-r.left)/r.width;if(e.clientY-r.top<70)return;if(xr<.35)prox(-1);else prox(1)};
+ w.onpointerdown=e=>{if(e.target.closest('button'))return;px=e.clientX;py=e.clientY;segurou=false;segura=true;clearTimeout(tmS);tmS=setTimeout(()=>{segurou=true;sv.classList.add('seg');try{speechSynthesis.pause()}catch{}},220)};
+ const solta=e=>{if(!segura)return;clearTimeout(tmS);segura=false;sv.classList.remove('seg');if(segurou)try{speechSynthesis.resume()}catch{};if(e.type!=='pointerup'||segurou)return;const dy=e.clientY-py,dx=e.clientX-px;if(dy>90)return fecharStory();if(Math.abs(dx)>30||Math.abs(dy)>30)return;const r=w.getBoundingClientRect(),xr=(e.clientX-r.left)/r.width;if(e.clientY-r.top<70)return;if(xr<.35)prox(-1);else prox(1)};
  w.onpointerup=solta;w.onpointercancel=solta;w.oncontextmenu=e=>e.preventDefault()}
-function fecharStory(){$('#sv').classList.remove('on','seg');document.body.style.overflow='';cancelAnimationFrame(stT);montarStories();marcarDia()}
+function fecharStory(){calar();$('#sv').classList.remove('on','seg');document.body.style.overflow='';cancelAnimationFrame(stT);montarStories();marcarDia()}
 // ---------------- perguntas (comentários) ----------------
 function textoClaude(p,t){const c=p?curso(p.curso):null;const assunto=p?(p.titulo||p.q||p.frente||'post'):'';return `Estou estudando no meu app insight. Sou iniciante total em programação, então me explique bem simples, com comparações de futebol (Inter, Brasileirão), família, luta, Dragon Ball Z, Simpsons ou receitas.${p?`\n\nPost que eu estava vendo: "${assunto}" (perfil ${c.nome}).`:''}\n\nMinha dúvida: ${t}`}
 async function abrirClaude(p,t){const txt=textoClaude(p,t);try{await navigator.clipboard.writeText(txt)}catch{}S.perg.push({post:p?p.id:'',texto:t,quando:new Date().toISOString(),resp:'(perguntei ao Claude)'});salvar();toast('Pergunta copiada. Se não aparecer pronta, é só colar ✓');setTimeout(()=>{location.href='https://claude.ai/new?q='+encodeURIComponent(txt)},450)}
@@ -362,12 +397,13 @@ function montarOfc(){const feitas=MISSOES.filter(m=>S.miss[m.id]).length;const a
  $('#ofc').innerHTML=`<div class="miss"><small class="gtx">PROJETO DO MÊS 1 · SEU SITE PESSOAL</small><h4>${atual?'Missão '+(MISSOES.indexOf(atual)+1)+': '+atual.titulo:'Semana 1 completa! 🏆'}</h4><p>${atual?esc(atual.pede):'Você escreveu a base do seu site sozinho. Na semana 2 a gente deixa ele bonito.'}</p><p style="margin-top:6px;font-size:12px;color:var(--mu)">${feitas} de ${MISSOES.length} missões da semana</p></div>
  <div class="kb">${['<h1>','</h1>','<p>','</p>','<ul>','</ul>','<li>','</li>','<a href="">','</a>'].map(t=>`<button data-k="${esc(t)}">${esc(t)}</button>`).join('')}</div>
  <textarea class="ed" spellcheck="false" autocapitalize="off" autocorrect="off">${esc(S.code)}</textarea>
- <div class="prev"><div class="lbx">COMO O SEU SITE ESTÁ FICANDO</div><iframe sandbox=""></iframe></div>
+ <div class="prev"><div class="lbx">COMO O SEU SITE ESTÁ FICANDO</div><iframe sandbox=""></iframe></div><button class="retro" id="ofcPost" style="margin:12px 0 0;width:100%">📌 Postar no meu perfil</button>
  <div class="lista" style="padding:12px 0 0">${MISSOES.map((m,i)=>`<div class="it" style="padding:8px 0"><span style="font-size:18px">${S.miss[m.id]?'✅':'⬜'}</span><div><b style="font-size:13px">${i+1}. ${m.titulo}</b><small>${esc(m.pede)}</small></div></div>`).join('')}</div>`;
  const ed=$('#ofc .ed'),fr=$('#ofc iframe');
  const att=()=>{S.code=ed.value;salvar();fr.srcdoc='<body style="font-family:-apple-system,Arial;padding:16px;margin:0">'+ed.value;
   const m=MISSOES.find(m=>!S.miss[m.id]);if(m&&m.testa(ed.value)){S.miss[m.id]=1;marcarDia();salvar();toast('Missão cumprida! +10 seguidores 🎉');confete(ed);setTimeout(montarOfc,1200)}};
  ed.oninput=att;att();
+ $('#ofcPost').onclick=()=>{const c=ed.value.trim();if(c.length<8)return toast('Escreva um pouco mais antes de postar ✍️');S.meus=S.meus||[];if(S.meus[0]&&S.meus[0].code===c)return toast('Esse já está no seu perfil');S.meus.unshift({id:'m'+Date.now(),dia:hoje(),code:c});marcarDia();salvar();toast('Postado no seu perfil! 📌');confete($('#ofcPost'))};
  $$('#ofc .kb button').forEach(b=>b.onclick=()=>{const t=b.dataset.k.replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&');const s=ed.selectionStart,e=ed.selectionEnd;ed.value=ed.value.slice(0,s)+t+ed.value.slice(e);ed.focus();ed.selectionStart=ed.selectionEnd=s+t.length;att()})}
 // ---------------- perfis ----------------
 let filtro='todos';
@@ -391,10 +427,14 @@ function montarPerfil(id){const t=$('#t-pf');
   <div class="pbar"><i style="width:${Math.round(feitas/16*100)}%"></i></div><div class="pbl"><span>Mês 1 · ${feitas} de 16 missões</span><span>projeto: site pessoal</span></div>
   <div class="btns"><button id="pfEd">Editar perfil</button><button id="pfOfc" class="gr">Abrir a Oficina</button><button id="pfPerg">Perguntas</button></div>
   <div class="hl" id="pfHl">${[['todos','✦','Todos'],['apps','📱','Meus apps'],['clientes','🤝','Clientes'],['marcas','🏷️','Marcas'],['estudos','🎓','Estudos']].map(([k,e,n])=>`<div data-f="${k}" style="cursor:pointer"><i class="${k===filtro?'done':''}">${e}</i>${n}</div>`).join('')}</div>
-  <div class="tabs"><button class="on" data-tb="p">Projetos</button><button data-tb="g">Guardados</button><button data-tb="c">Conquistas</button></div><div id="pfTab"></div>`;
+  <button class="retro" id="pfRetro">✨ Ver minha retrospectiva do mês</button>
+  <div class="tabs"><button class="on" data-tb="p">Projetos</button><button data-tb="m">Meus códigos</button><button data-tb="g">Guardados</button><button data-tb="c">Conquistas</button></div><div id="pfTab"></div>`;
+  $('#pfRetro').onclick=retrospectiva;
   const n=seguidores();let v=0;const f=()=>{v=Math.min(n,v+Math.max(1,Math.ceil(n/30)));const e=$('#segN');if(e){e.textContent=v;if(v<n)requestAnimationFrame(f)}};f();
   $('#pfTema').onclick=()=>$('#bTema').click();$('#bigFoto').onclick=()=>trocarFoto('me',()=>montarPerfil('me'));$('#pfEd').onclick=()=>editarPerfil('me');$('#pfOfc').onclick=()=>ir('ofc');$('#pfPerg').onclick=()=>$('#bPerg').click();
   const tab=k=>{$$('#t-pf .tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tb===k));const box=$('#pfTab');
+   if(k==='m'){const M=S.meus||[];box.innerHTML=M.length?`<div class="mgrid">${M.map(m=>`<div data-m="${m.id}"><iframe sandbox="" srcdoc="${('<body style=\'font-family:-apple-system,Arial;padding:16px;margin:0\'>'+m.code).replace(/&/g,'&amp;').replace(/"/g,'&quot;')}"></iframe><small>${m.dia.split('-').reverse().slice(0,2).join('/')}</small></div>`).join('')}</div>`:'<div class="vazio">Na Oficina, toque em <b>📌 Postar no meu perfil</b>.<br>Cada versão do seu código vira um post aqui e mostra a sua evolução.</div>';
+    box.querySelectorAll('[data-m]').forEach(e=>e.onclick=()=>{const m=M.find(x=>x.id===e.dataset.m);const md=$('#modal'),sh=md.querySelector('.sheet');sh.innerHTML=`<h4>📌 Meu código · ${m.dia.split('-').reverse().join('/')}</h4><iframe sandbox="" style="width:100%;height:55vh;border:1.5px solid var(--ln);border-radius:12px;background:#fff"></iframe><div class="row"><button id="mApg">Apagar</button><button class="gr" id="mOk">Fechar</button></div>`;sh.querySelector('iframe').srcdoc='<body style="font-family:-apple-system,Arial;padding:16px;margin:0">'+m.code;md.classList.add('on');$('#mOk').onclick=()=>md.classList.remove('on');$('#mApg').onclick=()=>{if(!confirm('Apagar este post?'))return;S.meus=M.filter(x=>x!==m);salvar();md.classList.remove('on');tab('m')}})}
    if(k==='g'){const gs=POSTS.filter(p=>S.guard[p.id]);box.innerHTML=gs.length?`<div class="grid">${gs.map(p=>`<div data-id="${p.id}">${esc((p.titulo||p.q||p.frente).slice(0,46))}</div>`).join('')}</div>`:'<div class="vazio">Toque duas vezes num post para guardar.<br>Os guardados voltam para você revisar.</div>';box.querySelectorAll('[data-id]').forEach(e=>e.onclick=()=>abrirPost(e.dataset.id))}
    if(k==='p'){const L=PROJETOS.filter(p=>filtro==='todos'||p.tipo===filtro);box.innerHTML=`<div class="reels">${L.map(p=>capa(p,'mini')).join('')}</div>`;
     box.querySelectorAll('[data-pj]').forEach(e=>e.onclick=()=>abrirReels(L,e.dataset.pj))}
@@ -447,6 +487,6 @@ async function abertura(){const el=$('#ab');if(sessionStorage.getItem('insight_a
   el.animate([{background:'#000'},{background:'rgba(0,0,0,0)'}],{duration:750,fill:'forwards'});await wait(750)}
  sessionStorage.setItem('insight_ab','1');el.remove()}
 // ---------------- início ----------------
-aplicarTema();montarStories();montarFeed();atualizarBadges();abertura();
+aplicarTema();montarStories();montarFeed();try{const nn=STORIES.filter(st=>S.stories[st.curso]!==hoje()).length;nn?navigator.setAppBadge&&navigator.setAppBadge(nn):navigator.clearAppBadge&&navigator.clearAppBadge()}catch{}atualizarBadges();abertura();
 if('serviceWorker' in navigator&&location.protocol==='https:'){navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{});let rl=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(!rl){rl=true;location.reload()}})}
 </script></body></html>

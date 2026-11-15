@@ -124,3 +124,39 @@ window.PROJETOS = [
  {id:'lab', ac:'#7c9cff', kick:'ESTUDOS', hl:'Onde tudo <em>começou.</em>', est:'navy', tag:'Onde tudo começou', nome:'Evolution Lab', tipo:'estudos', img:'./proj/lab.png', cor:'#1b1f4a', desc:'Minha plataforma de estudos, que virou o jogo.', status:'Arquivado no jogo'},
  {id:'sitepessoal', kick:'MÊS 1 · PROJETO', hl:'Escrito por mim, <em>do zero.</em>', est:'light', tag:'Escrito por mim, do zero', nome:'Meu site pessoal', tipo:'estudos', emoji:'🌐', cor:'#fa7e1e', desc:'O projeto do Mês 1: escrito por mim, do zero, na Oficina.', status:'Mês 1', oficina:true}
 ];
+
+// "Explica de outro jeito": outras comparações para cada post (botão 🔄 no post)
+window.ALT = {
+ s1:[{e:'🍔',t:'Jeito receita',x:'Um site é um prato pronto. O HTML são os ingredientes (pão, carne, queijo). O CSS é a montagem bonita no prato. O JavaScript é o garçom que reage quando você pede algo.'},
+     {e:'🍩',t:'Jeito Simpsons',x:'A casa dos Simpsons: as paredes e os cômodos são o HTML, a pintura amarela e os móveis são o CSS, e o Homer abrindo a geladeira é o JavaScript (a ação).'}],
+ s3:[{e:'📦',t:'Jeito mudança',x:'Tag é a etiqueta da caixa na mudança: "COZINHA", "QUARTO". O navegador lê a etiqueta e sabe onde colocar cada coisa. Abre a caixa com <p> e fecha com </p>.'},
+     {e:'👕',t:'Jeito vestiário',x:'É como o número na camisa: o 9 já diz que é o centroavante. A tag <h1> já diz "eu sou o título principal".'}],
+ s4:[{e:'🍳',t:'Jeito receita',x:'É como ver o bolo crescer pelo vidro do forno: você muda o código e vê o resultado na hora, sem esperar.'},
+     {e:'📺',t:'Jeito replay',x:'É o replay do lance: você vê exatamente o que o código fez, quadro a quadro.'}],
+ s6:[{e:'🦖',t:'Jeito museu',x:'O primeiro site (1991) é tipo o primeiro uniforme do Inter: simples, só texto, mas começou tudo. Ainda dá para visitar ele hoje.'},
+     {e:'📰',t:'Jeito jornal',x:'Era como um jornal de uma página só, sem foto: só letras e links azuis. A internet inteira nasceu disso.'}],
+ s7:[{e:'⚽',t:'Jeito vestiário',x:'<ul> é a prancheta do técnico. Cada <li> é um jogador escrito nela, um embaixo do outro.'},
+     {e:'🛒',t:'Jeito mercado',x:'<ul> é a lista do mercado. Cada <li> é um item: arroz, feijão, picanha. O navegador coloca a bolinha antes de cada um.'}],
+ s9:[{e:'🖼️',t:'Jeito porta-retrato',x:'<img> é o porta-retrato: você só diz onde está a foto (src) e ele mostra. Não tem tag de fechar porque não tem nada dentro.'},
+     {e:'🚪',t:'Jeito porta',x:'<a> é uma porta. O href é o endereço do outro cômodo. Clicou, atravessou.'}],
+ s10:[{e:'🪪',t:'Jeito crachá',x:'É o seu crachá da Indus, só que na internet: nome em destaque (h1), cargo embaixo (p) e o contato (link).'},
+      {e:'🥋',t:'Jeito luta',x:'É a apresentação antes da luta: nome do lutador, de onde vem e o cartel. Curto e direto.'}],
+ s12:[{e:'📝',t:'Jeito receita',x:'HTML é a lista de ingredientes: diz O QUE tem. Programação é o modo de preparo: diz o que FAZER, com decisões ("se queimar, abaixa o fogo"). HTML não decide nada.'},
+      {e:'🎨',t:'Jeito desenho',x:'HTML é o desenho parado. Programação (JavaScript) é o desenho animado: as coisas se mexem e reagem.'}],
+ l1:[{e:'🥫',t:'Jeito cozinha',x:'Variável é o pote com etiqueta "AÇÚCAR". O pote é sempre o mesmo, mas o que tem dentro pode acabar e você enche de novo.'},
+     {e:'🐉',t:'Jeito Dragon Ball',x:'O rastreador do Vegeta mostra o "poder de luta". O nome é fixo, mas o número muda: 8000, depois "mais de 8000!". Isso é uma variável.'}],
+ l3:[{e:'🦋',t:'Jeito história',x:'Em 1947 acharam uma mariposa de verdade presa dentro de um computador gigante, causando erro. Colaram ela no caderno: "primeiro bug encontrado".'},
+     {e:'🍩',t:'Jeito Simpsons',x:'É o Homer na usina: um detalhezinho errado e a máquina toda dá problema. O bug é esse detalhe escondido.'}],
+ i1:[{e:'📚',t:'Jeito estudante',x:'A IA leu uma biblioteca gigante e aprendeu a adivinhar a próxima palavra muito bem. Ela não "sabe" como gente, ela prevê o que faz sentido.'},
+     {e:'⚽',t:'Jeito narrador',x:'É como um narrador que viu milhares de jogos: pelo lance, ele já imagina o que vem depois. A IA faz isso com palavras.'}],
+ i3:[{e:'🧩',t:'Jeito quebra-cabeça',x:'Token é a pecinha. A IA corta o texto em pecinhas (pedaços de palavra) para ler. Quanto mais pecinhas, mais "cansada" a conversa fica.'},
+     {e:'🍕',t:'Jeito pizza',x:'O texto é a pizza, o token é cada fatia. A IA come fatia por fatia, e cada plano tem um limite de fatias.'}],
+ d1:[{e:'⚽',t:'Jeito placar',x:'No placar da TV o resultado é GRANDE, o tempo é médio e o nome do canal é pequeno. Seu olho sabe o que olhar primeiro. Isso é hierarquia.'},
+     {e:'🍽️',t:'Jeito cardápio',x:'No cardápio, o nome do prato vem em destaque, a descrição menor e o preço do lado. Organizado assim, você escolhe rápido.'}],
+ b1:[{e:'🎬',t:'Jeito desenho animado',x:'O olho pisca igual desenho animado antigo: a pálpebra é "achatada" por um instante e depois volta. Rápido demais para notar o truque.'},
+     {e:'🪟',t:'Jeito persiana',x:'A pálpebra é uma persiana: desce, fica fechada uma fração de segundo e sobe. O código só manda ela descer e subir.'}],
+ g1:[{e:'🏠',t:'Jeito família',x:'O Gemini é o primo que mora na casa do Google: conhece o Gmail, o Drive e a agenda porque estão todos debaixo do mesmo teto.'},
+     {e:'🧰',t:'Jeito caixa de ferramentas',x:'Cada IA é uma ferramenta. O Gemini é a chave que encaixa melhor nos parafusos do Google.'}],
+ c1:[{e:'🧠',t:'Jeito simples',x:'GPT = "Transformador Pré-treinado Generativo". Traduzindo: um cérebro que já estudou antes (pré-treinado) e cria texto novo (generativo).'},
+     {e:'🥋',t:'Jeito luta',x:'É o lutador que treinou anos antes da luta (pré-treinado) e na hora improvisa os golpes (generativo).'}]
+};
