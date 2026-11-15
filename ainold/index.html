@@ -28,6 +28,13 @@ h1{margin:0;font:900 22px/1 Inter,sans-serif;letter-spacing:.06em;background:var
 .bt::after{content:"";position:absolute;inset:auto -30% -60% auto;width:120px;height:120px;border-radius:50%;background:radial-gradient(rgba(59,130,246,.22),transparent 70%)}
 .bt.larga{grid-column:1/-1;min-height:auto;display:flex;align-items:center;gap:12px}.bt.larga b{margin:0}
 .bt.larga .ic{font-size:22px}
+.tabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 -16px 14px;padding:2px 16px}.tabs::-webkit-scrollbar{display:none}
+.tabs button{flex:0 0 auto;border:1px solid var(--ln);background:var(--card);color:var(--mu);border-radius:999px;padding:9px 14px;font:700 13px Inter,sans-serif;cursor:pointer;white-space:nowrap}
+.tabs button.on{background:linear-gradient(90deg,var(--az),var(--ci));color:#04101f;border-color:transparent}
+.aba{display:none}.aba.on{display:block;animation:sobe .2s ease}
+.sel{display:flex;align-items:center;gap:8px;margin-bottom:10px}.sel select{margin:0}
+.bt.link::before{content:"↗";position:absolute;top:10px;right:12px;color:var(--mu);font-size:13px}
+.dica{color:var(--mu);font-size:12.5px;margin:-2px 2px 12px}
 h2{font:800 11px Inter,sans-serif;letter-spacing:.22em;color:var(--mu);margin:26px 2px 10px}
 .log{display:grid;gap:8px}
 .it{border:1px solid var(--ln);background:var(--card);border-radius:14px;padding:11px 13px}
@@ -50,14 +57,70 @@ input,select{width:100%;font:16px Inter,sans-serif;padding:12px;border-radius:12
 <header><div class="logo"><span>AN</span></div><div><h1>AI NOLD</h1><div class="sub">Controle do seu PC pelo celular · sem token</div></div></header>
 <div class="pc" id="pc"><i></i><span id="pcTx">Conectando…</span></div>
 
-<div class="grid">
+<div class="tabs" id="tabs">
+  <button data-t="rap" class="on">⚡ Rápido</button><button data-t="prog">💻 Programador</button><button data-t="dia">🗂️ Dia a dia</button>
+  <button data-t="cli">👥 Clientes</button><button data-t="cer">🧠 Cérebro</button><button data-t="bkp">💾 Backups</button><button data-t="cfg">⚙️ Config</button>
+</div>
+
+<section class="aba on" data-t="rap"><div class="grid">
   <button class="bt" data-a="sites"><span class="ic">🟢</span><b>Sites no ar?</b><small>Studio, BLESSAINT, clientes</small></button>
   <button class="bt" data-a="atualizar"><span class="ic">🔄</span><b>Atualizar tudo</b><small>Projetos iguais ao GitHub</small></button>
   <button class="bt" data-a="backup"><span class="ic">💾</span><b>Backup no Drive</b><small>Todos os projetos</small></button>
   <button class="bt" data-a="relatorio"><span class="ic">📋</span><b>Relatório do PC</b><small>Espaço, programas, histórico</small></button>
-  <button class="bt" data-a="arrumar" data-c="Organizar a Área de Trabalho e os Downloads do PC?"><span class="ic">🧹</span><b>Arrumar o PC</b><small>Área de Trabalho e Downloads</small></button>
-  <button class="bt" data-a="publicar"><span class="ic">🚀</span><b>Publicar</b><small>Drive primeiro, depois GitHub</small></button>
-</div>
+  <button class="bt link" data-link="https://claude.ai/new"><span class="ic">🤖</span><b>Falar com o Claude</b><small>Para o que precisa pensar</small></button>
+  <button class="bt" data-sheet="apps"><span class="ic">🌐</span><b>Meus apps e sites</b><small>Abre aqui no celular</small></button>
+</div></section>
+
+<section class="aba" data-t="prog">
+  <div class="sel"><select id="pjSel"></select></div>
+  <div class="grid">
+    <button class="bt" data-a="proj_atualizar" data-pj><span class="ic">🔄</span><b>Atualizar</b><small>Pegar o que o Claude fez</small></button>
+    <button class="bt" data-a="proj_mudou" data-pj><span class="ic">🔍</span><b>O que mudou?</b><small>Ainda não publicado</small></button>
+    <button class="bt" data-pub><span class="ic">🚀</span><b>Publicar</b><small>Drive primeiro, depois GitHub</small></button>
+    <button class="bt" data-a="proj_historico" data-pj><span class="ic">📜</span><b>Histórico</b><small>Últimas 10 mudanças</small></button>
+    <button class="bt" data-a="backup_um" data-pj><span class="ic">💾</span><b>Backup deste</b><small>Cópia no Drive agora</small></button>
+    <button class="bt link" data-gh><span class="ic">🐙</span><b>Ver no GitHub</b><small>Abre aqui no celular</small></button>
+  </div>
+</section>
+
+<section class="aba" data-t="dia">
+  <div class="grid">
+    <button class="bt" data-a="arrumar_area" data-c="Organizar a Área de Trabalho do PC? Pastas vão para Projetos Arnold > Pastas soltas e arquivos para Arquivos organizados."><span class="ic">🖥️</span><b>Arrumar Área de Trabalho</b><small>Atalhos ficam</small></button>
+    <button class="bt" data-a="arrumar_downloads" data-c="Organizar os Downloads do PC por tipo e mês no Drive?"><span class="ic">📥</span><b>Arrumar Downloads</b><small>Por tipo e mês no Drive</small></button>
+    <button class="bt bt larga" data-sheet="fotos"><span class="ic">🖼️</span><div><b>Preparar fotos para posts</b><small>Põe as fotos no Drive: AI NOLD › fotos para posts</small></div></button>
+  </div>
+</section>
+
+<section class="aba" data-t="cli">
+  <p class="dica">Toque no nome para abrir o app dela aqui. 🔑 confere no PC se o código de acesso está salvo.</p>
+  <div class="log" id="cliLista"></div>
+</section>
+
+<section class="aba" data-t="cer">
+  <div class="grid">
+    <button class="bt" data-sheet="anotar"><span class="ic">✍️</span><b>Anotar</b><small>Guardar uma ideia</small></button>
+    <button class="bt" data-a="cerebro"><span class="ic">🧠</span><b>Ler anotações</b><small>As 10 últimas</small></button>
+    <button class="bt" data-a="historico_pws"><span class="ic">🗒️</span><b>O que o PC fez</b><small>Histórico do mês</small></button>
+    <button class="bt" data-a="aula"><span class="ic">🎓</span><b>Aula de PWS</b><small>Um comando explicado</small></button>
+  </div>
+</section>
+
+<section class="aba" data-t="bkp">
+  <div class="sel"><select id="bkSel"></select></div>
+  <div class="grid">
+    <button class="bt" data-a="backup"><span class="ic">💾</span><b>Salvar TODOS</b><small>Todos os projetos agora</small></button>
+    <button class="bt" data-a="backup_ver" data-bk><span class="ic">📦</span><b>Ver cópias</b><small>Do projeto escolhido</small></button>
+    <button class="bt" data-a="backup_restaurar" data-bk data-c="Restaurar a cópia mais nova numa pasta NOVA no PC? O projeto atual não é mexido."><span class="ic">⏪</span><b>Restaurar</b><small>Numa pasta nova</small></button>
+    <button class="bt" data-a="noturno" data-c="Ligar ou desligar o backup automático das 23:00?"><span class="ic">🌙</span><b>Backup noturno</b><small>Liga / desliga</small></button>
+  </div>
+</section>
+
+<section class="aba" data-t="cfg">
+  <div class="grid">
+    <button class="bt" data-a="ferramentas"><span class="ic">🧰</span><b>Ferramentas</b><small>O que está instalado e ligado</small></button>
+    <button class="bt" data-a="lembrete" data-c="Ligar ou desligar o INSIGHT abrindo sozinho no PC (seg, ter e qui às 20:30)?"><span class="ic">⏰</span><b>Lembrete de estudo</b><small>Liga / desliga</small></button>
+  </div>
+</section>
 
 <h2>PEDIDOS</h2>
 <div class="log" id="log"><div class="vazio">Carregando…</div></div>
@@ -71,7 +134,12 @@ input,select{width:100%;font:16px Inter,sans-serif;padding:12px;border-radius:12
 const OWNER='arnoldsuheth',REPO='super-visao-dados',ARQ='ainold-recados.json';
 const K='ainold_nuvem_v1';
 const PROJETOS=[["Site do Studio","studio-evolution-tech"],["Gestão do Studio (código)","studio-evolution-gestao"],["Gestão do Studio (site)","studio-evolution-gestao-app"],["INSIGHT + SUPER VISÃO","super-visao-app"],["Site da BLESSAINT","Blessaint"],["BLESSAINT Business","blessaint-business"],["Formulário do Studio","studio-evolution-formulario"],["Ju Intimates","ju-intimates"],["Evolution Lab","evolution-lab"],["Life Trail Juliana","app-lifetrail-juliana"],["Life Trail Katiúscia","app-lifetrail-katiuscia"],["Life Trail Ana Paula","app-lifetrail-ana-paula"],["Life Trail Adriana","life-trail-adriana"],["Life Trail Regiane","life-trail-regiane"],["Dra. Ana Luiza","dra-ana-luiza-app"]];
-const NOMES={sites:'🟢 Sites no ar?',atualizar:'🔄 Atualizar tudo',backup:'💾 Backup no Drive',relatorio:'📋 Relatório do PC',arrumar:'🧹 Arrumar o PC',publicar:'🚀 Publicar'};
+const NOMES={sites:'🟢 Sites no ar?',atualizar:'🔄 Atualizar tudo',backup:'💾 Backup de todos',relatorio:'📋 Relatório do PC',arrumar:'🧹 Arrumar o PC',publicar:'🚀 Publicar',
+ arrumar_area:'🖥️ Arrumar Área de Trabalho',arrumar_downloads:'📥 Arrumar Downloads',fotos:'🖼️ Fotos para posts',anotar:'✍️ Anotação',cerebro:'🧠 Anotações',historico_pws:'🗒️ O que o PC fez',aula:'🎓 Aula de PWS',
+ lembrete:'⏰ Lembrete de estudo',noturno:'🌙 Backup noturno',ferramentas:'🧰 Ferramentas',proj_atualizar:'🔄 Atualizar',proj_mudou:'🔍 O que mudou',proj_historico:'📜 Histórico',backup_um:'💾 Backup',
+ backup_ver:'📦 Cópias',backup_restaurar:'⏪ Restaurar',cliente_codigo:'🔑 Código de acesso'};
+const APPS=[["INSIGHT","https://arnoldsuheth.github.io/super-visao-app/insight/"],["SUPER VISÃO","https://arnoldsuheth.github.io/super-visao-app/"],["Gestão do Studio","https://arnoldsuheth.github.io/studio-evolution-gestao-app/"],["Site do Studio","https://www.studioevolutiontech.com.br/"],["Site da BLESSAINT","https://www.blessaint.com.br/"]];
+const CLIENTES=[["Katiúscia","katiu","https://arnoldsuheth.github.io/app-lifetrail-katiuscia/"],["Juliana","juliana","https://arnoldsuheth.github.io/app-lifetrail-juliana/"],["Ana Paula","ana paula","https://arnoldsuheth.github.io/app-lifetrail-ana-paula/"],["Adriana","adriana","https://arnoldsuheth.github.io/life-trail-adriana/"],["Regiane","regiane","https://arnoldsuheth.github.io/life-trail-regiane/"],["Dra. Ana Luiza","luiza",""],["Ju Intimates","ju intim",""],["Amanda","amanda",""],["Michele","michele",""]];
 const $=s=>document.querySelector(s);
 const te=new TextEncoder(),td=new TextDecoder();
 const unb64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
@@ -105,27 +173,45 @@ function desenhar(d){
   else{pc.classList.remove('on');$('#pcTx').textContent=L.some(p=>p.status==='pendente')?'Esperando o PC pegar o pedido (até 1 min)…':'O PC responde em até 1 minuto, se estiver ligado'}
   if(!L.length){$('#log').innerHTML='<div class="vazio">Nenhum pedido ainda. Toque num botão acima ⚡</div>';return}
   $('#log').innerHTML=L.map(p=>{const st={pendente:['p','⏳ aguardando'],rodando:['r','⚙️ fazendo'],feito:['f','✅ feito'],erro:['e','⚠️ erro']}[p.status]||['p',p.status];
-    return `<div class="it"><div class="t"><b>${esc(NOMES[p.acao]||p.acao)}${p.projeto?' · '+esc(p.projeto):''}</b><span><span class="st ${st[0]}">${st[1]}</span> · ${quando(p.feito_em||p.quando)}</span></div>${p.resultado?`<pre>${esc(p.resultado)}</pre>`:''}</div>`}).join('');
+    return `<div class="it"><div class="t"><b>${esc(NOMES[p.acao]||p.acao)}${p.projeto&&!/^[123]$/.test(p.projeto)?' · '+esc(p.projeto):''}</b><span><span class="st ${st[0]}">${st[1]}</span> · ${quando(p.feito_em||p.quando)}</span></div>${p.resultado?`<pre>${esc(p.resultado)}</pre>`:''}</div>`}).join('');
 }
 let ocupado=false;
 async function atualizar(){if(!token()||ocupado)return;ocupado=true;try{desenhar(await ler())}catch(e){if(e.status===401){localStorage.removeItem(K);conectar()}}ocupado=false}
 
-function abrir(html){$('#sh').innerHTML=html;$('#ov').classList.add('on')}
+function abrir(html,depois){$('#sh').innerHTML=html;$('#ov').classList.add('on');depois&&depois()}
 function fechar(){$('#ov').classList.remove('on')}
 $('#ov').onclick=e=>{if(e.target.id==='ov')fechar()};
 
 function publicar(){
   abrir(`<h3>🚀 Publicar um projeto</h3><p>O PC salva a cópia no Drive primeiro e depois publica no GitHub.</p>
-  <select id="pj">${PROJETOS.map(([n,r])=>`<option value="${r}">${esc(n)}</option>`).join('')}</select>
+  <select id="pj">${PROJETOS.map(([n,r])=>`<option value="${r}" ${r===$('#pjSel').value?'selected':''}>${esc(n)}</option>`).join('')}</select>
   <input id="msg" placeholder="O que mudou? Ex.: troquei a foto do topo" maxlength="120">
   <div class="row"><button id="ca">Cancelar</button><button class="go" id="ok">Publicar</button></div>`);
   $('#ca').onclick=fechar;$('#ok').onclick=()=>{const m=$('#msg').value.trim()||'Atualização';pedir('publicar',{projeto:$('#pj').value,mensagem:m});fechar()}
 }
-document.querySelectorAll('.bt').forEach(b=>b.onclick=()=>{
+const opts=PROJETOS.map(([n,r])=>`<option value="${r}">${esc(n)}</option>`).join('');
+$('#pjSel').innerHTML=opts;$('#bkSel').innerHTML=opts;
+try{const u=localStorage.getItem('ainold_pj');if(u){$('#pjSel').value=u;$('#bkSel').value=u}}catch{}
+$('#pjSel').onchange=e=>{try{localStorage.setItem('ainold_pj',e.target.value)}catch{}};
+document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('on',x===b));document.querySelectorAll('.aba').forEach(x=>x.classList.toggle('on',x.dataset.t===b.dataset.t));try{localStorage.setItem('ainold_aba',b.dataset.t)}catch{}});
+try{const ab=localStorage.getItem('ainold_aba');if(ab)document.querySelector(`#tabs [data-t="${ab}"]`)?.click()}catch{}
+$('#cliLista').innerHTML=CLIENTES.map(([n,k,u])=>`<div class="it"><div class="t" style="align-items:center"><b>${u?`<a href="${u}" target="_blank" style="color:inherit;text-decoration:none">👤 ${esc(n)} ↗</a>`:'👤 '+esc(n)}</b><button class="bt" style="min-height:0;padding:7px 11px;border-radius:10px" data-cli="${esc(k)}">🔑 Código</button></div></div>`).join('');
+$('#cliLista').onclick=e=>{const b=e.target.closest('[data-cli]');if(!b)return;if(!token())return conectar();pedir('cliente_codigo',{projeto:b.dataset.cli})};
+const SHEETS={
+ apps:()=>abrir(`<h3>🌐 Meus apps e sites</h3><p>Abrem aqui no celular.</p><div class="log">${APPS.map(([n,u])=>`<a class="it" style="color:inherit;text-decoration:none" href="${u}" target="_blank"><div class="t"><b>${esc(n)}</b><span>↗</span></div></a>`).join('')}</div><div class="row" style="margin-top:12px"><button id="ca">Fechar</button></div>`,()=>$('#ca').onclick=fechar),
+ fotos:()=>abrir(`<h3>🖼️ Fotos para posts</h3><p>1) Pelo app do Google Drive, coloque as fotos em <b>Projetos Arnold › AI NOLD › fotos para posts</b>.<br>2) Escolha a marca. O PC deixa todas em 1080×1350 em <b>fotos prontas</b>.</p><select id="mc"><option value="1">BLESSAINT</option><option value="2">Studio Evolution Tech</option><option value="3">Outra</option></select><div class="row"><button id="ca">Cancelar</button><button class="go" id="ok">Preparar</button></div>`,()=>{$('#ca').onclick=fechar;$('#ok').onclick=()=>{pedir('fotos',{projeto:$('#mc').value});fechar()}}),
+ anotar:()=>abrir(`<h3>✍️ Anotar no cérebro</h3><p>Fica no Drive, junto com o histórico do PC.</p><input id="tx" maxlength="300" placeholder="Sua ideia ou lembrete"><div class="row"><button id="ca">Cancelar</button><button class="go" id="ok">Guardar</button></div>`,()=>{$('#ca').onclick=fechar;setTimeout(()=>$('#tx').focus(),50);$('#ok').onclick=()=>{const t=$('#tx').value.trim();if(!t)return;pedir('anotar',{mensagem:t});fechar()}})
+};
+document.querySelectorAll('.bt').forEach(b=>{if(b.dataset.cli!==undefined)return;b.onclick=()=>{
+  if(b.dataset.link){window.open(b.dataset.link,'_blank');return}
+  if(b.dataset.gh!==undefined){window.open('https://github.com/arnoldsuheth/'+$('#pjSel').value,'_blank');return}
+  if(b.dataset.sheet){if(!token()&&b.dataset.sheet!=='apps')return conectar();return SHEETS[b.dataset.sheet]()}
   if(!token()){conectar();return}
-  const a=b.dataset.a;if(a==='publicar')return publicar();
-  if(b.dataset.c){abrir(`<h3>${esc(NOMES[a])}</h3><p>${esc(b.dataset.c)}</p><div class="row"><button id="ca">Cancelar</button><button class="go" id="ok">Sim, pode</button></div>`);$('#ca').onclick=fechar;$('#ok').onclick=()=>{fechar();pedir(a)};return}
-  pedir(a)});
+  if(b.dataset.pub!==undefined)return publicar();
+  const a=b.dataset.a;if(!a)return;
+  const extra={};if(b.dataset.pj!==undefined)extra.projeto=$('#pjSel').value;if(b.dataset.bk!==undefined)extra.projeto=$('#bkSel').value;
+  if(b.dataset.c){abrir(`<h3>${esc(NOMES[a]||a)}</h3><p>${esc(b.dataset.c)}</p><div class="row"><button id="ca">Cancelar</button><button class="go" id="ok">Sim, pode</button></div>`);$('#ca').onclick=fechar;$('#ok').onclick=()=>{fechar();pedir(a,extra)};return}
+  pedir(a,extra)}});
 
 function conectar(){
   abrir(`<h3>🔐 Entrar no AI NOLD</h3><p>Use a <b>mesma senha do SUPER VISÃO</b>. A senha e a chave ficam só neste aparelho.</p>
