@@ -23,7 +23,7 @@ function salvarImg(e,v){const im=lerImgs();if(v)im[e.id]=v;else delete im[e.id];
 // ---------- estado ----------
 function C(){if(!S.copa){S.copa={div:'mun',ini:hoje(),xp0:xpTotal(),xpIni:xpTotal(),hist:{},tit:[],fundos:[],msgs:[],vistas:{},temporadas:0};salvar()}return S.copa}
 function geral(){const c=C();if(c.xpIni==null){c.xpIni=c.xp0;salvar()}const BASE={mw:500,con:440,bra:380,sb:320,sc:270,sd:220,reg:170,est:120,mun:70};const d=Math.min(dias(c.ini0||c.ini,hoje()),365);
- const L=EQUIPES.map(e=>e.voce?{e,xp:Math.max(0,xpTotal()-c.xpIni),eu:true}:{e,xp:BASE[e.div]+Math.round(semente(e.id+'g')*40)+(e.div===c.div?xpRobo(e):Math.round(d*2.4*(.7+semente(e.id)*.5)))});return L.sort((a,b)=>b.xp-a.xp)}
+ const L=EQUIPES.map(e=>e.voce?{e,xp:Math.max(0,xpTotal()-c.xpIni),eu:true}:{e,xp:e.div===c.div?xpRobo(e):(BASE[e.div]+Math.round(semente(e.id+'g')*40)+Math.round(d*2.4*(.7+semente(e.id)*.5)))});return L.sort((a,b)=>b.xp-a.xp)}
 function xpTotal(){return Object.keys(S.miss||{}).length*3+acertos()+Math.floor(Object.keys(S.vistos||{}).length/2)}
 function bugs(){return Object.values(S.resp||{}).filter(r=>r==='ok').length}
 function dias(a,b){return Math.round((new Date(b)-new Date(a))/864e5)}
@@ -36,7 +36,7 @@ function ritmo(ate){const c=C();let ganho=0,n=0;for(let k=1;k<=7;k++){const d=ad
 function rivais(){const c=C();return EQUIPES.filter(e=>e.div===c.div&&!e.voce)}
 function xpRobo(e){const c=C();const fator=.72+semente(e.id)*.42;let xp=0;const t=Math.min(dias(c.ini,hoje()),90);for(let k=0;k<t;k++){const d=addDia(c.ini,k);xp+=ritmo(d)*fator*(.75+semente(e.id+d)*.5)}
  // parte do dia de hoje, proporcional à hora
- const h=new Date().getHours()/24;xp+=ritmo(hoje())*fator*.9*h;return Math.round(xp)}
+ const desde=c.iniTs?Math.max(0,(Date.now()-Math.max(c.iniTs,new Date(hoje()+'T00:00:00').getTime()))/864e5):new Date().getHours()/24;xp+=ritmo(hoje())*fator*.9*Math.min(1,desde);return Math.round(xp)}
 function tabela(){const c=C(),eu=EQUIPES.find(e=>e.voce);const L=[{e:eu,xp:meuXP(),bugs:bugs(),eu:true},...rivais().map(e=>({e,xp:xpRobo(e),bugs:Math.round(xpRobo(e)*.4)}))];L.sort((a,b)=>b.xp-a.xp||(a.eu?-1:1));return L}
 
 // ---------- fim de temporada ----------
@@ -44,7 +44,7 @@ function checarFim(){const c=C(),inf=INFO[c.div],T=tabela();if(T[0].xp<inf.meta)
  const pos=T.findIndex(x=>x.eu)+1,i=ORDEM.indexOf(c.div);let res;
  if(pos===1){res='campeao';c.tit.push(c.div);if(!c.fundos.includes(c.div))c.fundos.push(c.div);c.div=ORDEM[Math.min(i+1,ORDEM.length-1)]}
  else if(pos===2)res='fica';else{res='cai';c.div=ORDEM[Math.max(0,i-1)]}
- const antes=ORDEM[i];c.ini=hoje();c.xp0=xpTotal();c.hist={};c.temporadas++;salvar();return{res,pos,antes,T}}
+ const antes=ORDEM[i];c.ini=hoje();c.iniTs=Date.now();c.xp0=xpTotal();c.hist={};c.temporadas++;salvar();return{res,pos,antes,T}}
 
 // ---------- provocações ----------
 const DURAS=['Hoje 20:30 eu te espero na Oficina. Se tiver coragem.','Vi você abrindo o app e saindo sem estudar. Clássico.','Mais um dia sem missão? Seu time tá pagando seu salário à toa.','Te passei de novo. Já perdi a conta.','Você não é ruim. Você é inconstante. É pior.','Disse que ia mudar de vida estudando. Cadê?','Até o Boeing sobe mais rápido que você.','Seus robôs colegas estão pedindo transferência.','Abre a Oficina, capitão. Ou tá com medo do código?','Placar de hoje: eu 1 × 0 sua desculpa.'];
@@ -146,6 +146,6 @@ svg.mini{width:64px;height:76px;flex:0 0 64px}
 const st=document.createElement('style');st.textContent=css;document.head.appendChild(st);
 window.abrirCopa=abrirCopa;
 // início
-C();registrar();botao();setTimeout(provocar,1500);
+{const c=C();if(!c.zerou){c.zerou=1;c.ini=hoje();c.iniTs=Date.now();c.xp0=xpTotal();c.hist={};salvar()}}C();registrar();botao();setTimeout(provocar,1500);
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){registrar();atualizarBotao()}});
 })();

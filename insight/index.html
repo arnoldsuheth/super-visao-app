@@ -496,4 +496,4 @@ async function abertura(){const el=$('#ab');if(sessionStorage.getItem('insight_a
 aplicarTema();montarStories();montarFeed();try{const nn=STORIES.filter(st=>S.stories[st.curso]!==hoje()).length;nn?navigator.setAppBadge&&navigator.setAppBadge(nn):navigator.clearAppBadge&&navigator.clearAppBadge()}catch{}atualizarBadges();abertura();
 if('serviceWorker' in navigator&&location.protocol==='https:'){navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{});let rl=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(!rl){rl=true;location.reload()}})}
 </script>
-<script src="./copa-dados.js?v=1"></script><script src="./brasoes.js?v=1"></script><script src="./copa-arte.js?v=1"></script><script src="./copa.js?v=1"></script></body></html>
+<script src="./copa-dados.js?v=1"></script><script src="./brasoes.js?v=2"></script><script src="./copa-arte.js?v=1"></script><script src="./copa.js?v=2"></script></body></html>
