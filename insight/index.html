@@ -178,7 +178,7 @@ input,textarea,select{font-size:16px!important}
 <div class="modal" id="modal"><div class="sheet"></div></div>
 <div class="toast" id="toast"></div>
 <div id="ab"></div>
-<script src="./conteudo.js?v=7"></script>
+<script src="./conteudo.js?v=8"></script>
 <script>
 // ---------------- estado ----------------
 const KEY='insight_v1';const hoje=()=>new Date().toLocaleDateString('sv-SE',{timeZone:'America/Sao_Paulo'});
@@ -395,5 +395,5 @@ async function abertura(){const el=$('#ab');if(sessionStorage.getItem('insight_a
  sessionStorage.setItem('insight_ab','1');el.remove()}
 // ---------------- início ----------------
 aplicarTema();montarStories();montarFeed();atualizarBadges();abertura();
-if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('./sw.js').catch(()=>{});
+if('serviceWorker' in navigator&&location.protocol==='https:'){navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{});let rl=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(!rl){rl=true;location.reload()}})}
 </script></body></html>
