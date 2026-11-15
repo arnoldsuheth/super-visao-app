@@ -127,6 +127,7 @@ textarea.ed:focus{border-color:#d62976}
 #sv .ss{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;gap:16px;padding:90px 26px 90px;background:radial-gradient(circle at 30% 20%,rgba(214,41,118,.35),transparent 55%),radial-gradient(circle at 80% 90%,rgba(250,126,30,.3),transparent 55%),#000}
 #sv .ss .em{font-size:52px}#sv .ss h3{font-size:30px;line-height:1.12;font-weight:900}#sv .ss h3 i{font-style:normal;background:var(--gt);-webkit-background-clip:text;color:transparent}#sv .ss p{font-size:16px;line-height:1.55;color:#eee}
 #sv .ss .ops button{background:rgba(255,255,255,.07);color:#fff;border-color:rgba(255,255,255,.25);position:relative;z-index:6}
+#sv{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:none}#sv .bars,#sv .who{transition:opacity .2s}#sv.seg .bars,#sv.seg .who{opacity:0}
 #sv .tz{position:absolute;top:80px;bottom:80px;width:35%;z-index:4}#sv .tz.r{right:0}#sv .tz.l{left:0}
 /* modal */
 .modal{position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.5);display:none;align-items:flex-end;justify-content:center}.modal.on{display:flex}
@@ -314,20 +315,23 @@ function montarFeed(){const f=$('#feed');f.innerHTML=ordemFeed().map(postHTML).j
 function montarStories(){$('#stories').innerHTML=`<div class="sto" id="stMe"><div class="ring vis">${AV('me')}<span class="add">+</span></div><span>Sua anotação</span></div>`+STORIES.map((s,i)=>{const c=curso(s.curso);const visto=S.stories[c.id]===hoje();return `<div class="sto" data-i="${i}"><div class="ring${visto?' vis':''}">${AV(c.id)}</div><span>${c.nome}</span></div>`}).join('');
  $$('.sto[data-i]').forEach(e=>e.onclick=()=>abrirStory(+e.dataset.i));$('#stMe').onclick=()=>ir('ofc')}
 let stT=null;
-function abrirStory(i){const st=STORIES[i];if(!st)return fecharStory();const c=curso(st.curso);const sv=$('#sv'),w=sv.querySelector('.wrap');let k=0,t0=0,pausa=false;const DUR=6500;
+function abrirStory(i){const st=STORIES[i];if(!st)return fecharStory();const c=curso(st.curso);const sv=$('#sv'),w=sv.querySelector('.wrap');let k=0,prog=0,ult=0,pausa=false,segura=false,segurou=false,tmS=null;const DUR=6500;
  sv.classList.add('on');document.body.style.overflow='hidden';
  const render=()=>{const s=st.slides[k];w.innerHTML=`<div class="bars">${st.slides.map((_,j)=>`<i><b style="width:${j<k?100:0}%"></b></i>`).join('')}</div><div class="who"><div class="av">${AV(c.id)}</div><b>${c.user}</b><small>hoje</small><button class="x" aria-label="Fechar">×</button></div>
   <div class="ss">${s.quiz?`<div class="em">⚡</div><h3>${esc(s.quiz.q)}</h3><div class="ops">${s.quiz.ops.map((o,j)=>`<button data-j="${j}">${esc(o)}</button>`).join('')}</div><p class="fbq"></p>`:`${s.emoji?`<div class="em">${s.emoji}</div>`:''}<h3>${s.h}</h3>${s.code?`<div class="code">${s.code}</div>`:''}${s.p?`<p>${s.p}</p>`:''}`}</div><div class="tz l"></div><div class="tz r"></div>`;
-  t0=performance.now();pausa=!!s.quiz;
-  w.querySelector('.x').onclick=fecharStory;w.querySelector('.tz.r').onclick=()=>prox(1);w.querySelector('.tz.l').onclick=()=>prox(-1);
+  prog=0;pausa=!!s.quiz;
+  w.querySelector('.x').onclick=fecharStory;w.querySelector('.tz.r').onclick=()=>{if(!segurou)prox(1)};w.querySelector('.tz.l').onclick=()=>{if(!segurou)prox(-1)};
   if(s.quiz)w.querySelectorAll('.ops button').forEach(b=>b.onclick=()=>{const fb=w.querySelector('.fbq');w.querySelectorAll('.ops button').forEach(x=>x.className='');const qid='st_'+c.id+'_'+k;
    if(+b.dataset.j===s.quiz.ok){b.className='ok';fb.innerHTML='<b style="color:#5be39a">Isso!</b> '+esc(s.quiz.exp);if(S.resp[qid]!=='ok'){S.resp[qid]='ok';marcarDia();salvar();toast('+3 seguidores 🎉');confete(b)}setTimeout(()=>prox(1),2600)}
    else{b.className='no';fb.innerHTML='<b style="color:#ff8a7a">Quase!</b> Tenta a outra 😉'}})};
  const prox=d=>{k+=d;if(k<0)k=0;if(k>=st.slides.length){S.stories[c.id]=hoje();salvar();montarStories();return abrirStory(i+1)}render()};
  cancelAnimationFrame(stT);render();
- const tick=()=>{const b=w.querySelectorAll('.bars b')[k];if(b&&!pausa){const p=Math.min(1,(performance.now()-t0)/DUR);b.style.width=(p*100)+'%';if(p>=1)prox(1)}if(sv.classList.contains('on'))stT=requestAnimationFrame(tick)};stT=requestAnimationFrame(tick);
- let y0=null;w.ontouchstart=e=>y0=e.touches[0].clientY;w.ontouchend=e=>{if(y0!=null&&e.changedTouches[0].clientY-y0>90)fecharStory();y0=null}}
-function fecharStory(){$('#sv').classList.remove('on');document.body.style.overflow='';cancelAnimationFrame(stT);montarStories();marcarDia()}
+ ult=performance.now();const tick=()=>{const ag=performance.now(),dt=ag-ult;ult=ag;const b=w.querySelectorAll('.bars b')[k];if(b&&!pausa&&!segura){prog=Math.min(1,prog+dt/DUR);b.style.width=(prog*100)+'%';if(prog>=1)prox(1)}if(sv.classList.contains('on'))stT=requestAnimationFrame(tick)};stT=requestAnimationFrame(tick);
+ let y0=null;w.ontouchstart=e=>y0=e.touches[0].clientY;w.ontouchend=e=>{if(y0!=null&&e.changedTouches[0].clientY-y0>90)fecharStory();y0=null};
+ w.onpointerdown=e=>{if(e.target.closest('button'))return;segurou=false;segura=true;clearTimeout(tmS);tmS=setTimeout(()=>{segurou=true;sv.classList.add('seg')},220)};
+ const solta=()=>{clearTimeout(tmS);segura=false;sv.classList.remove('seg');setTimeout(()=>segurou=false,50)};
+ w.onpointerup=solta;w.onpointercancel=solta;w.onpointerleave=solta;w.oncontextmenu=e=>e.preventDefault()}
+function fecharStory(){$('#sv').classList.remove('on','seg');document.body.style.overflow='';cancelAnimationFrame(stT);montarStories();marcarDia()}
 // ---------------- perguntas (comentários) ----------------
 function textoClaude(p,t){const c=p?curso(p.curso):null;const assunto=p?(p.titulo||p.q||p.frente||'post'):'';return `Estou estudando no meu app insight. Sou iniciante total em programação, então me explique bem simples, com comparações de futebol (Inter, Brasileirão), família, luta, Dragon Ball Z, Simpsons ou receitas.${p?`\n\nPost que eu estava vendo: "${assunto}" (perfil ${c.nome}).`:''}\n\nMinha dúvida: ${t}`}
 async function abrirClaude(p,t){const txt=textoClaude(p,t);try{await navigator.clipboard.writeText(txt)}catch{}S.perg.push({post:p?p.id:'',texto:t,quando:new Date().toISOString(),resp:'(perguntei ao Claude)'});salvar();toast('Pergunta copiada. Se não aparecer pronta, é só colar ✓');setTimeout(()=>{location.href='https://claude.ai/new?q='+encodeURIComponent(txt)},450)}
