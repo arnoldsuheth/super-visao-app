@@ -111,3 +111,16 @@ window.CURSOS.push(
  {id:'supabase', site:'supabase.com', nome:'Supabase', user:'curso.supabase', sigla:'Sb', cor:'#3ecf8e', bio:'Banco de dados explicado como o estoque da loja: guardar, buscar, proteger.', modulos:['O que é','Tabelas','Login'], aulas:0, vazio:true},
  {id:'notion', site:'notion.so', nome:'Notion', user:'curso.notion', sigla:'N', cor:'#37352f', bio:'Organizar estudos, projetos e clientes num lugar só.', modulos:['Básico','Bancos','Modelos'], aulas:0, vazio:true}
 );
+
+// Seus projetos (portfólio do seu perfil)
+window.PROJETOS = [
+ {id:'sv', nome:'SUPER VISÃO', tipo:'apps', img:'../super-visao-icon-512-v3.png', cor:'#ff8a2a', desc:'Meu painel de gestão pessoal: rotina, lojas, equipe, finanças e metas. Abertura animada, olho como botão Início e linha do tempo ao vivo.', link:'https://arnoldsuheth.github.io/super-visao-app/', status:'No ar'},
+ {id:'gestao', nome:'Gestão do Studio', tipo:'apps', img:'https://arnoldsuheth.github.io/studio-evolution-gestao-app/icon-512-v2.png', cor:'#3b82f6', desc:'O painel da minha empresa: clientes, cobranças, recibos, contratos e o funil de vendas do Studio Evolution Tech.', status:'No ar · privado'},
+ {id:'insight', nome:'insight', tipo:'apps', img:'./icone-512.png', cor:'#d62976', desc:'Esta rede social de estudos. Troquei o rolar pelo aprender.', status:'No ar'},
+ {id:'lifetrail', nome:'Life Trail', tipo:'clientes', emoji:'🌳', cor:'#3fbf7a', desc:'Apps de rotina sob medida para clientes: blocos do dia, hábitos, metas, árvore que cresce e Bíblia. Cada cliente com senha e dados na nuvem.', status:'Vários clientes'},
+ {id:'blessaint', nome:'BLESSAINT', tipo:'marcas', emoji:'✝️', cor:'#111111', desc:'Minha marca de streetwear gospel com o Mário. Site da marca em construção, é o meu projeto de estudo.', status:'Em construção'},
+ {id:'studio', nome:'Studio Evolution Tech', tipo:'marcas', img:'https://arnoldsuheth.github.io/studio-evolution-gestao-app/icon-512-v2.png', cor:'#1e3a8a', desc:'Minha empresa de sites e apps sob medida.', status:'Ativa'},
+ {id:'lions', nome:"Lion's Cave", tipo:'estudos', emoji:'🦁', cor:'#7a4b1d', desc:'Meu RPG de estudos de programação (fase Lovelace Kingdom).', status:'Em desenvolvimento'},
+ {id:'lab', nome:'Evolution Lab', tipo:'estudos', emoji:'🧪', cor:'#4f5bd5', desc:'Minha plataforma de estudos, que virou o jogo.', status:'Arquivado no jogo'},
+ {id:'sitepessoal', nome:'Meu site pessoal', tipo:'estudos', emoji:'🌐', cor:'#fa7e1e', desc:'O projeto do Mês 1: escrito por mim, do zero, na Oficina.', status:'Mês 1', oficina:true}
+];

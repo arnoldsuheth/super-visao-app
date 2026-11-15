@@ -113,7 +113,7 @@ body.claro .glow{background:radial-gradient(circle at 100% 0,rgba(214,41,118,.10
 .miss{border-radius:16px;padding:14px;margin-bottom:12px;background:var(--card);border:1px solid var(--ln)}
 .miss small{font:800 10.5px Menlo,monospace;letter-spacing:2px}.miss h4{font-size:17px;margin:4px 0}.miss p{font-size:13.5px;line-height:1.45}
 .miss .ok{color:#1fa95e;font-weight:800}
-textarea.ed{width:100%;min-height:200px;border-radius:14px;border:1.5px solid var(--ln);background:#141416;color:#eee;font:14px/1.55 Menlo,ui-monospace,monospace;padding:12px;resize:vertical;outline:none}
+textarea.ed{width:100%;min-height:200px;border-radius:14px;border:1.5px solid var(--ln);background:#141416;color:#eee;font:16px/1.55 Menlo,ui-monospace,monospace;padding:12px;resize:vertical;outline:none}
 textarea.ed:focus{border-color:#d62976}
 .kb{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}.kb button{font:700 13px Menlo,monospace;padding:7px 10px;border-radius:8px;border:1px solid var(--ln);background:var(--chip);color:var(--tx);cursor:pointer}
 .prev{margin-top:10px;border-radius:14px;overflow:hidden;border:1px solid var(--ln);background:#fff}.prev .lbx{font:800 10px Menlo,monospace;letter-spacing:2px;padding:6px 10px;background:var(--g);color:#fff}
@@ -131,7 +131,7 @@ textarea.ed:focus{border-color:#d62976}
 /* modal */
 .modal{position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.5);display:none;align-items:flex-end;justify-content:center}.modal.on{display:flex}
 .sheet{width:100%;max-width:480px;background:var(--bg);border-radius:20px 20px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom))}
-.sheet h4{font-size:16px;margin-bottom:8px}.sheet textarea{width:100%;min-height:110px;border-radius:12px;border:1.5px solid var(--ln);background:var(--chip);color:var(--tx);font:15px inherit;font-family:inherit;padding:12px;outline:none}
+.sheet{overflow:hidden;max-height:92vh;overflow-y:auto}.sheet h4{font-size:17px;margin-bottom:10px;line-height:1.3}.sheet textarea{width:100%;min-height:110px;border-radius:12px;border:1.5px solid var(--ln);background:var(--chip);color:var(--tx);font:16px inherit;font-family:inherit;padding:12px;outline:none}
 .sheet .row{display:flex;gap:8px;margin-top:10px}.sheet .row button{flex:1;padding:12px;border-radius:12px;border:0;font:800 14px inherit;font-family:inherit;background:var(--chip);color:var(--tx)}.sheet .row .gr{background:var(--g);color:#fff}
 .toast{position:fixed;left:50%;bottom:calc(100px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);z-index:80;background:var(--tx);color:var(--bg);padding:10px 16px;border-radius:20px;font-size:13px;font-weight:700;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap}.toast.on{opacity:1;transform:translateX(-50%)}
 .fim{padding:30px 20px 40px;text-align:center;color:var(--mu);font-size:13.5px;line-height:1.5}
@@ -141,6 +141,9 @@ textarea.ed:focus{border-color:#d62976}
 #ab .word{font-weight:900;font-size:46px;letter-spacing:-1px;color:#fff;opacity:0;margin-top:26px}
 #ab .word span{background:linear-gradient(90deg,#feda75,#fa7e1e,#d62976,#962fbf,#4f5bd5,#feda75);background-size:200% 100%;-webkit-background-clip:text;color:transparent}
 #ab .sub{font-size:13px;color:#a8a8a8;margin-top:8px;opacity:0}
+input,textarea,select{font-size:16px!important}
+@media(min-width:700px){#app{box-shadow:0 0 0 1px var(--ln);min-height:100vh}.sheet{border-radius:20px;margin-bottom:20px}.modal{align-items:center}}
+.grid.pj>div{padding:0;overflow:hidden}.grid.pj img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.grid.pj .pe{font-size:44px}.grid.pj .pn{position:absolute;left:0;right:0;bottom:0;padding:18px 8px 7px;font-size:11.5px;text-align:left;background:linear-gradient(transparent,rgba(0,0,0,.65));color:#fff}
 </style></head><body class="claro">
 <svg width="0" height="0" style="position:absolute"><defs>
 <linearGradient id="hg" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#feda75"/><stop offset=".3" stop-color="#fa7e1e"/><stop offset=".6" stop-color="#d62976"/><stop offset="1" stop-color="#962fbf"/></linearGradient>
@@ -175,7 +178,7 @@ textarea.ed:focus{border-color:#d62976}
 <div class="modal" id="modal"><div class="sheet"></div></div>
 <div class="toast" id="toast"></div>
 <div id="ab"></div>
-<script src="./conteudo.js?v=5"></script>
+<script src="./conteudo.js?v=7"></script>
 <script>
 // ---------------- estado ----------------
 const KEY='insight_v1';const hoje=()=>new Date().toLocaleDateString('sv-SE',{timeZone:'America/Sao_Paulo'});
@@ -286,7 +289,7 @@ function fecharStory(){$('#sv').classList.remove('on');document.body.style.overf
 // ---------------- perguntas (comentários) ----------------
 function textoClaude(p,t){const c=p?curso(p.curso):null;const assunto=p?(p.titulo||p.q||p.frente||'post'):'';return `Estou estudando no meu app insight. Sou iniciante total em programação, então me explique bem simples, com comparações de futebol (Inter, Brasileirão), família, luta, Dragon Ball Z, Simpsons ou receitas.${p?`\n\nPost que eu estava vendo: "${assunto}" (perfil ${c.nome}).`:''}\n\nMinha dúvida: ${t}`}
 async function abrirClaude(p,t){const txt=textoClaude(p,t);try{await navigator.clipboard.writeText(txt)}catch{}S.perg.push({post:p?p.id:'',texto:t,quando:new Date().toISOString(),resp:'(perguntei ao Claude)'});salvar();toast('Pergunta copiada. Se não aparecer pronta, é só colar ✓');setTimeout(()=>{location.href='https://claude.ai/new?q='+encodeURIComponent(txt)},450)}
-function perguntar(p){const m=$('#modal'),sh=m.querySelector('.sheet');sh.innerHTML=`<h4>💬 Pergunta sobre "${p?esc(p.titulo||'este post'):'qualquer coisa'}"</h4><textarea placeholder="Escreva sem medo. Não existe pergunta boba."></textarea><button class="ask" style="width:100%;margin-top:10px;padding:14px;border-radius:12px;border:0;background:var(--g);color:#fff;font:800 15px inherit;font-family:inherit">✨ Perguntar ao Claude agora</button><p style="font-size:12px;color:var(--mu);margin-top:6px;line-height:1.4">Abre o app do Claude com a sua dúvida e o assunto do post. A resposta vem na hora.</p><div class="row"><button>Cancelar</button><button class="gr" style="background:var(--chip);color:var(--tx)">Só guardar</button></div>`;
+function perguntar(p){const m=$('#modal'),sh=m.querySelector('.sheet');sh.innerHTML=`<h4>💬 ${p?'Dúvida sobre: '+esc((p.titulo||p.q||p.frente||'este post').slice(0,60)):'Sua dúvida'}</h4><textarea placeholder="Escreva sem medo. Não existe pergunta boba."></textarea><button class="ask" style="width:100%;margin-top:10px;padding:14px;border-radius:12px;border:0;background:var(--g);color:#fff;font:800 15px inherit;font-family:inherit">✨ Perguntar ao Claude agora</button><p style="font-size:12px;color:var(--mu);margin-top:6px;line-height:1.4">Abre o app do Claude com a sua dúvida e o assunto do post. A resposta vem na hora.</p><div class="row"><button>Cancelar</button><button class="gr" style="background:var(--chip);color:var(--tx)">Só guardar</button></div>`;
  sh.querySelector('.ask').onclick=()=>{const t=sh.querySelector('textarea').value.trim();if(!t){sh.querySelector('textarea').focus();return toast('Escreva a sua dúvida primeiro')}m.classList.remove('on');abrirClaude(p,t)};
  m.classList.add('on');sh.querySelector('textarea').focus();
  sh.querySelectorAll('button')[0].onclick=()=>m.classList.remove('on');
@@ -321,23 +324,31 @@ function montarOfc(){const feitas=MISSOES.filter(m=>S.miss[m.id]).length;const a
  ed.oninput=att;att();
  $$('#ofc .kb button').forEach(b=>b.onclick=()=>{const t=b.dataset.k.replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&');const s=ed.selectionStart,e=ed.selectionEnd;ed.value=ed.value.slice(0,s)+t+ed.value.slice(e);ed.focus();ed.selectionStart=ed.selectionEnd=s+t.length;att()})}
 // ---------------- perfis ----------------
+let filtro='todos';
+function abrirProjeto(id){const p=PROJETOS.find(x=>x.id===id);const m=$('#modal'),sh=m.querySelector('.sheet');
+ sh.innerHTML=`<div style="display:flex;gap:14px;align-items:center;margin-bottom:12px"><div style="width:64px;height:64px;border-radius:16px;overflow:hidden;flex:0 0 auto;display:grid;place-items:center;font-size:32px;background:${p.img?'#111':p.cor}">${p.img?`<img src="${p.img}" style="width:100%;height:100%;object-fit:cover">`:p.emoji}</div><div><h4 style="margin:0">${esc(p.nome)}</h4><span style="font-size:12.5px;color:var(--mu)">${esc(p.status)}</span></div></div><p style="font-size:15px;line-height:1.5">${esc(p.desc)}</p><div class="row"><button>Fechar</button>${p.link?'<button class="gr" data-go>Abrir ↗</button>':p.oficina?'<button class="gr" data-of>Abrir a Oficina</button>':''}</div>`;
+ m.classList.add('on');sh.querySelector('.row button').onclick=()=>m.classList.remove('on');
+ const g=sh.querySelector('[data-go]');if(g)g.onclick=()=>window.open(p.link,'_blank');
+ const o=sh.querySelector('[data-of]');if(o)o.onclick=()=>{m.classList.remove('on');ir('ofc')}}
 function montarPerfil(id){const t=$('#t-pf');
  if(id==='me'){const seq=sequencia();const feitas=Object.keys(S.miss).length;
   t.innerHTML=`<div class="hd">${esc((S.edit.me||{}).user||'arnold.suheth')}<span class="sp"><button class="btn" id="pfTema">${I('sun')}</button></span></div>
   <div class="pf"><div class="big" id="bigFoto" style="position:relative;cursor:pointer">${AV('me')}<span class="cam">📷</span></div><div class="nums"><div><b>${Object.keys(S.vistos).length}</b><small>estudados</small></div><div><b id="segN">0</b><small>seguidores</small></div><div><b>${Object.keys(S.seg).length}</b><small>seguindo</small></div></div></div>
-  <div class="bio"><b>${esc((S.edit.me||{}).nome||'Arnold Suheth')}</b>${esc((S.edit.me||{}).bio||'Supervisor · Ciência da Computação · fundador do Studio Evolution Tech')}<br><span>🔥 ${seq} ${seq===1?'dia seguido':'dias seguidos'} · meta do mês: meu site no ar</span></div>
+  <div class="bio"><b>${esc((S.edit.me||{}).nome||'Arnold Suheth')}</b>${(S.edit.me||{}).bio?esc(S.edit.me.bio):'🧭 Supervisor na rede Indus<br>🚀 Fundador do Studio Evolution Tech · sites e apps sob medida<br>✝️ Cofundador da BLESSAINT<br>🎓 Ciência da Computação · aprendendo em público'}<br><span>🔥 ${seq} ${seq===1?'dia seguido':'dias seguidos'} · meta do mês: meu site no ar</span></div>
   <div class="pbar"><i style="width:${Math.round(feitas/16*100)}%"></i></div><div class="pbl"><span>Mês 1 · ${feitas} de 16 missões</span><span>projeto: site pessoal</span></div>
   <div class="btns"><button id="pfEd">Editar perfil</button><button id="pfOfc" class="gr">Abrir a Oficina</button><button id="pfPerg">Perguntas</button></div>
-  <div class="hl">${CURSOS.filter(c=>!c.vazio).map(c=>`<div><i class="${cursoPct(c.id)>=100?'done':''}">${{site:'🌐',logica:'🧠',ia:'🤖',design:'🎨',bastidores:'👁️'}[c.id]||'📚'}</i>${c.nome.split(' ')[0]}</div>`).join('')}</div>
-  <div class="tabs"><button class="on" data-tb="g">Guardados</button><button data-tb="p">Projetos</button><button data-tb="c">Conquistas</button></div><div id="pfTab"></div>`;
+  <div class="hl" id="pfHl">${[['todos','✦','Todos'],['apps','📱','Meus apps'],['clientes','🤝','Clientes'],['marcas','🏷️','Marcas'],['estudos','🎓','Estudos']].map(([k,e,n])=>`<div data-f="${k}" style="cursor:pointer"><i class="${k===filtro?'done':''}">${e}</i>${n}</div>`).join('')}</div>
+  <div class="tabs"><button class="on" data-tb="p">Projetos</button><button data-tb="g">Guardados</button><button data-tb="c">Conquistas</button></div><div id="pfTab"></div>`;
   const n=seguidores();let v=0;const f=()=>{v=Math.min(n,v+Math.max(1,Math.ceil(n/30)));const e=$('#segN');if(e){e.textContent=v;if(v<n)requestAnimationFrame(f)}};f();
   $('#pfTema').onclick=()=>$('#bTema').click();$('#bigFoto').onclick=()=>trocarFoto('me',()=>montarPerfil('me'));$('#pfEd').onclick=()=>editarPerfil('me');$('#pfOfc').onclick=()=>ir('ofc');$('#pfPerg').onclick=()=>$('#bPerg').click();
   const tab=k=>{$$('#t-pf .tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tb===k));const box=$('#pfTab');
    if(k==='g'){const gs=POSTS.filter(p=>S.guard[p.id]);box.innerHTML=gs.length?`<div class="grid">${gs.map(p=>`<div data-id="${p.id}">${esc((p.titulo||p.q||p.frente).slice(0,46))}</div>`).join('')}</div>`:'<div class="vazio">Toque duas vezes num post para guardar.<br>Os guardados voltam para você revisar.</div>';box.querySelectorAll('[data-id]').forEach(e=>e.onclick=()=>abrirPost(e.dataset.id))}
-   if(k==='p')box.innerHTML=`<div class="grid"><div style="grid-column:span 3;aspect-ratio:auto;padding:22px">📌 Projeto 1 · Site pessoal<br><span style="font-weight:600;font-size:12px;opacity:.9">${feitas} de 16 missões · fica fixado aqui e vira portfólio</span></div><div class="lk">Projeto 2<br>Painel</div><div class="lk">Projeto 3<br>SUPER VISÃO gerentes</div><div class="lk">…</div></div>`;
+   if(k==='p'){const L=PROJETOS.filter(p=>filtro==='todos'||p.tipo===filtro);box.innerHTML=`<div class="grid pj">${L.map(p=>`<div data-pj="${p.id}" style="background:${p.img?'#111':p.cor}">${p.img?`<img src="${p.img}" alt="" onerror="this.remove()">`:`<span class="pe">${p.emoji||'✦'}</span>`}<span class="pn">${esc(p.nome)}</span></div>`).join('')}</div>`;
+    box.querySelectorAll('[data-pj]').forEach(e=>e.onclick=()=>abrirProjeto(e.dataset.pj))}
    if(k==='c'){const C=[['🎯','Primeiro acerto',acertos()>=1],['🔥','3 dias seguidos',seq>=3],['🧱','Primeira tag',!!S.miss.m1],['⚽','5 desafios',acertos()>=5],['🌐','Site da semana 1',feitas>=4],['🏆','Sete dias de fogo',seq>=7]];
     box.innerHTML=`<div class="grid">${C.map(([e,n,ok])=>`<div class="${ok?'':'lk'}" style="font-size:12px"><span style="font-size:26px;display:block">${e}</span>${n}</div>`).join('')}</div>`}};
-  $$('#t-pf .tabs button').forEach(b=>b.onclick=()=>tab(b.dataset.tb));tab('g');return}
+  $$('#t-pf .tabs button').forEach(b=>b.onclick=()=>tab(b.dataset.tb));
+  $$('#pfHl [data-f]').forEach(d=>d.onclick=()=>{filtro=d.dataset.f;$$('#pfHl i').forEach(i=>i.classList.toggle('done',i.parentNode===d));tab('p')});tab('p');return}
  const c=curso(id);const ps=POSTS.filter(p=>p.curso===id);const pct=cursoPct(id);
  t.innerHTML=`<div class="hd"><button class="btn" id="pfBack">${I('back')}</button>${c.user}</div>
  <div class="pf"><div class="big" id="bigFoto" style="position:relative;cursor:pointer">${AV(c.id)}<span class="cam">📷</span></div><div class="nums"><div><b>${c.aulas||'—'}</b><small>aulas</small></div><div><b>${c.modulos.length}</b><small>módulos</small></div><div><b>${ps.filter(p=>S.vistos[p.id]).length}</b><small>vistos</small></div></div></div>
