@@ -79,7 +79,7 @@ body.claro .glow{background:radial-gradient(circle at 100% 0,rgba(214,41,118,.10
 /* ao vivo */
 .av2{height:100%;display:grid;grid-template-rows:1fr 1fr;background:var(--card)}
 .av2 pre{margin:0;padding:12px 14px;font:12.5px/1.55 Menlo,ui-monospace,monospace;overflow:auto;background:#141416;color:#e8e8e8}
-.av2 pre .t{color:#ff9a6a}.av2 pre .a{color:#8ad4ff}
+.av2 pre{background:#1e1e1e;color:#d4d4d4;white-space:pre-wrap}
 .av2 iframe{width:100%;height:100%;border:0;background:#fff}
 .av2 .lb{position:absolute;left:10px;font:800 9px Menlo,monospace;letter-spacing:2px;padding:3px 7px;border-radius:6px;background:var(--g);color:#fff;z-index:2}
 /* curiosidade */
@@ -123,11 +123,98 @@ body.claro .glow{background:radial-gradient(circle at 100% 0,rgba(214,41,118,.10
 .miss{border-radius:16px;padding:14px;margin-bottom:12px;background:var(--card);border:1px solid var(--ln)}
 .miss small{font:800 10.5px Menlo,monospace;letter-spacing:2px}.miss h4{font-size:17px;margin:4px 0}.miss p{font-size:13.5px;line-height:1.45}
 .miss .ok{color:#1fa95e;font-weight:800}
-textarea.ed{width:100%;min-height:200px;border-radius:14px;border:1.5px solid var(--ln);background:#141416;color:#eee;font:16px/1.55 Menlo,ui-monospace,monospace;padding:12px;resize:vertical;outline:none}
+textarea.old-ed{width:100%;min-height:200px;border-radius:14px;border:1.5px solid var(--ln);background:#141416;color:#eee;font:16px/1.55 Menlo,ui-monospace,monospace;padding:12px;resize:vertical;outline:none}
 textarea.ed:focus{border-color:#d62976}
 .kb{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}.kb button{font:700 13px Menlo,monospace;padding:7px 10px;border-radius:8px;border:1px solid var(--ln);background:var(--chip);color:var(--tx);cursor:pointer}
 .prev{margin-top:10px;border-radius:14px;overflow:hidden;border:1px solid var(--ln);background:#fff}.prev .lbx{font:800 10px Menlo,monospace;letter-spacing:2px;padding:6px 10px;background:var(--g);color:#fff}
 .prev iframe{width:100%;height:260px;border:0;display:block}
+
+/* ===== Oficina em tela cheia (modo quadro) ===== */
+.ofx{display:flex;flex-direction:column;gap:8px}
+.oftb{display:flex;flex-direction:column;gap:6px;animation:ofdesce .35s cubic-bezier(.2,.8,.2,1)}
+@keyframes ofdesce{from{transform:translateY(-110%);opacity:0}}
+.oft1{display:flex;gap:6px;align-items:stretch}
+.ofsair{flex:0 0 40px;border:1px solid var(--ln);background:var(--card);color:var(--tx);border-radius:12px;font:300 30px/1 inherit;font-family:inherit;cursor:pointer}
+.ofmb{flex:1;min-width:0;text-align:left;border:1px solid var(--ln);background:var(--card);color:var(--tx);border-radius:12px;padding:6px 10px;font-family:inherit;cursor:pointer}
+.ofmb.on{border-color:var(--tx)}
+.ofmb small{display:block;font:800 9.5px Menlo,monospace;letter-spacing:1.3px;color:var(--mu);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ofmb b{display:block;font-size:14px;margin-top:1px}
+.ofmb p{font-size:12.5px;line-height:1.35;color:var(--mu);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.oft2{display:flex;gap:4px;padding:4px;border-radius:16px;background:color-mix(in srgb,var(--card) 94%,transparent);border:1px solid var(--ln);box-shadow:0 6px 20px rgba(0,0,0,.08)}
+.oft2 button{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:1px;border:0;background:none;color:var(--tx);border-radius:11px;padding:5px 0 4px;font:700 9.5px inherit;font-family:inherit;cursor:pointer}
+.oft2 button i{font-style:normal;font-size:18px;line-height:1.1}
+.oft2 button.on{background:var(--g);color:#fff}
+.ofmain{position:relative;flex:1;min-height:0;display:flex;flex-direction:column}
+.ofmain .vsc{flex:1;min-height:0;display:flex;flex-direction:column}
+.vsc .vtop span{margin-left:auto;color:#6a9955}
+.cmbox{flex:1;min-height:0}.cmbox .cm-editor{height:100%;background:#1e1e1e}
+.ofsite{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;border-radius:12px;overflow:hidden;border:1px solid var(--ln);background:#fff;animation:ofsobe .25s ease}
+.ofsite[hidden]{display:none}.ofsite .lbx{font:800 10px Menlo,monospace;letter-spacing:2px;padding:7px 10px;background:var(--g);color:#fff}.ofsite iframe{flex:1;width:100%;border:0}
+@keyframes ofsobe{from{opacity:0;transform:translateY(12px)}}
+.ofpan{position:absolute;left:0;right:0;top:0;z-index:5;max-height:78%;overflow:auto;padding:14px;border-radius:16px;background:var(--card);border:1px solid var(--ln);box-shadow:0 18px 40px rgba(0,0,0,.25);animation:ofdesce2 .22s ease}
+.ofpan[hidden]{display:none}
+@keyframes ofdesce2{from{opacity:0;transform:translateY(-10px)}}
+.ofpx{position:sticky;top:0;float:right;width:30px;height:30px;border-radius:50%;border:1px solid var(--ln);background:var(--bg);color:var(--tx);font-size:13px;cursor:pointer;z-index:2}
+.ofh{display:block;font:800 10px Menlo,monospace;letter-spacing:1.5px;color:var(--mu);margin:6px 0 8px}
+.ofpede{font-size:14px;line-height:1.45;margin-bottom:8px}
+.ofpan .cg{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;clear:both}
+.ofpan .cg button{display:flex;flex-direction:column;align-items:center;gap:3px;border:1px solid var(--ln);background:var(--bg);color:var(--tx);border-radius:10px;padding:6px 2px;font:700 10.5px inherit;font-family:inherit;cursor:pointer}
+.ofpan .cg i{width:26px;height:26px;border-radius:50%;border:1px solid rgba(128,128,128,.4)}
+.ofpan .cg code{font:10px Menlo,monospace;color:var(--mu)}
+.ofx2{display:flex;align-items:center;gap:8px;margin-top:10px;font:700 13px inherit;font-family:inherit}.ofx2 input{width:44px;height:30px;border:0;background:none;padding:0}
+.rvi{display:block;width:100%;text-align:left;margin-top:6px;padding:9px 11px;border-radius:10px;border:1px solid var(--ln);background:var(--bg);color:var(--tx);font:13px/1.4 inherit;font-family:inherit;cursor:pointer}
+.rvi b{display:block;font-size:12px;margin-bottom:2px}.rvi.erro{border-left:4px solid #e5484d}.rvi.aviso{border-left:4px solid #f5a524}
+body.na-ofc .nav{transform:translateY(170%);opacity:0;pointer-events:none}
+.nav{transition:transform .35s cubic-bezier(.2,.8,.2,1),opacity .3s}
+@media(max-width:899px){
+ body.na-ofc #t-ofc.on{position:fixed;left:0;right:0;top:var(--vvt,0px);height:var(--vvh,100dvh);z-index:50;background:var(--bg);display:flex;flex-direction:column;overflow:hidden;padding-top:env(safe-area-inset-top)}
+ body.na-ofc #t-ofc .hd{display:none}
+ body.na-ofc #t-ofc .ofc{flex:1;min-height:0;padding:8px 10px calc(8px + env(safe-area-inset-bottom));display:flex;flex-direction:column}
+ body.na-ofc #t-ofc .ofx{flex:1;min-height:0}
+}
+@media(min-width:900px){
+ body.na-ofc .nav{transform:none;opacity:1;pointer-events:auto}
+ #t-ofc .ofx{height:calc(100vh - 90px)}
+ #t-ofc .ofmain{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+ #t-ofc .ofsite[hidden]{display:flex}#t-ofc .ofsite{position:relative;inset:auto}
+ #t-ofc .oft2 button[data-f=site]{display:none}
+}
+
+/* oficina antiga */
+.ofbar{position:sticky;top:var(--vvt,0px);z-index:15;margin:0 -14px 10px;padding:8px 14px 8px;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--ln)}
+.ofmis{display:block;width:100%;text-align:left;border:1px solid var(--ln);background:var(--card);color:var(--tx);border-radius:14px;padding:9px 12px;font-family:inherit;cursor:pointer}
+.ofmis small{display:flex;gap:8px;white-space:nowrap;justify-content:space-between;font:800 10px Menlo,monospace;letter-spacing:1.5px;color:var(--mu)}
+.ofmis b{display:block;font-size:14.5px;margin:3px 0 2px}
+.ofmis p{font-size:13.5px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.ofbar.aberta .ofmis p{-webkit-line-clamp:unset;display:block}
+.ofmais{display:none;max-height:45vh;overflow:auto}.ofbar.aberta .ofmais{display:block}
+.oftabs{display:flex;gap:6px;margin-top:8px}.oftabs button{flex:1;border:1.5px solid var(--ln);background:var(--card);color:var(--tx);border-radius:10px;padding:7px;font:800 13px inherit;font-family:inherit;cursor:pointer}
+.oftabs button.on{background:var(--tx);color:var(--bg);border-color:var(--tx)}
+.ofbar .kb{flex-wrap:nowrap;overflow-x:auto;margin:8px -14px 0;padding:0 14px;scrollbar-width:none}.ofbar .kb::-webkit-scrollbar{display:none}.ofbar .kb button{flex:0 0 auto}
+.ofc .ofp[hidden]{display:none}
+.vsc{position:relative;border-radius:12px;background:#1e1e1e;border:1px solid #2b2b2b;overflow:hidden}
+.vsc .vtop{display:flex;align-items:center;gap:6px;padding:7px 10px;background:#252526;border-bottom:1px solid #2b2b2b;font:12px Menlo,ui-monospace,monospace;color:#cccccc}
+.vsc .vtop i{width:9px;height:9px;border-radius:50%;background:#e44d26;display:inline-block}
+.vsc .cm-editor{background:#1e1e1e}.vsc .cm-gutters{border-right:0}.vsc pre{will-change:transform}
+.vsc pre,.vsc textarea{margin:0;border:0;padding:12px 12px 14px 46px;font:16px/1.55 Menlo,ui-monospace,SFMono-Regular,monospace;font-variant-ligatures:none;tab-size:2;letter-spacing:0;white-space:pre-wrap;overflow-wrap:break-word;word-wrap:break-word;word-break:normal;min-height:240px;box-sizing:border-box;width:100%}
+.vsc pre{color:#d4d4d4;counter-reset:ln;pointer-events:none}
+.vsc textarea{position:absolute;inset:0;height:100%;background:transparent;color:transparent;-webkit-text-fill-color:transparent;caret-color:#aeafad;resize:none;outline:none;overflow:hidden;-webkit-appearance:none;appearance:none;border-radius:0}
+.vsc textarea::selection{background:rgba(38,79,120,.85);-webkit-text-fill-color:transparent}
+.vsc .l{position:relative;min-height:1.55em}.vsc .l::before{counter-increment:ln;content:counter(ln);position:absolute;left:-46px;width:32px;text-align:right;color:#6e7681;font-size:13px}
+.vsc.foco .l.at::before{color:#c6c6c6}
+.vsc.foco .l.at{background:rgba(255,255,255,.04)}
+.vs-pn{color:#808080}.vs-tg{color:#569cd6}.vs-at{color:#9cdcfe}.vs-st{color:#ce9178}.vs-cm{color:#6a9955;font-style:italic}.vs-sl{color:#d7ba7d}.vs-pr{color:#9cdcfe}.vs-nu{color:#b5cea8}.vs-vl{color:#ce9178}.vs-br{color:#ffd700}
+.ofp .prev{margin-top:0}.ofp .prev iframe{height:62vh}
+body.digitando .nav{display:none}
+.ofbar .kb .kcor{background:var(--g);color:#fff;border:0}
+.ofcor{display:none;margin-top:8px;max-height:42vh;overflow:auto;padding:10px;border-radius:14px;background:var(--card);border:1px solid var(--ln)}.ofcor.on{display:block}
+.ofcor small{display:block;font:800 10px Menlo,monospace;letter-spacing:1.5px;color:var(--mu);margin-bottom:8px}
+.ofcor .cg{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.ofcor .cg button{display:flex;flex-direction:column;align-items:center;gap:3px;border:1px solid var(--ln);background:var(--bg);color:var(--tx);border-radius:10px;padding:6px 2px;font:700 10.5px inherit;font-family:inherit;cursor:pointer}
+.ofcor .cg i{width:26px;height:26px;border-radius:50%;border:1px solid rgba(128,128,128,.4)}
+.ofcor .cg code{font:10px Menlo,monospace;color:var(--mu)}
+.ofcor label{display:flex;align-items:center;gap:8px;margin-top:8px;font:700 13px inherit;font-family:inherit}.ofcor input[type=color]{width:44px;height:30px;border:0;background:none;padding:0}
+@media(min-width:900px){.ofc .ofgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}.ofc .ofp[hidden]{display:block}.oftabs{display:none}.ofp .prev{position:sticky;top:180px}}
 /* story viewer */
 #sv{position:fixed;inset:0;z-index:60;background:#000;color:#fff;display:none}#sv.on{display:block}
 #sv .wrap{position:relative;max-width:480px;height:100%;margin:0 auto;overflow:hidden}
@@ -311,7 +398,8 @@ input,textarea,select{font-size:16px!important}
 <div class="modal" id="modal"><div class="sheet"></div></div>
 <div class="toast" id="toast"></div>
 <div id="ab"></div>
-<script src="./conteudo.js?v=13"></script>
+<script src="./conteudo.js?v=14"></script>
+<script src="./editor.js?v=2"></script>
 <script>
 // ---------------- estado ----------------
 const KEY='insight_v1';const hoje=()=>new Date().toLocaleDateString('sv-SE',{timeZone:'America/Sao_Paulo'});
@@ -357,7 +445,7 @@ $('#bTema').onclick=()=>{S.tema=S.tema==='claro'?'faisca':'claro';salvar();aplic
 // ---------------- navegação ----------------
 let telaAtual='feed';
 function topo(suave){const o={top:0,behavior:suave?'smooth':'auto'};[window,document.documentElement,document.body,...document.querySelectorAll('.tela.on')].forEach(e=>{try{e.scrollTo(o)}catch(_){e.scrollTop=0}})}
-function ir(t,arg){const mesma=telaAtual===t;telaAtual=t;$$('.tela').forEach(s=>s.classList.remove('on'));$$('.nav .btn').forEach(b=>b.classList.toggle('on',b.dataset.t===t||(t==='pf'&&arg==='me'&&b.dataset.t==='me')));
+function ir(t,arg){const mesma=telaAtual===t;if(t!=='ofc')document.body.classList.remove('na-ofc');telaAtual=t;$$('.tela').forEach(s=>s.classList.remove('on'));$$('.nav .btn').forEach(b=>b.classList.toggle('on',b.dataset.t===t||(t==='pf'&&arg==='me'&&b.dataset.t==='me')));
  if(t==='feed')$('#t-feed').classList.add('on');
  if(t==='exp'){montarExp();$('#t-exp').classList.add('on')}
  if(t==='ofc'){montarOfc();$('#t-ofc').classList.add('on')}
@@ -369,10 +457,42 @@ $$('.nav .btn').forEach(b=>b.onclick=()=>ir(b.dataset.t));
 function midia(p){
  if(p.tipo==='carrossel')return `<div class="car">${p.slides.map(s=>`<div class="sl">${s.emoji?`<div class="em">${s.emoji}</div>`:''}<h3>${s.h}</h3>${s.code?`<div class="code">${s.code}</div>`:''}${s.p?`<p>${s.p}</p>`:''}</div>`).join('')}</div><span class="cnt">1/${p.slides.length}</span><div class="dots">${p.slides.map((_,i)=>`<i class="${i?'':'on'}"></i>`).join('')}</div><div class="tapz l"></div><div class="tapz r"></div>`;
  if(p.tipo==='desafio'){const r=S.resp[p.id];return `<div class="dz"><span class="tag gtx">⚡ DESAFIO</span><h3>${esc(p.q)}</h3>${p.code?`<div class="code">${esc(p.code)}</div>`:''}<div class="ops">${p.ops.map((o,i)=>`<button data-i="${i}" class="${r==='ok'&&i===p.ok?'ok':''}">${esc(o)}</button>`).join('')}</div><div class="fb">${r==='ok'?`<b class="ok">Você já acertou essa ✓</b> ${esc(p.exp)}`:''}</div>${r!=='ok'&&p.dica?`<button class="dica">Preciso de uma dica</button>`:''}</div>`}
- if(p.tipo==='aovivo')return `<div class="av2"><span class="lb" style="top:10px">VOCÊ ESCREVE</span><pre>${colorir(p.code)}</pre><span class="lb" style="top:calc(50% + 10px)">APARECE ASSIM</span><iframe sandbox="" srcdoc="${esc('<body style=\'font-family:-apple-system,Arial;padding:18px;margin:0\'>'+p.code)}"></iframe></div>`;
+ if(p.tipo==='aovivo')return `<div class="av2"><span class="lb" style="top:10px">VOCÊ ESCREVE</span><pre>${colorir(p.code)}</pre><span class="lb" style="top:calc(50% + 10px)">APARECE ASSIM</span><iframe sandbox="" srcdoc="${esc('<body style=\'font-family:-apple-system,Arial;padding:18px;margin:0\'>'+p.code).replace(/"/g,'&quot;')}"></iframe></div>`;
  if(p.tipo==='curiosidade')return `<div class="fl"><div class="in"><div class="fa"><div class="em">${p.emoji||'✨'}</div><small>VOCÊ SABIA? · TOQUE PARA VIRAR</small><h3>${p.frente}</h3><span class="tp">● ● ●</span></div><div class="fa b"><small>A RESPOSTA</small><p>${p.verso}</p></div></div></div>`;
 }
-function colorir(c){return esc(c).replace(/([a-z-]+)="([^"]*)"/gi,'\u0001$1\u0002$2\u0003').replace(/(&lt;\/?)([a-z0-9]+)/gi,'$1<span class="t">$2</span>').replace(/\u0001([^\u0002]*)\u0002([^\u0003]*)\u0003/g,'<span class="a">$1</span>="$2"')}
+function realceTok(src){const T=[],add=(c,t)=>{if(t)T.push([c,t])};let i=0;const n=src.length;
+ const mt=(re)=>{re.lastIndex=i;const m=re.exec(src);return m&&m.index===i?m[0]:null};
+ const css=(end)=>{let blk=false,col=false;while(i<end){const c=src[i];let m;
+  if(src.startsWith('/*',i)){const j=src.indexOf('*/',i+2);const e=j<0||j+2>end?end:j+2;add('cm',src.slice(i,e));i=e;continue}
+  if(c==='{'){add('br',c);i++;blk=true;col=false;continue}
+  if(c==='}'){add('br',c);i++;blk=false;col=false;continue}
+  if(c===';'){add('',c);i++;col=false;continue}
+  if(/\s/.test(c)){m=mt(/\s+/y);add('',m);i+=m.length;continue}
+  if(c==='"'||c==="'"){const j=src.indexOf(c,i+1);const e=j<0||j>=end?end:j+1;add('st',src.slice(i,e));i=e;continue}
+  if(!blk){m=mt(/[^{}\s;'"]+/y)||c;add('sl',m.slice(0,end-i));i+=Math.min(m.length,end-i);continue}
+  if(!col){if(c===':'){add('',c);i++;col=true;continue}m=mt(/[^:;{}\s]+/y)||c;add('pr',m.slice(0,end-i));i+=Math.min(m.length,end-i);continue}
+  if((m=mt(/-?\d*\.?\d+(?:[a-z%]+)?/iy))){add('nu',m.slice(0,end-i));i+=Math.min(m.length,end-i);continue}
+  if((m=mt(/#[0-9a-f]+/iy))){add('st',m.slice(0,end-i));i+=Math.min(m.length,end-i);continue}
+  if((m=mt(/!?[a-z-]+/iy))){add('vl',m.slice(0,end-i));i+=Math.min(m.length,end-i);continue}
+  add('',c);i++}};
+ while(i<n){
+  if(src.startsWith('<!--',i)){const j=src.indexOf('-->',i+4);const e=j<0?n:j+3;add('cm',src.slice(i,e));i=e;continue}
+  if(src[i]==='<'&&/[\/a-zA-Z!]/.test(src[i+1]||'')){let fecha=src[i+1]==='/';add('pn',fecha?'</':'<');i+=fecha?2:1;
+   const nm=mt(/[a-zA-Z0-9!-]*/y)||'';add('tg',nm);i+=nm.length;
+   while(i<n&&src[i]!=='>'&&src[i]!=='<'){const c=src[i];let m;
+    if(/\s/.test(c)){m=mt(/\s+/y);add('',m);i+=m.length}
+    else if(c==='='){add('',c);i++}
+    else if(c==='"'||c==="'"){const j=src.indexOf(c,i+1);const e=j<0?n:j+1;add('st',src.slice(i,e));i=e}
+    else if(c==='/'){add('pn',c);i++}
+    else{m=mt(/[^\s=>\/<"']+/y);add(src[i-1]==='='?'st':'at',m);i+=m.length}}
+   if(src[i]==='>'){add('pn','>');i++}
+   if(!fecha&&nm.toLowerCase()==='style'){const low=src.toLowerCase();let e=low.indexOf('</style',i);if(e<0)e=n;css(e)}
+   continue}
+  const m=mt(/[^<]+|</y);add('',m);i+=m.length}
+ return T}
+function realce(src){const L=[''];for(const [c,t] of realceTok(src)){const p=t.split('\n');p.forEach((x,k)=>{if(k)L.push('');if(x)L[L.length-1]+=c?`<span class="vs-${c}">${esc(x)}</span>`:esc(x)})}
+ return L.map(x=>`<div class="l">${x||'​'}</div>`).join('')}
+function colorir(c){return realce(c)}
 function postHTML(p){const c=curso(p.curso);const legenda=p.leg||p.nota||'';const titulo=p.titulo||(p.tipo==='desafio'?'Desafio':'Você sabia?');
  return `<article class="post" data-id="${p.id}"><div class="ph"><div class="av" data-c="${c.id}">${AV(c.id)}</div><div><strong data-c="${c.id}">${c.user}</strong><small>${c.nome}</small></div>${S.seg[c.id]?'':`<button class="seg" data-c="${c.id}">Seguir</button>`}<span class="mn"><i></i><i></i></span></div>
  <div class="md">${midia(p)}<svg class="bigh" viewBox="0 0 24 24"><path d="${IC.heart.match(/d="([^"]+)"/)[1]}" fill="url(#hg)"/></svg></div>
@@ -476,22 +596,91 @@ function montarDes(){const ds=POSTS.filter(p=>p.tipo==='desafio');const pend=ds.
  $('#desLista').innerHTML=(pend.length?'':'<div class="vazio">🏆 Todos os desafios de hoje feitos!<br>Amanhã chegam novos.</div>')+[...pend,...ds.filter(p=>S.resp[p.id]==='ok')].map(postHTML).join('');
  $$('#desLista .post').forEach(ligarPost)}
 // ---------------- oficina ----------------
+let ofAba='cod',ofAberta=false;
+const OFCORES=[['Preto','#000000'],['Branco','#ffffff'],['Grafite','#1a1a1a'],['Cinza','#808080'],['Vermelho','#ff0000'],['Laranja','#ff7a00'],['Amarelo','#ffd400'],['Dourado','#d4af37'],['Verde','#22c55e'],['Azul','#2563eb'],['Azul-claro','#38bdf8'],['Roxo','#8b5cf6'],['Rosa','#ec4899'],['Marrom','#8b5a2b'],['Vinho','#7f1d1d'],['Bege','#f5e6c8']];
+if(window.visualViewport){const vvf=()=>{const d=document.documentElement.style;d.setProperty('--vvt',Math.max(0,visualViewport.offsetTop)+'px');d.setProperty('--vvh',visualViewport.height+'px')};vvf();visualViewport.addEventListener('scroll',vvf);visualViewport.addEventListener('resize',vvf)}
+function revisar(c){const R=[],ln=i=>c.slice(0,i).split('\n').length,add=(i,msg,g)=>R.push({l:ln(i),msg,g:g||'erro'});
+ const VOID=/^(img|br|meta|link|hr|input|source|area|base|col|wbr)$/i,pilha=[];let m;
+ const semCom=c.replace(/<!--[\s\S]*?-->/g,x=>' '.repeat(x.length));
+ const re=/<(\/?)([a-zA-Z][a-zA-Z0-9]*)\b([^>]*)>/g;
+ while((m=re.exec(semCom))){const nome=m[2].toLowerCase();
+  if(nome==='img'&&!/\balt\s*=/.test(m[3]))add(m.index,'Esta <img> está sem alt (o texto que descreve a foto).','aviso');
+  if(nome==='img'&&!/\bsrc\s*=\s*["'][^"']+/.test(m[3]))add(m.index,'Esta <img> está sem o endereço da foto no src.');
+  if(nome==='a'&&!m[1]&&!/\bhref\s*=/.test(m[3]))add(m.index,'Este <a> está sem href (o endereço do link).');
+  if(VOID.test(nome))continue;
+  if(!m[1]){pilha.push({n:nome,i:m.index});if(nome==='style'){const f=semCom.toLowerCase().indexOf('</style',re.lastIndex);re.lastIndex=f<0?semCom.length:f}continue}
+  const k=pilha.map(x=>x.n).lastIndexOf(nome);
+  if(k<0){add(m.index,`Você fechou </${nome}>, mas não tem nenhum <${nome}> aberto antes.`);continue}
+  if(k<pilha.length-1){const a=pilha[pilha.length-1];add(a.i,`O <${a.n}> da linha ${ln(a.i)} não foi fechado antes do </${nome}> (linha ${ln(m.index)}).`)}
+  pilha.length=k}
+ pilha.forEach(a=>add(a.i,`O <${a.n}> foi aberto e não foi fechado. Falta o </${a.n}>.`));
+ const PROPS='color background background-color font-size font-family font-weight font-style text-decoration text-align text-transform line-height letter-spacing margin margin-top margin-bottom margin-left margin-right padding padding-top padding-bottom padding-left padding-right width height max-width min-width max-height min-height border border-radius border-color border-top border-bottom display gap flex flex-direction justify-content align-items grid-template-columns position top left right bottom z-index opacity box-shadow text-shadow transform transition animation cursor overflow object-fit list-style vertical-align white-space'.split(' ');
+ const cores={};let bodyFundo=null;
+ const sre=/<style[^>]*>([\s\S]*?)(<\/style>|$)/gi;let s;
+ while((s=sre.exec(semCom))){const ini=s.index+s[0].indexOf(s[1]),css=s[1].replace(/\/\*[\s\S]*?\*\//g,x=>' '.repeat(x.length));
+  if(!s[2])add(s.index,'O <style> não foi fechado. Falta o </style>.');
+  const pil=[];let st=0;
+  const decl=(de,ate,sel)=>{const bloco=css.slice(de,ate);let off=de;
+   bloco.split(';').forEach(d=>{const t=d.trim(),pos=ini+off+d.indexOf(t);off+=d.length+1;if(!t)return;
+    const dd=t.indexOf(':');if(dd<0){add(pos,`"${t.slice(0,30)}" está sem os dois-pontos. O certo é propriedade: valor;`);return}
+    const pr=t.slice(0,dd).trim().toLowerCase(),v=t.slice(dd+1).trim();
+    if(/^[a-z-]+$/.test(pr)&&!PROPS.includes(pr)&&!pr.startsWith('-'))add(pos,`Não conheço a propriedade "${pr}". Será erro de digitação?`,'aviso');
+    if(/\s[a-z-]+\s*:/.test(v))add(pos,`Parece que faltou um ; depois de "${v.split(/\s[a-z-]+\s*:/)[0].slice(0,25)}".`);
+    if(!v)add(pos,`"${pr}" está sem valor depois dos dois-pontos.`);
+    if(/^(font-size|width|height|max-width|padding|margin|border-radius)$/.test(pr)&&/^[1-9]\d*$/.test(v))add(pos,`Faltou a medida em "${pr}: ${v}". Use ${v}px.`);
+    if(/^(color|background|background-color)$/.test(pr))sel.toLowerCase().split(',').forEach(x=>{x=x.trim();if(x){cores[x]=cores[x]||{};cores[x][pr==='color'?'c':'f']=v.toLowerCase()}})})};
+  for(let i=0;i<css.length;i++){const ch=css[i];
+   if(ch==='{'){const sel=css.slice(st,i).trim(),pai=pil[pil.length-1];
+    if(!sel)add(ini+i,'Regra sem seletor: antes do { escreva QUEM vai mudar (ex.: p, h1, body).');
+    else if(pai&&!pai.at)add(ini+i,'Tem um { dentro de outra regra. Faltou fechar a anterior com }?');
+    pil.push({sel,at:sel.startsWith('@'),ini:i+1});st=i+1}
+   else if(ch==='}'){const t=pil.pop();if(!t)add(ini+i,'Tem um } sobrando, sem { para abrir.');else if(!t.at)decl(t.ini,i,t.sel);st=i+1}}
+  if(pil.length)add(ini+css.length,'Faltou fechar uma regra com }.')}
+ const fundo=(cores.body||{}).f||(cores.html||{}).f;
+ if(fundo){Object.entries(cores).forEach(([sel,v])=>{if(v.c&&v.c===fundo)R.push({l:0,msg:`O "${sel}" está com a mesma cor do fundo (${fundo}). Vai ficar invisível.`,g:'aviso'})});
+  const hx=(fundo.match(/^#([0-9a-f]{6}|[0-9a-f]{3})$/)||[])[1];if(hx){const h=hx.length===3?hx.replace(/./g,'$&$&'):hx;const lum=(parseInt(h.slice(0,2),16)*.3+parseInt(h.slice(2,4),16)*.59+parseInt(h.slice(4,6),16)*.11)/255;
+   if(lum<.35&&!(cores.body||{}).c){const T=['p','ul','li','h2','h3'].filter(t=>new RegExp('<'+t+'\\b','i').test(c)&&!(cores[t]||{}).c&&!(t==='li'&&(cores.ul||{}).c));if(T.length)R.push({l:0,msg:`O fundo é escuro, mas ${T.map(t=>'<'+t+'>').join(', ')} está sem cor: fica preto e quase some. Dica: body { color: white; } deixa todo o texto claro.`,g:'aviso'})}}}
+ return R.sort((a,b)=>(a.g==='erro'?0:1)-(b.g==='erro'?0:1)||a.l-b.l)}
+let ofPainel='',ofVerSite=false;
 function montarOfc(){const feitas=MISSOES.filter(m=>S.miss[m.id]).length;const atual=MISSOES.find(m=>!S.miss[m.id]);
  if(!S.code)S.code=MISSOES[0].inicio||'';
- $('#ofc').innerHTML=`<div class="miss"><small class="gtx">PROJETO DO MÊS 1 · SEU SITE PESSOAL</small><h4>${atual?'Semana '+atual.semana+' · Missão '+(MISSOES.indexOf(atual)+1)+': '+atual.titulo:'Tudo cumprido até aqui! 🏆'}</h4><p>${atual?esc(atual.pede):'Você terminou as missões liberadas. Logo chegam as da próxima semana.'}</p>${atual&&atual.estude?`<div class="apoio"><small>📚 ESTUDE ANTES</small>${atual.estude.map(id=>{const p=POSTS.find(x=>x.id===id);if(!p)return'';const c=curso(p.curso);return `<button data-post="${id}">${S.vistos[id]?'✓ ':''}${esc((p.titulo||p.q||p.frente).slice(0,34))} <i>@${c.user}</i></button>`}).join('')}<div class="apb"><button id="ofDica">💡 Dica</button><button id="ofDuv">💬 Tirar dúvida</button></div><p class="dica" id="ofDicaT" hidden>${esc(atual.dica||'')}</p></div>`:''}<p style="margin-top:6px;font-size:12px;color:var(--mu)">${atual?MISSOES.filter(m=>m.semana===atual.semana&&S.miss[m.id]).length+' de '+MISSOES.filter(m=>m.semana===atual.semana).length+' missões da semana '+atual.semana+' · ':''}${feitas} de ${MISSOES.length} no total</p></div>
- <div class="kb">${(atual&&atual.semana>=2?['<style>','</style>','{','}',';','color:','background:','font-size:','px','text-decoration: none','h1','p','a','body']:['<h1>','</h1>','<p>','</p>','<ul>','</ul>','<li>','</li>','<a href="">','</a>']).map(t=>`<button data-k="${esc(t)}">${esc(t)}</button>`).join('')}</div>
- <textarea class="ed" spellcheck="false" autocapitalize="off" autocorrect="off">${esc(S.code)}</textarea>
- <div class="prev"><div class="lbx">COMO O SEU SITE ESTÁ FICANDO</div><iframe sandbox=""></iframe></div><button class="retro" id="ofcPost" style="margin:12px 0 0;width:100%">📌 Postar no meu perfil</button>
- <div class="lista" style="padding:12px 0 0">${MISSOES.map((m,i)=>`${i===0||MISSOES[i-1].semana!==m.semana?`<small class="gtx" style="display:block;font-weight:800;font-size:11px;letter-spacing:.08em;margin:10px 0 2px">SEMANA ${m.semana} · ${['','OS TIJOLOS (HTML)','DEIXAR BONITO (CSS)','CELULAR','NO AR'][m.semana]}</small>`:''}<div class="it" style="padding:8px 0"><span style="font-size:18px">${S.miss[m.id]?'✅':'⬜'}</span><div><b style="font-size:13px">${i+1}. ${m.titulo}</b><small>${esc(m.pede)}</small></div></div>`).join('')}</div>`;
- const ed=$('#ofc .ed'),fr=$('#ofc iframe');
+ const sem=atual?MISSOES.filter(m=>m.semana===atual.semana):[];
+ $('#ofc').innerHTML=`<div class="ofx"><header class="oftb"><div class="oft1"><button class="ofsair" id="ofSair" aria-label="Sair da Oficina">‹</button><button class="ofmb" id="ofMisB"><small>${atual?'MISSÃO '+(MISSOES.indexOf(atual)+1)+' · SEMANA '+atual.semana+' · '+sem.filter(m=>S.miss[m.id]).length+'/'+sem.length:'MÊS 1 · '+feitas+'/'+MISSOES.length}</small><b>${atual?esc(atual.titulo):'Tudo cumprido! 🏆'}</b><p>${atual?esc(atual.pede):(feitas>=16?'Mês 1 completo! Poste no perfil e chame o Claude para colocar o seu site no ar.':'Logo chegam as próximas missões.')}</p></button></div>
+ <div class="oft2"><button data-f="desfaz"><i>↶</i>Voltar</button><button data-f="refaz"><i>↷</i>Refazer</button><button data-f="site" class="${ofVerSite?'on':''}"><i>👁️</i>Site</button><button data-f="cores"><i>🎨</i>Cores</button><button data-f="rev"><i>🔍</i>Revisar</button><button data-f="copia"><i>📋</i>Copiar</button><button data-f="posta"><i>📌</i>Postar</button></div></header>
+ <div class="ofmain"><div class="vsc"><div class="vtop"><i></i>index.html<span id="ofSt"></span></div><div class="cmbox"></div></div>
+ <div class="ofsite" ${ofVerSite?'':'hidden'}><div class="lbx">COMO O SEU SITE ESTÁ FICANDO</div><iframe sandbox=""></iframe></div>
+ <div class="ofpan" id="ofPan" hidden></div></div></div>`;
+ document.body.classList.add('na-ofc');
+ const fr=$('#ofc iframe'),vsc=$('#ofc .vsc'),pan=$('#ofPan');
+ const ed=CMed($('#ofc .cmbox'),S.code||'',()=>att(),f=>{if(f){fecha()}});
  const att=()=>{S.code=ed.value;salvar();fr.srcdoc='<body style="font-family:-apple-system,Arial;padding:16px;margin:0">'+ed.value;
-  const m=MISSOES.find(m=>!S.miss[m.id]);if(m&&m.testa(ed.value)){S.miss[m.id]=1;marcarDia();salvar();toast('Missão cumprida! +10 seguidores 🎉');confete(ed);setTimeout(montarOfc,1200)}};
- ed.oninput=att;att();
- $$('#ofc .apoio [data-post]').forEach(b=>b.onclick=()=>abrirPost(b.dataset.post));
- const od=$('#ofDica');if(od)od.onclick=()=>{const t=$('#ofDicaT');t.hidden=!t.hidden};
- const ou=$('#ofDuv');if(ou){const at=MISSOES.find(m=>!S.miss[m.id]);ou.onclick=()=>perguntar({id:'miss_'+at.id,curso:'site',titulo:'Missão: '+at.titulo+' — '+at.pede})}
- $('#ofcPost').onclick=()=>{const c=ed.value.trim();if(c.length<8)return toast('Escreva um pouco mais antes de postar ✍️');S.meus=S.meus||[];if(S.meus[0]&&S.meus[0].code===c)return toast('Esse já está no seu perfil');S.meus.unshift({id:'m'+Date.now(),dia:hoje(),code:c});marcarDia();salvar();toast('Postado no seu perfil! 📌');confete($('#ofcPost'))};
- $$('#ofc .kb button').forEach(b=>b.onclick=()=>{const t=b.dataset.k.replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&');const s=ed.selectionStart,e=ed.selectionEnd;ed.value=ed.value.slice(0,s)+t+ed.value.slice(e);ed.focus();ed.selectionStart=ed.selectionEnd=s+t.length;att()})}
+  const m=MISSOES.find(m=>!S.miss[m.id]);if(m&&m.testa(ed.value)){S.miss[m.id]=1;marcarDia();salvar();toast('Missão cumprida! +10 seguidores 🎉');confete(vsc);setTimeout(()=>{ofPainel='';montarOfc()},1400)}};
+ att();
+ const fecha=()=>{if(ofPainel){ofPainel='';pan.hidden=true;$$('#ofc .oft2 button').forEach(b=>b.dataset.f!=='site'&&b.classList.remove('on'));$('#ofMisB').classList.remove('on')}};
+ const abre=(qual,html)=>{if(ofPainel===qual){fecha();return}ofPainel=qual;pan.innerHTML=`<button class="ofpx" aria-label="Fechar">✕</button>`+html;pan.hidden=false;pan.scrollTop=0;
+  $$('#ofc .oft2 button').forEach(b=>b.dataset.f!=='site'&&b.classList.toggle('on',b.dataset.f===qual));$('#ofMisB').classList.toggle('on',qual==='mis');pan.querySelector('.ofpx').onclick=fecha;return pan};
+ const missao=()=>{const p=abre('mis',`${atual?`<small class="gtx ofh">MISSÃO ${MISSOES.indexOf(atual)+1} · ${esc(atual.titulo).toUpperCase()}</small><p class="ofpede">${esc(atual.pede)}</p>${atual.estude?`<div class="apoio"><small>📚 ESTUDE ANTES</small>${atual.estude.map(id=>{const p=POSTS.find(x=>x.id===id);if(!p)return'';const c=curso(p.curso);return `<button data-post="${id}">${S.vistos[id]?'✓ ':''}${esc((p.titulo||p.q||p.frente).slice(0,34))} <i>@${c.user}</i></button>`}).join('')}<div class="apb"><button id="ofDica">💡 Dica</button><button id="ofDuv">💬 Tirar dúvida</button></div><p class="dica" id="ofDicaT" hidden>${esc(atual.dica||'')}</p></div>`:''}`:'<p class="ofpede">Você cumpriu todas as missões liberadas. 🏆</p>'}
+  <div class="lista" style="padding:8px 0 0">${MISSOES.map((m,i)=>`${i===0||MISSOES[i-1].semana!==m.semana?`<small class="gtx" style="display:block;font-weight:800;font-size:11px;letter-spacing:.08em;margin:10px 0 2px">SEMANA ${m.semana} · ${['','OS TIJOLOS (HTML)','DEIXAR BONITO (CSS)','CELULAR','NO AR'][m.semana]}</small>`:''}<div class="it" style="padding:7px 0"><span style="font-size:17px">${S.miss[m.id]?'✅':m===atual?'👉':'⬜'}</span><div><b style="font-size:13px">${i+1}. ${m.titulo}</b><small>${esc(m.pede)}</small></div></div>`).join('')}</div>`);
+  if(!p)return;p.querySelectorAll('[data-post]').forEach(b=>b.onclick=()=>abrirPost(b.dataset.post));
+  const od=$('#ofDica');if(od)od.onclick=()=>{const t=$('#ofDicaT');t.hidden=!t.hidden};
+  const ou=$('#ofDuv');if(ou)ou.onclick=()=>perguntar({id:'miss_'+atual.id,curso:'site',titulo:'Missão: '+atual.titulo+' — '+atual.pede})};
+ const coresP=()=>{const p=abre('cores',`<small class="ofh">TOQUE PARA COLOCAR NO CÓDIGO</small><div class="cg">${OFCORES.map(([n,h])=>`<button data-cor="${h}"><i style="background:${h}"></i>${n}<code>${h}</code></button>`).join('')}</div><label class="ofx2">Outra cor: <input type="color" id="ofCorX" value="#ff0000"><code id="ofCorXv">#ff0000</code></label>`);
+  if(!p)return;p.querySelectorAll('[data-cor]').forEach(b=>{b.onpointerdown=e=>e.preventDefault();b.onclick=()=>{ed.poe(b.dataset.cor);fecha()}});
+  const cx=$('#ofCorX');cx.oninput=()=>$('#ofCorXv').textContent=cx.value;cx.onchange=()=>{ed.poe(cx.value);fecha()}};
+ const revP=()=>{const L=revisar(ed.value),m=MISSOES.find(m=>!S.miss[m.id]);
+  const p=abre('rev',`<small class="ofh">REVISÃO DO SEU CÓDIGO</small>${L.length?`<p class="ofpede">${L.filter(x=>x.g==='erro').length} erro(s) e ${L.filter(x=>x.g!=='erro').length} aviso(s). Toque num item para ir até a linha.</p>${L.map(x=>`<button class="rvi ${x.g}" data-l="${x.l}"><b>${x.g==='erro'?'❌':'⚠️'} ${x.l?'Linha '+x.l:'Geral'}</b>${esc(x.msg)}</button>`).join('')}`:'<p class="ofpede">✅ Tudo certo! Não achei nenhum erro: todas as tags estão fechadas e as regras do CSS estão completas.</p>'}${m?`<p class="ofpede" style="margin-top:10px">${m.testa(ed.value)?'✅':'⏳'} <b>Missão ${MISSOES.indexOf(m)+1}:</b> ${m.testa(ed.value)?'cumprida.':'ainda falta: '+esc(m.pede)}</p>`:''}`);
+  if(!p)return;p.querySelectorAll('[data-l]').forEach(b=>b.onclick=()=>{const l=+b.dataset.l;if(l){fecha();ed.irLinha(l)}})};
+ const copia=()=>{const t=ed.value;const ok=()=>toast('Código copiado 📋 Cole onde quiser revisar');
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(ok,()=>vel());else vel();
+  function vel(){const a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();try{document.execCommand('copy');ok()}catch(_){toast('Não consegui copiar')}a.remove()}};
+ const posta=()=>{const c=ed.value.trim();if(c.length<8)return toast('Escreva um pouco mais antes de postar ✍️');S.meus=S.meus||[];if(S.meus[0]&&S.meus[0].code===c)return toast('Esse já está no seu perfil');S.meus.unshift({id:'m'+Date.now(),dia:hoje(),code:c});marcarDia();salvar();toast('Postado no seu perfil! 📌');confete(vsc)};
+ const site=b=>{ofVerSite=!ofVerSite;$('#ofc .ofsite').hidden=!ofVerSite;b.classList.toggle('on',ofVerSite)};
+ $$('#ofc .oft2 button').forEach(b=>{b.onpointerdown=e=>{if(/desfaz|refaz/.test(b.dataset.f))e.preventDefault()};b.onclick=()=>{const f=b.dataset.f;
+  if(f==='desfaz')ed.desfaz();else if(f==='refaz')ed.refaz();else if(f==='site')site(b);else if(f==='cores')coresP();else if(f==='rev')revP();else if(f==='copia')copia();else if(f==='posta')posta()}});
+ $('#ofMisB').onclick=missao;
+ $('#ofSair').onclick=()=>ir('feed');
+ if(ofPainel){const q=ofPainel;ofPainel='';({mis:missao,cores:coresP,rev:revP}[q]||(()=>{}))()}}
+
 // ---------------- perfis ----------------
 let filtro='todos';
 function capa(p,modo){if(modo==='mini')return `<div class="pc ${p.est||'dark'}" data-pj="${p.id}" style="--c:${p.ac||p.cor}"><div class="pch">${p.img?`<img src="${p.img}" alt="">`:`<span>${p.emoji||'✦'}</span>`}<b>${esc(p.nome)}</b></div><small>${esc(p.kick||'')}</small><h5>${p.hl||esc(p.nome)}</h5><i class="pcl"></i><span class="pcf">@arnold.suheth</span><svg class="rpl" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>`;return `<div class="rc ${modo}" data-pj="${p.id}" style="--c:${p.cor}"><div class="rbg"></div><div class="rlogo">${p.img?`<img src="${p.img}" alt="">`:`<span>${p.emoji||'✦'}</span>`}</div><div class="rtx"><b>${esc(p.nome)}</b>${modo==='mini'?'':`<span>${esc(p.tag||'')}</span>`}</div>${modo==='mini'?'<svg class="rpl" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" fill="#fff"/></svg>':''}</div>`}
@@ -612,4 +801,4 @@ let _lig=ligarPost;ligarPost=function(el){_lig(el);const md=el.querySelector('.m
  md.insertAdjacentHTML('beforeend','<button class="cseta l" aria-label="Anterior">‹</button><button class="cseta r" aria-label="Próximo">›</button>');
  md.querySelector('.cseta.l').onclick=e=>{e.stopPropagation();md.querySelector('.tapz.l').click()};md.querySelector('.cseta.r').onclick=e=>{e.stopPropagation();md.querySelector('.tapz.r').click()}};montarFeed();
 </script>
-<script src="./copa-dados.js?v=1"></script><script src="./brasoes.js?v=2"></script><script src="./copa-arte.js?v=1"></script><script src="./copa.js?v=3"></script><script src="./nuvem.js?v=1"></script></body></html>
+<script src="./copa-dados.js?v=1"></script><script src="./brasoes.js?v=2"></script><script src="./copa-arte.js?v=1"></script><script src="./copa.js?v=3"></script><script src="./nuvem.js?v=2"></script></body></html>

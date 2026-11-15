@@ -21,10 +21,11 @@ async function gravar(arq,obj,msg){const body=()=>JSON.stringify({message:msg,co
  catch(e){if(e.status===409||e.status===422){await ler(arq);const j=await gh(`/repos/${OWNER}/${REPO}/contents/${arq}`,{method:'PUT',body:body()});sha[arq]=j.content.sha}else throw e}}
 // junta dois estados sem perder nada: objetos se somam, o resto vale o mais novo
 function juntar(a,b,bNovo){if(a&&b&&typeof a==='object'&&typeof b==='object'&&!Array.isArray(a)&&!Array.isArray(b)){const o={...a};for(const k in b)o[k]=k in a?juntar(a[k],b[k],bNovo):b[k];return o}
+ if(Array.isArray(a)&&Array.isArray(b)){const chave=x=>x&&typeof x==='object'?(x.id||x.t||JSON.stringify(x)):JSON.stringify(x);const m=new Map();(bNovo?[...a,...b]:[...b,...a]).forEach(x=>m.set(chave(x),x));return [...m.values()]}
  if(typeof a==='number'&&typeof b==='number')return Math.max(a,b);
  if(b===undefined)return a;if(a===undefined)return b;return bNovo?b:a}
 function juntarS(loc,rem){const rNovo=(rem._t||0)>(loc._t||0);const m=juntar(loc,rem,rNovo);
- m.code=rNovo?rem.code:loc.code;m.tema=rNovo?rem.tema:loc.tema;m.copa=rNovo?(rem.copa||loc.copa):(loc.copa||rem.copa);
+ const vazio=c=>!c||c.replace(/<!--[\s\S]*?-->/g,'').trim().length<5;m.code=vazio(rem.code)?loc.code:vazio(loc.code)?rem.code:(rNovo?rem.code:loc.code);m.tema=rNovo?rem.tema:loc.tema;m.copa=rNovo?(rem.copa||loc.copa):(loc.copa||rem.copa);
  if(m.copa&&loc.copa&&rem.copa){m.copa.tit=[...new Set([...(loc.copa.tit||[]),...(rem.copa.tit||[])])];m.copa.fundos=[...new Set([...(loc.copa.fundos||[]),...(rem.copa.fundos||[])])]}
  m._t=Math.max(loc._t||0,rem._t||0);return m}
 let estado='off',ocupado=false,timer=0,timerL=0;
