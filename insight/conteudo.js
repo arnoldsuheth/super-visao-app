@@ -86,15 +86,15 @@ window.MISSOES = [
 
 // Ferramentas (perfis novos; os posts chegam conforme a trilha)
 window.CURSOS.push(
- {id:'claude', nome:'Claude', user:'curso.claude', sigla:'Cl', cor:'#d97757', bio:'Usar o Claude do zero ao avançado: conversas, projetos, artefatos e agentes.', modulos:['Básico','Projetos','Artefatos','Agentes'], aulas:0, vazio:true},
- {id:'chatgpt', nome:'ChatGPT', user:'curso.chatgpt', sigla:'GPT', cor:'#10a37f', bio:'ChatGPT do zero: pedidos, GPTs personalizados, imagens e voz.', modulos:['Básico','GPTs','Imagens','Voz'], aulas:0, vazio:true},
- {id:'gemini', nome:'Gemini', user:'curso.gemini', sigla:'Ge', cor:'#4f7df3', bio:'Gemini do zero e como ele conversa com Google Drive, Docs e Gmail.', modulos:['Básico','Google','Imagens'], aulas:0, vazio:true},
- {id:'vscode', nome:'VS Code', user:'curso.vscode', sigla:'&lt;/&gt;', cor:'#2f80ed', bio:'O editor onde programadores escrevem código. Instalar, abrir projeto, atalhos.', modulos:['Instalar','Primeiro arquivo','Atalhos','Extensões'], aulas:0, vazio:true},
- {id:'github', nome:'GitHub', user:'curso.github', sigla:'GH', cor:'#24292f', bio:'Onde ficam os seus projetos (SUPER VISÃO, Gestão...). Repositório, commit, publicar site.', modulos:['O que é','Repositório','Commit','Pages'], aulas:0, vazio:true},
+ {id:'claude', site:'claude.ai', nome:'Claude', user:'curso.claude', sigla:'Cl', cor:'#d97757', bio:'Usar o Claude do zero ao avançado: conversas, projetos, artefatos e agentes.', modulos:['Básico','Projetos','Artefatos','Agentes'], aulas:0, vazio:true},
+ {id:'chatgpt', site:'chatgpt.com', nome:'ChatGPT', user:'curso.chatgpt', sigla:'GPT', cor:'#10a37f', bio:'ChatGPT do zero: pedidos, GPTs personalizados, imagens e voz.', modulos:['Básico','GPTs','Imagens','Voz'], aulas:0, vazio:true},
+ {id:'gemini', site:'gemini.google.com', nome:'Gemini', user:'curso.gemini', sigla:'Ge', cor:'#4f7df3', bio:'Gemini do zero e como ele conversa com Google Drive, Docs e Gmail.', modulos:['Básico','Google','Imagens'], aulas:0, vazio:true},
+ {id:'vscode', site:'code.visualstudio.com', nome:'VS Code', user:'curso.vscode', sigla:'&lt;/&gt;', cor:'#2f80ed', bio:'O editor onde programadores escrevem código. Instalar, abrir projeto, atalhos.', modulos:['Instalar','Primeiro arquivo','Atalhos','Extensões'], aulas:0, vazio:true},
+ {id:'github', site:'github.com', nome:'GitHub', user:'curso.github', sigla:'GH', cor:'#24292f', bio:'Onde ficam os seus projetos (SUPER VISÃO, Gestão...). Repositório, commit, publicar site.', modulos:['O que é','Repositório','Commit','Pages'], aulas:0, vazio:true},
  {id:'terminal', nome:'Terminal', user:'curso.terminal', sigla:'&gt;_', cor:'#111111', bio:'A "tela preta" sem medo: comandos básicos explicados como ordens para a equipe.', modulos:['Primeiros comandos','Pastas','Git'], aulas:0, vazio:true},
- {id:'figma', nome:'Figma', user:'curso.figma', sigla:'Fg', cor:'#a259ff', bio:'Desenhar telas antes de programar. Do zero até protótipo clicável.', modulos:['Básico','Telas','Componentes','Protótipo'], aulas:0, vazio:true},
- {id:'canva', nome:'Canva', user:'curso.canva', sigla:'Cv', cor:'#00c4cc', bio:'Posts, apresentações e artes para a BLESSAINT e o Studio.', modulos:['Básico','Posts','Marca'], aulas:0, vazio:true},
- {id:'lovable', nome:'Lovable', user:'curso.lovable', sigla:'Lv', cor:'#ff4f8b', bio:'Criar apps conversando com IA, e entender o que ela fez por baixo.', modulos:['Básico','Primeiro app','Banco de dados'], aulas:0, vazio:true},
- {id:'supabase', nome:'Supabase', user:'curso.supabase', sigla:'Sb', cor:'#3ecf8e', bio:'Banco de dados explicado como o estoque da loja: guardar, buscar, proteger.', modulos:['O que é','Tabelas','Login'], aulas:0, vazio:true},
- {id:'notion', nome:'Notion', user:'curso.notion', sigla:'N', cor:'#37352f', bio:'Organizar estudos, projetos e clientes num lugar só.', modulos:['Básico','Bancos','Modelos'], aulas:0, vazio:true}
+ {id:'figma', site:'figma.com', nome:'Figma', user:'curso.figma', sigla:'Fg', cor:'#a259ff', bio:'Desenhar telas antes de programar. Do zero até protótipo clicável.', modulos:['Básico','Telas','Componentes','Protótipo'], aulas:0, vazio:true},
+ {id:'canva', site:'canva.com', nome:'Canva', user:'curso.canva', sigla:'Cv', cor:'#00c4cc', bio:'Posts, apresentações e artes para a BLESSAINT e o Studio.', modulos:['Básico','Posts','Marca'], aulas:0, vazio:true},
+ {id:'lovable', site:'lovable.dev', nome:'Lovable', user:'curso.lovable', sigla:'Lv', cor:'#ff4f8b', bio:'Criar apps conversando com IA, e entender o que ela fez por baixo.', modulos:['Básico','Primeiro app','Banco de dados'], aulas:0, vazio:true},
+ {id:'supabase', site:'supabase.com', nome:'Supabase', user:'curso.supabase', sigla:'Sb', cor:'#3ecf8e', bio:'Banco de dados explicado como o estoque da loja: guardar, buscar, proteger.', modulos:['O que é','Tabelas','Login'], aulas:0, vazio:true},
+ {id:'notion', site:'notion.so', nome:'Notion', user:'curso.notion', sigla:'N', cor:'#37352f', bio:'Organizar estudos, projetos e clientes num lugar só.', modulos:['Básico','Bancos','Modelos'], aulas:0, vazio:true}
 );
