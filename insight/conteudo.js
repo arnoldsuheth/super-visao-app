@@ -160,3 +160,24 @@ window.ALT = {
  c1:[{e:'🧠',t:'Jeito simples',x:'GPT = "Transformador Pré-treinado Generativo". Traduzindo: um cérebro que já estudou antes (pré-treinado) e cria texto novo (generativo).'},
      {e:'🥋',t:'Jeito luta',x:'É o lutador que treinou anos antes da luta (pré-treinado) e na hora improvisa os golpes (generativo).'}]
 };
+
+// ---------- SEMANA 2 · deixar bonito (CSS) ----------
+window.POSTS.push(
+ {id:'s13', curso:'site', tipo:'carrossel', titulo:'CSS: o uniforme do site', leg:'Semana 2 começou! Agora o seu site ganha cor e estilo.', slides:[
+  {emoji:'👕', h:'HTML é o jogador, <i>CSS</i> é o uniforme', p:'O jogador (HTML) já está em campo. O CSS escolhe a cor da camisa, o número e o tamanho da letra.'},
+  {emoji:'📦', h:'Onde escrever', p:'Dentro de <b>&lt;style&gt;</b> e <b>&lt;/style&gt;</b>, no começo do código. Tudo que está ali é "regra de uniforme".', code:'&lt;style&gt;\n  h1 { color: red; }\n&lt;/style&gt;'},
+  {emoji:'🎯', h:'A regra tem 3 partes', p:'<b>Quem</b> (h1) · <b>o quê</b> (color) · <b>como</b> (red).<br>Tipo: "o goleiro · camisa · amarela".'}]},
+ {id:'s14', curso:'site', tipo:'desafio', q:'Nesta regra, qual parte diz QUEM vai mudar?', code:'p { color: blue; }', ops:['p','color','blue'], ok:0, exp:'O <b>p</b> é quem (todos os parágrafos). <b>color</b> é o que muda (a cor). <b>blue</b> é como fica (azul).', dica:'Vem antes da chave {'},
+ {id:'s15', curso:'site', tipo:'aovivo', titulo:'Pintando o uniforme', code:'<style>\n  body { background: #1a1a1a; }\n  h1 { color: #e30613; }\n  p { color: white; }\n</style>\n<h1>Arnold Suheth</h1>\n<p>Colorado de coração</p>', nota:'<b>background</b> pinta o fundo. <b>color</b> pinta a letra. As cores com # são códigos: #e30613 é o vermelho do Inter.'},
+ {id:'s16', curso:'site', tipo:'curiosidade', emoji:'🎨', frente:'Por que as cores têm código tipo #e30613?', verso:'É a "receita" da cor: os 2 primeiros números são a quantidade de vermelho, depois verde, depois azul. Igual misturar tinta. Você também pode escrever o nome em inglês: red, blue, white.'},
+ {id:'s17', curso:'site', tipo:'desafio', q:'Qual propriedade muda o TAMANHO da letra?', ops:['font-size','color','background'], ok:0, exp:'<b>font-size</b> = tamanho da letra. Ex.: <b>p { font-size: 20px; }</b>. "px" é a medida, tipo centímetro da tela.', dica:'"size" é tamanho em inglês.'}
+);
+window.MISSOES.push(
+ {id:'m5', semana:2, titulo:'Camisa nova', pede:'Abra um <style> no começo e pinte o seu <h1>: h1 { color: red; }', testa:c=>/<style>[\s\S]*h1\s*\{[^}]*color\s*:[^;}]+[\s\S]*<\/style>/i.test(c)},
+ {id:'m6', semana:2, titulo:'Gramado', pede:'Pinte o fundo da página: body { background: ... } (pode ser #1a1a1a).', testa:c=>/<style>[\s\S]*body\s*\{[^}]*background(-color)?\s*:[^;}]+[\s\S]*<\/style>/i.test(c)},
+ {id:'m7', semana:2, titulo:'Letra de craque', pede:'Mude o tamanho do texto: p { font-size: 20px; }', testa:c=>/<style>[\s\S]*\{[^}]*font-size\s*:\s*\d+[\s\S]*<\/style>/i.test(c)},
+ {id:'m8', semana:2, titulo:'Link com estilo', pede:'Deixe seu link com cor própria e sem sublinhado: a { color: ...; text-decoration: none; }', testa:c=>/<style>[\s\S]*\ba\s*\{[^}]*text-decoration\s*:\s*none[\s\S]*<\/style>/i.test(c)}
+);
+window.ALT.s13=[{e:'🏠',t:'Jeito casa',x:'HTML são as paredes. CSS é a pintura, o piso e a decoração. A casa é a mesma, só fica bonita.'},{e:'🍩',t:'Jeito Simpsons',x:'O desenho do Homer sem cor é HTML. Pintar a pele amarela e a camisa branca é CSS.'}];
+window.ALT.s15=[{e:'🎨',t:'Jeito pintor',x:'background é a parede, color é a tinta da letra. Você escolhe a tinta escrevendo o nome da cor ou o código dela.'}];
+window.ALT.s16=[{e:'🍹',t:'Jeito suco',x:'É como fazer suco misturando 3 frutas: vermelha, verde e azul. O código diz quanto de cada uma vai no copo.'}];

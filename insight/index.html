@@ -227,7 +227,7 @@ input,textarea,select{font-size:16px!important}
 <div class="modal" id="modal"><div class="sheet"></div></div>
 <div class="toast" id="toast"></div>
 <div id="ab"></div>
-<script src="./conteudo.js?v=11"></script>
+<script src="./conteudo.js?v=12"></script>
 <script>
 // ---------------- estado ----------------
 const KEY='insight_v1';const hoje=()=>new Date().toLocaleDateString('sv-SE',{timeZone:'America/Sao_Paulo'});
@@ -394,11 +394,11 @@ function montarDes(){const ds=POSTS.filter(p=>p.tipo==='desafio');const pend=ds.
 // ---------------- oficina ----------------
 function montarOfc(){const feitas=MISSOES.filter(m=>S.miss[m.id]).length;const atual=MISSOES.find(m=>!S.miss[m.id]);
  if(!S.code)S.code=MISSOES[0].inicio||'';
- $('#ofc').innerHTML=`<div class="miss"><small class="gtx">PROJETO DO MÊS 1 · SEU SITE PESSOAL</small><h4>${atual?'Missão '+(MISSOES.indexOf(atual)+1)+': '+atual.titulo:'Semana 1 completa! 🏆'}</h4><p>${atual?esc(atual.pede):'Você escreveu a base do seu site sozinho. Na semana 2 a gente deixa ele bonito.'}</p><p style="margin-top:6px;font-size:12px;color:var(--mu)">${feitas} de ${MISSOES.length} missões da semana</p></div>
- <div class="kb">${['<h1>','</h1>','<p>','</p>','<ul>','</ul>','<li>','</li>','<a href="">','</a>'].map(t=>`<button data-k="${esc(t)}">${esc(t)}</button>`).join('')}</div>
+ $('#ofc').innerHTML=`<div class="miss"><small class="gtx">PROJETO DO MÊS 1 · SEU SITE PESSOAL</small><h4>${atual?'Semana '+atual.semana+' · Missão '+(MISSOES.indexOf(atual)+1)+': '+atual.titulo:'Tudo cumprido até aqui! 🏆'}</h4><p>${atual?esc(atual.pede):'Você terminou as missões liberadas. Logo chegam as da próxima semana.'}</p><p style="margin-top:6px;font-size:12px;color:var(--mu)">${atual?MISSOES.filter(m=>m.semana===atual.semana&&S.miss[m.id]).length+' de '+MISSOES.filter(m=>m.semana===atual.semana).length+' missões da semana '+atual.semana+' · ':''}${feitas} de ${MISSOES.length} no total</p></div>
+ <div class="kb">${(atual&&atual.semana>=2?['<style>','</style>','{','}',';','color:','background:','font-size:','px','text-decoration: none','h1','p','a','body']:['<h1>','</h1>','<p>','</p>','<ul>','</ul>','<li>','</li>','<a href="">','</a>']).map(t=>`<button data-k="${esc(t)}">${esc(t)}</button>`).join('')}</div>
  <textarea class="ed" spellcheck="false" autocapitalize="off" autocorrect="off">${esc(S.code)}</textarea>
  <div class="prev"><div class="lbx">COMO O SEU SITE ESTÁ FICANDO</div><iframe sandbox=""></iframe></div><button class="retro" id="ofcPost" style="margin:12px 0 0;width:100%">📌 Postar no meu perfil</button>
- <div class="lista" style="padding:12px 0 0">${MISSOES.map((m,i)=>`<div class="it" style="padding:8px 0"><span style="font-size:18px">${S.miss[m.id]?'✅':'⬜'}</span><div><b style="font-size:13px">${i+1}. ${m.titulo}</b><small>${esc(m.pede)}</small></div></div>`).join('')}</div>`;
+ <div class="lista" style="padding:12px 0 0">${MISSOES.map((m,i)=>`${i===0||MISSOES[i-1].semana!==m.semana?`<small class="gtx" style="display:block;font-weight:800;font-size:11px;letter-spacing:.08em;margin:10px 0 2px">SEMANA ${m.semana} · ${['','OS TIJOLOS (HTML)','DEIXAR BONITO (CSS)','CELULAR','NO AR'][m.semana]}</small>`:''}<div class="it" style="padding:8px 0"><span style="font-size:18px">${S.miss[m.id]?'✅':'⬜'}</span><div><b style="font-size:13px">${i+1}. ${m.titulo}</b><small>${esc(m.pede)}</small></div></div>`).join('')}</div>`;
  const ed=$('#ofc .ed'),fr=$('#ofc iframe');
  const att=()=>{S.code=ed.value;salvar();fr.srcdoc='<body style="font-family:-apple-system,Arial;padding:16px;margin:0">'+ed.value;
   const m=MISSOES.find(m=>!S.miss[m.id]);if(m&&m.testa(ed.value)){S.miss[m.id]=1;marcarDia();salvar();toast('Missão cumprida! +10 seguidores 🎉');confete(ed);setTimeout(montarOfc,1200)}};
