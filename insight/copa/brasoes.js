@@ -49,50 +49,74 @@ const ORN={
  crista:`<path d="M30 10C30-4 44-12 70-8 60-4 54 2 52 10z" fill="#dc2626" stroke="#450a0a"/>`,
  orbitas:`<ellipse cx="50" cy="56" rx="54" ry="14" fill="none" stroke="#67e8f9" stroke-width="1.4" opacity=".7" transform="rotate(-20 50 56)"/><circle cx="100" cy="40" r="3" fill="#67e8f9"/>`};
 let uid=0;
+const PATS=[
+ (id,c)=>`<pattern id="pt${id}" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="3" height="6" fill="${c}" opacity=".18"/></pattern>`,
+ (id,c)=>`<pattern id="pt${id}" width="12" height="10.4" patternUnits="userSpaceOnUse"><path d="M3 0h6l3 5.2-3 5.2H3L0 5.2z" fill="none" stroke="${c}" stroke-width=".8" opacity=".35"/></pattern>`,
+ (id,c)=>`<pattern id="pt${id}" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M0 10h6l4-4h10M10 20v-6l4-4" fill="none" stroke="${c}" stroke-width=".9" opacity=".4"/><circle cx="10" cy="6" r="1.4" fill="${c}" opacity=".6"/></pattern>`,
+ (id,c)=>`<pattern id="pt${id}" width="10" height="8" patternUnits="userSpaceOnUse"><path d="M0 8a5 5 0 0 1 10 0M-5 4a5 5 0 0 1 10 0M5 4a5 5 0 0 1 10 0" fill="none" stroke="${c}" stroke-width=".8" opacity=".35"/></pattern>`,
+ (id,c)=>`<pattern id="pt${id}" width="100" height="120" patternUnits="userSpaceOnUse">${Array.from({length:18},(_,i)=>`<path d="M50 56 L${50+90*Math.cos(i*.349)} ${56+90*Math.sin(i*.349)} L${50+90*Math.cos(i*.349+.17)} ${56+90*Math.sin(i*.349+.17)}Z" fill="${c}" opacity=".16"/>`).join('')}</pattern>`,
+ (id,c)=>`<pattern id="pt${id}" width="16" height="8" patternUnits="userSpaceOnUse"><path d="M0 4q4-4 8 0t8 0" fill="none" stroke="${c}" stroke-width="1" opacity=".35"/></pattern>`,
+ (id,c)=>`<pattern id="pt${id}" width="10" height="10" patternUnits="userSpaceOnUse"><rect width="5" height="5" fill="${c}" opacity=".16"/><rect x="5" y="5" width="5" height="5" fill="${c}" opacity=".16"/></pattern>`,
+ (id,c)=>`<pattern id="pt${id}" width="6" height="6" patternUnits="userSpaceOnUse"><circle cx="3" cy="3" r="1.2" fill="${c}" opacity=".35"/></pattern>`,
+ (id,c)=>`<pattern id="pt${id}" width="8" height="8" patternUnits="userSpaceOnUse"><path d="M0 8L8 0M-2 2L2-2M6 10l4-4" stroke="${c}" stroke-width=".7" opacity=".4"/></pattern>`];
+const ANIM={ // animação do símbolo
+ logo:'.i{animation:eq 1.6s ease-in-out infinite}',turbo:'.i{animation:gira 2.4s linear infinite}',shuriken:'.i{animation:gira 1.6s linear infinite}',besouro:'.i{animation:resp 2s ease-in-out infinite}',
+ caveira:'.i{animation:pulsa 1.4s ease-in-out infinite}',chama:'.i{animation:fogo .5s ease-in-out infinite alternate}',foguete:'.i{animation:sobe 1.2s ease-in-out infinite alternate}',
+ raio:'.i{animation:flash 2.2s steps(1) infinite}',serpente:'.i{animation:balanca 2.4s ease-in-out infinite}',aguia:'.i{animation:voa 1.2s ease-in-out infinite}',leao:'.i{animation:resp 2.6s ease-in-out infinite}',
+ dragao:'.i{animation:balanca 1.8s ease-in-out infinite}',lobo:'.i{animation:pulsa 2s ease-in-out infinite}',katanas:'.i{animation:resp 1.8s ease-in-out infinite}',viking:'.i{animation:sobe 1.6s ease-in-out infinite alternate}',
+ mascara:'.i{animation:balanca 2s ease-in-out infinite}',esparta:'.i{animation:sobe 1.4s ease-in-out infinite alternate}',chave:'.i{animation:balanca 1.6s ease-in-out infinite}',chapeu:'.i{animation:balanca 2.6s ease-in-out infinite}',
+ elmo:'.i{animation:resp 2.2s ease-in-out infinite}',coluna:'.i{animation:resp 3s ease-in-out infinite}',cavalo:'.i{animation:sobe .9s ease-in-out infinite alternate}',mono:'.i{animation:resp 3s ease-in-out infinite}'};
+const KF='@keyframes gira{to{transform:rotate(360deg)}}@keyframes resp{50%{transform:scale(1.08)}}@keyframes pulsa{50%{transform:scale(1.06);filter:brightness(1.35)}}@keyframes fogo{to{transform:scale(1.06,1.12) skewX(-3deg)}}@keyframes sobe{to{transform:translateY(-3px)}}@keyframes flash{0%,86%{filter:none}88%{filter:brightness(2.2)}92%{filter:none}95%{filter:brightness(2)}}@keyframes balanca{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(6deg)}}@keyframes voa{50%{transform:scale(1.14,.92)}}@keyframes eq{0%,100%{transform:scaleY(1)}50%{transform:scaleY(1.12)}}@keyframes brilho{0%,60%{transform:translateX(-140px) skewX(-20deg)}100%{transform:translateX(160px) skewX(-20deg)}}@keyframes halo{50%{opacity:.35}}@keyframes gem{50%{filter:brightness(1.8)}}';
+let pidx=0;
 window.brasao=function(e,cls='em'){const id='b'+(uid++),f=FORMAS[e.forma],c1=e.c1,c2=e.c2;
- const lux=['bra','con','mw'].includes(e.div),eu=!!e.voce;
- const corPedra={bra:'#22c55e',con:'#a855f7',mw:'#ef4444'}[e.div]||'#22D3EE';
- const sc=(k)=>`transform="translate(50 57) scale(${k}) translate(-50 -57)"`;
- const pad=[``,
-  `<g clip-path="url(#k${id})">${[0,1,2,3,4].map(i=>`<rect x="${6+i*20}" y="-10" width="10" height="130" fill="${c2}" opacity=".9"/>`).join('')}</g>`,
-  `<g clip-path="url(#k${id})"><path d="M-10 130 L110 -10 L110 130Z" fill="${c2}" opacity=".9"/></g>`,
-  `<g clip-path="url(#k${id})"><path d="M-5 30 L50 64 L105 30 L105 54 L50 88 L-5 54Z" fill="${c2}" opacity=".95"/></g>`,
-  `<g clip-path="url(#k${id})"><rect x="50" y="-10" width="60" height="68" fill="${c2}" opacity=".9"/><rect x="-10" y="58" width="60" height="70" fill="${c2}" opacity=".9"/></g>`][e.padrao];
+ if(e._p===undefined)e._p=(pidx++)%PATS.length;
+ const lux=['bra','con','mw'].includes(e.div),eu=!!e.voce,corPedra={bra:'#22c55e',con:'#a855f7',mw:'#ef4444'}[e.div]||'#22D3EE';
+ const sc=k=>`transform="translate(50 57) scale(${k}) translate(-50 -57)"`;
+ const pad=[``,`<g clip-path="url(#k${id})">${[0,1,2,3,4].map(i=>`<rect x="${6+i*20}" y="-10" width="10" height="130" fill="url(#c2${id})" opacity=".85"/>`).join('')}</g>`,
+  `<g clip-path="url(#k${id})"><path d="M-10 130 L110 -10 L110 130Z" fill="url(#c2${id})" opacity=".85"/></g>`,
+  `<g clip-path="url(#k${id})"><path d="M-5 30 L50 64 L105 30 L105 54 L50 88 L-5 54Z" fill="url(#c2${id})" opacity=".9"/></g>`,
+  `<g clip-path="url(#k${id})"><rect x="50" y="-10" width="60" height="68" fill="url(#c2${id})" opacity=".85"/><rect x="-10" y="58" width="60" height="70" fill="url(#c2${id})" opacity=".85"/></g>`][e.padrao];
  let ic=ICO[e.icone]||'';
  if(e.icone==='mono'){const fs=e.sigla.length>1?18:34;
-  ic=`<circle cx="50" cy="55" r="29" fill="url(#m${id})" stroke="#1a1206" stroke-width="1.6"/><circle cx="50" cy="55" r="25" fill="#0b0b0f" stroke="url(#m${id})" stroke-width="1"/><circle cx="50" cy="55" r="22.5" fill="#fff"/>
-  <text x="50" y="${55+fs*.36}" text-anchor="middle" font-family="Inter,Arial" font-weight="900" font-size="${fs}" fill="${c1}">${e.sigla}</text>
-  ${e.site?`<image href="https://www.google.com/s2/favicons?domain=${e.site}&sz=128" x="34" y="39" width="32" height="32" preserveAspectRatio="xMidYMid meet"/>`:''}`}
+  ic=`<circle cx="50" cy="55" r="30" fill="url(#m${id})"/><circle cx="50" cy="55" r="26" fill="#0b0b0f"/><circle cx="50" cy="55" r="24" fill="#fff"/><text x="50" y="${55+fs*.36}" text-anchor="middle" font-family="Inter,Arial" font-weight="900" font-size="${fs}" fill="${c1}">${e.sigla}</text>
+  ${e.site?`<image href="https://www.google.com/s2/favicons?domain=${e.site}&sz=256" x="31" y="36" width="38" height="38" preserveAspectRatio="xMidYMid meet"/>`:''}`}
  const orn=(ORN[e.orn]||'').replace(/url\(#MT\)/g,`url(#m${id})`);
- const pedra=(x,y,r)=>`<g><circle cx="${x}" cy="${y}" r="${r+1.6}" fill="url(#m${id})" stroke="#1a1206" stroke-width=".8"/><circle cx="${x}" cy="${y}" r="${r}" fill="url(#p${id})"/><circle cx="${x-r*.35}" cy="${y-r*.4}" r="${r*.32}" fill="#fff" opacity=".9"/></g>`;
- const metal=eu?['#e0f2fe','#7dd3fc','#1e40af','#bae6fd']:['#fff9e0','#e8c46a','#7a5414','#f3dc95'];
- return `<svg class="${cls}" viewBox="-16 -26 132 156"><defs><clipPath id="k${id}"><path d="${f}"/></clipPath>
+ const pedra=(x,y,r)=>`<g class="gm"><circle cx="${x}" cy="${y}" r="${r+1.6}" fill="url(#m${id})"/><circle cx="${x}" cy="${y}" r="${r}" fill="url(#p${id})"/><circle cx="${x-r*.35}" cy="${y-r*.4}" r="${r*.32}" fill="#fff"/></g>`;
+ const metal=eu?['#e0f2fe','#7dd3fc','#1e40af','#bae6fd']:lux?['#fff9e0','#e8c46a','#7a5414','#f3dc95']:['#f4f4f5','#a1a1aa','#3f3f46','#e4e4e7'];
+ return `<svg class="${cls}" viewBox="-16 -26 132 156"><defs><style>#${id} .i{transform-box:fill-box;transform-origin:center}#${id} ${ANIM[e.icone]||''}#${id} .br{animation:brilho 4s ease-in-out infinite}#${id} .hl{animation:halo 2.4s ease-in-out infinite}#${id} .gm{animation:gem 1.8s ease-in-out infinite}${KF}</style>
+  <clipPath id="k${id}"><path d="${f}"/></clipPath>
   <linearGradient id="m${id}" x1="0" y1="0" x2=".9" y2="1"><stop offset="0" stop-color="${metal[0]}"/><stop offset=".28" stop-color="${metal[1]}"/><stop offset=".55" stop-color="${metal[2]}"/><stop offset=".78" stop-color="${metal[3]}"/><stop offset="1" stop-color="${metal[2]}"/></linearGradient>
-  <linearGradient id="d${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${metal[2]}"/><stop offset="1" stop-color="#1a1206"/></linearGradient>
-  <linearGradient id="l${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".22"/><stop offset=".55" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".45"/></linearGradient>
+  <linearGradient id="fd${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${c1}"/><stop offset=".6" stop-color="${c1}"/><stop offset="1" stop-color="${c2}" stop-opacity=".55"/></linearGradient>
+  <linearGradient id="c2${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${c2}"/><stop offset="1" stop-color="${c2}" stop-opacity=".55"/></linearGradient>
+  <linearGradient id="l${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".25"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".5"/></linearGradient>
+  <radialGradient id="hg${id}"><stop offset="0" stop-color="${c2}" stop-opacity=".9"/><stop offset="1" stop-color="${c2}" stop-opacity="0"/></radialGradient>
   <radialGradient id="p${id}" cx="35%" cy="30%"><stop offset="0" stop-color="#fff"/><stop offset=".35" stop-color="${corPedra}"/><stop offset="1" stop-color="#000"/></radialGradient>
-  <radialGradient id="gl${id}"><stop offset=".45" stop-color="${corPedra}" stop-opacity=".35"/><stop offset="1" stop-color="${corPedra}" stop-opacity="0"/></radialGradient>
-  <pattern id="t${id}" width="4" height="4" patternUnits="userSpaceOnUse"><rect width="2" height="2" fill="#fff" opacity=".05"/><rect x="2" y="2" width="2" height="2" fill="#000" opacity=".12"/></pattern>
-  <filter id="o${id}" x="-30%" y="-30%" width="160%" height="160%"><feMorphology in="SourceAlpha" operator="dilate" radius="1.6" result="a"/><feFlood flood-color="#0b0b0f"/><feComposite in2="a" operator="in" result="b"/><feMorphology in="SourceAlpha" operator="dilate" radius="3.2" result="c"/><feFlood flood-color="${eu?'#bae6fd':'#f3dc95'}"/><feComposite in2="c" operator="in" result="d"/><feMerge><feMergeNode in="d"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  <radialGradient id="gl${id}"><stop offset=".45" stop-color="${eu?'#22D3EE':corPedra}" stop-opacity=".35"/><stop offset="1" stop-color="${corPedra}" stop-opacity="0"/></radialGradient>
+  ${PATS[e._p](id,c2)}
+  <linearGradient id="sv${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset=".45" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".4"/></linearGradient>
+  <mask id="mk${id}"><g transform="translate(50 56) scale(${e.icone==='mono'?1:1.15}) translate(-50 -56)" fill="#fff" stroke="#fff">${ic.replace(/fill="[^"]*"/g,'fill="#fff"').replace(/stroke="[^"]*"/g,'stroke="#fff"')}</g></mask>
+  <filter id="o${id}" x="-30%" y="-30%" width="160%" height="160%"><feMorphology in="SourceAlpha" operator="dilate" radius="1.2" result="a"/><feFlood flood-color="#0b0b0f" flood-opacity=".85"/><feComposite in2="a" operator="in" result="b"/><feGaussianBlur in="SourceAlpha" stdDeviation="2.4" result="c"/><feFlood flood-color="${c2}"/><feComposite in2="c" operator="in" result="d"/><feMerge><feMergeNode in="d"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
   <filter id="sh${id}" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="4" stdDeviation="3" flood-color="#000" flood-opacity=".7"/></filter></defs>
-  ${lux||eu?`<circle cx="50" cy="57" r="72" fill="url(#gl${id})"/>`:''}
+  <g id="${id}">
+  ${lux||eu?`<circle class="hl" cx="50" cy="57" r="72" fill="url(#gl${id})"/>`:''}
   <g filter="url(#sh${id})">
   ${orn}
   <path d="${f}" fill="#0b0b0f" ${sc(1.17)}/>
   ${lux?`<path d="${f}" fill="url(#m${id})" ${sc(1.155)}/><path d="${f}" fill="#0b0b0f" ${sc(1.12)}/>`:''}
-  <path d="${f}" fill="url(#m${id})" ${sc(1.105)}/>
-  <path d="${f}" fill="url(#d${id})" ${sc(1.05)}/>
-  <path d="${f}" fill="${c1}"/>${pad}
-  <path d="${f}" fill="url(#t${id})"/><path d="${f}" fill="url(#l${id})"/>
-  <path d="${f}" fill="none" stroke="#fff" stroke-opacity=".28" stroke-width="1" ${sc(.92)}/>
-  <g filter="url(#o${id})" transform="translate(50 56) scale(${e.icone==='mono'?1:1.18}) translate(-50 -56)">${ic.replace(/url\(#MT\)/g,`url(#m${id})`)}</g>
-  <g clip-path="url(#k${id})"><ellipse cx="30" cy="20" rx="46" ry="26" fill="#fff" opacity=".13" transform="rotate(-25 30 20)"/></g>
+  <path d="${f}" fill="url(#m${id})" ${sc(1.105)}/><path d="${f}" fill="#0b0b0f" opacity=".55" ${sc(1.05)}/>
+  <path d="${f}" fill="url(#fd${id})"/>${pad}<path d="${f}" fill="url(#pt${id})"/>
+  <g clip-path="url(#k${id})"><circle class="hl" cx="50" cy="56" r="38" fill="url(#hg${id})" opacity=".55"/></g>
+  <path d="${f}" fill="url(#l${id})"/>
+  <path d="${f}" fill="none" stroke="${c2}" stroke-opacity=".6" stroke-width="1" ${sc(.92)}/>
+  <g filter="url(#o${id})"><g class="i" transform="translate(50 56) scale(${e.icone==='mono'?1:1.15}) translate(-50 -56)">${ic.replace(/url\(#MT\)/g,`url(#m${id})`)}</g></g>
+  <rect x="-20" y="0" width="140" height="120" fill="url(#sv${id})" mask="url(#mk${id})" opacity=".8"/>
+  <g clip-path="url(#k${id})"><rect class="br" x="0" y="-20" width="26" height="160" fill="#fff" opacity=".22"/></g>
   ${lux?pedra(50,-2,3.8)+pedra(2,42,2.8)+pedra(98,42,2.8):''}${eu?pedra(50,-2,3.4):''}
-  <g><path d="M-8 98 l10 4 v16 l-10 -4 l5 -8z" fill="url(#d${id})"/><path d="M108 98 l-10 4 v16 l10 -4 l-5 -8z" fill="url(#d${id})"/>
-   <path d="M2 100 h96 v16 h-96z" fill="url(#m${id})" stroke="#1a1206" stroke-width="1"/><path d="M2 102.5 h96" stroke="#fff" stroke-opacity=".6" stroke-width=".8"/>
-   <text x="50" y="112.6" text-anchor="middle" font-family="Inter,Arial" font-weight="900" font-size="7.6" letter-spacing=".9" fill="#1a1206" ${e.nome.length>14?'textLength="88" lengthAdjust="spacingAndGlyphs"':''}>${e.nome.toUpperCase()}</text></g>
-  <text x="50" y="125" text-anchor="middle" font-family="Inter,Arial" font-weight="800" font-size="5.4" letter-spacing="2.4" fill="${eu?'#bae6fd':'#f3dc95'}" opacity=".85">EST. 2026</text>
-  </g></svg>`};
+  <g><path d="M-8 98 l10 4 v16 l-10 -4 l5 -8z" fill="${c1}" stroke="#0b0b0f"/><path d="M108 98 l-10 4 v16 l10 -4 l-5 -8z" fill="${c1}" stroke="#0b0b0f"/>
+   <path d="M2 100 h96 v16 h-96z" fill="url(#m${id})" stroke="#0b0b0f" stroke-width="1"/><path d="M2 102.5 h96" stroke="#fff" stroke-opacity=".6" stroke-width=".8"/>
+   <text x="50" y="112.6" text-anchor="middle" font-family="Inter,Arial" font-weight="900" font-size="7.6" letter-spacing=".9" fill="#0b0b0f" ${e.nome.length>14?'textLength="88" lengthAdjust="spacingAndGlyphs"':''}>${e.nome.toUpperCase()}</text></g>
+  <text x="50" y="125" text-anchor="middle" font-family="Inter,Arial" font-weight="800" font-size="5.4" letter-spacing="2.4" fill="${c2}">EST. 2026</text>
+  </g></g></svg>`};
 // ---- robôs únicos ----
 const CAB=['M10 14h44v32H10z','M10 30a22 18 0 0 1 44 0v16H10z','M14 12h36l6 10v24H8V22z','M8 22a14 14 0 0 1 14-10h20a14 14 0 0 1 14 10v14a10 10 0 0 1-10 10H18A10 10 0 0 1 8 36z','M32 8l24 12v26H8V20z'];
 const OLHO=[
