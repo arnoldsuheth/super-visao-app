@@ -341,7 +341,7 @@ function retrospectiva(){const mes=hoje().slice(0,7);const nomeMes=new Date().to
   {emoji:'🧱',h:`<i>${mi}</i> missões e <i>${meus}</i> códigos postados`,p:meus?'Seu perfil já mostra sua evolução de verdade.':'Na Oficina, poste seu código: ele vira post no seu perfil.'},
   {emoji:'🔥',h:`Sequência: <i>${sequencia()}</i>`,p:'Meta do mês: seu site pessoal no ar. Você está no caminho. 🚀'}];
  abrirStory(0,[{c:{id:'me',user:'sua.retrospectiva',nome:'Retrospectiva'},so:1,slides:sl}])}
-function montarFeed(){const f=$('#feed');f.innerHTML=horaEstudo()+ordemFeed().map(postHTML).join('')+`<div class="fim">✦ Você viu tudo de hoje.<br>Amanhã cedo tem post novo. Que tal praticar na <b>Oficina</b>?</div>`;
+function montarFeed(){const f=$('#feed');f.innerHTML=ordemFeed().map(postHTML).join('')+`<div class="fim">✦ Você viu tudo de hoje.<br>Amanhã cedo tem post novo. Que tal praticar na <b>Oficina</b>?</div>`;
  f.querySelectorAll('.post').forEach(ligarPost);
  const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting&&e.intersectionRatio>.6){const id=e.target.dataset.id;const p=POSTS.find(x=>x.id===id);if(!S.vistos[id]&&p.tipo!=='desafio'){setTimeout(()=>{S.vistos[id]=1;marcarDia();salvar()},1500)}}}),{threshold:[.6]});
  f.querySelectorAll('.post').forEach(e=>io.observe(e))}
