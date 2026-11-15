@@ -546,7 +546,7 @@ async function abertura(){const el=$('#ab');if(sessionStorage.getItem('insight_a
   el.animate([{background:'#000'},{background:'rgba(0,0,0,0)'}],{duration:750,fill:'forwards'});await wait(750)}
  sessionStorage.setItem('insight_ab','1');el.remove()}
 // ---------------- início ----------------
-aplicarTema();montarStories();montarFeed();try{const nn=STORIES.filter(st=>S.stories[st.curso]!==hoje()).length;nn?navigator.setAppBadge&&navigator.setAppBadge(nn):navigator.clearAppBadge&&navigator.clearAppBadge()}catch{}atualizarBadges();abertura();
+aplicarTema();montarStories();montarFeed();try{const nn=STORIES.filter(st=>S.stories[st.curso]!==hoje()).length,cel=matchMedia('(pointer:coarse)').matches;(nn&&cel)?navigator.setAppBadge&&navigator.setAppBadge(nn):navigator.clearAppBadge&&navigator.clearAppBadge()}catch{}atualizarBadges();abertura();
 if('serviceWorker' in navigator&&location.protocol==='https:'){navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{});let rl=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(!rl){rl=true;location.reload()}})}
 
 // ====== layout de computador (barra lateral + coluna da direita) ======
