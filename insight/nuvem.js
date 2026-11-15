@@ -37,7 +37,7 @@ async function puxar(){if(!token())return;estado='sync';chip();
    const m=(rl.t||0)>tl?{...loc,...rl.img}:{...rl.img,...loc};try{localStorage.setItem('copa_img',JSON.stringify(m));localStorage.setItem('copa_img_t',Math.max(tl,rl.t||0))}catch{};window.copaRelerImgs&&copaRelerImgs()}
   estado='ok';await empurrar(true)}catch(e){estado=e.status===401?'off':'erro';if(e.status===401){localStorage.removeItem(K_TOKEN)}}chip()}
 async function empurrar(silencio){if(!token()||ocupado)return;ocupado=true;if(!silencio){estado='sync';chip()}
- try{await gravar(ARQ,S,'INSIGHT: progresso');estado='ok'}catch(e){estado='erro'}ocupado=false;chip()}
+ try{const rem=await ler(ARQ);if(rem){const antes=JSON.stringify(S);S=juntarS(S,rem);if(JSON.stringify(S)!==antes){try{localStorage.setItem('insight_v1',JSON.stringify(S))}catch{};if(typeof telaAtual!=='undefined'&&telaAtual==='ofc'){try{ir('ofc')}catch{}}}}await gravar(ARQ,S,'INSIGHT: progresso');estado='ok'}catch(e){estado='erro'}ocupado=false;chip()}
 async function empurrarLogos(){if(!token())return;try{let im={};try{im=JSON.parse(localStorage.getItem('copa_img')||'{}')}catch{}await ler(ARQ_LOGOS).catch(()=>null);await gravar(ARQ_LOGOS,{t:+(localStorage.getItem('copa_img_t')||Date.now()),img:im},'INSIGHT: logos da Copa')}catch{}}
 window.aoSalvar=()=>{if(!token())return;clearTimeout(timer);timer=setTimeout(()=>empurrar(),4000)};
 window.aoSalvarLogos=()=>{if(!token())return;clearTimeout(timerL);timerL=setTimeout(empurrarLogos,1500)};
