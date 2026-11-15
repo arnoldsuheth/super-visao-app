@@ -54,7 +54,8 @@ header{display:flex;align-items:center;justify-content:space-between;margin:10px
 .ola{font:500 12px var(--mono);color:#0ea5e9;letter-spacing:.1em}
 .titulo{font:800 24px/1.15 Inter,system-ui,sans-serif;letter-spacing:-.02em;color:var(--tx)}
 .pc{font:500 11.5px var(--mono);color:var(--mu);display:flex;align-items:center;gap:6px}
-.pc i{width:7px;height:7px;border-radius:50%;background:#94a3b8}.pc.on i{background:#22c55e;box-shadow:0 0 8px #22c55e}.pc.trab i{background:var(--la);box-shadow:0 0 8px var(--la);animation:pisca 1s steps(1) infinite}
+.pc[hidden]{display:none}.pc i{flex:0 0 auto;width:9px;height:9px;border-radius:50%;background:#94a3b8}.pc.on i{background:#22c55e;box-shadow:0 0 0 0 rgba(34,197,94,.5);animation:vivo 2s ease-out infinite}.pc.on{color:#15803d}.pc.trab i{background:var(--la);box-shadow:0 0 8px var(--la);animation:pisca 1s steps(1) infinite}.pc.trab{color:#c2410c}
+@keyframes vivo{0%{box-shadow:0 0 0 0 rgba(34,197,94,.55)}100%{box-shadow:0 0 0 9px rgba(34,197,94,0)}}
 .go{position:relative;overflow:hidden;align-self:flex-start;border:0;height:46px;padding:0 18px;background:rgba(37,99,235,.10);color:var(--tx);font:700 14px var(--mono);display:flex;align-items:center;gap:6px;box-shadow:inset 0 0 0 1px rgba(37,99,235,.35);cursor:pointer}
 .go:active,.bt:active,.relogio:active{transform:scale(.97)}
 em{font-style:normal;color:var(--la)}
@@ -208,6 +209,7 @@ nav .c.tl{--dx:-3px;--dy:-3px}nav .c.tr{--dx:3px;--dy:-3px}nav .c.bl{--dx:-3px;-
       <span class="titulo" id="titulo">Conectando…</span>
       <button class="go" data-a="atualizar"><i class="c tl"></i><i class="c tr"></i><i class="c bl"></i><i class="c br"></i><i class="scan"></i><em style="position:relative">&gt;</em><span style="position:relative">atualizar_tudo</span><span class="cur"></span></button>
       <span class="pc" id="pc"><i></i><span id="pcTx">…</span></span>
+      <span class="pc trab" id="pcTrab" hidden><i></i><span id="pcTrabTx"></span></span>
     </div>
     <div class="simb" aria-hidden="true">
           <span class="af-halo" style="inset: -10px"></span>
@@ -247,7 +249,7 @@ nav .c.tl{--dx:-3px;--dy:-3px}nav .c.tr{--dx:3px;--dy:-3px}nav .c.bl{--dx:-3px;-
   </div>
   <button class="vidro relogio" id="relogio" aria-label="Conferir se os sites estão no ar"><i class="c tl"></i><i class="c tr"></i><i class="c bl"></i><i class="c br"></i><i class="scan"></i>
     <span class="rl-top"><span>SITES NO AR</span><span id="rlQuando">TOQUE PARA CONFERIR</span></span>
-    <span class="rl-mid"><span class="rl-num"><span class="fantasma">88/88</span><span class="val"><span id="rlOk">--</span><svg width="22" height="44" viewBox="0 0 22 44" class="barra-viva" style="overflow:visible;margin:0 1px" aria-hidden="true"><defs><linearGradient id="rl-barra-g" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ea580c"/><stop offset="1" stop-color="#fb923c"/></linearGradient><filter id="rl-brilho-f" x="-100%" y="-50%" width="300%" height="200%"><feGaussianBlur stdDeviation="1.6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><g filter="url(#rl-brilho-f)"><path d="M16 4 L6 40" stroke="url(#rl-barra-g)" stroke-width="5" stroke-linecap="round"/><path class="rl-raio" pathLength="1" d="M6 40 L16 4" stroke="#fff7ed" stroke-width="2.4" stroke-linecap="round" fill="none"/></g><circle class="rl-faisca" cx="16" cy="4" r="2.4" fill="#fdba74"/><circle class="rl-faisca" cx="6" cy="40" r="2.4" fill="#fdba74" style="animation-delay:-1.3s"/></svg><span id="rlTot">--</span></span></span><span class="ok sem" id="rlSt"><b>●</b> --</span></span>
+    <span class="rl-mid"><span class="rl-num"><span class="fantasma">88<span style="display:inline-block;width:24px"></span>88</span><span class="val"><span id="rlOk">--</span><svg width="22" height="44" viewBox="0 0 22 44" class="barra-viva" style="overflow:visible;margin:0 1px" aria-hidden="true"><defs><linearGradient id="rl-barra-g" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ea580c"/><stop offset="1" stop-color="#fb923c"/></linearGradient><filter id="rl-brilho-f" x="-100%" y="-50%" width="300%" height="200%"><feGaussianBlur stdDeviation="1.6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><g filter="url(#rl-brilho-f)"><path d="M16 4 L6 40" stroke="url(#rl-barra-g)" stroke-width="5" stroke-linecap="round"/><path class="rl-raio" pathLength="1" d="M6 40 L16 4" stroke="#fff7ed" stroke-width="2.4" stroke-linecap="round" fill="none"/></g><circle class="rl-faisca" cx="16" cy="4" r="2.4" fill="#fdba74"/><circle class="rl-faisca" cx="6" cy="40" r="2.4" fill="#fdba74" style="animation-delay:-1.3s"/></svg><span id="rlTot">--</span></span></span><span class="ok sem" id="rlSt"><b>●</b> --</span></span>
     <span class="rl-barra"><i id="rlBarra" style="width:0"></i></span>
   </button>
   <h2><em>&gt;</em>rapido</h2>
@@ -405,9 +407,10 @@ function desenhar(d){
   const ult=L.find(p=>p.feito_em);const pc=$('#pc');
   const trab=L.find(p=>p.status==='rodando');
   const on=ult&&Date.now()-new Date(ult.feito_em)<15*60000;
-  pc.classList.toggle('on',!!on&&!trab);pc.classList.toggle('trab',!!trab);
+  const online=!!trab||!!on;pc.classList.toggle('on',online);
+  $('#pcTrab').hidden=!trab;if(trab)$('#pcTrabTx').textContent='trabalhando: '+(NOMES[trab.acao]||trab.acao).replace(/^\S+\s/,'').toLowerCase();
   const pend=L.some(p=>p.status==='pendente');
-  if(trab){$('#pcTx').textContent='pc trabalhando: '+(NOMES[trab.acao]||trab.acao).replace(/^\S+\s/,'').toLowerCase();$('#titulo').innerHTML='Trabalhando<br>nisso.'}
+  if(trab){$('#pcTx').textContent='pc online'+(ult?' · respondeu '+quando(ult.feito_em):'');$('#titulo').innerHTML='Trabalhando<br>nisso.'}
   else if(on){$('#pcTx').textContent='pc online · respondeu '+quando(ult.feito_em);$('#titulo').innerHTML=L.some(p=>p.status==='erro'&&Date.now()-new Date(p.feito_em)<3600000)?'Algo pede<br>atenção.':'Tudo sob<br>controle.'}
   else{$('#pcTx').textContent=pend?'esperando o pc pegar o pedido…':'o pc responde em até 1 min se estiver ligado';$('#titulo').innerHTML=pend?'Pedido na<br>fila.':'PC em<br>silêncio.'}
   relogio(L);
