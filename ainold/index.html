@@ -100,7 +100,12 @@ details.it .t b::before{content:"▸ ";color:var(--mu)}details.it[open] .t b::be
 .bt3{flex-direction:column;justify-content:center;padding:14px 4px 12px;gap:9px}.bt3 b{font-size:12px}
 .chip{position:relative;flex:0 0 auto;width:40px;height:40px;border-radius:6px;display:flex;align-items:center;justify-content:center;background:rgba(37,99,235,.10);box-shadow:inset 0 0 0 1px rgba(37,99,235,.25)}
 .chip svg{width:22px;height:22px}
-.bt.link::before{content:"↗";position:absolute;top:8px;right:10px;color:var(--mu);font-size:12px}
+.tag{position:absolute;top:5px;right:6px;font:700 9px var(--mono);letter-spacing:.04em;padding:2px 5px;border-radius:3px;pointer-events:none}
+.tag.in{position:static;display:inline-block;margin:0 3px 0 0}
+.tag.pc{background:rgba(249,115,22,.14);color:#c2410c}.tag.ls{background:rgba(37,99,235,.12);color:var(--az2)}.tag.lk{background:rgba(100,116,139,.14);color:#475569}
+.legenda{font:500 10.5px/1.9 var(--mono);color:var(--mu);margin:14px 2px 0}
+.bt3 .tag{top:4px;right:4px}
+.grid .bt{padding-top:22px}
 @keyframes bl-cai{0%,15%{transform:translateY(-7px);opacity:0}35%,100%{transform:translateY(0);opacity:1}}
 @keyframes bl-sobe{0%{transform:translateY(7px);opacity:0}40%,75%{transform:translateY(-2px);opacity:1}100%{transform:translateY(-9px);opacity:0}}
 @keyframes bl-escreve{0%,10%{stroke-dashoffset:1}50%,85%{stroke-dashoffset:0}100%{stroke-dashoffset:0;opacity:0}}
@@ -252,6 +257,7 @@ nav .c.tl{--dx:-3px;--dy:-3px}nav .c.tr{--dx:3px;--dy:-3px}nav .c.bl{--dx:-3px;-
     <span class="rl-mid"><span class="rl-num"><span class="fantasma">88<span style="display:inline-block;width:24px"></span>88</span><span class="val"><span id="rlOk">--</span><svg width="22" height="44" viewBox="0 0 22 44" class="barra-viva" style="overflow:visible;margin:0 1px" aria-hidden="true"><defs><linearGradient id="rl-barra-g" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ea580c"/><stop offset="1" stop-color="#fb923c"/></linearGradient><filter id="rl-brilho-f" x="-100%" y="-50%" width="300%" height="200%"><feGaussianBlur stdDeviation="1.6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><g filter="url(#rl-brilho-f)"><path d="M16 4 L6 40" stroke="url(#rl-barra-g)" stroke-width="5" stroke-linecap="round"/><path class="rl-raio" pathLength="1" d="M6 40 L16 4" stroke="#fff7ed" stroke-width="2.4" stroke-linecap="round" fill="none"/></g><circle class="rl-faisca" cx="16" cy="4" r="2.4" fill="#fdba74"/><circle class="rl-faisca" cx="6" cy="40" r="2.4" fill="#fdba74" style="animation-delay:-1.3s"/></svg><span id="rlTot">--</span></span></span><span class="ok sem" id="rlSt"><b>●</b> --</span></span>
     <span class="rl-barra"><i id="rlBarra" style="width:0"></i></span>
   </button>
+  <p class="legenda"><span class="tag in pc">▶ pc</span>o PC faz na hora &nbsp;<span class="tag in ls">☰ abre</span>abre uma janela &nbsp;<span class="tag in lk">↗ site</span>abre um site<br>títulos com ▾ abrem e fecham</p>
   <h2><em>&gt;</em>rapido</h2>
   <div class="g3">
     <button class="bt bt3" data-a="backup"><i class="c tl"></i><i class="c tr"></i><i class="c bl"></i><i class="c br"></i><i class="scan"></i><span class="chip" data-i="backup"></span><b><em>&gt;</em>backup</b></button>
@@ -313,6 +319,8 @@ nav .c.tl{--dx:-3px;--dy:-3px}nav .c.tr{--dx:3px;--dy:-3px}nav .c.bl{--dx:-3px;-
     <button class="bt" data-a="viagem" data-c="Ligar ou desligar o Modo viagem? Ligado, o PC não suspende nem hiberna, para o celular sempre alcançar ele. Desligado, volta como era antes." ><i class="c tl"></i><i class="c tr"></i><i class="c bl"></i><i class="c br"></i><i class="scan"></i><span class="chip" data-i="viagem"></span><span class="tx"><b><em>&gt;</em>viagem</b><small>PC sem dormir</small></span></button>
     <button class="bt" data-a="energia" ><i class="c tl"></i><i class="c tr"></i><i class="c bl"></i><i class="c br"></i><i class="scan"></i><span class="chip" data-i="energia"></span><span class="tx"><b><em>&gt;</em>pc_dorme</b><small>Ver energia agora</small></span></button>
     <button class="bt" data-a="lembrete" data-c="Ligar ou desligar o INSIGHT abrindo sozinho no PC (seg, ter e qui às 20:30)?" ><i class="c tl"></i><i class="c tr"></i><i class="c bl"></i><i class="c br"></i><i class="scan"></i><span class="chip" data-i="lembrete"></span><span class="tx"><b><em>&gt;</em>lembrete</b><small>Liga / desliga</small></span></button>
+    <button class="bt" data-a="avisos" ><i class="c tl"></i><i class="c tr"></i><i class="c bl"></i><i class="c br"></i><i class="scan"></i><span class="chip" data-i="avisos"></span><span class="tx"><b><em>&gt;</em>avisos</b><small>Aviso no celular quando o PC terminar</small></span></button>
+    <button class="bt" data-a="atalho" data-c="Criar o atalho AI Node (com o ícone) na Área de Trabalho do PC?" ><i class="c tl"></i><i class="c tr"></i><i class="c bl"></i><i class="c br"></i><i class="scan"></i><span class="chip" data-i="atalho"></span><span class="tx"><b><em>&gt;</em>atalho_pc</b><small>Ícone na Área de Trabalho</small></span></button>
   </div>
 </section>
 
@@ -332,7 +340,7 @@ const PROJETOS=[["Site do Studio","studio-evolution-tech"],["Gestão do Studio (
 const NOMES={sites:'🟢 Sites no ar?',atualizar:'🔄 Atualizar tudo',backup:'💾 Backup de todos',relatorio:'📋 Relatório do PC',arrumar:'🧹 Arrumar o PC',publicar:'🚀 Publicar',
  arrumar_area:'🖥️ Arrumar Área de Trabalho',arrumar_downloads:'📥 Arrumar Downloads',fotos:'🖼️ Fotos para posts',anotar:'✍️ Anotação',cerebro:'🧠 Anotações',historico_pws:'🗒️ O que o PC fez',aula:'🎓 Aula de PWS',
  lembrete:'⏰ Lembrete de estudo',noturno:'🌙 Backup noturno',ferramentas:'🧰 Ferramentas',proj_atualizar:'🔄 Atualizar',proj_mudou:'🔍 O que mudou',proj_historico:'📜 Histórico',backup_um:'💾 Backup',
- backup_ver:'📦 Cópias',backup_restaurar:'⏪ Restaurar',cliente_codigo:'🔑 Código de acesso',viagem:'✈️ Modo viagem',leiame:'📝 LEIA-ME de restaurar',energia:'🔋 Energia do PC'};
+ backup_ver:'📦 Cópias',backup_restaurar:'⏪ Restaurar',cliente_codigo:'🔑 Código de acesso',viagem:'✈️ Modo viagem',leiame:'📝 LEIA-ME de restaurar',avisos:'🔔 Avisos no celular',atalho:'🖥️ Atalho no PC',ping:'🟢 PC ligado?',energia:'🔋 Energia do PC'};
 const APPS=[["INSIGHT","https://arnoldsuheth.github.io/super-visao-app/insight/"],["SUPER VISÃO","https://arnoldsuheth.github.io/super-visao-app/"],["Gestão do Studio","https://arnoldsuheth.github.io/studio-evolution-gestao-app/"],["Site do Studio","https://www.studioevolutiontech.com.br/"],["Site da BLESSAINT","https://www.blessaint.com.br/"]];
 const CLIENTES=[["Katiúscia","katiu","https://arnoldsuheth.github.io/app-lifetrail-katiuscia/"],["Juliana","juliana","https://arnoldsuheth.github.io/app-lifetrail-juliana/"],["Ana Paula","ana paula","https://arnoldsuheth.github.io/app-lifetrail-ana-paula/"],["Adriana","adriana","https://arnoldsuheth.github.io/life-trail-adriana/"],["Regiane","regiane","https://arnoldsuheth.github.io/life-trail-regiane/"],["Dra. Ana Luiza","luiza",""],["Ju Intimates","ju intim",""],["Amanda","amanda",""],["Michele","michele",""]];
 const $=s=>document.querySelector(s);const $$=s=>document.querySelectorAll(s);const ABERTOS=new Set();
@@ -361,8 +369,11 @@ viagem:'<svg viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" stroke-width="2" s
 energia:'<svg viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round"><rect x="3" y="7" width="16" height="10"/><path d="M21 11v2"/><rect x="5" y="9" width="7" height="6" fill="#f97316" stroke="none" class="nv-janela"/></svg>',
 cem:'<svg viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6h1M4 12h1M4 18h1" stroke="#f97316" stroke-width="3"/></svg>',
 leiame:'<svg viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round"><path d="M6 3h9l4 4v14H6z"/><path class="a-escreve" pathLength="1" d="M9 11h7M9 14h7M9 17h4"/></svg>',
+avisos:'<svg viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 21h4"/><circle class="nv-janela" cx="18" cy="6" r="3" fill="#f97316" stroke="none"/></svg>',
+atalho:'<svg viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="12"/><path d="M9 20h6M12 16v4"/><rect x="9" y="7" width="6" height="6" fill="#f97316" stroke="none"/></svg>',
 lembrete:'<svg viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="13" r="7"/><path d="M12 9v4l2 2M5 4L3 6M19 4l2 2"/></svg>'};
 document.querySelectorAll('.chip[data-i]').forEach(c=>c.innerHTML=I[c.dataset.i]||'');
+document.querySelectorAll('.bt').forEach(b=>{let t,c;if(b.dataset.sheet||b.dataset.pub!==undefined){t='☰ abre';c='ls'}else if(b.dataset.link||b.dataset.gh!==undefined){t='↗ site';c='lk'}else if(b.dataset.a){t='▶ pc';c='pc'}if(t){const s=document.createElement('span');s.className='tag '+c;s.textContent=t;b.appendChild(s)}});
 
 const te=new TextEncoder(),td=new TextDecoder();
 const unb64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
@@ -379,12 +390,13 @@ async function ler(){try{const j=await gh(`/repos/${OWNER}/${REPO}/contents/${AR
  catch(e){if(e.status===404){sha=undefined;return {pedidos:[]}}throw e}}
 async function gravar(obj,msg){return gh(`/repos/${OWNER}/${REPO}/contents/${ARQ}`,{method:'PUT',body:JSON.stringify({message:msg,content:b64u(JSON.stringify(obj,null,1)),sha})})}
 
-async function pedir(acao,extra={}){
+async function pedir(acao,extra={},quieto){
   for(let tent=0;tent<3;tent++){
     try{const d=await ler();d.pedidos=Array.isArray(d.pedidos)?d.pedidos:[];
+      if(acao==='ping')d.pedidos=d.pedidos.filter(p=>p.acao!=='ping'||p.status==='pendente'||p.status==='rodando');
       d.pedidos.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),acao,projeto:extra.projeto||'',mensagem:extra.mensagem||'',quando:new Date().toISOString(),status:'pendente',resultado:'',feito_em:''});
       d.pedidos=d.pedidos.slice(-30);
-      await gravar(d,'AI Node: pedido '+acao);toast('> pedido enviado ao PC');desenhar(d);return}
+      await gravar(d,'AI Node: pedido '+acao);if(!quieto)toast('> pedido enviado ao PC');desenhar(d);return}
     catch(e){if(e.status===409||e.status===422)continue;if(e.status===401){localStorage.removeItem(K);conectar();return}toast('Não consegui enviar. Tente de novo.');return}
   }
 }
@@ -403,27 +415,34 @@ function relogio(L){
   $('#rlBarra').style.width=Math.max(0,100-min/60*100)+'%';
 }
 function desenhar(d){
-  const L=[...(d.pedidos||[])].reverse();
-  const ult=L.find(p=>p.feito_em);const pc=$('#pc');
-  const trab=L.find(p=>p.status==='rodando');
+  const L0=[...(d.pedidos||[])].reverse();const velho=p=>p.status==='rodando'&&Date.now()-new Date(p.quando)>30*60000;
+  const L=L0.filter(p=>p.acao!=='ping');
+  const ult=L0.find(p=>p.feito_em);
+  const pingando=L0.some(p=>p.acao==='ping'&&(p.status==='pendente'||p.status==='rodando'));const pc=$('#pc');
+  const trab=L.find(p=>p.status==='rodando'&&!velho(p));
   const on=ult&&Date.now()-new Date(ult.feito_em)<15*60000;
   const online=!!trab||!!on;pc.classList.toggle('on',online);
-  $('#pcTrab').hidden=!trab;if(trab)$('#pcTrabTx').textContent='trabalhando: '+(NOMES[trab.acao]||trab.acao).replace(/^\S+\s/,'').toLowerCase();
+  $('#pcTrab').hidden=!trab;if(trab)$('#pcTrabTx').textContent='trabalhando: '+(NOMES[trab.acao]||trab.acao).replace(/^\S+\s/,'').toLowerCase()+(trab.resultado&&trab.resultado.startsWith('⏳')?' · '+trab.resultado.replace(/^⏳\s*/,'').split(' · ')[0]:'');
   const pend=L.some(p=>p.status==='pendente');
   if(trab){$('#pcTx').textContent='pc online'+(ult?' · respondeu '+quando(ult.feito_em):'');$('#titulo').innerHTML='Trabalhando<br>nisso.'}
   else if(on){$('#pcTx').textContent='pc online · respondeu '+quando(ult.feito_em);$('#titulo').innerHTML=L.some(p=>p.status==='erro'&&Date.now()-new Date(p.feito_em)<3600000)?'Algo pede<br>atenção.':'Tudo sob<br>controle.'}
-  else{$('#pcTx').textContent=pend?'esperando o pc pegar o pedido…':'o pc responde em até 1 min se estiver ligado';$('#titulo').innerHTML=pend?'Pedido na<br>fila.':'PC em<br>silêncio.'}
+  else{$('#pcTx').textContent=pingando?'conferindo se o pc está ligado…':pend?'esperando o pc pegar o pedido…':'o pc responde em até 1 min se estiver ligado';$('#titulo').innerHTML=pend?'Pedido na<br>fila.':'PC em<br>silêncio.'}
   relogio(L);
   if(!L.length){$('#log').innerHTML='<div class="vazio">Nenhum pedido ainda. Toque num botão acima.</div>';return}
-  const nPend=L.filter(p=>p.status==='pendente').length,rod=L.filter(p=>p.status==='rodando').length;
+  const nPend=L.filter(p=>p.status==='pendente').length,rod=L.filter(p=>p.status==='rodando'&&!velho(p)).length;
   $('#pedCnt').textContent=rod?'· '+rod+' trabalhando':nPend?'· '+nPend+' na fila':'· '+L.length;
-  $('#log').innerHTML=L.map(p=>{const st={pendente:['p','aguardando'],rodando:['r','trabalhando…'],feito:['f','feito'],erro:['e','erro']}[p.status]||['p',p.status];
+  $('#log').innerHTML=L.map(p=>{const st=velho(p)?['e','travou? peça de novo']:({pendente:['p','aguardando'],rodando:['r','trabalhando…'],feito:['f','feito'],erro:['e','erro']}[p.status]||['p',p.status]);
     const cab=`<div class="t"><b><em>&gt;</em>${esc((NOMES[p.acao]||p.acao).replace(/^\S+\s/,'').toLowerCase())}${p.projeto&&!/^[123]$/.test(p.projeto)?' · '+esc(p.projeto):''}</b><span><span class="st ${st[0]}">${st[1]}</span> · ${quando(p.feito_em||p.quando)}</span></div>`;
     return p.resultado?`<details class="it" data-id="${esc(p.id)}"${ABERTOS.has(p.id)?' open':''}><summary>${cab}</summary><pre>${esc(p.resultado)}</pre></details>`:`<div class="it">${cab}</div>`}).join('');
   $$('#log details').forEach(d=>d.ontoggle=()=>{d.open?ABERTOS.add(d.dataset.id):ABERTOS.delete(d.dataset.id)});
 }
-let ocupado=false;
-async function atualizar(){if(!token()||ocupado)return;ocupado=true;try{desenhar(await ler())}catch(e){if(e.status===401){localStorage.removeItem(K);conectar()}}ocupado=false}
+let ocupado=false,pingou=false;
+function talvezPing(d){if(pingou||!token())return;const L=d.pedidos||[];const ult=[...L].reverse().find(p=>p.feito_em);
+  if(L.some(p=>p.status==='pendente'||(p.status==='rodando'&&Date.now()-new Date(p.quando)<30*60000)))return;
+  if(ult&&Date.now()-new Date(ult.feito_em)<10*60000)return;
+  let t=0;try{t=+localStorage.getItem('ainode_ping')||0}catch{}if(Date.now()-t<10*60000)return;
+  pingou=true;try{localStorage.setItem('ainode_ping',Date.now())}catch{};pedir('ping',{},true)}
+async function atualizar(){if(!token()||ocupado)return;ocupado=true;try{const d=await ler();desenhar(d);setTimeout(()=>talvezPing(d),400)}catch(e){if(e.status===401){localStorage.removeItem(K);conectar()}}ocupado=false}
 
 function abrir(html,depois){$('#sh').innerHTML=html;$('#ov').classList.add('on');depois&&depois()}
 function fechar(){$('#ov').classList.remove('on')}
