@@ -19,7 +19,7 @@ const FUNDO_CODIGO={ // o prêmio: código do fundo vivo explicado
 // ---------- robôs e imagens ----------
 const RG=new Map();let g=0;EQUIPES.forEach(e=>e.robos.forEach(r=>RG.set(r,g++)));const rb=(r,e)=>window.robo(r,e,RG.get(r)||0);
 function lerImgs(){let im={};try{im=JSON.parse(localStorage.getItem('copa_img')||'{}')}catch{}EQUIPES.forEach(e=>{const v=im[e.id];if(!v){delete e.imagem;return}if(typeof v==='string'){e.imagem=v;e.imgLarga=false;e.imgFundo='#ffffff'}else{e.imagem=v.src;e.imgLarga=!!v.larga;e.imgFundo=v.fundo||'#ffffff'}});return im}lerImgs();
-function salvarImg(e,v){const im=lerImgs();if(v)im[e.id]=v;else delete im[e.id];try{localStorage.setItem('copa_img',JSON.stringify(im))}catch{toast('Imagem grande demais')}lerImgs()}
+window.copaRelerImgs=()=>lerImgs();function salvarImg(e,v){const im=lerImgs();if(v)im[e.id]=v;else delete im[e.id];try{localStorage.setItem('copa_img',JSON.stringify(im));localStorage.setItem('copa_img_t',Date.now())}catch{toast('Imagem grande demais')}lerImgs();window.aoSalvarLogos&&aoSalvarLogos()}
 // ---------- estado ----------
 function C(){if(!S.copa){S.copa={div:'mun',ini:hoje(),xp0:xpTotal(),xpIni:xpTotal(),hist:{},tit:[],fundos:[],msgs:[],vistas:{},temporadas:0};salvar()}return S.copa}
 function geral(){const c=C();if(c.xpIni==null){c.xpIni=c.xp0;salvar()}const BASE={mw:500,con:440,bra:380,sb:320,sc:270,sd:220,reg:170,est:120,mun:70};const d=Math.min(dias(c.ini0||c.ini,hoje()),365);
