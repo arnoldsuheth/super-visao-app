@@ -79,7 +79,7 @@ body.claro .glow{background:radial-gradient(circle at 100% 0,rgba(214,41,118,.10
 /* ao vivo */
 .av2{height:100%;display:grid;grid-template-rows:1fr 1fr;background:var(--card)}
 .av2 pre{margin:0;padding:12px 14px;font:12.5px/1.55 Menlo,ui-monospace,monospace;overflow:auto;background:#141416;color:#e8e8e8}
-.av2 pre .t{color:#ff9a6a}.av2 pre .a{color:#8ad4ff}
+.av2 pre{background:#1e1e1e;color:#d4d4d4;white-space:pre-wrap}
 .av2 iframe{width:100%;height:100%;border:0;background:#fff}
 .av2 .lb{position:absolute;left:10px;font:800 9px Menlo,monospace;letter-spacing:2px;padding:3px 7px;border-radius:6px;background:var(--g);color:#fff;z-index:2}
 /* curiosidade */
@@ -123,11 +123,38 @@ body.claro .glow{background:radial-gradient(circle at 100% 0,rgba(214,41,118,.10
 .miss{border-radius:16px;padding:14px;margin-bottom:12px;background:var(--card);border:1px solid var(--ln)}
 .miss small{font:800 10.5px Menlo,monospace;letter-spacing:2px}.miss h4{font-size:17px;margin:4px 0}.miss p{font-size:13.5px;line-height:1.45}
 .miss .ok{color:#1fa95e;font-weight:800}
-textarea.ed{width:100%;min-height:200px;border-radius:14px;border:1.5px solid var(--ln);background:#141416;color:#eee;font:16px/1.55 Menlo,ui-monospace,monospace;padding:12px;resize:vertical;outline:none}
+textarea.old-ed{width:100%;min-height:200px;border-radius:14px;border:1.5px solid var(--ln);background:#141416;color:#eee;font:16px/1.55 Menlo,ui-monospace,monospace;padding:12px;resize:vertical;outline:none}
 textarea.ed:focus{border-color:#d62976}
 .kb{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}.kb button{font:700 13px Menlo,monospace;padding:7px 10px;border-radius:8px;border:1px solid var(--ln);background:var(--chip);color:var(--tx);cursor:pointer}
 .prev{margin-top:10px;border-radius:14px;overflow:hidden;border:1px solid var(--ln);background:#fff}.prev .lbx{font:800 10px Menlo,monospace;letter-spacing:2px;padding:6px 10px;background:var(--g);color:#fff}
 .prev iframe{width:100%;height:260px;border:0;display:block}
+/* oficina: barra fixa + editor estilo VS Code */
+.ofbar{position:sticky;top:var(--vvt,0px);z-index:15;margin:0 -14px 10px;padding:8px 14px 8px;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--ln)}
+.ofmis{display:block;width:100%;text-align:left;border:1px solid var(--ln);background:var(--card);color:var(--tx);border-radius:14px;padding:9px 12px;font-family:inherit;cursor:pointer}
+.ofmis small{display:flex;gap:8px;white-space:nowrap;justify-content:space-between;font:800 10px Menlo,monospace;letter-spacing:1.5px;color:var(--mu)}
+.ofmis b{display:block;font-size:14.5px;margin:3px 0 2px}
+.ofmis p{font-size:13.5px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.ofbar.aberta .ofmis p{-webkit-line-clamp:unset;display:block}
+.ofmais{display:none;max-height:45vh;overflow:auto}.ofbar.aberta .ofmais{display:block}
+.oftabs{display:flex;gap:6px;margin-top:8px}.oftabs button{flex:1;border:1.5px solid var(--ln);background:var(--card);color:var(--tx);border-radius:10px;padding:7px;font:800 13px inherit;font-family:inherit;cursor:pointer}
+.oftabs button.on{background:var(--tx);color:var(--bg);border-color:var(--tx)}
+.ofbar .kb{flex-wrap:nowrap;overflow-x:auto;margin:8px -14px 0;padding:0 14px;scrollbar-width:none}.ofbar .kb::-webkit-scrollbar{display:none}.ofbar .kb button{flex:0 0 auto}
+.ofc .ofp[hidden]{display:none}
+.vsc{position:relative;border-radius:12px;background:#1e1e1e;border:1px solid #2b2b2b;overflow:hidden}
+.vsc .vtop{display:flex;align-items:center;gap:6px;padding:7px 10px;background:#252526;border-bottom:1px solid #2b2b2b;font:12px Menlo,ui-monospace,monospace;color:#cccccc}
+.vsc .vtop i{width:9px;height:9px;border-radius:50%;background:#e44d26;display:inline-block}
+.vsc .vbox{position:relative}
+.vsc pre,.vsc textarea{margin:0;border:0;padding:12px 12px 14px 46px;font:16px/1.55 Menlo,ui-monospace,SFMono-Regular,monospace;font-variant-ligatures:none;tab-size:2;letter-spacing:0;white-space:pre-wrap;overflow-wrap:anywhere;word-break:normal;min-height:240px;box-sizing:border-box;width:100%}
+.vsc pre{color:#d4d4d4;counter-reset:ln;pointer-events:none}
+.vsc textarea{position:absolute;inset:0;height:100%;background:transparent;color:transparent;-webkit-text-fill-color:transparent;caret-color:#aeafad;resize:none;outline:none;overflow:hidden;-webkit-appearance:none;appearance:none;border-radius:0}
+.vsc textarea::selection{background:rgba(38,79,120,.85);-webkit-text-fill-color:transparent}
+.vsc .l{position:relative;min-height:1.55em}.vsc .l::before{counter-increment:ln;content:counter(ln);position:absolute;left:-46px;width:32px;text-align:right;color:#6e7681;font-size:13px}
+.vsc.foco .l.at::before{color:#c6c6c6}
+.vsc.foco .l.at{background:rgba(255,255,255,.04)}
+.vs-pn{color:#808080}.vs-tg{color:#569cd6}.vs-at{color:#9cdcfe}.vs-st{color:#ce9178}.vs-cm{color:#6a9955;font-style:italic}.vs-sl{color:#d7ba7d}.vs-pr{color:#9cdcfe}.vs-nu{color:#b5cea8}.vs-vl{color:#ce9178}.vs-br{color:#ffd700}
+.ofp .prev{margin-top:0}.ofp .prev iframe{height:62vh}
+body.digitando .nav{display:none}
+@media(min-width:900px){.ofc .ofgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}.ofc .ofp[hidden]{display:block}.oftabs{display:none}.ofp .prev{position:sticky;top:180px}}
 /* story viewer */
 #sv{position:fixed;inset:0;z-index:60;background:#000;color:#fff;display:none}#sv.on{display:block}
 #sv .wrap{position:relative;max-width:480px;height:100%;margin:0 auto;overflow:hidden}
@@ -372,7 +399,39 @@ function midia(p){
  if(p.tipo==='aovivo')return `<div class="av2"><span class="lb" style="top:10px">VOCÊ ESCREVE</span><pre>${colorir(p.code)}</pre><span class="lb" style="top:calc(50% + 10px)">APARECE ASSIM</span><iframe sandbox="" srcdoc="${esc('<body style=\'font-family:-apple-system,Arial;padding:18px;margin:0\'>'+p.code)}"></iframe></div>`;
  if(p.tipo==='curiosidade')return `<div class="fl"><div class="in"><div class="fa"><div class="em">${p.emoji||'✨'}</div><small>VOCÊ SABIA? · TOQUE PARA VIRAR</small><h3>${p.frente}</h3><span class="tp">● ● ●</span></div><div class="fa b"><small>A RESPOSTA</small><p>${p.verso}</p></div></div></div>`;
 }
-function colorir(c){return esc(c).replace(/([a-z-]+)="([^"]*)"/gi,'\u0001$1\u0002$2\u0003').replace(/(&lt;\/?)([a-z0-9]+)/gi,'$1<span class="t">$2</span>').replace(/\u0001([^\u0002]*)\u0002([^\u0003]*)\u0003/g,'<span class="a">$1</span>="$2"')}
+function realceTok(src){const T=[],add=(c,t)=>{if(t)T.push([c,t])};let i=0;const n=src.length;
+ const mt=(re)=>{re.lastIndex=i;const m=re.exec(src);return m&&m.index===i?m[0]:null};
+ const css=(end)=>{let blk=false,col=false;while(i<end){const c=src[i];let m;
+  if(src.startsWith('/*',i)){const j=src.indexOf('*/',i+2);const e=j<0||j+2>end?end:j+2;add('cm',src.slice(i,e));i=e;continue}
+  if(c==='{'){add('br',c);i++;blk=true;col=false;continue}
+  if(c==='}'){add('br',c);i++;blk=false;col=false;continue}
+  if(c===';'){add('',c);i++;col=false;continue}
+  if(/\s/.test(c)){m=mt(/\s+/y);add('',m);i+=m.length;continue}
+  if(c==='"'||c==="'"){const j=src.indexOf(c,i+1);const e=j<0||j>=end?end:j+1;add('st',src.slice(i,e));i=e;continue}
+  if(!blk){m=mt(/[^{}\s;'"]+/y)||c;add('sl',m.slice(0,end-i));i+=Math.min(m.length,end-i);continue}
+  if(!col){if(c===':'){add('',c);i++;col=true;continue}m=mt(/[^:;{}\s]+/y)||c;add('pr',m.slice(0,end-i));i+=Math.min(m.length,end-i);continue}
+  if((m=mt(/-?\d*\.?\d+(?:[a-z%]+)?/iy))){add('nu',m.slice(0,end-i));i+=Math.min(m.length,end-i);continue}
+  if((m=mt(/#[0-9a-f]+/iy))){add('st',m.slice(0,end-i));i+=Math.min(m.length,end-i);continue}
+  if((m=mt(/!?[a-z-]+/iy))){add('vl',m.slice(0,end-i));i+=Math.min(m.length,end-i);continue}
+  add('',c);i++}};
+ while(i<n){
+  if(src.startsWith('<!--',i)){const j=src.indexOf('-->',i+4);const e=j<0?n:j+3;add('cm',src.slice(i,e));i=e;continue}
+  if(src[i]==='<'&&/[\/a-zA-Z!]/.test(src[i+1]||'')){let fecha=src[i+1]==='/';add('pn',fecha?'</':'<');i+=fecha?2:1;
+   const nm=mt(/[a-zA-Z0-9!-]*/y)||'';add('tg',nm);i+=nm.length;
+   while(i<n&&src[i]!=='>'&&src[i]!=='<'){const c=src[i];let m;
+    if(/\s/.test(c)){m=mt(/\s+/y);add('',m);i+=m.length}
+    else if(c==='='){add('',c);i++}
+    else if(c==='"'||c==="'"){const j=src.indexOf(c,i+1);const e=j<0?n:j+1;add('st',src.slice(i,e));i=e}
+    else if(c==='/'){add('pn',c);i++}
+    else{m=mt(/[^\s=>\/<"']+/y);add(src[i-1]==='='?'st':'at',m);i+=m.length}}
+   if(src[i]==='>'){add('pn','>');i++}
+   if(!fecha&&nm.toLowerCase()==='style'){const low=src.toLowerCase();let e=low.indexOf('</style',i);if(e<0)e=n;css(e)}
+   continue}
+  const m=mt(/[^<]+|</y);add('',m);i+=m.length}
+ return T}
+function realce(src){const L=[''];for(const [c,t] of realceTok(src)){const p=t.split('\n');p.forEach((x,k)=>{if(k)L.push('');if(x)L[L.length-1]+=c?`<span class="vs-${c}">${esc(x)}</span>`:esc(x)})}
+ return L.map(x=>`<div class="l">${x||'​'}</div>`).join('')}
+function colorir(c){return realce(c)}
 function postHTML(p){const c=curso(p.curso);const legenda=p.leg||p.nota||'';const titulo=p.titulo||(p.tipo==='desafio'?'Desafio':'Você sabia?');
  return `<article class="post" data-id="${p.id}"><div class="ph"><div class="av" data-c="${c.id}">${AV(c.id)}</div><div><strong data-c="${c.id}">${c.user}</strong><small>${c.nome}</small></div>${S.seg[c.id]?'':`<button class="seg" data-c="${c.id}">Seguir</button>`}<span class="mn"><i></i><i></i></span></div>
  <div class="md">${midia(p)}<svg class="bigh" viewBox="0 0 24 24"><path d="${IC.heart.match(/d="([^"]+)"/)[1]}" fill="url(#hg)"/></svg></div>
@@ -476,14 +535,24 @@ function montarDes(){const ds=POSTS.filter(p=>p.tipo==='desafio');const pend=ds.
  $('#desLista').innerHTML=(pend.length?'':'<div class="vazio">🏆 Todos os desafios de hoje feitos!<br>Amanhã chegam novos.</div>')+[...pend,...ds.filter(p=>S.resp[p.id]==='ok')].map(postHTML).join('');
  $$('#desLista .post').forEach(ligarPost)}
 // ---------------- oficina ----------------
+let ofAba='cod',ofAberta=false;
+if(window.visualViewport){const vvf=()=>document.documentElement.style.setProperty('--vvt',Math.max(0,visualViewport.offsetTop)+'px');visualViewport.addEventListener('scroll',vvf);visualViewport.addEventListener('resize',vvf)}
 function montarOfc(){const feitas=MISSOES.filter(m=>S.miss[m.id]).length;const atual=MISSOES.find(m=>!S.miss[m.id]);
  if(!S.code)S.code=MISSOES[0].inicio||'';
- $('#ofc').innerHTML=`<div class="miss"><small class="gtx">PROJETO DO MÊS 1 · SEU SITE PESSOAL</small><h4>${atual?'Semana '+atual.semana+' · Missão '+(MISSOES.indexOf(atual)+1)+': '+atual.titulo:'Tudo cumprido até aqui! 🏆'}</h4><p>${atual?esc(atual.pede):'Você terminou as missões liberadas. Logo chegam as da próxima semana.'}</p>${atual&&atual.estude?`<div class="apoio"><small>📚 ESTUDE ANTES</small>${atual.estude.map(id=>{const p=POSTS.find(x=>x.id===id);if(!p)return'';const c=curso(p.curso);return `<button data-post="${id}">${S.vistos[id]?'✓ ':''}${esc((p.titulo||p.q||p.frente).slice(0,34))} <i>@${c.user}</i></button>`}).join('')}<div class="apb"><button id="ofDica">💡 Dica</button><button id="ofDuv">💬 Tirar dúvida</button></div><p class="dica" id="ofDicaT" hidden>${esc(atual.dica||'')}</p></div>`:''}<p style="margin-top:6px;font-size:12px;color:var(--mu)">${atual?MISSOES.filter(m=>m.semana===atual.semana&&S.miss[m.id]).length+' de '+MISSOES.filter(m=>m.semana===atual.semana).length+' missões da semana '+atual.semana+' · ':''}${feitas} de ${MISSOES.length} no total</p></div>
- <div class="kb">${(atual&&atual.semana>=2?['<style>','</style>','{','}',';','color:','background:','font-size:','px','text-decoration: none','h1','p','a','body']:['<h1>','</h1>','<p>','</p>','<ul>','</ul>','<li>','</li>','<a href="">','</a>']).map(t=>`<button data-k="${esc(t)}">${esc(t)}</button>`).join('')}</div>
- <textarea class="ed" spellcheck="false" autocapitalize="off" autocorrect="off">${esc(S.code)}</textarea>
- <div class="prev"><div class="lbx">COMO O SEU SITE ESTÁ FICANDO</div><iframe sandbox=""></iframe></div><button class="retro" id="ofcPost" style="margin:12px 0 0;width:100%">📌 Postar no meu perfil</button>
+ $('#ofc').innerHTML=`<div class="ofbar${ofAberta?' aberta':''}"><button class="ofmis" id="ofMis"><small><span>${atual?'MISSÃO '+(MISSOES.indexOf(atual)+1)+' · SEMANA '+atual.semana:'PROJETO DO MÊS 1'}</span><span>${atual?MISSOES.filter(m=>m.semana===atual.semana&&S.miss[m.id]).length+'/'+MISSOES.filter(m=>m.semana===atual.semana).length:feitas+'/'+MISSOES.length} · ${ofAberta?'fechar ▴':'ver tudo ▾'}</span></small><b>${atual?esc(atual.titulo):'Tudo cumprido até aqui! 🏆'}</b><p>${atual?esc(atual.pede):'Você terminou as missões liberadas. Logo chegam as da próxima semana.'}</p></button><div class="ofmais">${atual&&atual.estude?`<div class="apoio"><small>📚 ESTUDE ANTES</small>${atual.estude.map(id=>{const p=POSTS.find(x=>x.id===id);if(!p)return'';const c=curso(p.curso);return `<button data-post="${id}">${S.vistos[id]?'✓ ':''}${esc((p.titulo||p.q||p.frente).slice(0,34))} <i>@${c.user}</i></button>`}).join('')}<div class="apb"><button id="ofDica">💡 Dica</button><button id="ofDuv">💬 Tirar dúvida</button></div><p class="dica" id="ofDicaT" hidden>${esc(atual.dica||'')}</p></div>`:''}</div>
+ <div class="oftabs"><button data-ab="cod" class="${ofAba==='cod'?'on':''}">✍️ Código</button><button data-ab="site" class="${ofAba==='site'?'on':''}">👁️ Site</button></div>
+ <div class="kb">${(atual&&atual.semana>=2?['<style>','</style>','{','}',';','color:','background:','font-size:','px','text-decoration: none','h1','p','a','body']:['<h1>','</h1>','<p>','</p>','<ul>','</ul>','<li>','</li>','<a href="">','</a>']).map(t=>`<button data-k="${esc(t)}">${esc(t)}</button>`).join('')}</div></div>
+ <div class="ofgrid"><div class="ofp" data-p="cod" ${ofAba==='cod'?'':'hidden'}><div class="vsc"><div class="vtop"><i></i>index.html</div><div class="vbox"><pre aria-hidden="true"></pre><textarea class="ed" spellcheck="false" autocapitalize="off" autocorrect="off" autocomplete="off">${esc(S.code)}</textarea></div></div></div>
+ <div class="ofp" data-p="site" ${ofAba==='site'?'':'hidden'}><div class="prev"><div class="lbx">COMO O SEU SITE ESTÁ FICANDO</div><iframe sandbox=""></iframe></div></div></div><button class="retro" id="ofcPost" style="margin:12px 0 0;width:100%">📌 Postar no meu perfil</button>
  <div class="lista" style="padding:12px 0 0">${MISSOES.map((m,i)=>`${i===0||MISSOES[i-1].semana!==m.semana?`<small class="gtx" style="display:block;font-weight:800;font-size:11px;letter-spacing:.08em;margin:10px 0 2px">SEMANA ${m.semana} · ${['','OS TIJOLOS (HTML)','DEIXAR BONITO (CSS)','CELULAR','NO AR'][m.semana]}</small>`:''}<div class="it" style="padding:8px 0"><span style="font-size:18px">${S.miss[m.id]?'✅':'⬜'}</span><div><b style="font-size:13px">${i+1}. ${m.titulo}</b><small>${esc(m.pede)}</small></div></div>`).join('')}</div>`;
- const ed=$('#ofc .ed'),fr=$('#ofc iframe');
+ const ed=$('#ofc .ed'),fr=$('#ofc iframe'),pre=$('#ofc .vsc pre'),vsc=$('#ofc .vsc');
+ const pinta=()=>{pre.innerHTML=realce(ed.value);const ln=ed.value.slice(0,ed.selectionStart).split('\n').length-1;const L=pre.children[ln];if(L)L.classList.add('at')};
+ ed.addEventListener('input',pinta);['keyup','click','select'].forEach(e=>ed.addEventListener(e,pinta));
+ ed.onfocus=()=>{vsc.classList.add('foco');document.body.classList.add('digitando');pinta()};ed.onblur=()=>{vsc.classList.remove('foco');setTimeout(()=>{if(document.activeElement!==ed)document.body.classList.remove('digitando')},150)};
+ $('#ofMis').onclick=()=>{ofAberta=!ofAberta;$('#ofc .ofbar').classList.toggle('aberta',ofAberta);montarOfcTxt()};
+ const montarOfcTxt=()=>{const sp=$('#ofMis small span:last-child');if(sp)sp.textContent=sp.textContent.replace(/(ver tudo ▾|fechar ▴)/,ofAberta?'fechar ▴':'ver tudo ▾')};
+ $$('#ofc .oftabs button').forEach(b=>b.onclick=()=>{ofAba=b.dataset.ab;$$('#ofc .oftabs button').forEach(x=>x.classList.toggle('on',x===b));$$('#ofc .ofp').forEach(p=>p.hidden=p.dataset.p!==ofAba)});
+ pinta();
  const att=()=>{S.code=ed.value;salvar();fr.srcdoc='<body style="font-family:-apple-system,Arial;padding:16px;margin:0">'+ed.value;
   const m=MISSOES.find(m=>!S.miss[m.id]);if(m&&m.testa(ed.value)){S.miss[m.id]=1;marcarDia();salvar();toast('Missão cumprida! +10 seguidores 🎉');confete(ed);setTimeout(montarOfc,1200)}};
  ed.oninput=att;att();
@@ -491,7 +560,7 @@ function montarOfc(){const feitas=MISSOES.filter(m=>S.miss[m.id]).length;const a
  const od=$('#ofDica');if(od)od.onclick=()=>{const t=$('#ofDicaT');t.hidden=!t.hidden};
  const ou=$('#ofDuv');if(ou){const at=MISSOES.find(m=>!S.miss[m.id]);ou.onclick=()=>perguntar({id:'miss_'+at.id,curso:'site',titulo:'Missão: '+at.titulo+' — '+at.pede})}
  $('#ofcPost').onclick=()=>{const c=ed.value.trim();if(c.length<8)return toast('Escreva um pouco mais antes de postar ✍️');S.meus=S.meus||[];if(S.meus[0]&&S.meus[0].code===c)return toast('Esse já está no seu perfil');S.meus.unshift({id:'m'+Date.now(),dia:hoje(),code:c});marcarDia();salvar();toast('Postado no seu perfil! 📌');confete($('#ofcPost'))};
- $$('#ofc .kb button').forEach(b=>b.onclick=()=>{const t=b.dataset.k.replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&');const s=ed.selectionStart,e=ed.selectionEnd;ed.value=ed.value.slice(0,s)+t+ed.value.slice(e);ed.focus();ed.selectionStart=ed.selectionEnd=s+t.length;att()})}
+ $$('#ofc .kb button').forEach(b=>b.onmousedown=b.onpointerdown=e=>e.preventDefault());$$('#ofc .kb button').forEach(b=>b.onclick=()=>{const t=b.dataset.k.replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&');const s=ed.selectionStart,e=ed.selectionEnd;ed.value=ed.value.slice(0,s)+t+ed.value.slice(e);ed.focus();ed.selectionStart=ed.selectionEnd=s+t.length;att();pinta()})}
 // ---------------- perfis ----------------
 let filtro='todos';
 function capa(p,modo){if(modo==='mini')return `<div class="pc ${p.est||'dark'}" data-pj="${p.id}" style="--c:${p.ac||p.cor}"><div class="pch">${p.img?`<img src="${p.img}" alt="">`:`<span>${p.emoji||'✦'}</span>`}<b>${esc(p.nome)}</b></div><small>${esc(p.kick||'')}</small><h5>${p.hl||esc(p.nome)}</h5><i class="pcl"></i><span class="pcf">@arnold.suheth</span><svg class="rpl" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>`;return `<div class="rc ${modo}" data-pj="${p.id}" style="--c:${p.cor}"><div class="rbg"></div><div class="rlogo">${p.img?`<img src="${p.img}" alt="">`:`<span>${p.emoji||'✦'}</span>`}</div><div class="rtx"><b>${esc(p.nome)}</b>${modo==='mini'?'':`<span>${esc(p.tag||'')}</span>`}</div>${modo==='mini'?'<svg class="rpl" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" fill="#fff"/></svg>':''}</div>`}
