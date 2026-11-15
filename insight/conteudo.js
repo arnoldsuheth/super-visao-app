@@ -175,7 +175,7 @@ window.POSTS.push(
 window.MISSOES.push(
  {id:'m5', semana:2, titulo:'Camisa nova', pede:'Abra um <style> no começo e pinte o seu <h1>: h1 { color: red; }', testa:c=>/<style>[\s\S]*h1\s*\{[^}]*color\s*:[^;}]+[\s\S]*<\/style>/i.test(c)},
  {id:'m6', semana:2, titulo:'Gramado', pede:'Pinte o fundo da página: body { background: ... } (pode ser #1a1a1a).', testa:c=>/<style>[\s\S]*body\s*\{[^}]*background(-color)?\s*:[^;}]+[\s\S]*<\/style>/i.test(c)},
- {id:'m7', semana:2, titulo:'Letra de craque', pede:'Mude o tamanho do texto: p { font-size: 20px; }', testa:c=>/<style>[\s\S]*\{[^}]*font-size\s*:\s*\d+[\s\S]*<\/style>/i.test(c)},
+ {id:'m7', semana:2, titulo:'Letra de craque', pede:'Mude o tamanho do texto: p { font-size: 20px; }', testa:c=>/<style>[\s\S]*[a-z0-9]\s*\{[^}]*font-size\s*:\s*\d+[\s\S]*<\/style>/i.test(c)},
  {id:'m8', semana:2, titulo:'Link com estilo', pede:'Deixe seu link com cor própria e sem sublinhado: a { color: ...; text-decoration: none; }', testa:c=>/<style>[\s\S]*\ba\s*\{[^}]*text-decoration\s*:\s*none[\s\S]*<\/style>/i.test(c)}
 );
 window.ALT.s13=[{e:'🏠',t:'Jeito casa',x:'HTML são as paredes. CSS é a pintura, o piso e a decoração. A casa é a mesma, só fica bonita.'},{e:'🍩',t:'Jeito Simpsons',x:'O desenho do Homer sem cor é HTML. Pintar a pele amarela e a camisa branca é CSS.'}];
@@ -190,7 +190,7 @@ window.POSTS.push(
   {emoji:'✂️', h:'Tirar o <i>sublinhado</i>', p:'O sublinhado é uma "decoração" do texto. A propriedade é <b>text-decoration</b> e o valor para tirar é <b>none</b> (nenhuma).'}]}
 );
 window.ALT.s18=[{e:'👕',t:'Jeito uniforme',x:'O link vem com o uniforme padrão (azul com faixa embaixo). text-decoration: none tira a faixa; color troca a cor da camisa.'}];
-const APOIO={
+window.APOIO={
  m1:{estude:['s3','s4','s5'],dica:'Toda tag abre e fecha. O título grande usa a tag que começa com h.'},
  m2:{estude:['s4','s10'],dica:'Parágrafo em inglês é paragraph. A tag é só a primeira letra.'},
  m3:{estude:['s7'],dica:'Primeiro a lista (ul), e dentro dela cada item (li). Feche cada um.'},
@@ -199,4 +199,58 @@ const APOIO={
  m6:{estude:['s15','s16'],dica:'Quem é a página inteira? Uma tag que começa com b. A propriedade de fundo também começa com b.'},
  m7:{estude:['s17','s13'],dica:'A propriedade termina com size (tamanho). O número precisa da medida px no final.'},
  m8:{estude:['s18','s9'],dica:'A regra é para a tag a. Uma propriedade troca a cor; a outra tira a decoração (o sublinhado).'}};
-window.MISSOES.forEach(m=>Object.assign(m,APOIO[m.id]||{}));
+window.MISSOES.forEach(m=>Object.assign(m,window.APOIO[m.id]||{}));
+
+// ---------- SEMANA 3 · no celular (foto, caixa e espaço) ----------
+window.POSTS.push(
+ {id:'s19', curso:'site', tipo:'carrossel', titulo:'Sua foto no site', leg:'Semana 3! O site ganha a sua cara e fica bonito no celular.', slides:[
+  {emoji:'🖼️', h:'A tag <i>img</i> é o porta-retrato', p:'Ela não tem fechamento: você só diz onde está a foto (<b>src</b>) e um texto para quem não enxerga a imagem (<b>alt</b>).', code:'&lt;img src="foto.jpg" alt="Arnold sorrindo"&gt;'},
+  {emoji:'📍', h:'O <i>src</i> é o endereço da foto', p:'Pode ser um arquivo do site ou um link da internet. A sua foto já está no ar neste endereço:', code:'https://arnoldsuheth.github.io/super-visao-app/arnold.jpeg'},
+  {emoji:'📏', h:'Controle o tamanho no <i>CSS</i>', p:'Sem regra, a foto aparece gigante. Com <b>width</b> você diz a largura.', code:'img { width: 150px; }'}]},
+ {id:'s20', curso:'site', tipo:'desafio', q:'Qual atributo diz ONDE está a foto?', ops:['src','alt','width'], ok:0, exp:'<b>src</b> (de "source", fonte) é o endereço da foto. <b>alt</b> é o texto alternativo. <b>width</b> é a largura, e fica no CSS.', dica:'Vem de "source" em inglês.'},
+ {id:'s21', curso:'site', tipo:'aovivo', titulo:'Foto redonda de perfil', code:'<style>\n  img { width: 120px; border-radius: 50%; }\n</style>\n<img src="https://arnoldsuheth.github.io/super-visao-app/arnold.jpeg" alt="Arnold">\n<h1>Arnold Suheth</h1>', nota:'<b>border-radius</b> arredonda as quinas. Com <b>50%</b> a foto quadrada vira um círculo, igual foto de perfil.'},
+ {id:'s22', curso:'site', tipo:'curiosidade', emoji:'⭕', frente:'Por que 50% vira um círculo?', verso:'O border-radius diz o tamanho da curva em cada quina. Com 50%, cada curva vai até a metade do lado, e as quatro se encontram: sobra um círculo perfeito. Com 10px, só as pontinhas ficam redondas.'},
+ {id:'s23', curso:'site', tipo:'carrossel', titulo:'Caixa, margem e respiro', leg:'Para o seu site não grudar nas bordas da tela do celular.', slides:[
+  {emoji:'📦', h:'Tudo no site é uma <i>caixa</i>', p:'Título, parágrafo, foto: cada um é uma caixa. O CSS controla o tamanho e o espaço entre elas.'},
+  {emoji:'↔️', h:'<i>max-width</i> + <i>margin: auto</i> = centro', p:'max-width limita a largura (no computador não fica esticado). margin: 0 auto centraliza a caixa.', code:'body { max-width: 600px; margin: 0 auto; }'},
+  {emoji:'🫁', h:'<i>padding</i> é o respiro de dentro', p:'<b>margin</b> é o espaço de FORA da caixa. <b>padding</b> é o espaço de DENTRO, entre a borda e o conteúdo.', code:'body { padding: 20px; }'},
+  {emoji:'🎯', h:'Centralizar o <i>texto</i>', p:'Para o texto ficar no meio, use text-align.', code:'body { text-align: center; }'}]},
+ {id:'s24', curso:'site', tipo:'desafio', q:'Você quer espaço ENTRE a borda da tela e o seu texto, por dentro. Qual propriedade?', ops:['padding','margin','max-width'], ok:0, exp:'<b>padding</b> é o espaço de dentro. <b>margin</b> é o de fora, entre uma caixa e outra.', dica:'Pense no enchimento (padding) de uma luva de boxe: fica por dentro.'}
+);
+window.ALT.s19=[{e:'🪧',t:'Jeito placa',x:'O img é uma placa que diz "a foto está ali". O navegador vai buscar no endereço do src e pendura no seu site.'}];
+window.ALT.s23=[{e:'🥊',t:'Jeito ringue',x:'O ringue é a caixa. margin é a distância do ringue até a plateia. padding é o espaço entre as cordas e o lutador.'},{e:'🖼️',t:'Jeito quadro',x:'padding é o paspatur (a borda branca dentro do quadro). margin é o espaço entre um quadro e outro na parede.'}];
+window.MISSOES.push(
+ {id:'m9', semana:3, titulo:'Sua foto', pede:'Coloque uma <img> com src e alt. Pode usar: https://arnoldsuheth.github.io/super-visao-app/arnold.jpeg', testa:c=>/<img\s[^>]*src\s*=\s*["'][^"']+["'][^>]*>/i.test(c)&&/<img\s[^>]*alt\s*=/i.test(c)},
+ {id:'m10', semana:3, titulo:'Foto de perfil', pede:'Deixe a foto pequena e redonda: img { width: 150px; border-radius: 50%; }', testa:c=>/<style>[\s\S]*img\s*\{[^}]*width\s*:[^;}]+[^}]*\}/i.test(c)&&/img\s*\{[^}]*border-radius\s*:/i.test(c)},
+ {id:'m11', semana:3, titulo:'No meio do campo', pede:'Centralize o site: body { max-width: 600px; margin: 0 auto; }', testa:c=>/body\s*\{[^}]*max-width\s*:[^}]*\}/i.test(c)&&/body\s*\{[^}]*margin\s*:[^;}]*auto/i.test(c)},
+ {id:'m12', semana:3, titulo:'Respiro', pede:'Dê espaço por dentro e centralize o texto: padding: 20px; e text-align: center; (pode ser no body).', testa:c=>/<style>[\s\S]*padding\s*:\s*\d/i.test(c)&&/text-align\s*:\s*center/i.test(c)}
+);
+
+// ---------- SEMANA 4 · no ar (pronto para o mundo) ----------
+window.POSTS.push(
+ {id:'s25', curso:'site', tipo:'carrossel', titulo:'A cabeça do site', leg:'Semana 4: o acabamento para o site ir para a internet.', slides:[
+  {emoji:'🧠', h:'Tem coisa que <i>não aparece</i> na página', p:'O nome na aba do navegador e o "modo celular" ficam na cabeça do site, a tag <b>&lt;head&gt;</b>. Por enquanto, pode escrever no começo do código.'},
+  {emoji:'🏷️', h:'<i>title</i>: o nome na aba', p:'É o texto que aparece na aba do navegador e no Google.', code:'&lt;title&gt;Arnold Suheth · Programador&lt;/title&gt;'},
+  {emoji:'📱', h:'<i>viewport</i>: o modo celular', p:'Sem essa linha, o celular mostra o site miniatura, como se fosse um computador. Com ela, o site se ajusta à tela.', code:'&lt;meta name="viewport" content="width=device-width, initial-scale=1"&gt;'}]},
+ {id:'s26', curso:'site', tipo:'desafio', q:'Qual tag escolhe o nome que aparece na ABA do navegador?', ops:['<title>','<h1>','<meta>'], ok:0, exp:'<b>title</b> é o nome da aba. O <b>h1</b> é o título DENTRO da página. O <b>meta</b> dá informações para o navegador, como o modo celular.', dica:'Título em inglês, mas não é o h1.'},
+ {id:'s27', curso:'site', tipo:'aovivo', titulo:'Rodapé e link vivo', code:'<style>\n  a { color: gold; text-decoration: none; }\n  a:hover { color: white; }\n  footer { margin-top: 40px; font-size: 13px; color: gray; }\n</style>\n<a href="#">Passe o dedo ou o mouse</a>\n<footer>© 2026 Arnold Suheth</footer>', nota:'<b>footer</b> é o rodapé, a última parte do site. <b>a:hover</b> é a regra de quando o mouse passa em cima: o link muda de cor.'},
+ {id:'s28', curso:'site', tipo:'curiosidade', emoji:'🚀', frente:'Como um site vai para a internet?', verso:'O arquivo do site precisa ficar num computador que nunca desliga (um servidor). O GitHub Pages faz isso de graça: você guarda o arquivo lá e ganha um endereço tipo seunome.github.io. É lá que o INSIGHT e o SUPER VISÃO moram.'},
+ {id:'s29', curso:'site', tipo:'desafio', q:'O que a regra "a:hover" faz?', code:'a:hover { color: white; }', ops:['Muda o link quando o mouse passa em cima','Muda todos os links sempre','Esconde o link'], ok:0, exp:'<b>:hover</b> significa "quando estiver em cima". A regra só vale nesse momento; quando o mouse sai, volta ao normal.', dica:'Hover em inglês é "pairar em cima".'}
+);
+window.ALT.s25=[{e:'🎫',t:'Jeito ingresso',x:'A página é o jogo. O head é o ingresso: tem o nome do evento (title) e as regras de entrada (meta). Ninguém vê o ingresso no campo, mas sem ele nada funciona direito.'}];
+window.MISSOES.push(
+ {id:'m13', semana:4, titulo:'Nome na aba', pede:'Escreva um <title> com o seu nome e o que você faz.', testa:c=>/<title>[\s\S]*\S[\s\S]*<\/title>/i.test(c)},
+ {id:'m14', semana:4, titulo:'Modo celular', pede:'Coloque a linha <meta name="viewport" content="width=device-width, initial-scale=1">', testa:c=>/<meta\s[^>]*name\s*=\s*["']viewport["'][^>]*content\s*=\s*["'][^"']*width=device-width/i.test(c)},
+ {id:'m15', semana:4, titulo:'Assinatura', pede:'No fim do site, um <footer> com © 2026 e o seu nome, com letra menor no CSS.', testa:c=>/<footer>[\s\S]*\S[\s\S]*<\/footer>/i.test(c)&&/footer\s*\{[^}]*font-size\s*:/i.test(c)},
+ {id:'m16', semana:4, titulo:'Link vivo', pede:'Faça o link mudar de cor quando passar o mouse: a:hover { color: ...; }', testa:c=>/a:hover\s*\{[^}]*color\s*:[^;}]+/i.test(c)}
+);
+Object.assign(window.APOIO,{
+ m9:{estude:['s19','s20'],dica:'A tag começa com img e não fecha. Dentro dela: src="endereço" e alt="descrição".'},
+ m10:{estude:['s21','s22'],dica:'A regra é para a tag img. Uma propriedade diz a largura (width); a outra arredonda as quinas.'},
+ m11:{estude:['s23'],dica:'As duas propriedades vão dentro de body { }. A largura máxima é max-width; o centro vem do margin com auto.'},
+ m12:{estude:['s23','s24'],dica:'padding é o respiro de dentro. Para centralizar o texto: text-align: center;'},
+ m13:{estude:['s25','s26'],dica:'Abre <title>, escreve o nome, fecha </title>. Pode ficar na primeira linha.'},
+ m14:{estude:['s25'],dica:'Copie a linha do segundo slide do post "A cabeça do site". Ela não tem fechamento.'},
+ m15:{estude:['s27'],dica:'Escreva <footer>© 2026 Seu Nome</footer> no fim. No <style>: footer { font-size: 13px; }'},
+ m16:{estude:['s27','s29'],dica:'É uma regra nova, separada da regra do a: a:hover { color: white; }'}});
+window.MISSOES.forEach(m=>Object.assign(m,window.APOIO[m.id]||{}));
