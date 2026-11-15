@@ -364,6 +364,21 @@ input,textarea,select{font-size:16px!important}
  #t-feed.on{grid-template-columns:630px 320px!important;column-gap:64px!important}
  #side{grid-row:1 / span 2}
 }
+
+/* Oficina no computador: usa a tela toda, igual VS Code */
+@media(min-width:768px){
+ #t-ofc{max-width:none!important;margin:0!important}
+ #t-ofc .ofc{padding:14px 18px 14px 6px}
+ #t-ofc .ofx{height:calc(100vh - 28px)}
+ #t-ofc .oftb{flex-direction:row;align-items:stretch;gap:10px}
+ #t-ofc .oft1{flex:1;min-width:0}
+ #t-ofc .oft2{flex:0 0 auto;width:min(560px,45%)}
+ #t-ofc .oft2 button{font-size:11px;padding:7px 0 6px}#t-ofc .oft2 button i{font-size:19px}
+ #t-ofc .ofmain{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:14px}
+ #t-ofc .ofmb p{-webkit-line-clamp:1}
+ body:has(#t-ofc.on) .msgpill{display:none}
+}
+@media(min-width:1600px){#t-ofc .ofmain{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
 </style></head><body class="claro">
 <svg width="0" height="0" style="position:absolute"><defs>
 <linearGradient id="hg" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#feda75"/><stop offset=".3" stop-color="#fa7e1e"/><stop offset=".6" stop-color="#d62976"/><stop offset="1" stop-color="#962fbf"/></linearGradient>
