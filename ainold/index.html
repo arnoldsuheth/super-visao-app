@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="pt-BR"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta name="ainode-v" content="1794791380">
 <meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#eef1f6">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="AI Node">
 <title>AI Node</title>
@@ -509,6 +509,9 @@ function desenhar(d){ULTIMOS=d.pedidos||[];
   $$('#log details').forEach(d=>d.ontoggle=()=>{d.open?ABERTOS.add(d.dataset.id):ABERTOS.delete(d.dataset.id)});
 }
 let ocupado=false,pingou=false,pagLido=false,svT=0;
+// atualiza sozinho: se tiver versão nova no ar, recarrega (o iPhone guarda a página velha)
+(async()=>{try{const minha=document.querySelector('meta[name=ainode-v]').content;const r=await fetch(location.pathname+'?v='+Date.now(),{cache:'no-store'});const t=await r.text();const m=t.match(/name="ainode-v" content="(\\d+)"/);
+ if(m&&m[1]!==minha){const k='ainode_recarregou';const ult=+(sessionStorage.getItem(k)||0);if(Date.now()-ult>60000){sessionStorage.setItem(k,Date.now());location.replace(location.pathname+'?v='+m[1])}}}catch(e){}})();
 const ymd=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 function svOcorre(t,d){if(!t.date)return false;const ini=new Date(t.date+'T12:00:00'),dd=new Date(ymd(d)+'T12:00:00');if(dd<ini)return false;
  if(t.repeat==='Semanal')return dd.getDay()===ini.getDay();if(t.repeat==='Mensal')return dd.getDate()===ini.getDate();if(t.repeat==='Diário')return true;return ymd(dd)===t.date}
