@@ -414,7 +414,9 @@ input,textarea,select{font-size:16px!important}
 <div class="toast" id="toast"></div>
 <div id="ab"></div>
 <script src="./conteudo.js?v=15"></script>
-<script src="./conteudo-mes2.js?v=1"></script>
+<script src="./conteudo-mes2.js?v=2"></script>
+<script src="./conteudo-mes3.js?v=1"></script>
+<script src="./conteudo-extra.js?v=1"></script>
 <script src="./editor.js?v=2"></script>
 <script>
 // ---------------- estado ----------------
@@ -672,17 +674,20 @@ function revisar(c){const R=[],ln=i=>c.slice(0,i).split('\n').length,add=(i,msg,
 let ofPainel='',ofVerSite=false;
 // missão só conta se ainda está no código (revisão contínua)
 function projDe(m){return m.proj||'site'}
+// a Oficina roda o painel sem acesso ao localStorage de verdade; esta "gaveta" guarda no INSIGHT
+function gavetaShim(){const d=JSON.stringify(S.gaveta||{}).replace(/</g,'\\u003c');return '<script>(function(){var m='+d+';var g={getItem:function(k){return Object.prototype.hasOwnProperty.call(m,k)?m[k]:null},setItem:function(k,v){m[k]=String(v);try{parent.postMessage({insightGaveta:m},"*")}catch(e){}},removeItem:function(k){delete m[k];try{parent.postMessage({insightGaveta:m},"*")}catch(e){}},clear:function(){m={};try{parent.postMessage({insightGaveta:m},"*")}catch(e){}},key:function(i){return Object.keys(m)[i]||null},get length(){return Object.keys(m).length}};try{Object.defineProperty(window,"localStorage",{value:g,configurable:true})}catch(e){}})()<\/script>'}
+window.addEventListener('message',e=>{const g=e.data&&e.data.insightGaveta;if(!g||typeof g!=='object')return;const t=JSON.stringify(g);if(t.length>60000)return;S.gaveta=JSON.parse(t);salvar()});
 function cod(pj){return pj==='painel'?(S.codeP||''):(S.code||'')}
 function setCod(pj,v){if(pj==='painel')S.codeP=v;else S.code=v}
 let ofPj=null;
-const SEMANAS=['','OS TIJOLOS (HTML)','DEIXAR BONITO (CSS)','CELULAR','NO AR','CAIXAS E GRADE','O VENDEDOR CHEGA','NÚMEROS E METAS','A LISTA DE LOJAS'];
+const SEMANAS=['','OS TIJOLOS (HTML)','DEIXAR BONITO (CSS)','CELULAR','NO AR','CAIXAS E GRADE','O VENDEDOR CHEGA','NÚMEROS E METAS','A LISTA DE LOJAS','FUNÇÕES DE VERDADE','O PAINEL ESCUTA','GUARDAR OS DADOS','ORDENAR E COLORIR'];
 function feita(m){return !!S.miss[m.id]&&(!m.testa||m.testa(cod(projDe(m))))}
 function sumiu(m){return !!S.miss[m.id]&&!feita(m)}
 function montarOfc(){const pa=MISSOES.find(m=>!feita(m));const pj=ofPj||(pa?projDe(pa):'site');const MS=MISSOES.filter(m=>projDe(m)===pj);
  const feitas=MS.filter(feita).length;const atual=MS.find(m=>!feita(m));const nSumiu=MS.filter(sumiu).length;
  if(pj==='site'&&!S.code)S.code=MISSOES[0].inicio||'';if(pj==='painel'&&!S.codeP)S.codeP=MS[0].inicio||'';
  const sem=atual?MISSOES.filter(m=>m.semana===atual.semana):[];
- $('#ofc').innerHTML=`<div class="ofx"><header class="oftb"><div class="oft1"><button class="ofsair" id="ofSair" aria-label="Sair da Oficina">‹</button><button class="ofmb" id="ofMisB"><small>${atual?'MISSÃO '+(MS.indexOf(atual)+1)+' · SEMANA '+atual.semana+' · '+sem.filter(feita).length+'/'+sem.length+(nSumiu?' · ⚠️ '+nSumiu+' REVISAR':''):(pj==='painel'?'MÊS 2 · ':'MÊS 1 · ')+feitas+'/'+MS.length}</small><b>${atual?(sumiu(atual)?'⚠️ ':'')+esc(atual.titulo):'Tudo cumprido! 🏆'}</b><p>${atual?(sumiu(atual)?'Isso sumiu do seu código. ':'')+esc(atual.pede):'Mês completo! Logo chegam as próximas missões.'}</p></button></div>
+ $('#ofc').innerHTML=`<div class="ofx"><header class="oftb"><div class="oft1"><button class="ofsair" id="ofSair" aria-label="Sair da Oficina">‹</button><button class="ofmb" id="ofMisB"><small>${atual?'MÊS '+Math.ceil(atual.semana/4)+' · MISSÃO '+(MS.indexOf(atual)+1)+' · SEMANA '+atual.semana+' · '+sem.filter(feita).length+'/'+sem.length+(nSumiu?' · ⚠️ '+nSumiu+' REVISAR':''):'MÊS '+(pj==='painel'?3:1)+' · '+feitas+'/'+MS.length}</small><b>${atual?(sumiu(atual)?'⚠️ ':'')+esc(atual.titulo):'Tudo cumprido! 🏆'}</b><p>${atual?(sumiu(atual)?'Isso sumiu do seu código. ':'')+esc(atual.pede):'Mês completo! Logo chegam as próximas missões.'}</p></button></div>
  <div class="oft2"><button data-f="desfaz"><i>↶</i>Voltar</button><button data-f="refaz"><i>↷</i>Refazer</button><button data-f="site" class="${ofVerSite?'on':''}"><i>👁️</i>Site</button><button data-f="cores"><i>🎨</i>Cores</button><button data-f="rev"><i>🔍</i>Revisar</button><button data-f="copia"><i>📋</i>Copiar</button><button data-f="posta"><i>📌</i>Postar</button></div></header>
  <div class="ofmain"><div class="vsc"><div class="vtop"><i></i><button id="ofArq" style="all:unset;cursor:pointer;font:inherit;color:inherit">${pj==='painel'?'painel.html':'index.html'} ⇄</button><span id="ofSt"></span></div><div class="cmbox"></div></div>
  <div class="ofsite" ${ofVerSite?'':'hidden'}><div class="lbx">COMO O SEU SITE ESTÁ FICANDO</div><iframe sandbox="${pj==='painel'?'allow-scripts allow-modals':''}"></iframe></div>
@@ -690,7 +695,7 @@ function montarOfc(){const pa=MISSOES.find(m=>!feita(m));const pj=ofPj||(pa?proj
  document.body.classList.add('na-ofc');
  const fr=$('#ofc iframe'),vsc=$('#ofc .vsc'),pan=$('#ofPan');
  const ed=CMed($('#ofc .cmbox'),cod(pj),()=>att(),f=>{if(f){fecha()}});
- const att=()=>{setCod(pj,ed.value);salvar();fr.srcdoc='<body style="font-family:-apple-system,Arial;padding:16px;margin:0">'+ed.value;
+ const att=()=>{setCod(pj,ed.value);salvar();fr.srcdoc='<body style="font-family:-apple-system,Arial;padding:16px;margin:0">'+(pj==='painel'?gavetaShim():'')+ed.value;
   const m=MS.find(m=>!feita(m));if(m&&m.testa(ed.value)){const volta=!!S.miss[m.id];S.miss[m.id]=1;marcarDia();salvar();toast(volta?'Revisado! De volta no código ✅':'Missão cumprida! +10 seguidores 🎉');confete(vsc);setTimeout(()=>{ofPainel='';montarOfc()},1400)}};
  att();
  const fecha=()=>{if(ofPainel){ofPainel='';pan.hidden=true;$$('#ofc .oft2 button').forEach(b=>b.dataset.f!=='site'&&b.classList.remove('on'));$('#ofMisB').classList.remove('on')}};
@@ -735,11 +740,11 @@ function abrirProjeto(id){const p=PROJETOS.find(x=>x.id===id);const m=$('#modal'
  const g=sh.querySelector('[data-go]');if(g)g.onclick=()=>window.open(p.link,'_blank');
  const o=sh.querySelector('[data-of]');if(o)o.onclick=()=>{m.classList.remove('on');ir('ofc')}}
 function montarPerfil(id){const t=$('#t-pf');
- if(id==='me'){const seq=sequencia();const mesAt=MISSOES.filter(m=>projDe(m)==='site').every(feita)?2:1;const MSp=MISSOES.filter(m=>projDe(m)===(mesAt===2?'painel':'site'));const feitas=MSp.filter(feita).length;
+ if(id==='me'){const seq=sequencia();const pend1=MISSOES.find(m=>!feita(m));const mesAt=pend1?Math.ceil(pend1.semana/4):3;const MSp=MISSOES.filter(m=>Math.ceil(m.semana/4)===mesAt);const feitas=MSp.filter(feita).length;
   t.innerHTML=`<div class="hd">${esc((S.edit.me||{}).user||'arnold.suheth')}<span class="sp"><button class="btn" id="pfTema">${I('sun')}</button></span></div>
   <div class="pf"><div class="big" id="bigFoto" style="position:relative;cursor:pointer">${AV('me')}<span class="cam">📷</span></div><div class="nums"><div><b>${Object.keys(S.vistos).length}</b><small>estudados</small></div><div><b id="segN">0</b><small>seguidores</small></div><div><b>${Object.keys(S.seg).length}</b><small>seguindo</small></div></div></div>
   <div class="bio"><b>${esc((S.edit.me||{}).nome||'Arnold Suheth')}</b>${(S.edit.me||{}).bio?esc(S.edit.me.bio):'🧭 Supervisor na rede Indus<br>🚀 Fundador do Studio Evolution Tech · sites e apps sob medida<br>✝️ Cofundador da BLESSAINT<br>🎓 Ciência da Computação · aprendendo em público'}<br><span>🔥 ${seq} ${seq===1?'dia seguido':'dias seguidos'} · meta do mês: meu site no ar</span></div>
-  <div class="pbar"><i style="width:${Math.round(feitas/MSp.length*100)}%"></i></div><div class="pbl"><span>Mês ${mesAt} · ${feitas} de ${MSp.length} missões</span><span>projeto: ${mesAt===2?'painel do supervisor':'site pessoal'}</span></div>
+  <div class="pbar"><i style="width:${Math.round(feitas/MSp.length*100)}%"></i></div><div class="pbl"><span>Mês ${mesAt} · ${feitas} de ${MSp.length} missões</span><span>projeto: ${mesAt===1?'site pessoal':mesAt===2?'painel do supervisor':'painel de verdade'}</span></div>
   <div class="btns"><button id="pfEd">Editar perfil</button><button id="pfOfc" class="gr">Abrir a Oficina</button><button id="pfPerg">Perguntas</button></div>
   <div class="hl" id="pfHl">${[['todos','✦','Todos'],['apps','📱','Meus apps'],['clientes','🤝','Clientes'],['marcas','🏷️','Marcas'],['estudos','🎓','Estudos']].map(([k,e,n])=>`<div data-f="${k}" style="cursor:pointer"><i class="${k===filtro?'done':''}">${e}</i>${n}</div>`).join('')}</div>
   <button class="retro" id="pfRetro">✨ Ver minha retrospectiva do mês</button>

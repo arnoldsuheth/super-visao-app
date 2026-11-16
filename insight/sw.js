@@ -1,4 +1,4 @@
-const C='insight-v35';
+const C='insight-v36';
 self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(C).then(c=>c.addAll(['./','./index.html','./manifest.webmanifest','./icone-192.png'])))});
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==C).map(x=>caches.delete(x)))).then(()=>self.clients.claim())));
 // sempre busca a versão mais nova (sem cache do navegador); só usa a cópia guardada sem internet
