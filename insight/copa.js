@@ -7,9 +7,9 @@ const INFO={
  mun:{nome:'Municipal',taca:'Troféu Tag de Ouro',meta:30,cena:'mun',med:'mun',cor:'#ff9a3c',etapa:'Semanas 1–2 · HTML'},
  est:{nome:'Estadual',taca:'Cinturão do Estilo',meta:45,cena:'est',med:'est',cor:'#2bff88',etapa:'Semana 3 · CSS e celular'},
  reg:{nome:'Regional',taca:'Engrenagem do Deploy',meta:60,cena:'reg',med:'reg',cor:'#2ee6ff',etapa:'Semana 4 · site no ar'},
- sd:{nome:'Série D',taca:'Insígnia do Acesso',meta:75,cena:'ser',med:'ser',cor:'#ff3c5a',etapa:'Mês 2 · o painel'},
- sc:{nome:'Série C',taca:'Insígnia do Acesso',meta:90,cena:'ser',med:'ser',cor:'#ff3c5a',etapa:'Mês 2 · o painel'},
- sb:{nome:'Série B',taca:'Insígnia do Acesso',meta:105,cena:'ser',med:'ser',cor:'#ff3c5a',etapa:'Mês 3 · o painel'},
+ sd:{nome:'Série D',taca:'Insígnia do Acesso',meta:75,cena:'ser',med:'ser',cor:'#ff3c5a',etapa:'Semanas 5–6 · o painel'},
+ sc:{nome:'Série C',taca:'Insígnia do Acesso',meta:90,cena:'ser',med:'ser',cor:'#ff3c5a',etapa:'Semanas 7–8 · números e listas'},
+ sb:{nome:'Série B',taca:'Insígnia do Acesso',meta:105,cena:'ser',med:'ser',cor:'#ff3c5a',etapa:'Mês 3 · painel de verdade'},
  bra:{nome:'Brasileirão do Código',taca:'Taça Kernel Brasil',meta:130,cena:'bra',med:'bra',cor:'#ffd23f',etapa:'Mês 4–5 · SUPER VISÃO'},
  con:{nome:'Copa Continental',taca:'Orbe Continental',meta:160,cena:'mun2',med:'con',cor:'#c9a7ff',etapa:'Mês 6 · entrega final'},
  mw:{nome:'Mundial de Programadores',taca:'Coroa do Código Supremo',meta:200,cena:'ouro',med:'mw',cor:'#f0c75e',etapa:'O mais difícil'}};
@@ -39,9 +39,14 @@ function xpRobo(e){const c=C();const fator=.72+semente(e.id)*.42;let xp=0;const 
  const desde=c.iniTs?Math.max(0,(Date.now()-Math.max(c.iniTs,new Date(hoje()+'T00:00:00').getTime()))/864e5):new Date().getHours()/24;xp+=ritmo(hoje())*fator*.9*Math.min(1,desde);return Math.round(xp)}
 function tabela(){const c=C(),eu=EQUIPES.find(e=>e.voce);const L=[{e:eu,xp:meuXP(),bugs:bugs(),eu:true},...rivais().map(e=>({e,xp:xpRobo(e),bugs:Math.round(xpRobo(e)*.4)}))];L.sort((a,b)=>b.xp-a.xp||(a.eu?-1:1));return L}
 
+// ---------- a Copa anda junto com os meses do curso ----------
+const ATE_SEM={mun:2,est:3,reg:4,sd:6,sc:8,sb:12,bra:20,con:24,mw:99};
+function faltamEtapa(div){const lim=ATE_SEM[div]||99;const L=(window.MISSOES||[]).filter(m=>m.semana<=lim);const f=L.filter(m=>!(S.miss||{})[m.id]);const existe=(window.MISSOES||[]).some(m=>m.semana>lim)||lim<=12;return{n:f.length,existe,lim,prox:f[0]}}
+window.copaFaltam=faltamEtapa;
 // ---------- fim de temporada ----------
 function checarFim(){const c=C(),inf=INFO[c.div],T=tabela();if(T[0].xp<inf.meta)return null;
  const pos=T.findIndex(x=>x.eu)+1,i=ORDEM.indexOf(c.div);let res;
+ if(pos===1){const fe=faltamEtapa(c.div);if(fe.n>0||!fe.existe)return null} // a taça só sai quando a etapa do curso está feita
  if(pos===1){res='campeao';c.tit.push(c.div);if(!c.fundos.includes(c.div))c.fundos.push(c.div);c.div=ORDEM[Math.min(i+1,ORDEM.length-1)]}
  else if(pos===2)res='fica';else{res='cai';c.div=ORDEM[Math.max(0,i-1)]}
  const antes=ORDEM[i];c.ini=hoje();c.iniTs=Date.now();c.xp0=xpTotal();c.hist={};c.temporadas++;salvar();return{res,pos,antes,T}}
@@ -70,7 +75,7 @@ function abrirCopa(aba='tab'){registrar();const fim=checarFim();const c=C(),inf=
  o.style.setProperty('--cc',inf.cor);
  o.innerHTML=`<canvas class="cp-bg"></canvas><div class="cp-in">
   <div class="cp-top"><button class="cp-x" aria-label="Fechar">×</button><span>COPA DO INSIGHT</span><span class="cp-pos">${pos}º</span></div>
-  <div class="cp-capa">${medalhaGrande(c.div)}<small>${inf.nome.toUpperCase()} · ${inf.etapa.toUpperCase()}</small><h2>${inf.taca}</h2>
+  <div class="cp-capa">${medalhaGrande(c.div)}<small>${inf.nome.toUpperCase()} · ${inf.etapa.toUpperCase()}</small><h2>${inf.taca}</h2>${(()=>{const fe=faltamEtapa(c.div);return fe.n>0?`<small class=\"cp-trava\">🔒 Para levantar a taça: ${fe.n} missão(ões) até a semana ${fe.lim}</small>`:!fe.existe?`<small class=\"cp-trava\">🔒 Esta etapa abre quando chegar o conteúdo novo</small>`:''})()}
    <div class="cp-bar"><i style="width:${Math.min(100,lider.xp/inf.meta*100)}%"></i></div><p>${lider.eu?'Você lidera! ':`${lider.e.nome} lidera com ${lider.xp} XP. `}Campeão é quem chega primeiro a <b>${inf.meta} XP</b>.${falta?` Faltam <b>${falta} XP</b> para você.`:''}</p></div>
   <div class="cp-abas">${[['tab','Tabela'],['rk','Ranking geral'],['msgs','Provocações'],['car','Carreira'],['pre','Prêmios']].map(([k,n])=>`<button data-a="${k}" class="${k===aba?'on':''}">${n}</button>`).join('')}</div>
   <div class="cp-corpo"></div>
@@ -168,7 +173,7 @@ const css=`
 #copa .cp-in{position:relative;height:100%;overflow-y:auto;max-width:520px;margin:0 auto;padding:calc(10px + env(safe-area-inset-top)) 14px calc(30px + env(safe-area-inset-bottom))}
 .cp-top{display:flex;align-items:center;justify-content:space-between;font:900 11px Inter,Arial;letter-spacing:.24em;opacity:.9}.cp-x{background:none;border:0;color:#fff;font-size:30px;line-height:1;width:36px}
 .cp-pos{background:var(--cc);color:#05050a;border-radius:8px;padding:4px 8px;letter-spacing:.05em}
-.cp-capa{text-align:center;padding:6px 0 4px}.cp-capa small{display:block;font:900 10px Inter,Arial;letter-spacing:.2em;color:var(--cc);margin-top:4px}.cp-capa h2{font:900 28px/1.05 Inter,Arial;text-transform:uppercase;margin:6px 0 10px}
+.cp-capa{text-align:center;padding:6px 0 4px}.cp-capa small{display:block;font:900 10px Inter,Arial;letter-spacing:.2em;color:var(--cc);margin-top:4px}.cp-capa small.cp-trava{letter-spacing:.04em;font-weight:700;color:#ffd23f;background:rgba(255,210,63,.1);border:1px solid rgba(255,210,63,.35);border-radius:10px;padding:6px 10px;margin:8px auto 0;display:inline-block}.cp-capa h2{font:900 28px/1.05 Inter,Arial;text-transform:uppercase;margin:6px 0 10px}
 .cp-capa p{font-size:13px;opacity:.85;line-height:1.45}.cp-bar{height:6px;border-radius:9px;background:rgba(255,255,255,.12);overflow:hidden;margin:0 8px 8px}.cp-bar i{display:block;height:100%;background:var(--cc);border-radius:9px}
 .cp-med{position:relative;width:170px;height:170px;margin:4px auto 0;perspective:900px}.cp-med .gira{position:absolute;inset:0;transform-style:preserve-3d;animation:cpGira 9s linear infinite}
 @keyframes cpGira{from{transform:rotateX(6deg) rotateY(0)}to{transform:rotateX(6deg) rotateY(360deg)}}

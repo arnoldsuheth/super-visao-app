@@ -141,6 +141,7 @@ details.it .t b::before{content:"▸ ";color:var(--mu)}details.it[open] .t b::be
 .lin.some,.menu.some{display:none}
 .nvc{position:absolute;top:2px;right:6px;min-width:15px;height:15px;border-radius:8px;background:var(--la);color:#fff;font:700 9px/15px var(--mono);text-align:center;padding:0 3px}
 .nvc[hidden]{display:none}
+.conserto{background:#fff7ed!important;color:#c2410c!important;border:1px solid #fdba74!important}.fxs{display:grid;gap:8px;margin:10px 0}.fxs button{width:100%;padding:13px;border:0;background:linear-gradient(135deg,#fb923c,#ea580c);color:#fff;font:700 13px var(--mono);box-shadow:0 6px 16px rgba(234,88,12,.28)}
 .hoje{margin-top:12px;padding:12px 14px}.hoje h4{margin:0 0 8px;font:700 11px var(--mono);letter-spacing:.12em;color:var(--mu);display:flex;justify-content:space-between}.hoje h4 a{color:var(--az2);text-decoration:none}
 .tk{display:flex;gap:10px;align-items:baseline;padding:6px 0;border-top:1px dashed rgba(37,99,235,.15);font:500 12px var(--mono)}.tk:first-of-type{border-top:0}
 .tk time{font-weight:700;color:var(--az2);min-width:44px}.tk span{flex:1}.tk.ok span{text-decoration:line-through;color:var(--mu)}.tk.agora{background:rgba(249,115,22,.08);margin:0 -6px;padding:6px}.tk.agora time{color:#c2410c}
@@ -504,7 +505,7 @@ function desenhar(d){ULTIMOS=d.pedidos||[];
   $('#pedCnt').textContent=rod?'· '+rod+' trabalhando':nPend?'· '+nPend+' na fila':'· '+L.length;
   $('#log').innerHTML=L.map(p=>{const pct=(p.status==='rodando'&&(p.resultado||'').match(/(\d+)\s*de\s*(\d+)/))||null;const st=velho(p)?['e','travou? peça de novo']:({pendente:['p','aguardando'],rodando:['r','trabalhando…'+(pct?' '+Math.round(+pct[1]/+pct[2]*100)+'%':'')],feito:['f','feito'],erro:['e','erro']}[p.status]||['p',p.status]);
     const cab=`<div class="t"><b><em>&gt;</em>${esc((NOMES[p.acao]||p.acao).replace(/^\S+\s/,'').toLowerCase())}${p.projeto&&!/^[123]$/.test(p.projeto)?' · '+esc(p.projeto):''}</b><span><span class="st ${st[0]}">${st[1]}</span> · ${quando(p.feito_em||p.quando)}</span></div>${barra(p,velho(p))}`;
-    return p.resultado?`<details class="it" data-id="${esc(p.id)}"${ABERTOS.has(p.id)?' open':''}><summary>${cab}</summary>${p.status==='feito'||p.status==='erro'?`<div class="cp">${p.acao!=='ping'?`<button class="repetir" data-rp="${esc(p.id)}">↻ repetir</button>`:''}<button class="copiar" data-cp="${esc(p.id)}"><em>⧉</em> copiar para o Claude</button></div>`:''}<pre>${esc(p.resultado)}</pre></details>`:`<div class="it">${cab}</div>`}).join('');
+    return p.resultado?`<details class="it" data-id="${esc(p.id)}"${ABERTOS.has(p.id)?' open':''}><summary>${cab}</summary>${p.status==='feito'||p.status==='erro'?`<div class="cp">${p.status==='erro'?`<button class="conserto" data-fx="${esc(p.id)}">🛠 possível correção</button>`:''}${p.acao!=='ping'?`<button class="repetir" data-rp="${esc(p.id)}">↻ repetir</button>`:''}<button class="copiar" data-cp="${esc(p.id)}"><em>⧉</em> copiar para o Claude</button></div>`:''}<pre>${esc(p.resultado)}</pre></details>`:`<div class="it">${cab}</div>`}).join('');
   $$('#log details').forEach(d=>d.ontoggle=()=>{d.open?ABERTOS.add(d.dataset.id):ABERTOS.delete(d.dataset.id)});
 }
 let ocupado=false,pingou=false,pagLido=false,svT=0;
@@ -529,7 +530,21 @@ function statusClientes(L){const s=L.find(p=>p.acao==='sites'&&p.status==='feito
  if(!pagLido&&token()){pagLido=true;gh('/repos/arnoldsuheth/studio-evolution-gestao-dados/contents/dados.json').then(j=>{const d=JSON.parse(j.content?deb64u(j.content):'{}');const R=d.records||[];
   const cli=R.filter(r=>r.kind==='client');const pag=R.filter(r=>r.kind==='payment'&&r.data.status!=='Pago'&&r.data.due).sort((a,b)=>a.data.due.localeCompare(b.data.due));
   $$('.cpag').forEach(sp=>{const k=semAc2(sp.dataset.cp2);const c=cli.find(x=>semAc2(x.data.name).includes(k));if(!c)return;const p=pag.find(x=>x.data.clientId===c.id);if(!p)return;const [a,m,di]=p.data.due.split('-');const venc=new Date(p.data.due+'T12:00:00')<new Date();sp.innerHTML=`próximo pagamento: <b>${di}/${m}</b>${venc?' · vencido':''}`})}).catch(()=>{})}}
-$('#log').addEventListener('click',e=>{const rp=e.target.closest('.repetir');if(rp){e.preventDefault();e.stopPropagation();const p=ULTIMOS.find(x=>x.id===rp.dataset.rp);if(p){if(!token())return conectar();pedir(p.acao,{projeto:p.projeto,mensagem:p.mensagem==='agenda'?'':p.mensagem})}return}
+function correcao(p){const r=(p.resultado||'').toLowerCase(),A=[];let o;
+ if(/interrompido/.test(r))o='O PC desligou, dormiu ou fechou no meio da tarefa. Deixe o PC ligado e peça de novo.',A.push(['repetir','↻ pedir de novo']),A.push(['energia','o PC dorme? (conferir)']);
+ else if(/git/.test(r)&&/instalad/.test(r))o='Falta o Git no PC. O botão abaixo instala as ferramentas; depois peça de novo.',A.push(['ferramentas','instalar ferramentas']);
+ else if(/ainda não está no pc/.test(r))o='O projeto ainda não foi baixado no PC. Primeiro "atualizar tudo", depois repita.',A.push(['atualizar','atualizar tudo']),A.push(['repetir','↻ pedir de novo']);
+ else if(/drive|googledrive/.test(r))o='O Google Drive do PC parece fechado ou sem espaço. Abra o Google Drive no PC e confira o espaço.',A.push(['disco','espaço livre']),A.push(['repetir','↻ pedir de novo']);
+ else if(/enviar|push|403|acesso|permission|auth/.test(r))o='O PC não conseguiu enviar para o GitHub (internet ou acesso). Confira a internet do PC e tente de novo; se repetir, copie para o Claude.',A.push(['repetir','↻ pedir de novo']),A.push(['relatorio','relatório do PC']);
+ else if(/espaço|disk|space/.test(r))o='Pouco espaço no PC. Veja o que ocupa e arrume os downloads.',A.push(['disco','espaço livre']),A.push(['arrumar_downloads','arrumar downloads']);
+ else if(/https:|escreva|vazia|inválido/.test(r))o='Faltou ou está errado algo que você escreveu. Abra a tarefa de novo e confira o texto.',A.push(['repetir','↻ pedir de novo']);
+ else o='Não reconheci esse erro. Tente de novo; se repetir, copie para o Claude.',A.push(['repetir','↻ pedir de novo']),A.push(['relatorio','relatório do PC']);
+ return{o,A}}
+$('#log').addEventListener('click',e=>{const fx=e.target.closest('.conserto');if(fx){e.preventDefault();e.stopPropagation();const p=ULTIMOS.find(x=>x.id===fx.dataset.fx);if(!p)return;const c=correcao(p);
+  abrir(`<h3>🛠 Possível correção</h3><p class="dica">${esc((p.resultado||'').replace(/^⚠️ */,'').slice(0,220))}</p><p>${esc(c.o)}</p><div class="fxs">${c.A.map(([a,t])=>`<button class="ok2" data-fa="${a}">${esc(t)}</button>`).join('')}</div><div class="row"><button id="ca">Fechar</button><button id="cpc">⧉ copiar para o Claude</button></div>`,()=>{
+   $('#ca').onclick=fechar;$('#cpc').onclick=()=>{fechar();const b=document.querySelector(`.copiar[data-cp="${p.id}"]`);b&&b.click()};
+   $$('[data-fa]').forEach(b=>b.onclick=()=>{if(!token())return conectar();const a=b.dataset.fa;fechar();if(a==='repetir')pedir(p.acao,{projeto:p.projeto,mensagem:p.mensagem==='agenda'?'':p.mensagem});else pedir(a,{})})});return}
+ const rp=e.target.closest('.repetir');if(rp){e.preventDefault();e.stopPropagation();const p=ULTIMOS.find(x=>x.id===rp.dataset.rp);if(p){if(!token())return conectar();pedir(p.acao,{projeto:p.projeto,mensagem:p.mensagem==='agenda'?'':p.mensagem})}return}
  const b=e.target.closest('.copiar');if(!b)return;e.preventDefault();e.stopPropagation();const p=ULTIMOS.find(x=>x.id===b.dataset.cp);if(!p)return;
  const nome=(NOMES[p.acao]||p.acao).replace(/^\S+\s/,'');const dt=new Date(p.feito_em||p.quando).toLocaleString('pt-BR');
  const txt=`Resultado do AI Node · ${nome}${p.projeto&&!/^[123]$/.test(p.projeto)?' · '+p.projeto:''} · ${dt}\n\n${p.resultado}`;
