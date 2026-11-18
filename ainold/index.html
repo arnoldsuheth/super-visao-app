@@ -292,6 +292,19 @@ nav .c.tl{--dx:-3px;--dy:-3px}nav .c.tr{--dx:3px;--dy:-3px}nav .c.bl{--dx:-3px;-
 .cmbrun{flex:0 0 auto;border:0;height:32px;padding:0 12px;font:700 11px var(--mono);background:#f97316;color:#fff;cursor:pointer;box-shadow:0 4px 10px rgba(249,115,22,.3)}
 .cmbs.prox{background:rgba(var(--cc),.10);box-shadow:0 0 0 2px rgba(var(--cc),.55);animation:pisca 1s ease-in-out 6}
 @keyframes pisca{50%{box-shadow:0 0 0 2px rgba(var(--cc),.1)}}
+.pvag{display:flex;align-items:center;gap:8px;margin:14px 2px 8px;font:800 11px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:#c2410c}
+.pvag b{margin-left:auto;background:#f97316;color:#fff;border-radius:10px;padding:1px 8px;font-size:10.5px;letter-spacing:0}
+.pvpt{width:8px;height:8px;border-radius:50%;background:#f97316;box-shadow:0 0 0 0 rgba(249,115,22,.5);animation:pvp 1.4s infinite}
+@keyframes pvp{70%{box-shadow:0 0 0 8px rgba(249,115,22,0)}100%{box-shadow:0 0 0 0 rgba(249,115,22,0)}}
+.pvnada{margin:12px 2px 4px;font:600 11.5px var(--mono);color:var(--mu)}
+.pvabas{display:flex;gap:2px;overflow-x:auto;margin:14px -2px 4px;padding:0 2px;border-bottom:1px solid var(--ln);scrollbar-width:none;-webkit-mask-image:linear-gradient(90deg,#000 88%,transparent)}
+.pvabas::-webkit-scrollbar{display:none}
+.pvt{position:relative;flex:0 0 auto;border:0;background:none;padding:10px 12px 11px;font:700 12px var(--mono);color:var(--mu);cursor:pointer;white-space:nowrap}
+.pvt b{margin-left:5px;font-size:10px;font-weight:700;color:var(--mu);background:rgba(100,116,139,.14);border-radius:9px;padding:1px 6px}
+.pvt.on{color:var(--tx)}.pvt.on b{background:#f97316;color:#fff}
+.pvt.on::after{content:'';position:absolute;left:10px;right:10px;bottom:-1px;height:3px;background:#f97316}
+.pvt i{position:absolute;top:8px;right:4px;width:6px;height:6px;border-radius:50%;background:#dc2626}
+.pvdia{margin:14px 2px 6px;font:700 10.5px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--mu)}
 .cntcmd{display:flex;align-items:center;gap:6px;width:100%;margin:10px 0 0;padding:9px 12px;border:0;font:700 11px var(--mono);color:var(--tx);background:var(--vid);box-shadow:inset 0 0 0 1px var(--ln);cursor:pointer;text-align:left}
 .cntcmd b{color:#f97316;font-size:16px}
 .cntcmd u{margin-left:auto;text-decoration:none;color:var(--az2);white-space:nowrap}
@@ -610,7 +623,17 @@ function desenhar(d){ULTIMOS=d.pedidos||[];
   const itemPed=p=>{const pct=(p.status==='rodando'&&(p.resultado||'').match(/(\d+)\s*de\s*(\d+)/))||null;const st=velho(p)?['e','travou? peça de novo']:({pendente:['p','aguardando'],rodando:['r','trabalhando…'+(pct?' '+Math.round(+pct[1]/+pct[2]*100)+'%':'')],feito:['f','feito'],erro:['e','erro']}[p.status]||['p',p.status]);
     const cab=`<div class="t"><b><em>&gt;</em>${NUM[p.acao]?'<u class="pn">'+NUM[p.acao]+'</u> ':''}${esc((NOMES[p.acao]||p.acao).replace(/^\S+\s/,'').toLowerCase())}${p.projeto&&!/^[123]$/.test(p.projeto)?' · '+esc(p.projeto):''}</b><span><span class="st ${st[0]}">${st[1]}</span> · ${quando(p.feito_em||p.quando)}</span></div>${barra(p,velho(p))}`;
     return p.resultado?`<details class="it" data-id="${esc(p.id)}"${ABERTOS.has(p.id)?' open':''}><summary>${cab}</summary>${p.status==='feito'||p.status==='erro'?`<div class="cp">${p.status==='erro'?`<button class="conserto" data-fx="${esc(p.id)}">🛠 possível correção</button>`:''}${p.acao!=='ping'?`<button class="repetir" data-rp="${esc(p.id)}">↻ repetir</button>`:''}<button class="copiar" data-cp="${esc(p.id)}"><em>⧉</em> copiar para o Claude</button></div>`:''}<pre>${esc(p.resultado)}</pre></details>`:`<div class="it">${cab}</div>`};
-  $('#log').innerHTML=L.map(itemPed).join('');
+  {const exec=L.filter(p=>p.status==='pendente'||p.status==='rodando').sort((a,b)=>(a.status==='rodando'?0:1)-(b.status==='rodando'?0:1)||new Date(a.quando)-new Date(b.quando));
+   const fim=L.filter(p=>p.status!=='pendente'&&p.status!=='rodando').sort((a,b)=>new Date(b.feito_em||b.quando)-new Date(a.feito_em||a.quando));
+   const G={};fim.forEach(p=>{const g=ASS[p.acao]||'ou';(G[g]=G[g]||[]).push(p)});
+   const gs=GRS.filter(([id])=>G[id]);if(PED_ABA!=='todos'&&!G[PED_ABA])PED_ABA='todos';
+   const nome=nm=>nm.replace(/^\S+\s/,'').replace(/^Limpar e arrumar o PC$/,'Limpar o PC').replace(/^Publicar e atualizar$/,'Publicar');
+   const nErr=g=>G[g].filter(p=>p.status==='erro').length;
+   const abas='<div class="pvabas"><button class="pvt'+(PED_ABA==='todos'?' on':'')+'" data-ab="todos">todos<b>'+fim.length+'</b></button>'+gs.map(([id,nm])=>'<button class="pvt'+(PED_ABA===id?' on':'')+'" data-ab="'+id+'">'+esc(nome(nm).toLowerCase())+'<b>'+G[id].length+'</b>'+(nErr(id)?'<i></i>':'')+'</button>').join('')+'</div>';
+   const lista=PED_ABA==='todos'?fim:G[PED_ABA];
+   const dia=p=>{const d=new Date(p.feito_em||p.quando),h=new Date(),ont=new Date(Date.now()-864e5);const ig=(a,b)=>a.toDateString()===b.toDateString();return ig(d,h)?'hoje':ig(d,ont)?'ontem':String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')};
+   let ult='';const corpo=lista.map(p=>{const dd=dia(p);const cab=dd!==ult?'<div class="pvdia">'+dd+'</div>':'';ult=dd;return cab+itemPed(p)}).join('');
+   $('#log').innerHTML=(exec.length?'<div class="pvag"><span class="pvpt"></span>agora<b>'+exec.length+'</b></div>'+exec.map(itemPed).join(''):'<div class="pvnada">nada rodando agora</div>')+abas+(corpo||'<div class="vazio sm">Nada por aqui ainda.</div>')}
   $$('#log details.it').forEach(d=>d.ontoggle=()=>{d.open?ABERTOS.add(d.dataset.id):ABERTOS.delete(d.dataset.id)});
 }
 let ocupado=false,pingou=false,pagLido=false,svT=0;
@@ -651,7 +674,7 @@ function correcao(p){const r=(p.resultado||'').toLowerCase(),A=[];let o;
  else if(/https:|escreva|vazia|inválido/.test(r))o='Faltou ou está errado algo que você escreveu. Abra a tarefa de novo e confira o texto.',A.push(['repetir','↻ pedir de novo']);
  else o='Não reconheci esse erro. Tente de novo; se repetir, copie para o Claude.',A.push(['repetir','↻ pedir de novo']),A.push(['relatorio','relatório do PC']);
  return{o,A}}
-$('#log').addEventListener('click',e=>{const ch=e.target.closest('.abchip');if(ch){PED_ABA=ch.dataset.ab;try{localStorage.setItem('ainode_aba',PED_ABA)}catch{};desenhar({pedidos:ULTIMOS});return}const fx=e.target.closest('.conserto');if(fx){e.preventDefault();e.stopPropagation();const p=ULTIMOS.find(x=>x.id===fx.dataset.fx);if(!p)return;const c=correcao(p);
+$('#log').addEventListener('click',e=>{const ch=e.target.closest('.abchip,.pvt');if(ch){PED_ABA=ch.dataset.ab;try{localStorage.setItem('ainode_aba',PED_ABA)}catch{};desenhar({pedidos:ULTIMOS});return}const fx=e.target.closest('.conserto');if(fx){e.preventDefault();e.stopPropagation();const p=ULTIMOS.find(x=>x.id===fx.dataset.fx);if(!p)return;const c=correcao(p);
   abrir(`<h3>🛠 Possível correção</h3><p class="dica">${esc((p.resultado||'').replace(/^⚠️ */,'').slice(0,220))}</p><p>${esc(c.o)}</p><div class="fxs">${c.A.map(([a,t])=>`<button class="ok2" data-fa="${a}">${esc(t)}</button>`).join('')}</div><div class="row"><button id="ca">Fechar</button><button id="cpc">⧉ copiar para o Claude</button></div>`,()=>{
    $('#ca').onclick=fechar;$('#cpc').onclick=()=>{fechar();const b=document.querySelector(`.copiar[data-cp="${p.id}"]`);b&&b.click()};
    $$('[data-fa]').forEach(b=>b.onclick=()=>{if(!token())return conectar();const a=b.dataset.fa;if(a.startsWith('link:')){window.open(a.slice(5),'_blank');return}fechar();if(a==='repetir')pedir(p.acao,{projeto:p.projeto,mensagem:p.mensagem==='agenda'?'':p.mensagem});else pedir(a,{})})});return}
