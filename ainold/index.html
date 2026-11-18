@@ -582,18 +582,8 @@ function desenhar(d){ULTIMOS=d.pedidos||[];
   const itemPed=p=>{const pct=(p.status==='rodando'&&(p.resultado||'').match(/(\d+)\s*de\s*(\d+)/))||null;const st=velho(p)?['e','travou? peça de novo']:({pendente:['p','aguardando'],rodando:['r','trabalhando…'+(pct?' '+Math.round(+pct[1]/+pct[2]*100)+'%':'')],feito:['f','feito'],erro:['e','erro']}[p.status]||['p',p.status]);
     const cab=`<div class="t"><b><em>&gt;</em>${NUM[p.acao]?'<u class="pn">'+NUM[p.acao]+'</u> ':''}${esc((NOMES[p.acao]||p.acao).replace(/^\S+\s/,'').toLowerCase())}${p.projeto&&!/^[123]$/.test(p.projeto)?' · '+esc(p.projeto):''}</b><span><span class="st ${st[0]}">${st[1]}</span> · ${quando(p.feito_em||p.quando)}</span></div>${barra(p,velho(p))}`;
     return p.resultado?`<details class="it" data-id="${esc(p.id)}"${ABERTOS.has(p.id)?' open':''}><summary>${cab}</summary>${p.status==='feito'||p.status==='erro'?`<div class="cp">${p.status==='erro'?`<button class="conserto" data-fx="${esc(p.id)}">🛠 possível correção</button>`:''}${p.acao!=='ping'?`<button class="repetir" data-rp="${esc(p.id)}">↻ repetir</button>`:''}<button class="copiar" data-cp="${esc(p.id)}"><em>⧉</em> copiar para o Claude</button></div>`:''}<pre>${esc(p.resultado)}</pre></details>`:`<div class="it">${cab}</div>`};
-  const exec=L.filter(p=>p.status==='pendente'||p.status==='rodando').sort((a,b)=>(a.status==='rodando'?0:1)-(b.status==='rodando'?0:1)||new Date(a.quando)-new Date(b.quando));
-  const fim=L.filter(p=>p.status!=='pendente'&&p.status!=='rodando').sort((a,b)=>new Date(b.feito_em||b.quando)-new Date(a.feito_em||a.quando));
-  const G={};fim.forEach(p=>{const g=ASS[p.acao]||'ou';(G[g]=G[g]||[]).push(p)});
-  const gs=GRS.filter(([id])=>G[id]).sort((a,b)=>new Date(G[b[0]][0].feito_em||G[b[0]][0].quando)-new Date(G[a[0]][0].feito_em||G[a[0]][0].quando));
-  if(PED_ABA!=='todos'&&!G[PED_ABA])PED_ABA='todos';
-  const nErr=g=>G[g].filter(p=>p.status==='erro').length,novoG=g=>G[g].some(p=>p.feito_em&&Date.now()-new Date(p.feito_em)<10*60000);
-  const abas=`<div class="abas"><button class="abchip${PED_ABA==='todos'?' on':''}" data-ab="todos">todos<b>${fim.length}</b></button>${gs.map(([id,nm])=>`<button class="abchip${PED_ABA===id?' on':''}" data-ab="${id}" title="${esc(nm.replace(/^\S+\s/,''))}">${nm.split(' ')[0]}<b>${G[id].length}</b>${nErr(id)?'<i>!</i>':''}</button>`).join('')}</div>`;
-  const execH=`<h3 class="gh"><span>⚡ em execução</span><b>${exec.length}</b></h3>${exec.length?exec.map(itemPed).join(''):'<div class="vazio sm">Nada rodando agora.</div>'}`;
-  const conc=PED_ABA==='todos'?(gs.length?gs.map(([id,nm])=>`<details class="grp" data-g="${id}"${GAB.has(id)?' open':''}><summary><span>${nm}</span><span class="gm">${nErr(id)?'<i class="ge">⚠️ '+nErr(id)+'</i>':''}${novoG(id)?'<i class="gn">novo</i>':''}<b>${G[id].length}</b></span></summary><div class="gl">${G[id].map(itemPed).join('')}</div></details>`).join(''):'<div class="vazio sm">Nenhum pedido concluído ainda.</div>'):`<div class="gl">${G[PED_ABA].map(itemPed).join('')}</div>`;
-  $('#log').innerHTML='<div class="pcol">'+execH+'</div><div class="pcol">'+`<h3 class="gh"><span>✅ concluídos por assunto</span><b>${fim.length}</b></h3>`+abas+conc+'</div>';
+  $('#log').innerHTML=L.map(itemPed).join('');
   $$('#log details.it').forEach(d=>d.ontoggle=()=>{d.open?ABERTOS.add(d.dataset.id):ABERTOS.delete(d.dataset.id)});
-  $$('#log details.grp').forEach(d=>d.ontoggle=()=>{d.open?GAB.add(d.dataset.g):GAB.delete(d.dataset.g);try{localStorage.setItem('ainode_gab',JSON.stringify([...GAB]))}catch{}});
 }
 let ocupado=false,pingou=false,pagLido=false,svT=0;
 // atualiza sozinho: se tiver versão nova no ar, recarrega (o iPhone guarda a página velha)
