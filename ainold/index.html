@@ -273,6 +273,10 @@ nav .c.tl{--dx:-3px;--dy:-3px}nav .c.tr{--dx:3px;--dy:-3px}nav .c.bl{--dx:-3px;-
 .favxb{display:flex;flex-direction:row;justify-content:flex-start;align-items:center;gap:8px;min-width:0;border:0;padding:12px 10px;background:var(--vid);box-shadow:inset 0 0 0 1px var(--ln);font:700 12.5px var(--mono);color:var(--tx);cursor:pointer;text-align:left}
 .favxb:active{background:rgba(249,115,22,.12)}
 @media(min-width:1800px){.favxg{grid-template-columns:repeat(3,1fr)}}
+.press{transform:scale(.93)!important;filter:brightness(.88)}
+.run,.favxb,.fav,.abchip,.bt{transition:transform .09s ease,filter .09s ease}
+.sentok{background:#16a34a!important;color:#fff!important;box-shadow:0 4px 10px rgba(22,163,74,.35)!important}
+.sending{opacity:.75}
 .cntcmd{display:flex;align-items:center;gap:6px;width:100%;margin:10px 0 0;padding:9px 12px;border:0;font:700 11px var(--mono);color:var(--tx);background:var(--vid);box-shadow:inset 0 0 0 1px var(--ln);cursor:pointer;text-align:left}
 .cntcmd b{color:#f97316;font-size:16px}
 .cntcmd u{margin-left:auto;text-decoration:none;color:var(--az2);white-space:nowrap}
@@ -469,7 +473,7 @@ nav .c.tl{--dx:-3px;--dy:-3px}nav .c.tr{--dx:3px;--dy:-3px}nav .c.bl{--dx:-3px;-
 (()=>{
 const OWNER='arnoldsuheth',REPO='super-visao-dados',ARQ='ainold-recados.json';
 const K='ainold_nuvem_v1';
-const PROJETOS=[["Site do Studio","studio-evolution-tech"],["Gestão do Studio (código)","studio-evolution-gestao"],["Gestão do Studio (site)","studio-evolution-gestao-app"],["INSIGHT + SUPER VISÃO","super-visao-app"],["Site da BLESSAINT","Blessaint"],["BLESSAINT Business","blessaint-business"],["Formulário do Studio","studio-evolution-formulario"],["Ju Intimates","ju-intimates"],["Evolution Lab","evolution-lab"],["Life Trail Juliana","app-lifetrail-juliana"],["Life Trail Katiúscia","app-lifetrail-katiuscia"],["Life Trail Ana Paula","app-lifetrail-ana-paula"],["Life Trail Adriana","life-trail-adriana"],["Life Trail Regiane","life-trail-regiane"],["Dra. Ana Luiza","dra-ana-luiza-app"]];
+const PROJETOS=[["Site do Studio","studio-evolution-tech"],["Gestão do Studio (código)","studio-evolution-gestao"],["Gestão do Studio (site)","studio-evolution-gestao-app"],["INSIGHT + SUPER VISÃO","super-visao-app"],["AI Node (vai junto com o INSIGHT)","super-visao-app"],["Site da BLESSAINT","Blessaint"],["BLESSAINT Business","blessaint-business"],["Formulário do Studio","studio-evolution-formulario"],["Ju Intimates","ju-intimates"],["Evolution Lab","evolution-lab"],["Life Trail Juliana","app-lifetrail-juliana"],["Life Trail Katiúscia","app-lifetrail-katiuscia"],["Life Trail Ana Paula","app-lifetrail-ana-paula"],["Life Trail Adriana","life-trail-adriana"],["Life Trail Regiane","life-trail-regiane"],["Dra. Ana Luiza","dra-ana-luiza-app"]];
 const NOMES={sites:'🟢 Sites no ar?',atualizar:'🔄 Atualizar tudo',backup:'💾 Backup de todos',relatorio:'📋 Relatório do PC',arrumar:'🧹 Arrumar o PC',publicar:'🚀 Publicar',
  arrumar_area:'🖥️ Arrumar Área de Trabalho',arrumar_downloads:'📥 Arrumar Downloads',fotos:'🖼️ Fotos para posts',anotar:'✍️ Anotação',cerebro:'🧠 Anotações',historico_pws:'🗒️ O que o PC fez',aula:'🎓 Aula de PWS',
  lembrete:'⏰ Lembrete de estudo',noturno:'🌙 Backup noturno',ferramentas:'🧰 Ferramentas',proj_atualizar:'🔄 Atualizar',proj_mudou:'🔍 O que mudou',proj_historico:'📜 Histórico',backup_um:'💾 Backup',
@@ -536,12 +540,13 @@ async function ler(){try{const j=await gh(`/repos/${OWNER}/${REPO}/contents/${AR
 async function gravar(obj,msg){return gh(`/repos/${OWNER}/${REPO}/contents/${ARQ}`,{method:'PUT',body:JSON.stringify({message:msg,content:b64u(JSON.stringify(obj,null,1)),sha})})}
 
 async function pedir(acao,extra={},quieto){
+  window.ULTPED=window.ULTPED||{};{const ch=acao+'|'+(extra.projeto||'');if(!quieto&&window.ULTPED[ch]&&Date.now()-window.ULTPED[ch]<5000){toast('> já enviei agora há pouco');return}if(!quieto)window.ULTPED[ch]=Date.now()}
   for(let tent=0;tent<3;tent++){
     try{const d=await ler();d.pedidos=Array.isArray(d.pedidos)?d.pedidos:[];
       if(acao==='ping')d.pedidos=d.pedidos.filter(p=>p.acao!=='ping'||p.status==='pendente'||p.status==='rodando');
       d.pedidos.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),acao,projeto:extra.projeto||'',mensagem:extra.mensagem||'',quando:new Date().toISOString(),status:'pendente',resultado:'',feito_em:''});
       d.pedidos=d.pedidos.slice(-30);
-      await gravar(d,'AI Node: pedido '+acao);if(!quieto)toast('> pedido enviado ao PC');desenhar(d);return}
+      await gravar(d,'AI Node: pedido '+acao);if(!quieto){toast('> pedido enviado ao PC');if(window.sentFlash)window.sentFlash()}desenhar(d);return}
     catch(e){if(e.status===409||e.status===422)continue;if(e.status===401){localStorage.removeItem(K);conectar();return}toast('Não consegui enviar. Tente de novo.');return}
   }
 }
@@ -654,7 +659,7 @@ $('#ov').onclick=e=>{if(e.target.id==='ov')fechar()};
 
 function publicar(){
   abrir(`<h3>Publicar um projeto</h3><p>O PC salva a cópia no Drive primeiro e depois publica no GitHub.</p>
-  <select id="pj">${PROJETOS.map(([n,r])=>`<option value="${r}" ${r===$('#pjSel').value?'selected':''}>${esc(n)}</option>`).join('')}</select>
+  <select id="pj">${PROJETOS.map(([n,r],i)=>`<option value="${r}" ${r===$('#pjSel').value&&PROJETOS.findIndex(x=>x[1]===r)===i?'selected':''}>${esc(n)}</option>`).join('')}</select>
   <input id="msg" placeholder="O que mudou? Ex.: troquei a foto do topo" maxlength="120">
   <div class="row"><button id="ca">Cancelar</button><button class="ok2" id="ok">Publicar</button></div>`);
   $('#ca').onclick=fechar;$('#ok').onclick=()=>{const m=$('#msg').value.trim()||'Atualização';pedir('publicar',{projeto:$('#pj').value,mensagem:m});fechar()}
@@ -778,6 +783,13 @@ function montarContador(){const inv=inventario(),keys=inv.it.map(x=>x.m+':'+x.k)
   <p class="dica"><b>Só no app (sem número no PWS):</b> ${sem.length?sem.map(x=>x.n).join(' · '):'nenhum ✓'}</p>
   <div class="row"><button id="ca">Fechar</button></div>`,()=>{$('#ca').onclick=fechar;salvar();nv.hidden=true})};}
 document.addEventListener('click',e=>{const f=e.target.closest('.favxb');if(!f)return;const b=document.querySelector('.lin[data-k="'+f.dataset.px+'"] .bt.run');if(b)b.click()});
+{let LB=null,LT=0;const alvo=e=>e.target.closest('.run,.favxb,.fav,.repetir,.copiar,.mh,.cntcmd,#buscaX');
+ const on=e=>{const b=alvo(e);if(b){b.classList.add('press');try{navigator.vibrate&&navigator.vibrate(18)}catch{}}};
+ const off=()=>document.querySelectorAll('.press').forEach(x=>x.classList.remove('press'));
+ document.addEventListener('pointerdown',on,true);['pointerup','pointercancel','pointerleave','scroll'].forEach(t=>document.addEventListener(t,()=>setTimeout(off,120),true));
+ document.addEventListener('click',e=>{let b=alvo(e);if(!b)return;if(b.classList.contains('favxb')){b=document.querySelector('.lin[data-k="'+b.dataset.px+'"] .bt.run')||b}if(b.classList.contains('run')||b.classList.contains('repetir')){LB=b;LT=Date.now();b.classList.add('sending')}},true);
+ window.sentFlash=()=>{const b=LB;if(!b||Date.now()-LT>10000)return;LB=null;const t=b.innerHTML;b.classList.remove('sending');b.classList.add('sentok');b.innerHTML='✓ enviado';setTimeout(()=>{b.classList.remove('sentok');b.innerHTML=t},2600)};
+ setInterval(()=>{if(LB&&Date.now()-LT>10000){LB.classList.remove('sending');LB=null}},3000)}
 montarContador();
 $$('.lin').forEach(l=>{l.dataset.q=semAc(l.textContent+' '+((EXP[l.dataset.k]||[])[0]||''))});
 const CEMQ=CEM.flatMap(([c,L])=>L.map(x=>semAc(x[0]+' '+c)));
