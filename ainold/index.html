@@ -347,16 +347,30 @@ nav .c.tl{--dx:-3px;--dy:-3px}nav .c.tr{--dx:3px;--dy:-3px}nav .c.bl{--dx:-3px;-
  nav button span{font-size:11px}
  header{margin:6px 0 18px}
  .colA,.colB{display:block;min-width:0}
- .aba[data-t=inicio].on{display:grid;grid-template-columns:minmax(360px,410px) minmax(0,1fr);gap:0 28px;align-items:start}
+ .aba[data-t=inicio].on{display:block}
+ .colA{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:12px;align-items:stretch;margin-bottom:14px}
+ .colA>*{grid-column:span 4;margin:0!important}
+ .colA>.hero{grid-column:1/-1;min-height:170px;padding:22px 36px}
+ .colA>.hero .simb{margin-right:40px}
+ .colA>[hidden],.colA>.favs:empty{display:none}
+ .colA>.relogio:nth-last-child(2),.colA>.ext:last-child{grid-column:span 4}
+ .colA>.ext{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+ .colA:has(>.hoje[hidden])>.relogio,.colA:has(>.hoje[hidden])>.ext{grid-column:span 6}
+ .favxg{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .cmb{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 10px;align-items:start}
+ .cmb>.favxh{grid-column:1/-1}
  .colB .busca{margin-top:0}
- #menus{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start}
+ #menus{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:start;grid-auto-flow:dense}
  #menus .menu{margin-bottom:0}
+ #menus .menu.aberto{grid-column:1/-1}
+ #menus .menu.aberto .ml{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 14px;align-items:start}
+ #menus .menu.aberto .ml>:not(.lin){grid-column:1/-1}
  .toast{bottom:28px}
  .ov{align-items:center}
  .sh{width:min(600px,92vw);max-width:none;border-radius:6px;padding-bottom:20px;box-shadow:inset 0 0 0 1px var(--ln),0 24px 60px rgba(11,18,32,.25)}
  #log{grid-template-columns:minmax(0,1fr) minmax(0,1.35fr);gap:22px;align-items:start}
  .pcol{display:grid;gap:8px;align-content:start;min-width:0}
- #cliLista{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #cliLista{grid-template-columns:repeat(3,minmax(0,1fr))}
  #cemPag #cemL{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:28px;align-items:start}
  .lin:hover{background-color:rgba(37,99,235,.09)}.mh:hover{background:rgba(37,99,235,.05)}
  .abchip:hover,.grp>summary:hover,.cntcmd:hover{filter:brightness(.97)}
@@ -365,7 +379,8 @@ nav .c.tl{--dx:-3px;--dy:-3px}nav .c.tr{--dx:3px;--dy:-3px}nav .c.bl{--dx:-3px;-
 @media(min-width:1800px){
  main{max-width:1760px}
  nav{left:max(12px,calc(50% - 880px + 12px))}
- .aba[data-t=inicio].on{grid-template-columns:minmax(380px,440px) minmax(0,1fr)}
+ #menus .menu.aberto .ml{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .favxg{grid-template-columns:repeat(6,minmax(0,1fr))}
  #menus{grid-template-columns:repeat(3,minmax(0,1fr))}
  #cemPag #cemL{grid-template-columns:repeat(3,minmax(0,1fr))}
 }
