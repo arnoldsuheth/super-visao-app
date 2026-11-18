@@ -379,6 +379,28 @@ input,textarea,select{font-size:16px!important}
  body:has(#t-ofc.on) .msgpill{display:none}
 }
 @media(min-width:1600px){#t-ofc .ofmain{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+
+/* oficina: botões em grupos, abas e "mais" (18/11/2026) */
+.oft2{align-items:stretch}
+.oft2 .ofg{display:flex;gap:2px;flex:1}
+.oft2 .ofg-ed{flex:1.1;border-right:1px solid var(--ln);padding-right:4px}
+.oft2 .ofg-pri{flex:2}
+.oft2 button.pri{color:var(--g)}
+.oft2 button.pri.on{color:#fff}
+.ofmb .ofdica{display:block;font-style:normal;font-size:11px;font-weight:700;color:var(--g);margin-top:3px}
+.oftabs{display:flex;gap:4px;padding:4px;margin-bottom:6px;border-radius:12px;background:#1f1f1f}
+.oftabs button{flex:1;border:0;border-radius:8px;background:none;color:#bbb;font:700 12px inherit;font-family:inherit;padding:7px 0;cursor:pointer}
+.oftabs button.on{background:#fff;color:#111}
+.vtop .ofhint{opacity:.55;font-size:11px;margin-left:8px;flex:1}
+.ofpan.mini{left:auto;right:0;width:min(300px,100%);max-height:none;padding:8px;border-radius:14px}
+.ofpan.mini .ofpx{display:none}
+.ofbusca{width:100%;box-sizing:border-box;margin:0 0 6px;padding:6px 10px;border-radius:9px;border:1px solid var(--ln);background:var(--bg);color:var(--tx);font:13px inherit;font-family:inherit}
+.ofmlist{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.ofmlist button{display:flex;flex-direction:column;align-items:center;gap:2px;border:0;background:none;color:var(--tx);border-radius:9px;padding:6px 0;font:700 10.5px inherit;font-family:inherit;cursor:pointer}
+.ofmlist button:hover{background:var(--bg)}
+.ofmlist button i{font-style:normal;font-size:19px;line-height:1.1}
+.ofmlist button[hidden]{display:none}
+@media(min-width:900px){.oftabs{display:none}}
 </style></head><body class="claro">
 <svg width="0" height="0" style="position:absolute"><defs>
 <linearGradient id="hg" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#feda75"/><stop offset=".3" stop-color="#fa7e1e"/><stop offset=".6" stop-color="#d62976"/><stop offset="1" stop-color="#962fbf"/></linearGradient>
@@ -688,9 +710,9 @@ function montarOfc(){const pa=MISSOES.find(m=>!feita(m));const pj=ofPj||(pa?proj
  const feitas=MS.filter(feita).length;const atual=MS.find(m=>!feita(m));const nSumiu=MS.filter(sumiu).length;
  if(pj==='site'&&!S.code)S.code=MISSOES[0].inicio||'';if(pj==='painel'&&!S.codeP)S.codeP=MS[0].inicio||'';
  const sem=atual?MISSOES.filter(m=>m.semana===atual.semana):[];
- $('#ofc').innerHTML=`<div class="ofx"><header class="oftb"><div class="oft1"><button class="ofsair" id="ofSair" aria-label="Sair da Oficina">‹</button><button class="ofmb" id="ofMisB"><small>${atual?'MÊS '+Math.ceil(atual.semana/4)+' · MISSÃO '+(MS.indexOf(atual)+1)+' · SEMANA '+atual.semana+' · '+sem.filter(feita).length+'/'+sem.length+(nSumiu?' · ⚠️ '+nSumiu+' REVISAR':''):'MÊS '+(pj==='painel'?3:1)+' · '+feitas+'/'+MS.length}</small><b>${atual?(sumiu(atual)?'⚠️ ':'')+esc(atual.titulo):'Tudo cumprido! 🏆'}</b><p>${atual?(sumiu(atual)?'Isso sumiu do seu código. ':'')+esc(atual.pede):'Mês completo! Logo chegam as próximas missões.'}</p></button></div>
- <div class="oft2"><button data-f="desfaz"><i>↶</i>Voltar</button><button data-f="refaz"><i>↷</i>Refazer</button><button data-f="site" class="${ofVerSite?'on':''}"><i>👁️</i>Site</button><button data-f="cores"><i>🎨</i>Cores</button><button data-f="rev"><i>🔍</i>Revisar</button><button data-f="copia"><i>📋</i>Copiar</button><button data-f="posta"><i>📌</i>Postar</button></div></header>
- <div class="ofmain"><div class="vsc"><div class="vtop"><i></i><button id="ofArq" style="all:unset;cursor:pointer;font:inherit;color:inherit">${pj==='painel'?'painel.html':'index.html'} ⇄</button><span id="ofSt"></span></div><div class="cmbox"></div></div>
+ $('#ofc').innerHTML=`<div class="ofx"><header class="oftb"><div class="oft1"><button class="ofsair" id="ofSair" aria-label="Sair da Oficina">‹</button><button class="ofmb" id="ofMisB"><small>${atual?'MISSÃO '+(sem.indexOf(atual)+1)+' DE '+sem.length+' · SEMANA '+atual.semana+' · MÊS '+Math.ceil(atual.semana/4)+(nSumiu?' · ⚠️ '+nSumiu+' PARA REVISAR':''):'MÊS '+(pj==='painel'?3:1)+' · '+feitas+' DE '+MS.length+' FEITAS'}</small><b>${atual?(sumiu(atual)?'⚠️ ':'')+esc(atual.titulo):'Tudo cumprido! 🏆'}</b><p>${atual?(sumiu(atual)?'Isso sumiu do seu código. ':'')+esc(atual.pede):'Mês completo! Logo chegam as próximas missões.'}</p>${atual?'<em class="ofdica">💡 Toque aqui para ver a dica e o que estudar ›</em>':''}</button></div>
+ <div class="oft2"><div class="ofg ofg-ed"><button data-f="desfaz" title="Desfazer a última mudança"><i>↶</i>Voltar</button><button data-f="refaz" title="Refazer"><i>↷</i>Refazer</button></div><div class="ofg ofg-pri"><button data-f="rev" class="pri" title="Confere seu código e aponta erros"><i>🔍</i>Revisar</button><button data-f="posta" class="pri" title="Posta esta versão no seu perfil"><i>📌</i>Postar</button></div><div class="ofg"><button data-f="mais" title="Mais opções"><i>⋯</i>Mais</button></div></div></header>
+ <div class="oftabs"><button data-v="cod" class="${ofVerSite?'':'on'}">⌨️ Código</button><button data-v="site" class="${ofVerSite?'on':''}">👁️ Site</button></div><div class="ofmain"><div class="vsc"><div class="vtop"><i></i><button id="ofArq" style="all:unset;cursor:pointer;font:inherit;color:inherit">${pj==='painel'?'painel.html':'index.html'} ⇄</button><span class="ofhint">o site atualiza sozinho</span><span id="ofSt"></span></div><div class="cmbox"></div></div>
  <div class="ofsite" ${ofVerSite?'':'hidden'}><div class="lbx">COMO O SEU SITE ESTÁ FICANDO</div><iframe sandbox="${pj==='painel'?'allow-scripts allow-modals':''}"></iframe></div>
  <div class="ofpan" id="ofPan" hidden></div></div></div>`;
  document.body.classList.add('na-ofc');
@@ -700,7 +722,7 @@ function montarOfc(){const pa=MISSOES.find(m=>!feita(m));const pj=ofPj||(pa?proj
   const m=MS.find(m=>!feita(m));if(m&&m.testa(ed.value)){const volta=!!S.miss[m.id];S.miss[m.id]=1;marcarDia();salvar();toast(volta?'Revisado! De volta no código ✅':'Missão cumprida! +10 seguidores 🎉');confete(vsc);setTimeout(()=>{ofPainel='';montarOfc()},1400)}};
  att();
  const fecha=()=>{if(ofPainel){ofPainel='';pan.hidden=true;$$('#ofc .oft2 button').forEach(b=>b.dataset.f!=='site'&&b.classList.remove('on'));$('#ofMisB').classList.remove('on')}};
- const abre=(qual,html)=>{if(ofPainel===qual){fecha();return}ofPainel=qual;pan.innerHTML=`<button class="ofpx" aria-label="Fechar">✕</button>`+html;pan.hidden=false;pan.scrollTop=0;
+ const abre=(qual,html)=>{if(ofPainel===qual){fecha();return}ofPainel=qual;pan.innerHTML=`<button class="ofpx" aria-label="Fechar">✕</button>`+html;pan.hidden=false;pan.scrollTop=0;pan.classList.toggle('mini',qual==='mais');
   $$('#ofc .oft2 button').forEach(b=>b.dataset.f!=='site'&&b.classList.toggle('on',b.dataset.f===qual));$('#ofMisB').classList.toggle('on',qual==='mis');pan.querySelector('.ofpx').onclick=fecha;return pan};
  const missao=()=>{const p=abre('mis',`${atual?`<small class="gtx ofh">MISSÃO ${MS.indexOf(atual)+1} · ${esc(atual.titulo).toUpperCase()}</small>${sumiu(atual)?'<p class="ofpede" style="color:#f59e0b"><b>⚠️ Revisão:</b> esta missão já estava feita, mas o código dela sumiu ou ficou com erro. Coloque de novo para ela voltar a contar.</p>':''}<p class="ofpede">${esc(atual.pede)}</p>${atual.painelExtra?atual.painelExtra():''}${atual.estude?`<div class="apoio"><small>📚 ESTUDE ANTES</small>${atual.estude.map(id=>{const p=POSTS.find(x=>x.id===id);if(!p)return'';const c=curso(p.curso);return `<button data-post="${id}">${S.vistos[id]?'✓ ':''}${esc((p.titulo||p.q||p.frente).slice(0,34))} <i>@${c.user}</i></button>`}).join('')}<div class="apb"><button id="ofDica">💡 Dica</button><button id="ofDuv">💬 Tirar dúvida</button></div><p class="dica" id="ofDicaT" hidden>${esc(atual.dica||'')}</p></div>`:''}`:'<p class="ofpede">Você cumpriu todas as missões liberadas. 🏆</p>'}
   <div class="lista" style="padding:8px 0 0">${MS.map((m,i)=>`${i===0||MS[i-1].semana!==m.semana?`<small class="gtx" style="display:block;font-weight:800;font-size:11px;letter-spacing:.08em;margin:10px 0 2px">SEMANA ${m.semana} · ${SEMANAS[m.semana]||''}</small>`:''}<div class="it" style="padding:7px 0"><span style="font-size:17px">${feita(m)?'✅':sumiu(m)?'⚠️':m===atual?'👉':'⬜'}</span><div><b style="font-size:13px">${i+1}. ${m.titulo}</b><small>${sumiu(m)?'<b style="color:#f59e0b">Sumiu do código: revisar. </b>':''}${esc(m.pede)}</small></div></div>`).join('')}</div>`);
@@ -718,13 +740,18 @@ function montarOfc(){const pa=MISSOES.find(m=>!feita(m));const pj=ofPj||(pa?proj
   if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(ok,()=>vel());else vel();
   function vel(){const a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();try{document.execCommand('copy');ok()}catch(_){toast('Não consegui copiar')}a.remove()}};
  const posta=()=>{const c=ed.value.trim();if(c.length<8)return toast('Escreva um pouco mais antes de postar ✍️');S.meus=S.meus||[];if(S.meus[0]&&S.meus[0].code===c)return toast('Esse já está no seu perfil');S.meus.unshift({id:'m'+Date.now(),dia:hoje(),code:c});marcarDia();salvar();toast('Postado no seu perfil! 📌');confete(vsc)};
- const site=b=>{ofVerSite=!ofVerSite;$('#ofc .ofsite').hidden=!ofVerSite;b.classList.toggle('on',ofVerSite)};
+ const site=v=>{ofVerSite=v;$('#ofc .ofsite').hidden=!ofVerSite;$$('#ofc .oftabs button').forEach(t=>t.classList.toggle('on',(t.dataset.v==='site')===ofVerSite))};
+ $$('#ofc .oftabs button').forEach(t=>t.onclick=()=>site(t.dataset.v==='site'));
+ const MAIS=[['cores','🎨','Cores','Escolher as cores do seu site'],['copia','📋','Copiar','Copia o código para colar em outro lugar'],['arq','⇄','Arquivo','Alterna entre index.html e painel.html'],['mis','💡','Dica','Abre a missão, a dica e o que estudar']];
+ const maisP=()=>{const p=abre('mais',`<input class="ofbusca" placeholder="🔍 buscar…" aria-label="Buscar opção"><div class="ofmlist">${MAIS.map(([k,ic,t,d])=>`<button data-m="${k}" title="${d}"><i>${ic}</i><b>${t}</b></button>`).join('')}</div>`);if(!p||p.hidden)return;
+  const q=p.querySelector('.ofbusca');q.oninput=()=>{const v=q.value.toLowerCase();p.querySelectorAll('.ofmlist button').forEach(b=>b.hidden=!b.textContent.toLowerCase().includes(v))};
+  p.querySelectorAll('.ofmlist button').forEach(b=>b.onclick=()=>{const k=b.dataset.m;fecha();if(k==='cores')coresP();else if(k==='copia')copia();else if(k==='arq')$('#ofArq').click();else if(k==='mis')missao()})};
  $$('#ofc .oft2 button').forEach(b=>{b.onpointerdown=e=>{if(/desfaz|refaz/.test(b.dataset.f))e.preventDefault()};b.onclick=()=>{const f=b.dataset.f;
-  if(f==='desfaz')ed.desfaz();else if(f==='refaz')ed.refaz();else if(f==='site')site(b);else if(f==='cores')coresP();else if(f==='rev')revP();else if(f==='copia')copia();else if(f==='posta')posta()}});
+  if(f==='desfaz')ed.desfaz();else if(f==='refaz')ed.refaz();else if(f==='mais')maisP();else if(f==='cores')coresP();else if(f==='rev')revP();else if(f==='copia')copia();else if(f==='posta')posta()}});
  $('#ofMisB').onclick=missao;
  $('#ofArq').onclick=()=>{ofPj=pj==='painel'?'site':'painel';ofPainel='';montarOfc();toast(ofPj==='painel'?'📊 painel.html · Mês 2':'🌐 index.html · Mês 1')};
  $('#ofSair').onclick=()=>ir('feed');
- if(ofPainel){const q=ofPainel;ofPainel='';({mis:missao,cores:coresP,rev:revP}[q]||(()=>{}))()}}
+ if(ofPainel){const q=ofPainel;ofPainel='';({mis:missao,cores:coresP,rev:revP,mais:maisP}[q]||(()=>{}))()}}
 
 // ---------------- perfis ----------------
 let filtro='todos';
@@ -846,4 +873,4 @@ let _lig=ligarPost;ligarPost=function(el){_lig(el);const md=el.querySelector('.m
  md.insertAdjacentHTML('beforeend','<button class="cseta l" aria-label="Anterior">‹</button><button class="cseta r" aria-label="Próximo">›</button>');
  md.querySelector('.cseta.l').onclick=e=>{e.stopPropagation();md.querySelector('.tapz.l').click()};md.querySelector('.cseta.r').onclick=e=>{e.stopPropagation();md.querySelector('.tapz.r').click()}};montarFeed();
 </script>
-<script src="./copa-dados.js?v=1"></script><script src="./brasoes.js?v=2"></script><script src="./copa-arte.js?v=1"></script><script src="./copa.js?v=5"></script><script src="./nuvem.js?v=3"></script></body></html>
+<script src="./copa-dados.js?v=1"></script><script src="./brasoes.js?v=2"></script><script src="./copa-arte.js?v=1"></script><script src="./copa.js?v=5"></script><script src="./nuvem.js?v=3"></script></body></html>
