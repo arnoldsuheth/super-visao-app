@@ -7862,23 +7862,28 @@ function realLoad(st){
    As peças metálicas da roupa (partes cinza/claras) ganham a cor e o brilho da estrela do peitoral. */
 const MX = {base:'assets/chars/', models:{}, anims:{}, state:{}, waits:[], borrowed:{}, split:{}};
 const MX_R = {rot:[0, 0, Math.PI/2], pos:[0, .08, .03]}, MX_L = {rot:[0, 0, -Math.PI/2], pos:[0, .08, .03]};
+/* NINE CROWNS: herois novos (pacote KayKit Adventurers, CC0). Cada classe usa um modelo pronto, com as armas e animacoes dele.
+   hide = pecas do modelo que ficam escondidas para a classe; clips = qual animacao do modelo o jogo usa em cada situacao */
+const KK_BASE = {idle:'Idle', run:'Running_A', death:'Death_A', dash:'Dodge_Forward', block:'Blocking', hit:'Hit_A', cast:'Spellcast_Shoot', smash:'2H_Melee_Attack_Chop', spin:'2H_Melee_Attack_Spin', bash:'Block_Attack',
+  atk1:'1H_Melee_Attack_Slice_Diagonal', atk2:'1H_Melee_Attack_Chop', atk3:'1H_Melee_Attack_Stab'};
+const KK_2H = {idle:'2H_Melee_Idle', atk1:'2H_Melee_Attack_Slice', atk2:'2H_Melee_Attack_Chop', atk3:'2H_Melee_Attack_Stab'};
 const MX_DEF = {
-  warrior:{model:'warrior', anims:'anim_sword', h:1.92, borrow:{from:'paladin', bones:{Sword_joint:'weapon', Shield_joint:'shield'}}, noBox:['weapon', 'shield'], sk:{bash:'bash', whirl:'spin'}},
-  paladin:{model:'paladin', anims:'anim_sword', h:1.95, own:{Shield_joint:'shield', Sword_joint:'weapon'}, noBox:['weapon', 'shield'], sk:{holy:'smash'}},
-  barbarian:{model:'barbarian', anims:'anim_great', h:2.02, own:{RightHand:'weapon'}, noBox:['weapon'], sk:{leap:'smash', cyclone:'spin', whirl:'spin'}},
-  archer:{model:'archer', anims:'anim_bow', h:1.8, own:{Left_arch1:'weapon', Left_arch2:'weapon'}, noBox:['weapon'], atk:{at:.4, speed:2.4}},
-  mage:{model:'mage', anims:'anim_magic', h:1.9, staff:{wood:0x8a6a48, gem:0x7fd8ff}, noBox:['weapon'], atk:{at:.2, speed:1.9}},
-  necro:{model:'necro', anims:'anim_magic', h:1.92, staff:{wood:0x4a3c38, gem:0xb070ff, dark:1}, noBox:['weapon'], atk:{at:.2, speed:1.9}},
-  assassin:{model:'assassin', anims:'anim_sword', h:1.78, daggers:{from:'paladin', bn:'Sword_joint', s:.62}, noBox:['weapon'], sk:{shadow:'dash'}, atk:{at:.22, speed:2.8}},
-  monk:{model:'monk', anims:'anim_fist', h:1.82, noBox:['weapon'], atk:{at:.15, speed:2.2}, sk:{quake:'smash'}},
+  warrior:{model:'kk_knight', anims:'kk:warrior', h:2.05, kk2:{hide:['Offhand','Badge_Shield','Rectangle_Shield','Spike_Shield','2H_Sword'], clips:{}}, sk:{bash:'bash', whirl:'spin'}},
+  paladin:{model:'kk_knight', anims:'kk:paladin', h:2.05, kk2:{hide:['Offhand','Badge_Shield','Round_Shield','Spike_Shield','2H_Sword','Knight_Cape'], clips:{}}, sk:{holy:'smash'}},
+  barbarian:{model:'kk_barbarian', anims:'kk:barbarian', h:2.15, kk2:{hide:['Offhand','Barbarian_Round_Shield','^1H_Axe$','Mug'], clips:KK_2H}, sk:{leap:'smash', cyclone:'spin', whirl:'spin'}},
+  archer:{model:'kk_rogue_hooded', anims:'kk:archer', h:1.95, kk2:{hide:['Offhand','1H_Crossbow','^Knife$','Throwable'], clips:{idle:'2H_Ranged_Aiming', atk1:'2H_Ranged_Shoot', atk2:'2H_Ranged_Shoot', atk3:'2H_Ranged_Shoot'}}, atk:{at:.1, speed:1.6}},
+  mage:{model:'kk_mage', anims:'kk:mage', h:1.95, kk2:{hide:['^Spellbook$','Spellbook_open','1H_Wand'], clips:{atk1:'Spellcast_Shoot', atk2:'Spellcast_Shoot', atk3:'Spellcast_Raise', smash:'Spellcast_Long', spin:'Spellcast_Raise'}}, atk:{at:.2, speed:1.9}},
+  necro:{model:'kk_mage', anims:'kk:necro', h:1.95, kk2:{hide:['^Spellbook$','2H_Staff'], clips:{atk1:'Spellcast_Shoot', atk2:'Spellcast_Shoot', atk3:'Spellcast_Raise', smash:'Spellcast_Long', spin:'Spellcast_Raise'}}, atk:{at:.2, speed:1.9}},
+  assassin:{model:'kk_rogue', anims:'kk:assassin', h:1.95, kk2:{hide:['1H_Crossbow','2H_Crossbow','Throwable'], clips:{atk1:'Dualwield_Melee_Attack_Slice', atk2:'Dualwield_Melee_Attack_Chop', atk3:'Dualwield_Melee_Attack_Stab'}}, sk:{shadow:'dash'}, atk:{at:.22, speed:2.4}},
+  monk:{model:'kk_barbarian', anims:'kk:monk', h:2.1, kk2:{hide:['Axe','Barbarian_Round_Shield','Mug','Barbarian_Hat','Barbarian_Cape'], clips:{idle:'Unarmed_Idle', atk1:'Unarmed_Melee_Attack_Punch_A', atk2:'Unarmed_Melee_Attack_Punch_B', atk3:'Unarmed_Melee_Attack_Kick', smash:'Unarmed_Melee_Attack_Kick'}}, atk:{at:.15, speed:2.0}, sk:{quake:'smash'}},
 };
 const MXU = {uRim:{value:new T.Color(0x9ab8ff)}, uRimK:{value:.08}, uArm:{value:new T.Color(0xffffff)}, uArmK:{value:0}};
 const mxNeeds = d => [d.model, d.borrow ? d.borrow.from : null, d.daggers ? d.daggers.from : null, d.kk ? 'kk_weapons' : null].filter(Boolean);
 const mxReady = cls => { const d = MX_DEF[cls]; return !!(d && mxNeeds(d).every(k => MX.models[k]) && MX.anims[d.anims]); };
 const hubHeroIs = h => !!h && !!h.root.parent;
 /* bonecos do Mixamo desligados (pedido do Tiago: voltar aos heróis antigos); o código fica para uso futuro */
-const MX_ON = false;
-const mxWanted = cls => MX_ON && save.mx !== false && GFX_NAMES.indexOf(save.gfx) >= 2 && !!T.GLTFLoader && !!MX_DEF[cls];
+const MX_ON = true;
+const mxWanted = cls => MX_ON && save.mx !== false && !!T.GLTFLoader && !!MX_DEF[cls];   // herois novos valem em qualquer nivel de grafico
 function mxShader(m, body){
   m.onBeforeCompile = sh => { Object.assign(sh.uniforms, {uRim:MXU.uRim, uRimK:MXU.uRimK, uArm:MXU.uArm, uArmK:body ? MXU.uArmK : {value:0}});
     sh.fragmentShader = 'uniform vec3 uRim, uArm; uniform float uRimK, uArmK;\n' + sh.fragmentShader
@@ -7915,11 +7920,13 @@ function mxLoad(cls, done){
   const fin = ok => { MX.state[cls] = ok ? 'ready' : 'fail'; const w = MX.waits.filter(x => x[0] === cls); MX.waits = MX.waits.filter(x => x[0] !== cls); w.forEach(x => x[1](ok)); };
   const jobs = mxNeeds(d).filter(k => !MX.models[k]).map(k => ld(k).then(g => {
     const sc = g.scene; sc.updateMatrixWorld(true); const b = new T.Box3().setFromObject(sc);
-    sc.traverse(o => { if(o.isMesh){ o.geometry.__keep = true; if(o.isSkinnedMesh) o.userData.bone = mxMainBone(o); (Array.isArray(o.material) ? o.material : [o.material]).forEach(mxStyle); } });
-    MX.models[k] = {scene:sc, h:b.max.y - b.min.y}; }));
-  if(!MX.anims[d.anims]) jobs.push(ld(d.anims).then(a => { // ossos com o mesmo nome em vários arquivos ganham "_1", "_2"... no carregamento: volta para o nome original
+    sc.traverse(o => { if(o.isMesh){ o.geometry.__keep = true; if(o.isSkinnedMesh) o.userData.bone = mxMainBone(o); if(!d.kk2) (Array.isArray(o.material) ? o.material : [o.material]).forEach(mxStyle); } });
+    if(d.kk2){ const bb = new T.Box3(); sc.traverse(o => { if(o.isSkinnedMesh) bb.expandByObject(o); }); if(!bb.isEmpty()) b.copy(bb); }   // altura so do corpo (sem contar espada e escudo)
+    MX.models[k] = {scene:sc, h:b.max.y - b.min.y, clips:g.animations}; }));
+  if(!MX.anims[d.anims] && !d.kk2) jobs.push(ld(d.anims).then(a => { // ossos com o mesmo nome em vários arquivos ganham "_1", "_2"... no carregamento: volta para o nome original
     a.animations.forEach(c => c.tracks.forEach(t => t.name = t.name.replace(/_\d+\./, '.'))); MX.anims[d.anims] = a.animations; }));
-  Promise.all(jobs).then(() => fin(true), e => { console.warn('bonecos:', e); fin(false); });
+  Promise.all(jobs).then(() => { if(d.kk2 && !MX.anims[d.anims]){ const mp = Object.assign({}, KK_BASE, d.kk2.clips), src = MX.models[d.model].clips, out = [];
+      for(const nm in mp){ const c0 = src.find(c => c.name === mp[nm]); if(c0){ const c = c0.clone(); c.name = nm; out.push(c); } } MX.anims[d.anims] = out; } fin(true); }, e => { console.warn('bonecos:', e); fin(false); });
 }
 /* cópia com esqueleto próprio (cada herói precisa do seu) */
 function mxClone(src){
@@ -7950,6 +7957,7 @@ function mxAttach(h){
   const d = MX_DEF[h.cls], md = MX.models[d.model], clips = MX.anims[d.anims];
   const m = mxClone(md.scene); m.scale.setScalar(d.h/md.h);
   m.traverse(o => { if(o.isMesh){ o.castShadow = true; o.receiveShadow = true; o.frustumCulled = false; } });
+  if(d.kk2) m.traverse(o => { if(o.isMesh && d.kk2.hide.some(r => new RegExp(r).test(o.name))) o.visible = false; });
   h.root.add(m); h.body.visible = false;
   const bones = {}; m.traverse(o => { if(o.isBone) bones[o.name.replace(/^mixamorig/, '')] = o; });
   const mixer = new T.AnimationMixer(m), acts = {}; (MX.split[d.anims] = MX.split[d.anims] || mxSplit(clips)).forEach(c => acts[c.name] = mixer.clipAction(c));
@@ -7967,6 +7975,7 @@ function mxTintMat(base, tier, rigid){
 function mxGear(h){
   const x = h.mx; if(!x) return; const d = x.d;
   x.extra.forEach(o => { if(o.parent) o.parent.remove(o); if(o.material && o.material.dispose && !o.userData.shared) o.material.dispose(); }); x.extra = [];
+  if(d.kk2) return;   // os herois novos ja trazem as proprias armas
   const tierOf = slot => { const it = equipped(slot); return it ? it.tier : -1; };
   const nb = d.noBox || [];
   // armas e escudo do jogo, presos nos ossos das mãos
@@ -8055,13 +8064,13 @@ const mxWaiting = h => !!h && !h.mx && !!h.mxWait && performance.now() - h.mxWai
 /* baixa os bonecos das outras classes aos poucos, com o jogo parado no mapa, para a troca de herói ser na hora */
 function mxPreload(){
   if(MX.pre || !MX_ON) return; MX.pre = true;
-  const next = () => { if(!save || save.mx === false || GFX_NAMES.indexOf(save.gfx) < 2) return;
+  const next = () => { if(!save || save.mx === false) return;
     const c = Object.keys(MX_DEF).find(k => !mxReady(k) && MX.state[k] !== 'fail' && MX.state[k] !== 'loading');
     if(!c) return; if(mode === 'stage'){ setTimeout(next, 8000); return; } mxLoad(c, () => setTimeout(next, 1500)); };
   setTimeout(next, 4000);
 }
 /* animação separada: pernas (andar) e tronco/braços (golpe/tiro) — para andar atirando sem deslizar */
-const MX_UP = /Spine|Neck|Head|Shoulder|Arm|Hand|Thumb|Index|Middle|Ring|Pinky/;
+const MX_UP = /Spine|Neck|Head|Shoulder|Arm|Hand|Thumb|Index|Middle|Ring|Pinky|^spine|^chest|^head|^upperarm|^lowerarm|^wrist|^hand/;
 function mxSplit(clips){
   const out = [...clips];
   for(const c of clips){ const up = c.tracks.filter(t => MX_UP.test(t.name.split('.')[0])), low = c.tracks.filter(t => !MX_UP.test(t.name.split('.')[0]));
