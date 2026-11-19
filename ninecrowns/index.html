@@ -5473,7 +5473,7 @@ const TIERS = [
 /* NINE CROWNS: grades no lugar das estrelas. As 10 faixas do jogo viram 6 grades; o "+" marca a faixa mais forte dentro do mesmo grade.
    Cada grade pede um nivel minimo para equipar: sem grade 0, D 15, C 30, B 50, A 65, S 80. */
 const GR_OF = [0,0,1,1,2,2,3,4,4,5], GR_N = ['Sem grade','Grade D','Grade C','Grade B','Grade A','Grade S'], GR_LV = [0,15,30,50,65,80], NC_MAX_LV = 80, NC_LV_K = 43/79;
-const GR = t => { t = Math.max(0, Math.min(9, Math.round(t))); return GR_N[GR_OF[t]] + (t > 0 && GR_OF[t - 1] === GR_OF[t] ? '+' : ''); };
+const GR = t => { t = Math.max(0, Math.min(9, Math.round(t))); return GR_N[GR_OF[t]]; };
 const grLv = t => GR_LV[GR_OF[Math.max(0, Math.min(9, Math.round(t)))]];
 TIERS.forEach((t, i) => { t.name = t.model; t.star = i + 1; t.s = GR(i); t.sc = GR(i); t.m = 1; t.img = IMG['a' + i]; });
 // habilidade especial de cada armadura (conjunto completo de 6 peças iguais)
@@ -5520,9 +5520,9 @@ const setText0 = t => t === 9 ? 'ataque ×' + (2*1.5*(1 + .05*10)).toFixed(1).re
 const SET_TEXT = TIERS.map((_, i) => setText(i));
 const COMBOS = [
   {id:'solgelo', name:'Sol Congelado', css:'#ffd88a', req:'2 peças de Grade C + 2 de Grade B ou A', desc:'+15% de ataque e 15% de chance de congelar. Orbes de sol e gelo giram ao seu redor.'},
-  {id:'eclipse', name:'Eclipse', css:'#ff9a5a', req:'2 peças de Grade C + 2 de Grade A+ ou S', desc:'Críticos mais fortes e os golpes queimam. Chamas sombrias saem do corpo.'},
-  {id:'abismo', name:'Abismo Cristalino', css:'#c08aff', req:'2 peças de Grade B ou A + 2 de Grade A+ ou S', desc:'Três cristais flutuam ao seu redor e atiram sozinhos nos inimigos.'},
-  {id:'tempestade', name:'Tempestade Tripla', css:'#bff8ff', req:'pelo menos 1 peça de Grade C, 1 de Grade B ou A e 1 de Grade A+ ou S', desc:'Raios saem do corpo e cada golpe tem 20% de chance de soltar um raio em cadeia.'},
+  {id:'eclipse', name:'Eclipse', css:'#ff9a5a', req:'2 peças de Grade C + 2 de Ródio (A) ou Rutênio (S)', desc:'Críticos mais fortes e os golpes queimam. Chamas sombrias saem do corpo.'},
+  {id:'abismo', name:'Abismo Cristalino', css:'#c08aff', req:'2 peças de Grade B ou A (Ósmio/Irídio) + 2 de Ródio ou Rutênio', desc:'Três cristais flutuam ao seu redor e atiram sozinhos nos inimigos.'},
+  {id:'tempestade', name:'Tempestade Tripla', css:'#bff8ff', req:'pelo menos 1 peça de Grade C, 1 de Grade B ou A e 1 de Ródio (A) ou Rutênio (S)', desc:'Raios saem do corpo e cada golpe tem 20% de chance de soltar um raio em cadeia.'},
 ];
 const ICON = {
   helmet:'<svg viewBox="0 0 24 24"><path d="M3 15a9 9 0 0 1 18 0v5h-6v-5H9v5H3z"/><path d="M11 2h2v5h-2z"/></svg>',
@@ -5581,7 +5581,8 @@ const CLS = () => CLASSES[save.cls] || CLASSES.warrior;
 const classOfW = w => CLASS_ORDER.find(k => CLASSES[k].wtype === w);
 // Regra do Nine Crowns: cada classe so usa a propria arma e a propria armadura (o amuleto serve para todas).
 const ncLocked = slot => slot !== 'weapon' && slot !== 'amulet';
-const itemCls = it => it.slot === 'weapon' ? classOfW(it.wtype) : (ncLocked(it.slot) ? it.cls : undefined);
+const itemCls = it => it.slot === 'weapon' ? classOfW(it.wtype) : it.slot === 'shield' ? 'paladin' : (ncLocked(it.slot) ? it.cls : undefined);
+const ncSlots = () => SLOTS.filter(sl => sl !== 'shield' || save.cls === 'paladin');   // escudo: so o Paladino
 const itemOk = it => { const c = itemCls(it); return !c || c === save.cls; };
 
 function itemName(it){
@@ -5992,6 +5993,7 @@ function rollQ(bonus, maxQ){ const k = 1 + ((bonus || 0) + DF().qb)*1.5, r = Mat
   for(let i=0;i<4;i++){ c += ps[i]*k; if(r < c){ q = 4 - i; break; } } return Math.min(q, maxQ === undefined ? 4 : maxQ); }
 function newItem(slot, tier, o){
   o = o || {};
+  if(slot === 'shield' && save.cls !== 'paladin') slot = ARMOR[Math.floor(Math.random()*ARMOR.length)];   // escudo so cai/compra para o Paladino
   const it = {id:save.nextId++, slot, tier, q:0, up:0};
   if(slot === 'weapon'){ it.wtype = o.wtype || (Math.random() < .65 ? CLS().wtype : CLASSES[CLASS_ORDER[Math.floor(Math.random()*CLASS_ORDER.length)]].wtype); it.v = o.v !== undefined ? o.v : Math.floor(Math.random()*3); }
   else if(ncLocked(slot)) it.cls = o.cls || ((o.wtype || Math.random() < .7) ? save.cls : CLASS_ORDER[Math.floor(Math.random()*CLASS_ORDER.length)]);
@@ -6011,6 +6013,7 @@ function equipItem(it){
   save.eq[it.slot] = it.id;
 }
 function fixWeaponForClass(){
+  if(save.cls !== 'paladin'){ try{ if(craftSlot === 'shield') craftSlot = 'helmet'; if(shopSlot === 'shield') shopSlot = 'helmet'; }catch(e){} }
   // ao trocar de classe: tira o que nao e da classe e veste a melhor peca da classe em cada lugar vazio
   for(const slot of SLOTS){
     const cur = equipped(slot);
@@ -7504,18 +7507,18 @@ function itemRow(it, actions){
   return `<div class="irow" style="--tc:${css};--rc:${TIERS[it.tier].css}">${ic}<div style="min-width:0"><div class="iname ${it.tier === 9 ? 'prism' : ''}">${itemName(it)}${skDots(it)}<small>${TIERS[it.tier].s} ${TIERS[it.tier].n}</small></div><div class="istat">${statText(itemStats(it))}</div>${isEquipped(it) ? '' : cmpText(it)}</div><div class="iact">${actions}</div></div>`;
 }
 function renderGear(){
-  $('#eqGrid').innerHTML = SLOTS.map(slot => {
+  $('#eqGrid').innerHTML = ncSlots().map(slot => {
     const it = equipped(slot);
     return `<button class="eq ${it ? 'has' : ''}" data-uneq="${slot}" style="--tc:${it ? TIERS[it.tier].css : '#3a405c'}" ${it ? '' : 'disabled'} title="${it ? 'Tirar ' + itemName(it) : 'Vazio'}">${slotIcon(slot, it && it.wtype)}<span class="en">${it ? itemName(it) : SLOT_INFO[slot].n}</span><span class="es" ${it ? `style="color:${TIERS[it.tier].css}"` : ''}>${it ? TIERS[it.tier].sc + ' · ' + TIERS[it.tier].n : 'vazio'}</span></button>`;
   }).join('');
   const B = bonuses(), c = B.counts;
-  let bl = `<div class="bon"><b>Peças vestidas:</b> ${TIERS.map((t, i) => c[i] ? `<span style="color:${t.css}">${c[i]} ${t.name}</span>` : '').filter(Boolean).join(' · ') || 'nenhuma'}<small>As combinações misturam peças de grades diferentes: Grade C, Grade B ou A e Grade A+ ou S.</small></div>`;
+  let bl = `<div class="bon"><b>Peças vestidas:</b> ${TIERS.map((t, i) => c[i] ? `<span style="color:${t.css}">${c[i]} ${t.name}</span>` : '').filter(Boolean).join(' · ') || 'nenhuma'}<small>As combinações misturam peças de grades diferentes: Grade C, Grade B ou A e Ródio (A) ou Rutênio (S).</small></div>`;
   bl += [9,8,7,6,5,4,3,2,1,0].map(t => `<div class="bon ${B.sets.includes(t) ? 'on' : ''}" style="--tc:${TIERS[t].css}"><b>${SET_NAMES[t]} completa</b> (6 peças iguais): ${SET_TEXT[t]}.</div>`).join('');
   bl += COMBOS.map(k => `<div class="bon ${B.combos.includes(k.id) ? 'on' : ''}" style="--tc:${k.css}"><b>${k.name}</b>: ${k.desc}<small>Precisa de ${k.req}.</small></div>`).join('');
   $('#bonusList').innerHTML = bl;
   $('#invCap').textContent = save.inv.length + ' / ' + INV_MAX;
   $('#bagList').innerHTML = bagHTML();
-  const fl = [['all','Todos'], ...SLOTS.map(s => [s, SLOT_INFO[s].n])];
+  const fl = [['all','Todos'], ...ncSlots().map(s => [s, SLOT_INFO[s].n])];
   $('#invFilters').innerHTML = fl.map(([k, n]) => `<button class="chipb" data-filter="${k}" aria-pressed="${invFilter === k}">${n}</button>`).join('');
   const list = save.inv.filter(i => !isEquipped(i) && (invFilter === 'all' || i.slot === invFilter))
     .sort((a, b) => (b.tier - a.tier) || (b.q - a.q) || (SLOTS.indexOf(a.slot) - SLOTS.indexOf(b.slot)));
@@ -7645,7 +7648,7 @@ function canCraft(t){ const R = recipe(t), k = evFx().craft || 1; return save.go
 function craftHTML(){
   const k = evFx().craft || 1;
   let h = `<p class="lede">Fabrique peças com os materiais que os monstros deixam cair. Cada espécie solta um material próprio, e as armaduras mais raras pedem materiais de chefes e de <b>Chefes Mundiais</b> (Poeira Divina).${k < 1 ? ' <b style="color:#ff9a3a">Evento Forja Ardente: tudo custa 25% menos.</b>' : ''}</p>`;
-  h += `<div class="fsel">${[...ARMOR, 'weapon', 'shield', 'amulet'].map(sl => `<button class="chipb" data-cslot="${sl}" aria-pressed="${craftSlot === sl}">${sl === 'weapon' ? 'Arma (' + CLS().name + ')' : SLOT_INFO[sl].n}</button>`).join('')}</div><div class="blist">`;
+  h += `<div class="fsel">${[...ARMOR, 'weapon', 'shield', 'amulet'].filter(sl => sl !== 'shield' || save.cls === 'paladin').map(sl => `<button class="chipb" data-cslot="${sl}" aria-pressed="${craftSlot === sl}">${sl === 'weapon' ? 'Arma (' + CLS().name + ')' : SLOT_INFO[sl].n}</button>`).join('')}</div><div class="blist">`;
   h += TIERS.map((T, t) => { const R = recipe(t), ok = canCraft(t);
     const need = Object.keys(R.mats).map(m => { const q = Math.ceil(R.mats[m]*k), have = save.mats[m] || 0; return `<span class="${have >= q ? 'ok' : 'no'}" style="--tc:${MATS[m].css}">${q} ${MATS[m].n} (${have})</span>`; }).join('');
     return `<div class="frow" style="--tc:${T.css}">${pieceImg(t, craftSlot, 'ps-row')}<div><div class="fn" style="color:${T.css}">${craftSlot === 'weapon' ? 'Arma' : SLOT_INFO[craftSlot].n} ${T.pre} · ${T.sc} <small style="color:var(--mute)">${T.n}</small></div>
@@ -7719,7 +7722,7 @@ function renderShop(){
     <div class="row"><span class="istat">Peça exclusiva do evento (+10% nos atributos, só enquanto o evento durar, 1 por semana):</span>
     <button class="btn sm primary" data-evbuy="1" ${save.coins >= shopPrice(60) && !save.evBought[evKey()] ? '' : 'disabled'}>${save.evBought[evKey()] ? 'Já comprada nesta semana' : SLOT_INFO[shopSlot].n + ' ' + E.n + ' · ' + shopPrice(60) + ' moedas'}</button></div></div>` : '';
   h += `<h2>Equipamentos <small>Moedas Solares · até ${TIERS[CFG.shopMaxTier].sc}. Armaduras Míticas e Divinas não são vendidas.</small></h2>
-    <div class="fsel">${[...ARMOR, 'weapon', 'shield', 'amulet'].map(sl => `<button class="chipb" data-sslot="${sl}" aria-pressed="${shopSlot === sl}">${SLOT_INFO[sl].n}</button>`).join('')}</div><div class="shopgrid">`;
+    <div class="fsel">${[...ARMOR, 'weapon', 'shield', 'amulet'].filter(sl => sl !== 'shield' || save.cls === 'paladin').map(sl => `<button class="chipb" data-sslot="${sl}" aria-pressed="${shopSlot === sl}">${SLOT_INFO[sl].n}</button>`).join('')}</div><div class="shopgrid">`;
   for(let t = 0; t <= Math.min(CFG.shopMaxTier, 7); t++){ const p = piecePrice(t);
     h += `<button class="scard" style="--tc:${TIERS[t].css}" data-sbuy="${t}" ${save.coins >= p ? '' : 'disabled'}>${tierImg(t)}<b>${TIERS[t].model}</b><small>${TIERS[t].sc} · ${TIERS[t].n}</small><span>${p} moedas</span></button>`; }
   h += `</div><h2>Trocar fragmentos <small>junte fragmentos de uma armadura para trocar por uma peça dela</small></h2><div class="blist">`;
@@ -7790,7 +7793,7 @@ function cmpText(it){ const e = equipped(it.slot); if(!e || e === it) return '';
   [['hp','vida'],['atk','ataque'],['def','defesa']].forEach(([k, n]) => { const d = (a[k] || 0) - (b[k] || 0); if(d) out.push(`<span class="${d > 0 ? 'up1' : 'dn1'}">${d > 0 ? '+' : ''}${d} ${n}</span>`); });
   return out.length ? `<div class="cmpl">vs equipado: ${out.join(' ')}</div>` : ''; }
 function fuseHTML(){
-  return `<p class="lede">Funda <b>3 peças iguais</b> (mesmo tipo e mesma estrela) para criar uma peça com <b>uma faixa acima</b>. A fusão vai até Grade A+ (Ródio). A Armadura de <b class="prism">Rutênio (Grade S)</b> não sai da fusão: ela vem de Chefes Mundiais ou é fabricada com Poeira Divina. As pedras das peças fundidas voltam para a bolsa, e se uma delas estava em +10 ou mais, a peça nova já nasce em +5.</p><div class="blist">` + SLOTS.map(slot => {
+  return `<p class="lede">Funda <b>3 peças iguais</b> (mesmo tipo e mesma estrela) para criar uma peça com <b>uma faixa acima</b>. A fusão vai até Grade A (Ródio). A Armadura de <b class="prism">Rutênio (Grade S)</b> não sai da fusão: ela vem de Chefes Mundiais ou é fabricada com Poeira Divina. As pedras das peças fundidas voltam para a bolsa, e se uma delas estava em +10 ou mais, a peça nova já nasce em +5.</p><div class="blist">` + SLOTS.map(slot => {
     const f = fuseInputs(slot), w = CLS().wtype;
     if(!f){ let bt = -1, bc = 0; for(let t = 7; t >= 2; t--){ const c = save.inv.filter(i => i.slot === slot && i.tier === t && (slot !== 'weapon' || i.wtype === w)).length; if(c > bc){ bc = c; bt = t; } }
       return `<div class="frow">${slotIcon(slot)}<div><div class="fn">${SLOT_INFO[slot].n}</div><div class="istat">${bt >= 0 ? `Você tem ${bc} de ${GR(bt)}. Faltam ${3 - bc} para fundir.` : 'Junte 3 peças iguais de Grade D a Grade A.'}</div></div><button class="btn sm" disabled>Fundir</button></div>`; }
@@ -11085,10 +11088,10 @@ const inspect = {yaw:0, dist:4.6};
   pz.addEventListener('wheel', e => { if(e.target !== pz) return; e.preventDefault(); inspect.dist = clamp(inspect.dist*(e.deltaY > 0 ? 1.1 : .9), 2.2, 9); }, {passive:false}); })();
 function renderPauseGear(){
   const B = bonuses(), S = stats();
-  const eq = SLOTS.map(slot => { const it = equipped(slot);
+  const eq = ncSlots().map(slot => { const it = equipped(slot);
     return `<button class="eq ${it ? 'has' : ''}" data-puneq="${slot}" style="--tc:${it ? TIERS[it.tier].css : '#3a405c'}" ${it ? '' : 'disabled'} title="${it ? 'Tirar ' + itemName(it) : 'Vazio'}">${slotIcon(slot, it && it.wtype)}<span class="en">${it ? itemName(it) : SLOT_INFO[slot].n}</span><span class="es" ${it ? `style="color:${TIERS[it.tier].css}"` : ''}>${it ? TIERS[it.tier].sc + ' · ' + TIERS[it.tier].n : 'vazio'}</span></button>`; }).join('');
   const act = [...B.sets.map(t => `<b style="color:${TIERS[t].css}">${SET_NAMES[t]}</b>`), ...COMBOS.filter(k => B.combos.includes(k.id)).map(k => `<b style="color:${k.css}">${k.name}</b>`)];
-  const fl = [['all','Todos'], ...SLOTS.map(s => [s, SLOT_INFO[s].n])];
+  const fl = [['all','Todos'], ...ncSlots().map(s => [s, SLOT_INFO[s].n])];
   const list = save.inv.filter(i => !isEquipped(i) && (pFilter === 'all' || i.slot === pFilter))
     .sort((a, b) => (b.tier - a.tier) || (b.q - a.q) || (SLOTS.indexOf(a.slot) - SLOTS.indexOf(b.slot)));
   $('#pauseGear').innerHTML = `<h2>Câmera</h2><div class="filters">${ZOOMS.map((z, i) => `<button class="chipb" data-pzoom="${i}" aria-pressed="${(save.zoom ?? 4) === i}">${z.n}</button>`).join('')}</div>
