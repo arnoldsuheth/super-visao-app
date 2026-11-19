@@ -648,7 +648,7 @@ body.nocur, body.nocur *{cursor:none !important}
       </div>
       <div class="statgrid" id="uStats"></div>
       <div class="shop">
-        <div><div class="eyebrow">Ouro</div><div class="gold coin" id="uGold">0</div></div>
+        <div><div class="eyebrow">Adena</div><div class="gold" id="uGold">0</div></div>
         <div><div class="eyebrow">Poções</div><div class="gold" id="uPot" style="color:var(--ink)">0</div></div>
         <button class="btn" id="buyPot">Comprar poção · 25</button>
       </div>
@@ -5449,6 +5449,10 @@ const $ = s => document.querySelector(s);
 const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const C = h => new T.Color(h).convertSRGBToLinear();
 const fmtGold = n => Math.floor(n || 0).toLocaleString('pt-BR');
+/* NINE CROWNS: a moeda e a Adena, em ouro, prata e bronze. 100 de bronze = 1 de prata; 100 de prata = 1 de ouro. O numero guardado no jogo e em bronze. */
+const adenaParts = n => { n = Math.max(0, Math.floor(n || 0)); return [Math.floor(n/10000), Math.floor(n/100)%100, n%100]; };
+const adenaTxt = n => { const [o, p, b] = adenaParts(n); return ((o ? o.toLocaleString('pt-BR') + ' de ouro ' : '') + (p ? p + ' de prata ' : '') + (b || (!o && !p) ? b + ' de bronze' : '')).trim(); };
+const adenaHTML = n => { const [o, p, b] = adenaParts(n), c = (v, k) => `<span class="adn ${k}">${v.toLocaleString('pt-BR')}</span>`; return (o ? c(o, 'o') : '') + (o || p ? c(p, 'p') : '') + c(b, 'b'); };
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const smooth = (a, b, x) => { const t = clamp((x - a)/(b - a), 0, 1); return t*t*(3 - 2*t); };
 
@@ -7428,7 +7432,7 @@ function renderHub(){
     `<div><span>Vida</span><b>${S.hp}</b></div><div><span>Ataque</span><b>${S.atk}</b></div>` +
     `<div><span>Defesa</span><b>${S.def} · −${Math.round(S.reduce*100)}%</b></div><div><span>Velocidade</span><b>${S.spd.toFixed(1).replace('.',',')}</b></div>` +
     `<div><span>Crítico</span><b>${Math.round(S.crit*100)}%</b></div><div><span>Bloqueio</span><b>${Math.round(S.block*100)}%</b></div>`;
-  $('#uGold').textContent = fmtGold(save.gold);
+  $('#uGold').innerHTML = adenaHTML(save.gold);
   $('#uPot').textContent = save.potions + ' / 9';
   $('#buyPot').disabled = save.gold < 25 || save.potions >= 9;
   $('#swTunic').innerHTML = TUNICS.map((t, i) => `<button class="sw" style="--c:#${t.c.toString(16).padStart(6,'0')}" data-tunic="${i}" aria-pressed="${save.look.tunic === i}" aria-label="Roupa ${t.n}" title="${t.n}"></button>`).join('');
@@ -7636,7 +7640,7 @@ function craftHTML(){
   h += TIERS.map((T, t) => { const R = recipe(t), ok = canCraft(t);
     const need = Object.keys(R.mats).map(m => { const q = Math.ceil(R.mats[m]*k), have = save.mats[m] || 0; return `<span class="${have >= q ? 'ok' : 'no'}" style="--tc:${MATS[m].css}">${q} ${MATS[m].n} (${have})</span>`; }).join('');
     return `<div class="frow" style="--tc:${T.css}">${pieceImg(t, craftSlot, 'ps-row')}<div><div class="fn" style="color:${T.css}">${craftSlot === 'weapon' ? 'Arma' : SLOT_INFO[craftSlot].n} ${T.pre} · ${T.sc} <small style="color:var(--mute)">${T.n}</small></div>
-      <div class="need">${need}<span class="${save.gold >= Math.round(R.gold*k) ? 'ok' : 'no'}" style="--tc:#f2c14e">${Math.round(R.gold*k)} de ouro</span></div></div>
+      <div class="need">${need}<span class="${save.gold >= Math.round(R.gold*k) ? 'ok' : 'no'}" style="--tc:#f2c14e">${adenaTxt(Math.round(R.gold*k))}</span></div></div>
       <button class="btn sm ${ok ? 'primary' : ''}" data-craft="${t}" ${ok ? '' : 'disabled'}>Fabricar</button></div>`; }).join('') + '</div>';
   return h;
 }
@@ -7660,7 +7664,7 @@ function upHTML(){
       <div class="big">${itemName(it)} <span class="up">→ +${it.up + 1}</span></div>
       <div class="cmp"><div><div class="eyebrow">Agora</div>${statText(itemStats(it))}</div><div><div class="eyebrow">Depois</div><b>${statText(statsAfter(it))}</b></div></div>
       <div class="pbar"><i style="width:${it.up/15*100}%"></i><span>+${it.up} de +15</span></div></div></div>
-    <div class="row"><span class="pill ok">Chance ${Math.round(upChance(it)*100)}%</span><span class="pill">${MATS[U.m].n}: ${have}/1</span><span class="pill">${cost} de ouro</span></div>
+    <div class="row"><span class="pill ok">Chance ${Math.round(upChance(it)*100)}%</span><span class="pill">${MATS[U.m].n}: ${have}/1</span><span class="pill">${adenaTxt(cost)}</span></div>
     <div class="istat">${upRisk(U)}.</div>
     <div class="row">${U.lose ? `<button class="chipb" data-fopt="selo" aria-pressed="${forgeOpt.selo}">Usar Selo de Ferreiro se falhar (${save.mats.selo || 0})</button>` : ''}${U.brk ? `<button class="chipb" data-fopt="bencao" aria-pressed="${forgeOpt.bencao}">Usar Bênção da Bigorna se rachar (${save.mats.bencao || 0})</button>` : ''}</div>
     <button class="btn ${ok ? 'primary' : ''} ${confirmNow ? 'warnb' : ''}" data-fup="${it.id}" ${ok ? '' : 'disabled'}>${!ok ? (have < 1 ? 'Falta ' + MATS[U.m].n : 'Falta ouro') : confirmNow ? 'Confirmar: a peça pode perder nível' : 'Evoluir'}</button></div>`;
@@ -7674,7 +7678,7 @@ function gemsHTML(){
       <div class="row">${it.sk.length ? it.sk.map((c, i) => { const g = it.gm[i];
         if(!g) return `<span class="sockb" style="--c:${SKC.W.css}"><span class="dot"></span>Vazio</span>`;
         const [k, r] = g.split(':');
-        return `<button class="sockb" style="--c:${RAR[r - 1].css}" data-fpull="${i}" title="Tirar a pedra por ${pullCost(g)} de ouro">${stoneImg(k, 20)}${stoneName(k, +r)} · tirar ${pullCost(g)}</button>`; }).join('') : '<span class="istat">Esta peça não tem encaixes.</span>'}</div>
+        return `<button class="sockb" style="--c:${RAR[r - 1].css}" data-fpull="${i}" title="Tirar a pedra por ${adenaTxt(pullCost(g))}">${stoneImg(k, 20)}${stoneName(k, +r)} · tirar ${pullCost(g)}</button>`; }).join('') : '<span class="istat">Esta peça não tem encaixes.</span>'}</div>
       <div class="row"><button class="btn sm" data-freroll="${it.id}" ${save.mats.broca > 0 ? '' : 'disabled'}>Sortear encaixes de novo · Broca Solar (${save.mats.broca || 0})</button><span class="istat">As pedras voltam para a bolsa.</span></div></div>`; }
   h += `<h2>Bolsa de pedras</h2><div class="fsel">${[['all','Todas'], ...GEM_KEYS.map(k => [k, GEMS[k].st])].map(([k, n]) => `<button class="chipb" data-sfilter="${k}" aria-pressed="${stoneFilter === k}">${n}</button>`).join('')}</div>`;
   const keys = Object.keys(save.gems).filter(k => save.gems[k] > 0 && GEMS[k.split(':')[0]] && (stoneFilter === 'all' || k.startsWith(stoneFilter + ':')))
@@ -8678,7 +8682,7 @@ function placeLandmarks(st){
 /* ================= DIA E NOITE =================
    Cada fase começa num horário sorteado e o tempo anda: o ciclo inteiro leva 10 minutos.
    À noite: céu e luz azulados (sempre visível), estrelas e lua, tochas mais fortes, brilho em volta do herói,
-   inimigos 10% mais fortes e +25% de ouro. O modo desenvolvedor pode travar o horário (DEV.dnLock). */
+   inimigos 10% mais fortes e +25% de Adena. O modo desenvolvedor pode travar o horário (DEV.dnLock). */
 const DN_LEN = 600;
 const DN = {on:false, t:.4, amp:1, night:0, base:null, nightSky:null, stars:null, orb:null, lights:[], off:new T.Vector3(9, 26, 7), wasNight:null, chipT:0};
 const dnLock = () => (typeof OWN !== 'undefined' && OWN && DEV.owner === OWN.h && DEV.dnLock != null) ? DEV.dnLock : null;
@@ -8728,7 +8732,7 @@ function updateDayNight(dt){
   if(hero && hero.light){ const hb = hero.light.userData.base ?? hero.light.intensity; hero.light.intensity = Math.max(hb, night*.9); hero.light.distance = 5 + night*3; }
   // aviso ao anoitecer / amanhecer
   const isN = night > .55;
-  if(DN.wasNight !== null && isN !== DN.wasNight && k > .5 && running) banner(isN ? 'A noite chegou' : 'Amanheceu', isN ? 'Inimigos 10% mais fortes · +25% de ouro' : 'Bom dia, herói');
+  if(DN.wasNight !== null && isN !== DN.wasNight && k > .5 && running) banner(isN ? 'A noite chegou' : 'Amanheceu', isN ? 'Inimigos 10% mais fortes · +25% de Adena' : 'Bom dia, herói');
   DN.wasNight = isN;
   if((DN.chipT -= dt) <= 0){ DN.chipT = .5; const c = $('#hTime'); if(c){ c.textContent = (e >= 0 ? '☀ ' : '☾ ') + dnClock(); c.classList.toggle('night', isN); } }
 }
@@ -10671,7 +10675,7 @@ function updateWorld(dt){
     if(l.t > .5 && Math.hypot(P.pos.x - l.x, P.pos.z - l.z) < 1.8 && !P.dead){
       const css = TIERS[l.item.tier].css;
       if(addItem(l.item)){ runLoot.push(l.item); feed(TIERS[l.item.tier].s + ' ' + itemName(l.item), TIERS[l.item.tier].css); itemCard(l.item); if(l.item.tier >= 4) discover(l.item); }
-      else feed('Mochila cheia: vendido por ' + sellValue(l.item) + ' de ouro', '#f2c14e');
+      else feed('Mochila cheia: vendido por ' + adenaTxt(sellValue(l.item)), '#f2c14e');
       SFX.item(); burst(l.g.position, TIERS[l.item.tier].hex, 10 + l.item.tier*3, 3, 4, 0);
       if(l.item.slot !== 'weapon' || l.item.wtype === CLS().wtype){ if(isEquipped(l.item)){ P.S = stats(); applyGear(hero); } }
       removeObj(l.g); if(l.tag) l.tag.remove(); loot.splice(i, 1); continue;
@@ -10774,7 +10778,7 @@ function updateHUD(){
   $('#hHp').style.width = (P.hp/S.hp*100) + '%';
   $('#hHpT').textContent = Math.ceil(P.hp) + '/' + S.hp;
   $('#hXp').style.width = Math.min(100, save.xp/xpNeed(save.level)*100) + '%';
-  $('#hGold').textContent = fmtGold(save.gold);
+  $('#hGold').innerHTML = adenaHTML(save.gold);
   $('#hPot').textContent = save.potions;
   if(boss && bossActive) $('#bHp').style.width = Math.max(0, boss.hp/boss.maxHp*100) + '%';
   const nR = runes.filter(r => r.taken).length; let near = null, nd = 1e9;
@@ -11022,7 +11026,7 @@ function showResult(){
   const nextBtn = next && unlocked(next) ? `<button class="btn" data-act="next">Ir para a próxima área: ${next.name}</button>` : '';
   $('#resultBox').innerHTML = `<h3 class="win">Vitória!</h3>
     <p>${lastResult.world ? '<b style="color:#ff4ae0">Chefe Mundial</b> · ' : ''}${st.boss} derrotado · ${wins}ª vitória · <b style="color:${DF().css}">${DF().name}</b></p>
-    <div class="rewards"><div><span class="eyebrow">Experiência</span><b>+${xp}</b></div><div><span class="eyebrow">Ouro</span><b class="gold">+${gold}</b></div></div>
+    <div class="rewards"><div><span class="eyebrow">Experiência</span><b>+${xp}</b></div><div><span class="eyebrow">Adena</span><b class="gold">+${adenaHTML(gold)}</b></div></div>
     ${mod && mod !== 'normal' ? `<p>Variante <b style="color:${BMODS[mod].css}">${BMODS[mod].n}</b>: mais chance de drop e gemas extras.</p>` : ''}
     ${dh}<div class="rbreak"><div class="eyebrow">Partes quebradas (${(breaks || []).length} de ${parts || 3})</div>${(breaks || []).length ? breaks.map(x => `<div><b>${x.n}</b>: ${x.got.join(', ')}</div>`).join('') : '<div>Nenhuma. Bata na cabeça, nas pernas e nas costas do chefe para quebrar partes e ganhar bônus.</div>'}</div>
     ${matsRun()}${setHtml}${lootHtml}
@@ -11047,7 +11051,7 @@ function showDead(){
   inputLocked = true;
   const bossPct = boss && boss.awake && !boss.dead ? Math.ceil(boss.hp/boss.maxHp*100) : null;
   $('#deadBox').innerHTML = `<h3 class="lose">Você caiu</h3>
-    <p>${bossPct !== null ? `O ${curStage.boss} ficou com ${bossPct}% de vida.` : `Os inimigos de ${curStage.name} venceram desta vez.`} ${P.goldLost ? `A dificuldade ${DF().name} cobrou <b style="color:#f2c14e">${P.goldLost} de ouro</b>. ` : ''}A experiência e os ${runLoot.length} itens que você pegou ficam com você.</p>
+    <p>${bossPct !== null ? `O ${curStage.boss} ficou com ${bossPct}% de vida.` : `Os inimigos de ${curStage.name} venceram desta vez.`} ${P.goldLost ? `A dificuldade ${DF().name} cobrou <b style="color:#f2c14e">${adenaTxt(P.goldLost)}</b>. ` : ''}A experiência e os ${runLoot.length} itens que você pegou ficam com você.</p>
     ${save.level < curStage.lvl ? `<p>Nível sugerido para esta fase: ${curStage.lvl}. Explore fases anteriores para subir de nível e achar peças melhores.</p>` : ''}
     <div class="mact">
       <button class="btn primary" data-act="retry">Tentar de novo</button>
@@ -11061,7 +11065,7 @@ function togglePause(force){
   if(pausing && !running) return;
   running = !pausing; $('#pause').hidden = !pausing; if(pausing) unlockMouse();
   if(pausing){ attackHeld = false; for(const k in keys) keys[k] = false; inspect.yaw = P.face; inspect.dist = 4.6;
-    syncVolUI(); $('#pauseInfo').textContent = `Fase ${curStage.id + 1} · ${curStage.name} · ${DF().name}. Sair agora mantém o ouro, a experiência e os itens já coletados.`; renderPauseGear(); }
+    syncVolUI(); $('#pauseInfo').textContent = `Fase ${curStage.id + 1} · ${curStage.name} · ${DF().name}. Sair agora mantém a Adena, a experiência e os itens já coletados.`; renderPauseGear(); }
 }
 let pFilter = 'all';
 const inspect = {yaw:0, dist:4.6};
@@ -11774,6 +11778,11 @@ requestAnimationFrame(loop);
 #hud .bar.xp i{background:linear-gradient(90deg,#b9801f,#ffe08a)}
 #hud .obj{margin-top:8px;font-family:var(--f-display);font-weight:600}
 #hud .chip{border:1px solid rgba(242,193,78,.3);border-radius:12px;background:rgba(10,12,24,.62);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);font-family:var(--f-display);font-weight:700;box-shadow:0 3px 10px rgba(0,0,0,.3)}
+.adn{display:inline-flex;align-items:center;gap:3px;margin-left:6px;font-variant-numeric:tabular-nums}.adn:first-child{margin-left:0}
+.adn::before{content:"";width:.78em;height:.78em;border-radius:50%;flex:none;box-shadow:inset 0 0 0 1.5px rgba(0,0,0,.28)}
+.adn.o::before{background:radial-gradient(circle at 35% 30%,#fff3c0,#f2c14e 55%,#a8741f)}.adn.p::before{background:radial-gradient(circle at 35% 30%,#ffffff,#c9d2dc 55%,#7d8894)}.adn.b::before{background:radial-gradient(circle at 35% 30%,#ffd2a8,#c87a3c 55%,#7a4318)}
+#hud .chip.g::before{display:none}#hud .chip.g{gap:0}
+.nc-chip .adn{display:flex;justify-content:center;margin:1px 0 0}
 #hud #potBtn{display:inline-flex;align-items:center;gap:5px}
 #hud #potBtn::before{content:"";width:16px;height:16px;background:var(--nc-pot) center/contain no-repeat}
 #hud #mm{border-radius:14px;border:1.5px solid rgba(242,193,78,.55);box-shadow:0 4px 14px rgba(0,0,0,.4)}
@@ -11925,13 +11934,13 @@ body.nc-l #hub>aside.panel::before,body.nc-r #hub>#rightPanel::before{transform:
   var top=document.createElement('div');top.className='nc-top';var logo=L.querySelector('.logo');if(logo)top.appendChild(logo);
   var sub=document.createElement('div');sub.className='nc-sub';sub.textContent='Nove reinos · nove coroas';top.appendChild(sub);hub.appendChild(top);
   var cw=document.createElement('div');cw.className='nc-crowns';cw.title='Coroas reunidas';cw.innerHTML='<i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>';top.appendChild(cw);
-  var chip=document.createElement('div');chip.className='nc-chip';chip.innerHTML='<span id="ncLv"></span><span><i>Ouro</i><br><b id="ncGd"></b></span>';hub.appendChild(chip);
+  var chip=document.createElement('div');chip.className='nc-chip';chip.innerHTML='<span id="ncLv"></span><span><i>Adena</i><br><b id="ncGd"></b></span>';hub.appendChild(chip);
   /* jogar */
   var play=document.createElement('div');play.className='nc-play';play.innerHTML='<button class="nc-go" type="button" id="ncGo">Jogar</button><div class="nc-where" id="ncWhere"></div>';hub.appendChild(play);
   function alvo(){var bs=[].slice.call(document.querySelectorAll('#stages .card:not(.locked) [data-play]'));return bs[bs.length-1]||null}
   document.getElementById('ncGo').onclick=function(){var b=alvo();if(b)b.click();else toggle('r','stages')};
   function sync(){var b=alvo(),c=b&&b.closest('.card'),n=c&&c.querySelector('.cname');document.getElementById('ncWhere').innerHTML=n?'Próxima área · <b>'+n.textContent+'</b>':'';
-    var lv=document.getElementById('uLvl'),gd=document.getElementById('uGold');document.getElementById('ncLv').textContent=lv?lv.textContent.replace('Nv','Nível'):'';document.getElementById('ncGd').textContent=gd?gd.textContent:'0';
+    var lv=document.getElementById('uLvl'),gd=document.getElementById('uGold');document.getElementById('ncLv').textContent=lv?lv.textContent.replace('Nv','Nível'):'';document.getElementById('ncGd').innerHTML=gd?gd.innerHTML:'0';
     try{var n=window.NC.coroas();cw.querySelectorAll('i').forEach(function(e,i){e.classList.toggle('on',i<n)});cw.title='Coroas reunidas: '+n+' de 9'}catch(e){}}
   new MutationObserver(sync).observe(document.getElementById('stages'),{childList:true});
   ['uLvl','uGold'].forEach(function(id){var el=document.getElementById(id);if(el)new MutationObserver(sync).observe(el,{childList:true,characterData:true,subtree:true})});
