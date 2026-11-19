@@ -7396,7 +7396,7 @@ const hubZoom = f => { hubDist = clamp(hubDist*f, .42, 1.25); hubCamera(); };
   sp.addEventListener('dblclick', () => { hubPan = 0; hubDist = 1; hubCamera(); }); })();
 function updateHub(dt){
   hubT += dt; hero.body.visible = !hero.mx && !mxWaiting(hero); if(hero.mx){ hero.mx.m.visible = true; mxState(dt, false, 0); } if(hero.light.userData.base != null){ hero.light.intensity = hero.light.userData.base; hero.light.distance = 5; } if(VM.g) VM.g.visible = false;
-  if(hubDragT > 0) hubDragT -= dt; else hero.root.rotation.y += dt * .45;
+  if(hubDragT > 0) hubDragT -= dt; else { let r = hero.root.rotation.y % TAU; if(r > Math.PI) r -= TAU; if(r < -Math.PI) r += TAU; hero.root.rotation.y = r + (Math.sin(hubT*.55)*.42 - r)*Math.min(1, dt*2.2); }
   hero.body.position.y = Math.sin(hubT*2) * .03;
   hero.armL.rotation.x = Math.sin(hubT*2) * .05; hero.armR.rotation.x = -.2 + Math.sin(hubT*2) * .05;
   hero.cape.rotation.x = .08 + Math.sin(hubT*1.5)*.04; hero.cape2.rotation.x = .05 + Math.sin(hubT*1.5 + .6)*.05;
@@ -7869,14 +7869,55 @@ const KK_BASE = {idle:'Idle', run:'Running_A', death:'Death_A', dash:'Dodge_Forw
 const KK_2H = {idle:'2H_Melee_Idle', atk1:'2H_Melee_Attack_Slice', atk2:'2H_Melee_Attack_Chop', atk3:'2H_Melee_Attack_Stab'};
 const MX_DEF = {
   warrior:{model:'kk_knight', anims:'kk:warrior', h:2.05, kk2:{hide:['Offhand','Badge_Shield','Rectangle_Shield','Spike_Shield','2H_Sword'], clips:{}}, sk:{bash:'bash', whirl:'spin'}},
-  paladin:{model:'kk_knight', anims:'kk:paladin', h:2.05, kk2:{hide:['Offhand','Badge_Shield','Round_Shield','Spike_Shield','2H_Sword','Knight_Cape'], clips:{}}, sk:{holy:'smash'}},
+  paladin:{model:'kk_knight', anims:'kk:paladin', h:2.05, kk2:{hide:['Offhand','Badge_Shield','Round_Shield','Spike_Shield','2H_Sword'], clips:{}, cloth:0xf1ede2, metal:0xd8b65c}, sk:{holy:'smash'}},
   barbarian:{model:'kk_barbarian', anims:'kk:barbarian', h:2.15, kk2:{hide:['Offhand','Barbarian_Round_Shield','^1H_Axe$','Mug'], clips:KK_2H}, sk:{leap:'smash', cyclone:'spin', whirl:'spin'}},
   archer:{model:'kk_rogue_hooded', anims:'kk:archer', h:1.95, kk2:{hide:['Offhand','1H_Crossbow','^Knife$','Throwable'], clips:{idle:'2H_Ranged_Aiming', atk1:'2H_Ranged_Shoot', atk2:'2H_Ranged_Shoot', atk3:'2H_Ranged_Shoot'}}, atk:{at:.1, speed:1.6}},
   mage:{model:'kk_mage', anims:'kk:mage', h:1.95, kk2:{hide:['^Spellbook$','Spellbook_open','1H_Wand'], clips:{atk1:'Spellcast_Shoot', atk2:'Spellcast_Shoot', atk3:'Spellcast_Raise', smash:'Spellcast_Long', spin:'Spellcast_Raise'}}, atk:{at:.2, speed:1.9}},
-  necro:{model:'kk_mage', anims:'kk:necro', h:1.95, kk2:{hide:['^Spellbook$','2H_Staff'], clips:{atk1:'Spellcast_Shoot', atk2:'Spellcast_Shoot', atk3:'Spellcast_Raise', smash:'Spellcast_Long', spin:'Spellcast_Raise'}}, atk:{at:.2, speed:1.9}},
+  necro:{model:'kk_mage', anims:'kk:necro', h:1.95, kk2:{hide:['^Spellbook$','2H_Staff'], clips:{atk1:'Spellcast_Shoot', atk2:'Spellcast_Shoot', atk3:'Spellcast_Raise', smash:'Spellcast_Long', spin:'Spellcast_Raise'}, cloth:0x2b2f36, cape:0x3fae5a, trim:0x3fae5a, hair:0xe4e2ea, skin:0xcfd6cf}, atk:{at:.2, speed:1.9}},
   assassin:{model:'kk_rogue', anims:'kk:assassin', h:1.95, kk2:{hide:['1H_Crossbow','2H_Crossbow','Throwable'], clips:{atk1:'Dualwield_Melee_Attack_Slice', atk2:'Dualwield_Melee_Attack_Chop', atk3:'Dualwield_Melee_Attack_Stab'}}, sk:{shadow:'dash'}, atk:{at:.22, speed:2.4}},
-  monk:{model:'kk_barbarian', anims:'kk:monk', h:2.1, kk2:{hide:['Axe','Barbarian_Round_Shield','Mug','Barbarian_Hat','Barbarian_Cape'], clips:{idle:'Unarmed_Idle', atk1:'Unarmed_Melee_Attack_Punch_A', atk2:'Unarmed_Melee_Attack_Punch_B', atk3:'Unarmed_Melee_Attack_Kick', smash:'Unarmed_Melee_Attack_Kick'}}, atk:{at:.15, speed:2.0}, sk:{quake:'smash'}},
+  monk:{model:'kk_barbarian', anims:'kk:monk', h:2.1, kk2:{hide:['Axe','Barbarian_Round_Shield','Mug','Barbarian_Hat','Barbarian_Cape'], clips:{idle:'Unarmed_Idle', atk1:'Unarmed_Melee_Attack_Punch_A', atk2:'Unarmed_Melee_Attack_Punch_B', atk3:'Unarmed_Melee_Attack_Kick', smash:'Unarmed_Melee_Attack_Kick'}, cloth:0xd9772b}, atk:{at:.15, speed:2.0}, sk:{quake:'smash'}},
 };
+/* Cada personagem novo e pintado por uma "cartela" de 8x8 cores. Aqui diz quais quadrinhos da cartela sao pele, cabelo, roupa, metal e arma,
+   para o jogo poder trocar a cor (escolha do jogador, classe e estrela do equipamento) sem mexer no modelo. */
+const KK_PAL = {
+  kk_knight:{skin:['00','01'], hair:['10','11'], cloth:['02','03'], metal:['30','31','70','22','73','40','41','72'], wpn:['32','33']},
+  kk_barbarian:{skin:['00','01'], hair:['10','11'], cloth:['12','13','02'], metal:[], wpn:['32','33','04','05']},
+  kk_mage:{skin:['00','01','75'], hair:['10','11'], cloth:['02','03','12','13','73'], cape:['22','23'], trim:['50','51'], metal:[], wpn:['64','65']},
+  kk_rogue:{skin:['00','01'], hair:['10','11'], cloth:['02','03','12','13'], metal:[], wpn:['23','32','33']},
+};
+KK_PAL.kk_rogue_hooded = KK_PAL.kk_rogue;
+const KK_TEX = {};
+function kkTex(model, col){
+  const md = MX.models[model], pal = KK_PAL[model]; if(!md || !pal) return null;
+  if(!md.map0){ md.scene.traverse(o => { if(!md.map0 && o.isMesh && o.material && o.material.map) md.map0 = o.material.map; }); } const base = md.map0; if(!base || !base.image) return null;
+  const roles = Object.keys(col).filter(r => pal[r] && pal[r].length).sort(); if(!roles.length) return base;
+  const key = model + '|' + roles.map(r => r + ':' + col[r]).join(','); if(KK_TEX[key]) return KK_TEX[key];
+  try{
+    const W = base.image.width, cv = document.createElement('canvas'); cv.width = cv.height = W; const g = cv.getContext('2d'); g.drawImage(base.image, 0, 0, W, W); const S = W/8;
+    roles.forEach(r => { const c = new T.Color(col[r]), tr = c.r*255, tg = c.g*255, tb = c.b*255;
+      pal[r].forEach(cell => { const d = g.getImageData(+cell[0]*S, +cell[1]*S, S, S), a = d.data; let sum = 0; for(let i=0;i<a.length;i+=4) sum += a[i]*.3 + a[i+1]*.59 + a[i+2]*.11; const mean = sum/(a.length/4) || 1;
+        for(let i=0;i<a.length;i+=4){ const k = Math.min(1.5, (a[i]*.3 + a[i+1]*.59 + a[i+2]*.11)/mean); a[i] = Math.min(255, tr*k); a[i+1] = Math.min(255, tg*k); a[i+2] = Math.min(255, tb*k); }
+        g.putImageData(d, +cell[0]*S, +cell[1]*S); }); });
+    const t = new T.CanvasTexture(cv); t.flipY = base.flipY; t.encoding = base.encoding; t.wrapS = base.wrapS; t.wrapT = base.wrapT; t.magFilter = base.magFilter; t.minFilter = base.minFilter; t.needsUpdate = true; return KK_TEX[key] = t;
+  }catch(e){ return base; }
+}
+/* aplica no heroi: pecas visiveis (elmo so com capacete equipado, escudo conforme a estrela) e cores */
+function kkPaint(h){
+  const x = h.mx; if(!x) return; const d = x.d, k = d.kk2, tOf = s => { const it = equipped(s); return it ? it.tier : -1; }, mix = (a, b, t) => new T.Color(a).lerp(new T.Color(b), t).getHex();
+  const hide = k.hide.slice(); if(tOf('helmet') < 0) hide.push('_Helmet$', '_Hat$');
+  if(d.model === 'kk_knight'){ const st = tOf('shield'), want = h.cls === 'paladin' ? (st >= 7 ? 'Spike_Shield' : 'Rectangle_Shield') : st >= 8 ? 'Spike_Shield' : st >= 5 ? 'Rectangle_Shield' : st >= 3 ? 'Badge_Shield' : 'Round_Shield';
+    ['Badge_Shield','Rectangle_Shield','Round_Shield','Spike_Shield'].forEach(n => { const i = hide.indexOf(n); if(i >= 0) hide.splice(i, 1); if(n !== want) hide.push('^' + n + '$'); }); }
+  x.m.traverse(o => { if(o.isMesh) o.visible = !hide.some(r => new RegExp(r).test(o.name)); });
+  const lk = save.look || {}, col = {};
+  if(lk.tunic > 0 && TUNICS[lk.tunic]) col.cloth = TUNICS[lk.tunic].c; else if(k.cloth) col.cloth = k.cloth;
+  if(k.cape) col.cape = k.cape; if(k.trim) col.trim = k.trim;
+  if(lk.hair > 0 && HAIRS[lk.hair]) col.hair = HAIRS[lk.hair].c; else if(k.hair) col.hair = k.hair;
+  if(lk.skin > 0 && SKINS[lk.skin]) col.skin = SKINS[lk.skin].c; else if(k.skin) col.skin = k.skin;
+  const ct = tOf('chest'); if(ct >= 0) col.metal = mix(0x9aa7ac, TIERS[ct].hex, .6); else if(k.metal) col.metal = k.metal;
+  const wt = tOf('weapon'); if(wt >= 0) col.wpn = mix(0x9aa7ac, TIERS[wt].hex, .55);
+  const tex = kkTex(d.model, col); if(!tex) return;
+  x.m.traverse(o => { if(o.isMesh && o.material){ if(!o.userData.kkM){ o.material = o.material.clone(); o.userData.kkM = 1; } if(o.material.map !== tex){ o.material.map = tex; o.material.needsUpdate = true; } } });
+}
 const MXU = {uRim:{value:new T.Color(0x9ab8ff)}, uRimK:{value:.08}, uArm:{value:new T.Color(0xffffff)}, uArmK:{value:0}};
 const mxNeeds = d => [d.model, d.borrow ? d.borrow.from : null, d.daggers ? d.daggers.from : null, d.kk ? 'kk_weapons' : null].filter(Boolean);
 const mxReady = cls => { const d = MX_DEF[cls]; return !!(d && mxNeeds(d).every(k => MX.models[k]) && MX.anims[d.anims]); };
@@ -7957,7 +7998,6 @@ function mxAttach(h){
   const d = MX_DEF[h.cls], md = MX.models[d.model], clips = MX.anims[d.anims];
   const m = mxClone(md.scene); m.scale.setScalar(d.h/md.h);
   m.traverse(o => { if(o.isMesh){ o.castShadow = true; o.receiveShadow = true; o.frustumCulled = false; } });
-  if(d.kk2) m.traverse(o => { if(o.isMesh && d.kk2.hide.some(r => new RegExp(r).test(o.name))) o.visible = false; });
   h.root.add(m); h.body.visible = false;
   const bones = {}; m.traverse(o => { if(o.isBone) bones[o.name.replace(/^mixamorig/, '')] = o; });
   const mixer = new T.AnimationMixer(m), acts = {}; (MX.split[d.anims] = MX.split[d.anims] || mxSplit(clips)).forEach(c => acts[c.name] = mixer.clipAction(c));
@@ -7975,7 +8015,7 @@ function mxTintMat(base, tier, rigid){
 function mxGear(h){
   const x = h.mx; if(!x) return; const d = x.d;
   x.extra.forEach(o => { if(o.parent) o.parent.remove(o); if(o.material && o.material.dispose && !o.userData.shared) o.material.dispose(); }); x.extra = [];
-  if(d.kk2) return;   // os herois novos ja trazem as proprias armas
+  if(d.kk2){ kkPaint(h); return; }   // os herois novos ja trazem as proprias armas: so ajusta pecas e cores
   const tierOf = slot => { const it = equipped(slot); return it ? it.tier : -1; };
   const nb = d.noBox || [];
   // armas e escudo do jogo, presos nos ossos das mãos
