@@ -6177,7 +6177,7 @@ function detectChip(g){
   else if(/SwiftShader|llvmpipe|Software/i.test(g)){ lv = 1; soc = 'sem aceleração de vídeo'; }
   else lv = cores >= 8 && mem >= 6 ? 3 : cores >= 4 ? 2 : 1;
   if(mem && mem <= 2) lv = Math.min(lv, 1); else if(mem && mem <= 4) lv = Math.min(lv, 3);
-  if(COARSE) lv = Math.min(lv, 4); // celular no automático vai até "Alto" (o Ultra esquenta muito); dá para escolher Ultra manualmente
+  if(COARSE) lv = Math.min(lv, 3); // NINE CROWNS: celular no automático vai até "Médio" (mais leve); Alto e Ultra continuam nos Ajustes. Antes: até "Alto" (o Ultra esquenta muito); dá para escolher Ultra manualmente
   return {name, soc, lv, cores, mem, preset:GFX_NAMES[clamp(lv, 1, 5) - 1]};
 }
 const CHIP = detectChip();
@@ -7868,7 +7868,7 @@ const KK_BASE = {idle:'Idle', run:'Running_A', death:'Death_A', dash:'Dodge_Forw
   atk1:'1H_Melee_Attack_Slice_Diagonal', atk2:'1H_Melee_Attack_Chop', atk3:'1H_Melee_Attack_Stab'};
 const KK_2H = {idle:'2H_Melee_Idle', atk1:'2H_Melee_Attack_Slice', atk2:'2H_Melee_Attack_Chop', atk3:'2H_Melee_Attack_Stab'};
 const MX_DEF = {
-  warrior:{model:'kk_knight', anims:'kk:warrior', h:2.05, kk2:{hide:['Offhand','Badge_Shield','Rectangle_Shield','Spike_Shield','2H_Sword'], clips:{}}, sk:{bash:'bash', whirl:'spin'}},
+  warrior:{model:'kk_knight', anims:'kk:warrior', h:2.05, kk2:{hide:['Offhand','Badge_Shield','Rectangle_Shield','Round_Shield','Spike_Shield','^1H_Sword$'], clips:Object.assign({bash:'2H_Melee_Attack_Stab'}, KK_2H), noShield:1}, sk:{bash:'bash', whirl:'spin'}},   // espadao de duas maos, sem escudo
   paladin:{model:'kk_knight', anims:'kk:paladin', h:2.05, kk2:{hide:['Offhand','Badge_Shield','Round_Shield','Spike_Shield','2H_Sword'], clips:{}, cloth:0xf1ede2, metal:0xd8b65c}, sk:{holy:'smash'}},
   barbarian:{model:'kk_barbarian', anims:'kk:barbarian', h:2.15, kk2:{hide:['Offhand','Barbarian_Round_Shield','^1H_Axe$','Mug'], clips:KK_2H}, sk:{leap:'smash', cyclone:'spin', whirl:'spin'}},
   archer:{model:'kk_rogue_hooded', anims:'kk:archer', h:1.95, kk2:{hide:['Offhand','1H_Crossbow','^Knife$','Throwable'], clips:{idle:'2H_Ranged_Aiming', atk1:'2H_Ranged_Shoot', atk2:'2H_Ranged_Shoot', atk3:'2H_Ranged_Shoot'}}, atk:{at:.1, speed:1.6}},
@@ -7905,9 +7905,9 @@ function kkTex(model, col){
 function kkPaint(h){
   const x = h.mx; if(!x) return; const d = x.d, k = d.kk2, tOf = s => { const it = equipped(s); return it ? it.tier : -1; }, mix = (a, b, t) => new T.Color(a).lerp(new T.Color(b), t).getHex();
   const hide = k.hide.slice(); if(tOf('helmet') < 0) hide.push('_Helmet$', '_Hat$');
-  if(d.model === 'kk_knight'){ const st = tOf('shield'), want = h.cls === 'paladin' ? (st >= 7 ? 'Spike_Shield' : 'Rectangle_Shield') : st >= 8 ? 'Spike_Shield' : st >= 5 ? 'Rectangle_Shield' : st >= 3 ? 'Badge_Shield' : 'Round_Shield';
+  if(d.model === 'kk_knight' && !k.noShield){ const st = tOf('shield'), want = h.cls === 'paladin' ? (st >= 7 ? 'Spike_Shield' : 'Rectangle_Shield') : st >= 8 ? 'Spike_Shield' : st >= 5 ? 'Rectangle_Shield' : st >= 3 ? 'Badge_Shield' : 'Round_Shield';
     ['Badge_Shield','Rectangle_Shield','Round_Shield','Spike_Shield'].forEach(n => { const i = hide.indexOf(n); if(i >= 0) hide.splice(i, 1); if(n !== want) hide.push('^' + n + '$'); }); }
-  x.m.traverse(o => { if(o.isMesh) o.visible = !hide.some(r => new RegExp(r).test(o.name)); });
+  x.m.traverse(o => { if(o.isMesh){ o.visible = !hide.some(r => new RegExp(r).test(o.name)); if(/_Helmet$|_Hat$/.test(o.name) && !o.userData.kkS){ o.scale.multiplyScalar(1.05); o.userData.kkS = 1; } } });   // elmo um pouco maior: o cabelo nao atravessa mais
   const lk = save.look || {}, col = {};
   if(lk.tunic > 0 && TUNICS[lk.tunic]) col.cloth = TUNICS[lk.tunic].c; else if(k.cloth) col.cloth = k.cloth;
   if(k.cape) col.cape = k.cape; if(k.trim) col.trim = k.trim;
@@ -10754,8 +10754,9 @@ addEventListener('pointerdown', e => { if(e.pointerType === 'mouse') setInput('k
 function renderSkillbar(){
   const c = CLS(), pad = inputDev === 'pad';
   const items = [['Ataque', pad ? g1('a') : '<kbd>J</kbd>'], [c.skills[0].full, pad ? g1('x') : '<kbd>E</kbd>'], [c.skills[1].full, pad ? g1('y') : '<kbd>R</kbd>'], [c.dash, pad ? g1('b') : '<kbd>Shift</kbd>'], ['Cavalo', pad ? g1('view') : '<kbd>H</kbd>'], ['Poção', pad ? g1('lb') : '<kbd>Q</kbd>']];
-  $('#skillbar').innerHTML = items.map((it, i) => `<div class="sk ${i === 0 ? 'atk' : i < 3 ? 'skl' : ''}" id="sk${i}"><div class="ov"></div><b>${it[0]}</b>${it[1]}</div>`).join('');
+  $('#skillbar').innerHTML = items.map((it, i) => `<div class="sk ${i === 0 ? 'atk' : i < 3 ? 'skl' : ''}" id="sk${i}" title="${it[0]}"><div class="ov"></div><i class="ic" style='background-image:${window.ncIconUrl ? window.ncIconUrl(['atk', c.skills[0].id, c.skills[1].id, 'dash', 'horse', 'potion'][i]) : 'none'}'></i><b>${it[0]}</b>${it[1]}</div>`).join('');
   $('#tSk1').textContent = c.skills[0].name; $('#tSk2').textContent = c.skills[1].name; $('#tDash').textContent = c.dash;
+  if(window.ncHud) window.ncHud(c.skills[0].id, c.skills[1].id);
   $('#tSk1').title = c.skills[0].full + ': ' + c.skills[0].desc; $('#tSk2').title = c.skills[1].full + ': ' + c.skills[1].desc;
   document.body.dataset.input = inputDev;
 }
@@ -11750,6 +11751,63 @@ requestAnimationFrame(loop);
 })();
 </script>
 
+<!-- ===== NINE CROWNS: tela do jogo (vida, botoes e atalhos) com icones no lugar de texto ===== -->
+<style id="nc-hud-css">
+:root{--f-display:ui-rounded,"SF Pro Rounded","Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",sans-serif}
+#hud .hud-l{position:relative;padding-left:58px;min-width:232px}
+#hud .hud-lv{position:absolute;left:0;top:-2px;width:48px;height:48px;border-radius:50%;display:grid;place-items:center;font-size:0;background:radial-gradient(circle at 35% 28%,#454b86,#14162c 72%);box-shadow:0 0 0 2px #f2c14e,0 0 0 5px rgba(8,10,20,.55),0 5px 14px rgba(0,0,0,.5)}
+#hud .hud-lv b{font-family:var(--f-display);font-weight:800;font-size:20px;color:#ffe08a;text-shadow:0 1px 2px #000}
+#hud .bar{border:0;border-radius:11px;overflow:hidden;background:rgba(8,10,20,.72);box-shadow:0 0 0 1.5px rgba(242,193,78,.75),0 3px 10px rgba(0,0,0,.4)}
+#hud .bar.hp{height:20px}
+#hud .bar.hp i{background:linear-gradient(180deg,#ff9a86 0%,#ee4f45 45%,#b3262c 100%);border-radius:11px 4px 4px 11px}
+#hud .bar.hp::after{content:"";position:absolute;left:4px;right:4px;top:2px;height:6px;border-radius:6px;background:linear-gradient(180deg,rgba(255,255,255,.45),rgba(255,255,255,0));pointer-events:none}
+#hud .bar span{font-family:var(--f-display);font-weight:800;font-size:12px;letter-spacing:.03em;z-index:1}
+#hud .bar.xp{height:6px;margin-top:6px;box-shadow:0 0 0 1px rgba(242,193,78,.45)}
+#hud .bar.xp i{background:linear-gradient(90deg,#b9801f,#ffe08a)}
+#hud .obj{margin-top:8px;font-family:var(--f-display);font-weight:600}
+#hud .chip{border:1px solid rgba(242,193,78,.3);border-radius:12px;background:rgba(10,12,24,.62);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);font-family:var(--f-display);font-weight:700;box-shadow:0 3px 10px rgba(0,0,0,.3)}
+#hud #potBtn{display:inline-flex;align-items:center;gap:5px}
+#hud #potBtn::before{content:"";width:16px;height:16px;background:var(--nc-pot) center/contain no-repeat}
+#hud #mm{border-radius:14px;border:1.5px solid rgba(242,193,78,.55);box-shadow:0 4px 14px rgba(0,0,0,.4)}
+#hud .bossbar .bar{border-radius:9px}
+@media (max-width:600px){#hud .hud-l{min-width:0;width:44vw;padding-left:50px}#hud .hud-lv{width:42px;height:42px}#hud .hud-lv b{font-size:17px}#hud .bar.hp{height:17px}#hud .hud-r{max-width:50vw}#hud .hud-rr{flex-wrap:wrap;justify-content:flex-end}}
+/* botoes de toque: so imagem */
+.tbtns button{font-size:0!important;border:0!important;background-repeat:no-repeat!important;background-position:center,center!important;background-size:54% 54%,cover!important;box-shadow:0 0 0 2px rgba(242,193,78,.8),0 0 0 5px rgba(8,10,20,.5),0 6px 16px rgba(0,0,0,.5),inset 0 3px 8px rgba(255,255,255,.28),inset 0 -6px 10px rgba(0,0,0,.28);transition:transform .08s}
+.tbtns button:active{transform:scale(.93)}
+#joy{background:radial-gradient(circle,rgba(20,24,48,.35),rgba(8,10,20,.6))!important;border:2px solid rgba(242,193,78,.55)!important;box-shadow:0 6px 18px rgba(0,0,0,.4)}
+#knob{background:radial-gradient(circle at 35% 28%,#ffe9a8,#f2c14e 55%,#b9801f)!important;box-shadow:0 3px 8px rgba(0,0,0,.45),inset 0 2px 4px rgba(255,255,255,.5)}
+/* atalhos no computador */
+.skillbar{gap:10px}
+.sk{width:62px;height:62px;border-radius:16px;border:0;background:radial-gradient(circle at 35% 25%,#3b3f72,#12142a 75%);box-shadow:0 0 0 1.5px rgba(242,193,78,.6),0 5px 14px rgba(0,0,0,.45),inset 0 2px 6px rgba(255,255,255,.18);justify-content:flex-end;padding-bottom:4px;gap:0}
+.sk.atk{background:radial-gradient(circle at 35% 25%,#f0685f,#8a1f25 78%)}
+.sk.skl{background:radial-gradient(circle at 35% 25%,#8f6ff0,#34206e 78%)}
+.sk b{display:none}
+.sk .ic{position:absolute;left:50%;top:44%;width:32px;height:32px;transform:translate(-50%,-50%);background:center/contain no-repeat}
+.sk kbd{position:relative;z-index:1;font-family:var(--f-display);font-weight:700;font-size:10px;background:rgba(0,0,0,.45);border:0;border-radius:6px;padding:0 5px;color:#fff}
+.sk .ov{border-radius:0 0 16px 16px}
+.sk.ready{box-shadow:0 0 0 2px #f2c14e,0 5px 14px rgba(0,0,0,.45),inset 0 2px 6px rgba(255,255,255,.18)}
+</style>
+<script id="nc-hud-js">
+(function(){
+  var P={atk:'M19 3l2 2-10.5 10.5-2-2z M7 13l4 4 M5 19l2.500-2.500 M3 21l2-2',bash:'M12 3l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6z M8 12h8 M13 9l3 3-3 3',whirl:'M12 4a8 8 0 1 1-7.500 5.200 M4 4v5.500h5.500 M12 9l3 3-3 3-3-3z',
+    leap:'M12 3v11 M7 9l5 5 5-5 M4 20h16 M6 20l-2 2 M18 20l2 2',rage:'M12 3c1 3 4.500 4.500 4.500 8.500a4.500 4.500 0 0 1-9 0c0-2 1-3 1.500-4.500C10 8.500 11.500 6 12 3z M12 15.500v.01',
+    fireball:'M9 14a5 5 0 1 0 10 0a5 5 0 1 0-10 0 M3 3l5 5 M3.500 9l3 2 M9 3.500l2 3',frost:'M12 2v20 M3.300 7l17.400 10 M20.700 7L3.300 17 M12 6l-2-2 M12 6l2-2 M12 18l-2 2 M12 18l2 2',
+    volley:'M6 3v12 M12 3v16 M18 3v12 M3.500 12.500L6 15l2.500-2.500 M9.500 16.500L12 19l2.500-2.500 M15.500 12.500L18 15l2.500-2.500',pierce:'M3 12h16 M14 6l6 6-6 6 M3 8l3 4-3 4',
+    holy:'M7 6h10v5H7z M12 11v10 M4 3l2 2 M20 3l-2 2 M12 1v2',aegis:'M12 3l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6z M12 8v7 M8.500 11.500h7',shadow:'M4 12h8 M2 8h6 M6 16h5 M14 6l6 6-6 6',
+    fan:'M12 21V8 M12 8l-1.500-3L12 2l1.500 3z M12 21L5.500 11 M5.500 11L5 7l3 2.500z M12 21l6.500-10 M18.500 11L19 7l-3 2.500z',quake:'M3 13l4-3 3 4 4-7 3 5 4-2 M4 20h16 M8 20l-1 2 M16 20l1 2',
+    cyclone:'M4 5h16 M6 9h12 M8 13h8 M10 17h5 M12 21h2',drain:'M12 3c3 4 6 6.500 6 10a6 6 0 0 1-12 0c0-3.500 3-6 6-10z M9.500 13l2.500 2.500 2.500-2.500',
+    army:'M12 3a7 7 0 0 0-7 7c0 2.500 1 4 2.500 5v3h9v-3c1.500-1 2.500-2.500 2.500-5a7 7 0 0 0-7-7z M9 11v.01 M15 11v.01 M10 18v-2 M14 18v-2',dash:'M5 6l6 6-6 6 M12 6l6 6-6 6',
+    horse:'M7 21v-9a5 5 0 0 1 10 0v9 M5 21h4 M15 21h4 M8.500 14h.01 M15.500 14h.01',potion:'M10 3h4 M10.500 3v5L6 16a3.500 3.500 0 0 0 3 5h6a3.500 3.500 0 0 0 3-5l-4.500-8V3 M7.500 14h9'};
+  function url(k,c){var d=P[k]||P.atk;return "url(\"data:image/svg+xml,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="'+(c||'#fff')+'" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="'+d+'"/></svg>')+"\")"}
+  var G={atk:'radial-gradient(circle at 35% 26%,#ff8a7c,#c0303a 60%,#6e141c)',skl:'radial-gradient(circle at 35% 26%,#a88bff,#5a36c0 60%,#281259)',dash:'radial-gradient(circle at 35% 26%,#6fe0d0,#1f8f8a 60%,#0d3f47)',horse:'radial-gradient(circle at 35% 26%,#ffd27a,#b9801f 60%,#5a380a)'};
+  window.ncIconUrl=url;
+  /* chamado pelo jogo sempre que a classe ou o controle muda: [habilidade 1, habilidade 2] */
+  window.ncHud=function(s1,s2){ var set=function(id,k,g){var e=document.getElementById(id);if(e)e.style.backgroundImage=url(k)+','+G[g]};
+    set('tAtk','atk','atk');set('tSk1',s1,'skl');set('tSk2',s2,'skl');set('tDash','dash','dash');set('tMount','horse','horse');
+    document.documentElement.style.setProperty('--nc-pot',url('potion','#ff9aa8')); };
+  window.ncHud('bash','whirl');
+})();
+</script>
 <!-- ===== NINE CROWNS: menu novo (retrátil). Não mexe nas funções do jogo, só na forma de mostrar. ===== -->
 <style id="nc-menu-css">
 #hub{display:block!important;overflow:hidden!important;padding:0!important;pointer-events:none}
