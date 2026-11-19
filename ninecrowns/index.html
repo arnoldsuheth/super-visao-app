@@ -5579,6 +5579,10 @@ CLASSES.necro = {name:'Necromante', tag:'Foice e mortos-vivos', wtype:'scythe', 
 const CLASS_ORDER = ['warrior','barbarian','mage','archer','paladin','assassin','monk','necro'];
 const CLS = () => CLASSES[save.cls] || CLASSES.warrior;
 const classOfW = w => CLASS_ORDER.find(k => CLASSES[k].wtype === w);
+// Regra do Nine Crowns: cada classe so usa a propria arma e a propria armadura (o amuleto serve para todas).
+const ncLocked = slot => slot !== 'weapon' && slot !== 'amulet';
+const itemCls = it => it.slot === 'weapon' ? classOfW(it.wtype) : (ncLocked(it.slot) ? it.cls : undefined);
+const itemOk = it => { const c = itemCls(it); return !c || c === save.cls; };
 
 function itemName(it){
   const u = (it.up ? ' +' + it.up : '') + (it.ex ? (it.ex.startsWith('boss:') ? ' · Relíquia do ' + (STAGES[+it.ex.slice(5)] || {}).boss : ' · Edição ' + ((EVENTS.find(e => 'ev:' + e.id === it.ex) || {}).n || 'Especial')) : '');
@@ -5889,7 +5893,8 @@ const freshSave = () => ({level:1, xp:0, gold:0, potions:3, inv:[], eq:{}, nextI
   gfx:'auto', look:{tunic:0, hair:0}, cls:'warrior', diff:'normal', best:{}, zoom:4, zoomV2:true, zoomV3:true, vol:{master:.7, music:.5, sfx:.8},
   mats:{refino:3, superior:0, ancestral:0, selo:0, bencao:0, broca:1, metal:5}, gems:{}, gemPity:{}, frags:[0,0,0,0,0,0,0,0,0,0], coins:5, cnt:{}, mq:{}, seq:{step:0, lvl:0}, pityEx:{}, evBought:{}, worldWins:{}});
 let save = loadSave();
-if(!save.nc80){ save.level = Math.min(80, Math.max(1, Math.round(1 + ((save.level || 1) - 1)*79/43))); save.nc80 = 1; }   // saves antigos: converte o nivel para a escala de 80
+if(!save.nc80){ save.level = Math.min(80, Math.max(1, Math.round(1 + ((save.level || 1) - 1)*79/43))); save.nc80 = 1; }
+if(!save.ncCls){ (save.inv || []).forEach(it => { if(it.slot !== 'weapon' && it.slot !== 'amulet' && !it.cls) it.cls = save.cls; }); save.ncCls = 1; }   // saves antigos: as armaduras que ja existiam ficam com a classe atual   // saves antigos: converte o nivel para a escala de 80
 save.mats = Object.assign({refino:0, superior:0, ancestral:0, selo:0, bencao:0, broca:0}, save.mats || {}); save.gems = save.gems || {}; save.gemPity = save.gemPity || {};
 if(!save.skV){ (save.inv || []).forEach(ensureSk); save.mats.refino += 3; save.mats.broca += 1; save.skV = 1; }
 save.frags = save.frags || [0,0,0,0,0,0,0,0,0,0]; save.coins = save.coins || 0; save.cnt = save.cnt || {}; save.mq = save.mq || {}; save.seq = save.seq || {step:0, lvl:0};
@@ -5989,6 +5994,7 @@ function newItem(slot, tier, o){
   o = o || {};
   const it = {id:save.nextId++, slot, tier, q:0, up:0};
   if(slot === 'weapon'){ it.wtype = o.wtype || (Math.random() < .65 ? CLS().wtype : CLASSES[CLASS_ORDER[Math.floor(Math.random()*CLASS_ORDER.length)]].wtype); it.v = o.v !== undefined ? o.v : Math.floor(Math.random()*3); }
+  else if(ncLocked(slot)) it.cls = o.cls || ((o.wtype || Math.random() < .7) ? save.cls : CLASS_ORDER[Math.floor(Math.random()*CLASS_ORDER.length)]);
   rollSockets(it, o.boss);
   return it;
 }
@@ -5996,20 +6002,23 @@ function randomSlot(){ const r = Math.random(); if(r < .2) return 'weapon'; if(r
 function addItem(it){
   if(save.inv.length >= INV_MAX){ const g = sellValue(it); save.gold += g; returnGems(it); return false; }
   save.inv.push(it);
-  if(!save.eq[it.slot] && (it.slot !== 'weapon' || it.wtype === CLS().wtype) && save.level >= grLv(it.tier)) save.eq[it.slot] = it.id;
+  if(!save.eq[it.slot] && itemOk(it) && save.level >= grLv(it.tier)) save.eq[it.slot] = it.id;
   return true;
 }
 function equipItem(it){
-  if(it.slot === 'weapon' && it.wtype !== CLS().wtype) return;
+  if(!itemOk(it)){ try{ banner('Só ' + CLASSES[itemCls(it)].name + ' pode usar', itemName(it), 'danger'); }catch(e){} return; }
   if(save.level < grLv(it.tier)){ try{ banner('Nível ' + grLv(it.tier) + ' para usar ' + GR(it.tier), 'Você está no nível ' + save.level, 'danger'); }catch(e){} return; }
   save.eq[it.slot] = it.id;
 }
 function fixWeaponForClass(){
-  const w = equipped('weapon');
-  if(w && w.wtype === CLS().wtype) return;
-  delete save.eq.weapon;
-  const best = save.inv.filter(i => i.slot === 'weapon' && i.wtype === CLS().wtype).sort((a,b) => (b.tier - a.tier) || (b.q - a.q))[0];
-  if(best) save.eq.weapon = best.id;
+  // ao trocar de classe: tira o que nao e da classe e veste a melhor peca da classe em cada lugar vazio
+  for(const slot of SLOTS){
+    const cur = equipped(slot);
+    if(cur && itemOk(cur)) continue;
+    delete save.eq[slot];
+    const best = save.inv.filter(i => i.slot === slot && itemOk(i) && save.level >= grLv(i.tier)).sort((a,b) => (b.tier - a.tier) || (b.q - a.q))[0];
+    if(best) save.eq[slot] = best.id;
+  }
 }
 
 /* ================= AUDIO ================= */
@@ -7511,8 +7520,8 @@ function renderGear(){
   const list = save.inv.filter(i => !isEquipped(i) && (invFilter === 'all' || i.slot === invFilter))
     .sort((a, b) => (b.tier - a.tier) || (b.q - a.q) || (SLOTS.indexOf(a.slot) - SLOTS.indexOf(b.slot)));
   $('#invList').innerHTML = list.length ? list.map(it => {
-    const wrong = it.slot === 'weapon' && it.wtype !== CLS().wtype;
-    return itemRow(it, `<button class="btn sm primary" data-eq="${it.id}" ${wrong ? 'disabled' : ''}>${wrong ? 'Só ' + CLASSES[classOfW(it.wtype)].name : 'Equipar'}</button><button class="btn sm" data-sell="${it.id}">Vender ${sellValue(it)}</button>`);
+    const wrong = !itemOk(it);
+    return itemRow(it, `<button class="btn sm primary" data-eq="${it.id}" ${wrong ? 'disabled' : ''}>${wrong ? 'Só ' + CLASSES[itemCls(it)].name : 'Equipar'}</button><button class="btn sm" data-sell="${it.id}">Vender ${sellValue(it)}</button>`);
   }).join('') : `<div class="empty">Nada guardado aqui. Itens caem de inimigos, baús e chefes durante as fases.</div>`;
   const irons = save.inv.filter(i => i.tier === 0 && !isEquipped(i)).length;
   $('#sellIron').disabled = !irons; $('#sellIron').textContent = irons ? `Vender os ${irons} itens de Ferro da mochila` : 'Nenhum item de Ferro na mochila';
@@ -7520,7 +7529,7 @@ function renderGear(){
 const fuseCost = t => Math.round(300*Math.pow(1.8, t));
 function fuseInputs(slot){
   const w = CLS().wtype;
-  for(let t = 7; t >= 2; t--){ const l = save.inv.filter(i => i.slot === slot && i.tier === t && (slot !== 'weapon' || i.wtype === w)).sort((a, b) => isEquipped(a) - isEquipped(b));
+  for(let t = 7; t >= 2; t--){ const l = save.inv.filter(i => i.slot === slot && i.tier === t && itemOk(i)).sort((a, b) => isEquipped(a) - isEquipped(b));
     if(l.length >= 3) return {t, items:l.slice(0, 3)}; }
   return null;
 }
@@ -7647,7 +7656,7 @@ function craftHTML(){
 function craftItem(t){
   if(!canCraft(t)) return; const R = recipe(t), k = evFx().craft || 1;
   save.gold -= Math.round(R.gold*k); for(const m in R.mats) save.mats[m] -= Math.ceil(R.mats[m]*k);
-  const it = newItem(craftSlot, t, {wtype:CLS().wtype}); addItem(it); persist(); SFX.drop();
+  const it = newItem(craftSlot, t, {wtype:CLS().wtype, cls:save.cls}); addItem(it); persist(); SFX.drop();
   banner('Fabricado: ' + itemName(it), TIERS[t].sc + ' · ' + TIERS[t].n); discover(it);
 }
 function statsAfter(it){ const c = Object.assign({}, it, {up:(it.up || 0) + 1}); return itemStats(c); }
@@ -7721,7 +7730,7 @@ function renderShop(){
   h += `<h2>Materiais e pedras</h2><div class="blist">${SHOP.map((o, i) => `<div class="frow"><span></span><div class="fn">${o.n}</div><button class="btn sm" data-mbuy="${i}" ${save.coins >= shopPrice(o.p) ? '' : 'disabled'}>${shopPrice(o.p)} moedas</button></div>`).join('')}</div>`;
   $('#shopBody').innerHTML = h;
 }
-function buyPiece(t, ex){ const it = newItem(shopSlot, t, {wtype:CLS().wtype}); if(ex) it.ex = ex; addItem(it); persist(); SFX.drop(); banner('Comprado: ' + itemName(it), TIERS[t].sc + ' · ' + TIERS[t].n); discover(it); }
+function buyPiece(t, ex){ const it = newItem(shopSlot, t, {wtype:CLS().wtype, cls:save.cls}); if(ex) it.ex = ex; addItem(it); persist(); SFX.drop(); banner('Comprado: ' + itemName(it), TIERS[t].sc + ' · ' + TIERS[t].n); discover(it); }
 /* ===== MISSÕES ===== */
 const MISSIONS = [
   {id:'hunt',   n:'Caçador',            key:'kills',  g:100, d:g => `Derrote ${g} monstros`,                         rw:L => ({coins:6 + L*3, frag:[Math.min(6, 1 + L), 3 + L]})},
@@ -7795,7 +7804,7 @@ function forge(slot){
   const f = fuseInputs(slot); if(!f) return; const cost = fuseCost(f.t); if(save.gold < cost) return;
   save.gold -= cost;
   f.items.forEach(it => { if(isEquipped(it)) delete save.eq[slot]; returnGems(it); save.inv = save.inv.filter(i => i !== it); });
-  const last = f.items[2], nu = newItem(slot, f.t + 1, {wtype:last.wtype, v:last.v, boss:true});
+  const last = f.items[2], nu = newItem(slot, f.t + 1, {wtype:last.wtype, v:last.v, cls:save.cls, boss:true});
   nu.up = Math.max(...f.items.map(i => i.up || 0)) >= 10 ? 5 : 0;
   save.inv.push(nu); save.eq[slot] = nu.id;
   persist(); SFX.drop(); applyGear(hero); renderHub();
@@ -10008,9 +10017,9 @@ function pickCard(html, css){
 }
 function itemCard(it){
   const T0 = TIERS[it.tier], ic = itemImg(it, 'ps-card');
-  const wrong = it.slot === 'weapon' && it.wtype !== CLS().wtype;
+  const wrong = !itemOk(it);
   pickCard(`${ic}<div><div class="eyebrow">Você pegou · ${SLOT_INFO[it.slot].n}</div><b class="${it.tier === 9 ? 'prism' : ''}">${itemName(it)}</b><div class="pc-st">${T0.s} ${T0.n}</div>
-    <div class="istat">${statText(itemStats(it))}</div>${wrong ? '<div class="cmpl">Arma de outra classe: dá para vender ou fundir</div>' : cmpText(it)}</div>`, T0.css);
+    <div class="istat">${statText(itemStats(it))}</div>${wrong ? '<div class="cmpl">Peça de ${CLASSES[itemCls(it)].name}: dá para vender</div>' : cmpText(it)}</div>`, T0.css);
 }
 function gemCard(k, r){
   pickCard(`${stoneImg(k, 30)}<div><div class="eyebrow">Você pegou · Pedra</div><b>${stoneName(k, r)}</b><div class="pc-st" style="color:${RAR[r - 1].css}">${RAR[r - 1].n}</div>
@@ -11087,8 +11096,8 @@ function renderPauseGear(){
     <div class="eqgrid">${eq}</div>
     <div class="pbon">Vida <b>${S.hp}</b> · Ataque <b>${S.atk}</b> · Defesa <b>${S.def}</b> · Crítico <b>${Math.round(S.crit*100)}%</b>${act.length ? '<br>Ativo: ' + act.join(' · ') : ''}</div>
     <div class="filters">${fl.map(([k, n]) => `<button class="chipb" data-pfilter="${k}" aria-pressed="${pFilter === k}">${n}</button>`).join('')}</div>
-    <div class="invlist">${list.length ? list.map(it => { const wrong = it.slot === 'weapon' && it.wtype !== CLS().wtype;
-      return itemRow(it, `<button class="btn sm primary" data-peq="${it.id}" ${wrong ? 'disabled' : ''}>${wrong ? 'Só ' + CLASSES[classOfW(it.wtype)].name : 'Equipar'}</button>`); }).join('') : '<div class="empty">Nada na mochila para este tipo.</div>'}</div>`;
+    <div class="invlist">${list.length ? list.map(it => { const wrong = !itemOk(it);
+      return itemRow(it, `<button class="btn sm primary" data-peq="${it.id}" ${wrong ? 'disabled' : ''}>${wrong ? 'Só ' + CLASSES[itemCls(it)].name : 'Equipar'}</button>`); }).join('') : '<div class="empty">Nada na mochila para este tipo.</div>'}</div>`;
 }
 function refreshGearInStage(){
   const ratio = P.hp/P.S.hp; P.S = stats(); P.hp = Math.max(1, Math.min(P.S.hp, Math.round(P.S.hp*ratio)));
@@ -11399,7 +11408,7 @@ $('#dev').addEventListener('click', async e => {
     if(g === 'lvl1' || g === 'lvl10'){ save.level += g === 'lvl1' ? 1 : 10; save.xp = 0; devApply(); renderDev(); return devMsg('Agora no nível ' + save.level); }
     if(g === 'stages'){ STAGES.forEach(s => { if(!(save.beaten[s.id] > 0)) save.beaten[s.id] = 1; }); devApply(); return devMsg('Todas as fases foram liberadas.'); }
     if(g === 'set'){ const tr = +$('#devTier').value; let n = 0;
-      for(const slot of SLOTS){ const it = newItem(slot, tr, slot === 'weapon' ? {wtype:CLS().wtype} : {}); it.dev = true; if(addItem(it)){ save.eq[slot] = it.id; n++; } }
+      for(const slot of SLOTS){ const it = newItem(slot, tr, {wtype:CLS().wtype, cls:save.cls}); it.dev = true; if(addItem(it)){ save.eq[slot] = it.id; n++; } }
       devApply(); if(mode === 'hub') rebuildHubHero(); return devMsg(n === SLOTS.length ? 'Conjunto ' + TIERS[tr].model + ' equipado.' : 'Mochila cheia: só ' + n + ' peças couberam.', n < SLOTS.length); }
   }catch(err){ devMsg('Algo deu errado: ' + (err && err.message || err), true); }
 });
