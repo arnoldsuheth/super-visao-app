@@ -5838,6 +5838,7 @@ const NC_AREA_REINO = [1,1,2,3,2,8,5,1,4,3,7,6,0,8,2,0,7,8];
 const NC_AREA_REI = {1:1,3:3,6:5,8:4,10:7,11:6,12:0,14:2,17:8};   // area -> coroa que o chefe dela carrega
 const ncReino = i => NC_REINOS[NC_AREA_REINO[i]], ncCoroa = i => (i in NC_AREA_REI) ? NC_COROAS[NC_AREA_REI[i]] : null;
 const ncCoroasGanhas = () => Object.keys(NC_AREA_REI).filter(i => (save.beaten || {})[i]).length;
+window.NC = {coroas:() => ncCoroasGanhas()};   // usado pelo menu novo, que fica fora deste bloco
 const STAGES = ST_DEF.map((d, i) => Object.assign({}, d, {
   id:i, region:Math.floor(i/6), itier:BOSS_BASE(i), slot:PIECE_ORDER[i%6], lvl:1 + Math.round(i*2.5),
   minion:{name:d.mn, color:d.mc, ranged:!!d.mr, hp:Math.round(30*Math.pow(1.27,i)), dmg:Math.round(7*Math.pow(1.2,i)), spd:3.2 + i*.05, scale:.8},
@@ -11703,6 +11704,7 @@ requestAnimationFrame(loop);
 <!-- ===== NINE CROWNS: menu novo (retrátil). Não mexe nas funções do jogo, só na forma de mostrar. ===== -->
 <style id="nc-menu-css">
 #hub{display:block!important;overflow:hidden!important;padding:0!important;pointer-events:none}
+#hub[hidden]{display:none!important}
 #hub>*{pointer-events:auto}
 #hub #hubSpacer{position:absolute;inset:0;height:auto;min-height:0;z-index:0;order:0}
 #hub .dragHint{display:none}
@@ -11815,7 +11817,7 @@ body.nc-l #hub>aside.panel::before,body.nc-r #hub>#rightPanel::before{transform:
   document.getElementById('ncGo').onclick=function(){var b=alvo();if(b)b.click();else toggle('r','stages')};
   function sync(){var b=alvo(),c=b&&b.closest('.card'),n=c&&c.querySelector('.cname');document.getElementById('ncWhere').innerHTML=n?'Próxima área · <b>'+n.textContent+'</b>':'';
     var lv=document.getElementById('uLvl'),gd=document.getElementById('uGold');document.getElementById('ncLv').textContent=lv?lv.textContent.replace('Nv','Nível'):'';document.getElementById('ncGd').textContent=gd?gd.textContent:'0';
-    try{var n=ncCoroasGanhas();cw.querySelectorAll('i').forEach(function(e,i){e.classList.toggle('on',i<n)});cw.title='Coroas reunidas: '+n+' de 9'}catch(e){}}
+    try{var n=window.NC.coroas();cw.querySelectorAll('i').forEach(function(e,i){e.classList.toggle('on',i<n)});cw.title='Coroas reunidas: '+n+' de 9'}catch(e){}}
   new MutationObserver(sync).observe(document.getElementById('stages'),{childList:true});
   ['uLvl','uGold'].forEach(function(id){var el=document.getElementById(id);if(el)new MutationObserver(sync).observe(el,{childList:true,characterData:true,subtree:true})});
   sync();
