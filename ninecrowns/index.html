@@ -5551,7 +5551,7 @@ const HAIRS  = [{c:0x3a2414,n:'Castanho'},{c:0xd8b050,n:'Loiro'},{c:0x161616,n:'
 const SKINS  = [{c:0xf1c7a0,n:'Clara'},{c:0xe0ac84,n:'Média'},{c:0xc08a60,n:'Morena'},{c:0x8e5c3a,n:'Parda'},{c:0x5e3a24,n:'Escura'}];
 
 const CLASSES = {
-  warrior:{name:'Guerreiro', tag:'Espada e escudo', wtype:'sword', desc:'Equilibrado e resistente. Bloqueia mais golpes.', hp:1.1, atk:1, def:1.2, spd:1, block:.1, crit:0, cd:.42, attack:'slash', dash:'Esquiva',
+  warrior:{name:'Guerreiro', tag:'Espada de duas mãos', wtype:'sword', desc:'Equilibrado e resistente. Bloqueia mais golpes.', hp:1.1, atk:1, def:1.2, spd:1, block:.1, crit:0, cd:.42, attack:'slash', dash:'Esquiva',
     skills:[{id:'bash', name:'Investida', full:'Investida de Escudo', cd:6, desc:'avança com o escudo, causa dano e atordoa'},
             {id:'whirl', name:'Giro', full:'Giro da Lâmina', cd:8, desc:'gira e acerta tudo ao redor três vezes'}]},
   barbarian:{name:'Bárbaro', tag:'Machado gigante', wtype:'axe', desc:'Muita vida e golpes lentos que acertam vários inimigos de uma vez.', hp:1.35, atk:1.45, def:.95, spd:.96, block:0, crit:0, cd:.62, attack:'cleave', dash:'Esquiva',
@@ -7536,7 +7536,7 @@ function fuseInputs(slot){
     if(l.length >= 3) return {t, items:l.slice(0, 3)}; }
   return null;
 }
-function matsHTML(keys){ return (keys || MAT_KEYS).map(k => `<span style="--c:${MATS[k].css}">${MATS[k].n} <b>${save.mats[k] || 0}</b></span>`).join('') + `<span style="--c:#f2c14e">Ouro <b>${save.gold}</b></span><span style="--c:#ffd23a">Moedas Solares <b>${save.coins}</b></span>`; }
+function matsHTML(keys){ return (keys || MAT_KEYS).map(k => `<span style="--c:${MATS[k].css}">${MATS[k].n} <b>${save.mats[k] || 0}</b></span>`).join('') + `<span style="--c:#f2c14e">Adena <b>${adenaHTML(save.gold)}</b></span><span style="--c:#ffd23a">Moedas Solares <b>${save.coins}</b></span>`; }
 function tierImg(t, cls){ return `<img class="${cls || 'timg'}" src="${TIERS[t].img}" alt="" loading="lazy">`; }
 /* Só a peça que caiu, desenhada a partir do modelo 3D do jogo: um herói invisível (da classe atual; para armas, da classe da arma)
    recebe o material daquela estrela e só a peça pedida aparece. A cena é "fotografada" num alvo de 256 px, reduzida para 128 px
@@ -7772,7 +7772,7 @@ function renderMissions(){
 /* ===== BOLSA ===== */
 function bagHTML(){
   const st = Object.keys(save.gems).filter(k => save.gems[k] > 0 && GEMS[k.split(':')[0]]).sort((a, b) => +b.split(':')[1] - +a.split(':')[1]);
-  return `<div class="bag"><div class="eyebrow">Moedas</div><div class="mats"><span style="--c:#f2c14e">Ouro <b>${save.gold}</b></span><span style="--c:#ffd23a">Moedas Solares <b>${save.coins}</b></span></div>
+  return `<div class="bag"><div class="eyebrow">Moedas</div><div class="mats"><span style="--c:#f2c14e">Adena <b>${adenaHTML(save.gold)}</b></span><span style="--c:#ffd23a">Moedas Solares <b>${save.coins}</b></span></div>
     <div class="eyebrow">Materiais</div><div class="mats">${MAT_KEYS.filter(k => save.mats[k]).map(k => `<span style="--c:${MATS[k].css}">${MATS[k].n} <b>${save.mats[k]}</b></span>`).join('') || '<span>nenhum</span>'}</div>
     <div class="eyebrow">Fragmentos de armadura</div><div class="mats">${TIERS.map((T, t) => save.frags[t] ? `<span style="--c:${T.css}">${T.model} ${T.sc} <b>${save.frags[t]}${CFG.frag[t] ? '/' + CFG.frag[t] : ''}</b></span>` : '').join('') || '<span>nenhum</span>'}</div>
     <div class="eyebrow">Pedras</div><div class="stones">${st.map(k => { const [g, r] = k.split(':'); return `<span title="${stoneName(g, +r)}: ${stoneDesc(g, +r)}" style="--tc:${RAR[r - 1].css}">${stoneImg(g, 30)}<b>${save.gems[k]}</b></span>`; }).join('') || '<span class="istat">nenhuma</span>'}</div></div>`;
@@ -11918,6 +11918,15 @@ body.nc-l #hub>aside.panel::before,body.nc-r #hub>#rightPanel::before{transform:
   .nc-go{min-width:200px;padding:11px 22px;font-size:14px}
   .nc-top .logo{font-size:22px}.nc-chip{display:none}
 }
+/* celular em pe: os 9 botoes cabem numa barra so, sem um passar por cima do outro */
+@media (max-width:600px) and (orientation:portrait){
+  .nc-rail{gap:3px;bottom:calc(6px + env(safe-area-inset-bottom,0px))}
+  .nc-rail.l{left:6px}.nc-rail.r{right:6px}
+  .nc-b{width:calc((100vw - 12px - 24px)/9);min-width:0;height:52px;padding:0;letter-spacing:0;overflow:hidden}
+  .nc-b span{font-size:0;white-space:nowrap}.nc-b span::after{content:attr(data-s);font-size:7.5px;letter-spacing:.02em}
+  .nc-play{bottom:calc(70px + env(safe-area-inset-bottom,0px))}
+  .nc-where{max-width:86vw;text-align:center;font-size:10px}
+}
 @media (max-width:900px) and (orientation:landscape){#hub>.panel{top:calc(8px + env(safe-area-inset-top,0px));width:47vw!important;max-height:none!important}#hub>aside.panel{right:auto!important}#hub>#rightPanel{left:auto!important}.nc-top{align-items:flex-start;left:12px;top:calc(8px + env(safe-area-inset-top,0px))}.nc-top .logo{font-size:17px}.nc-sub{font-size:8px;letter-spacing:.22em}#hub>.panel{max-height:calc(100vh - 90px)}.nc-play{left:auto;right:8px;transform:none;bottom:calc(72px + env(safe-area-inset-bottom,0px))}.nc-where{display:none}}
 </style>
 <script id="nc-menu-js">
@@ -11930,7 +11939,7 @@ body.nc-l #hub>aside.panel::before,body.nc-r #hub>#rightPanel::before{transform:
   var NAMES={hero:'Herói',play:'Progresso',set:'Ajustes',stages:'Mundo',gear:'Equipamento',forge:'Forja',shop:'Loja',missions:'Missões',music:'Músicas'};
   function head(p,side){var h=document.createElement('div');h.className='nc-head';h.innerHTML='<b></b><button class="nc-x" type="button" aria-label="Fechar">×</button>';p.insertBefore(h,p.firstChild);h.querySelector('button').onclick=function(){close(side)};return h.querySelector('b')}
   var tL=head(L,'l'),tR=head(R,'r');
-  function rail(side,keys){var r=document.createElement('nav');r.className='nc-rail '+side;keys.forEach(function(k){var b=document.createElement('button');b.type='button';b.className='nc-b';b.dataset.nc=k;b.innerHTML='<svg viewBox="0 0 24 24">'+I[k]+'</svg><span>'+(k==='gear'?'Equip.':NAMES[k])+'</span>';b.onclick=function(){toggle(side,k)};r.appendChild(b)});hub.appendChild(r);return r}
+  function rail(side,keys){var r=document.createElement('nav');r.className='nc-rail '+side;keys.forEach(function(k){var b=document.createElement('button');b.type='button';b.className='nc-b';b.dataset.nc=k;b.innerHTML='<svg viewBox="0 0 24 24">'+I[k]+'</svg><span data-s="'+({play:'Progr.',gear:'Equip.',missions:'Missão',music:'Música'}[k]||NAMES[k])+'">'+(k==='gear'?'Equip.':NAMES[k])+'</span>';b.onclick=function(){toggle(side,k)};r.appendChild(b)});hub.appendChild(r);return r}
   var rl=rail('l',['hero','play','set']),rr=rail('r',['stages','gear','forge','shop','missions','music']);
   var cur={l:null,r:null};
   function mark(){[rl,rr].forEach(function(r,i){var s=i?'r':'l';r.querySelectorAll('.nc-b').forEach(function(b){b.classList.toggle('on',cur[s]===b.dataset.nc)})})}
