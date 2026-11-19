@@ -631,6 +631,7 @@ body.nocur, body.nocur *{cursor:none !important}
       <p class="lede">A Coroa Ancestral se partiu em nove. Cada rei ficou com uma, e cada coroa transformou o seu rei em monstro. Você é o soldado que sobrou. Reacenda as fogueiras, liberte os nove reinos e reúna as nove coroas.</p>
       <div class="eyebrow">Herói</div>
       <div class="cgrid" id="classGrid"></div>
+      <div id="specBox"></div>
       <div class="cinfo" id="classInfo"></div>
       <div class="look">
         <div class="eyebrow">Cor da roupa</div>
@@ -5551,8 +5552,8 @@ const HAIRS  = [{c:0x3a2414,n:'Castanho'},{c:0xd8b050,n:'Loiro'},{c:0x161616,n:'
 const SKINS  = [{c:0xf1c7a0,n:'Clara'},{c:0xe0ac84,n:'Média'},{c:0xc08a60,n:'Morena'},{c:0x8e5c3a,n:'Parda'},{c:0x5e3a24,n:'Escura'}];
 
 const CLASSES = {
-  warrior:{name:'Guerreiro', tag:'Espada de duas mãos', wtype:'sword', desc:'Equilibrado e resistente. Bloqueia mais golpes.', hp:1.1, atk:1, def:1.2, spd:1, block:.1, crit:0, cd:.42, attack:'slash', dash:'Esquiva',
-    skills:[{id:'bash', name:'Investida', full:'Investida de Escudo', cd:6, desc:'avança com o escudo, causa dano e atordoa'},
+  warrior:{name:'Guerreiro', tag:'Espada de duas mãos', wtype:'sword', desc:'Equilibrado e resistente, com golpes largos da espada de duas mãos.', hp:1.1, atk:1, def:1.2, spd:1, block:.1, crit:0, cd:.42, attack:'slash', dash:'Esquiva',
+    skills:[{id:'bash', name:'Investida', full:'Investida Brutal', cd:6, desc:'avança com a espada, causa dano e atordoa'},
             {id:'whirl', name:'Giro', full:'Giro da Lâmina', cd:8, desc:'gira e acerta tudo ao redor três vezes'}]},
   barbarian:{name:'Bárbaro', tag:'Machado gigante', wtype:'axe', desc:'Muita vida e golpes lentos que acertam vários inimigos de uma vez.', hp:1.35, atk:1.45, def:.95, spd:.96, block:0, crit:0, cd:.62, attack:'cleave', dash:'Esquiva',
     skills:[{id:'leap', name:'Salto', full:'Salto Esmagador', cd:7, desc:'salta e esmaga o chão, atordoando quem estiver perto'},
@@ -5578,6 +5579,37 @@ CLASSES.necro = {name:'Necromante', tag:'Foice e mortos-vivos', wtype:'scythe', 
           {id:'army', name:'Exército', full:'Exército dos Mortos', cd:18, desc:'levanta 3 esqueletos que lutam ao seu lado por 12 s'}]};
 const CLASS_ORDER = ['warrior','barbarian','mage','archer','paladin','assassin','monk','necro'];
 const CLS = () => CLASSES[save.cls] || CLASSES.warrior;
+// Especializacao (nivel 30): cada classe escolhe 1 de 2 caminhos. A escolha fica guardada por classe.
+const NC_SPEC_LV = 30;
+const NC_SPEC = {
+  warrior:[{id:'guardiao', n:'Guardião', r:'Tanque', d:'+25% de vida, +20% de defesa e 8% menos dano recebido', fx:s => { s.hp *= 1.25; s.def *= 1.2; s.dmgRes += .08; }},
+           {id:'duelista', n:'Duelista', r:'Ataque', d:'+18% de ataque, +10% de chance de crítico e golpes 10% mais rápidos', fx:s => { s.atk *= 1.18; s.crit += .1; s.aspd += .1; }}],
+  paladin:[{id:'templario', n:'Templário', r:'Proteção', d:'+20% de vida, +8% de bloqueio e recupera vida o tempo todo', fx:s => { s.hp *= 1.2; s.block += .08; s.regen += .004; }},
+           {id:'cruzado', n:'Cruzado', r:'Ataque', d:'+20% de ataque e 15% de chance de atordoar', fx:s => { s.atk *= 1.2; s.stunCh += .15; }}],
+  barbarian:[{id:'berserker', n:'Berserker', r:'Fúria', d:'+25% de ataque, golpes 12% mais rápidos e rouba 3% de vida, mas com 10% menos defesa', fx:s => { s.atk *= 1.25; s.aspd += .12; s.leech += .03; s.def *= .9; }},
+             {id:'chefe', n:'Chefe de Clã', r:'Resistência', d:'+30% de vida, +10% de defesa e 12% de chance de atordoar', fx:s => { s.hp *= 1.3; s.def *= 1.1; s.stunCh += .12; }}],
+  archer:[{id:'cacadora', n:'Caçadora', r:'Velocidade', d:'Anda 10% mais rápido, atira 12% mais rápido e cada tiro solta uma segunda flecha', fx:s => { s.spd *= 1.1; s.aspd += .12; s.multi = (s.multi || 0) + 1; }},
+          {id:'elite', n:'Atiradora de Elite', r:'Precisão', d:'+15% de chance de crítico, crítico 50% mais forte e +8% de ataque', fx:s => { s.crit += .15; s.critMult += .5; s.atk *= 1.08; }}],
+  mage:[{id:'elementalista', n:'Elementalista', r:'Elementos', d:'+12% de ataque, 15% de chance de congelar e 15% de chance de raio em cadeia', fx:s => { s.atk *= 1.12; s.freezeCh += .15; s.chainCh += .15; }},
+        {id:'arcano', n:'Arcano', r:'Poder puro', d:'+25% de ataque e +8% de chance de crítico', fx:s => { s.atk *= 1.25; s.crit += .08; }}],
+  necro:[{id:'ossudo', n:'Lorde Ossudo', r:'Resistência', d:'+25% de vida, +15% de defesa e recupera vida o tempo todo', fx:s => { s.hp *= 1.25; s.def *= 1.15; s.regen += .003; }},
+         {id:'ceifador', n:'Ceifador', r:'Dreno', d:'+18% de ataque e rouba 5% de vida a cada golpe', fx:s => { s.atk *= 1.18; s.leech += .05; }}],
+  assassin:[{id:'sombra', n:'Sombra', r:'Crítico', d:'+12% de chance de crítico, crítico 60% mais forte e anda 6% mais rápido', fx:s => { s.crit += .12; s.critMult += .6; s.spd *= 1.06; }},
+            {id:'venenosa', n:'Venenosa', r:'Veneno', d:'Todo golpe deixa o inimigo queimando de veneno, +10% de ataque e rouba 3% de vida', fx:s => { s.burn = true; s.atk *= 1.1; s.leech += .03; }}],
+  monk:[{id:'ferro', n:'Punho de Ferro', r:'Força', d:'+20% de ataque, 15% de chance de atordoar e +10% de defesa', fx:s => { s.atk *= 1.2; s.stunCh += .15; s.def *= 1.1; }},
+        {id:'vento', n:'Mestre do Vento', r:'Velocidade', d:'Anda 12% mais rápido, golpes 18% mais rápidos e 6% menos dano recebido', fx:s => { s.spd *= 1.12; s.aspd += .18; s.dmgRes += .06; }}],
+};
+const ncSpec = () => { const id = save.spec && save.spec[save.cls]; return (id && save.level >= NC_SPEC_LV && (NC_SPEC[save.cls] || []).find(x => x.id === id)) || null; };
+let ncSpecAsk = null;
+function renderSpec(){
+  const box = document.getElementById('specBox'); if(!box) return;
+  const list = NC_SPEC[save.cls] || [], cur = ncSpec();
+  let h = '<div class="eyebrow">Especialização · nível ' + NC_SPEC_LV + '</div>';
+  if(save.level < NC_SPEC_LV) h += '<div class="spec-lock">Libera no nível ' + NC_SPEC_LV + '. Você está no nível ' + save.level + '.<small>' + list.map(x => x.n).join(' ou ') + '</small></div>';
+  else if(cur) h += '<div class="spec-card on"><b>' + cur.n + '</b><em>' + cur.r + '</em><small>' + cur.d + '</small></div>';
+  else h += '<div class="spec-pick">' + list.map(x => '<div class="spec-card"><b>' + x.n + '</b><em>' + x.r + '</em><small>' + x.d + '</small><button class="btn sm primary" data-spec="' + x.id + '">' + (ncSpecAsk === x.id ? 'Confirmar? Não dá para trocar' : 'Escolher') + '</button></div>').join('') + '</div>';
+  box.innerHTML = h;
+}
 const classOfW = w => CLASS_ORDER.find(k => CLASSES[k].wtype === w);
 // Regra do Nine Crowns: cada classe so usa a propria arma e a propria armadura (o amuleto serve para todas).
 const ncLocked = slot => slot !== 'weapon' && slot !== 'amulet';
@@ -5961,6 +5993,7 @@ function stats(){
   const addG = (k, v) => s[k] = (s[k] || 0) + v;
   for(const slot of SLOTS){ const it = equipped(slot); if(!it) continue; const b = itemStats(it); for(const k in b){ if(k === 'elem') s.elem = b.elem; else s[k] += b[k]; } gemFx(it, addG); }
   s.hp *= c.hp*(1 + s.hpPct); s.atk *= c.atk*(1 + s.atkPct); s.def *= c.def*(1 + s.defPct); s.spd *= c.spd*(1 + s.spdPct); s.block += c.block;
+  const sp = ncSpec(); if(sp) sp.fx(s);
   const B = bonuses(); s.sets = B.sets; s.combos = B.combos;
   for(const t of B.sets){ s.atk *= 1 + .05*(t + 1); s.hp *= 1 + .04*(t + 1); if(t >= 3) s.regen += .002; SET_SPECIAL[t].fx(s); }
   if(B.hyper){ s.atk *= 1.5; s.hyper = true; }
@@ -7397,7 +7430,10 @@ function hubCamera(){
   camera.aspect = w/h;
   const lim = hubPanLim(); hubPan = clamp(hubPan, -lim*(w <= 900 ? .72 : 1), lim);
   const ly = 1.5 + (1 - k)*.15 + hubPan, py = hubPan;
-  if(narrow){ camera.position.set(0, 1.6 + .6*k + py, 6.6*k); camera.lookAt(0, ly - .05, 0); camera.setViewOffset(w, h, 0, h*.3, w, h); }
+  if(narrow && h > w){   // celular em pe: heroi inteiro entre o nome do jogo e o botao Jogar; com gaveta aberta, sobe para a parte livre
+    const open = document.body.classList.contains('nc-l') || document.body.classList.contains('nc-r');
+    camera.position.set(0, 1.6 + .6*k + py, 6.6*k*(open ? 1.55 : 1.1)); camera.lookAt(0, ly - .05, 0); camera.setViewOffset(w, h, 0, h*(open ? .33 : .07), w, h); }
+  else if(narrow){ camera.position.set(0, 1.6 + .6*k + py, 6.6*k); camera.lookAt(0, ly - .05, 0); camera.setViewOffset(w, h, 0, h*.3, w, h); }
   else { camera.clearViewOffset(); camera.position.set(0, 1.7 + .6*k + py, 6.2*k); camera.lookAt(0, ly, 0); }
   camera.updateProjectionMatrix();
 }
@@ -7432,6 +7468,7 @@ function pulseMats(ms){ const k = .65 + Math.sin(clock*3)*.35; for(const m of ms
 function renderHub(){
   const S = stats(), c = CLS();
   $('#classGrid').innerHTML = CLASS_ORDER.map(k => `<button class="cbtn" data-cls="${k}" aria-pressed="${save.cls === k}"><b>${CLASSES[k].name}</b><small>${CLASSES[k].tag}</small></button>`).join('');
+  renderSpec();
   const D = DF();
   $('#diffGrid').innerHTML = DIFF_ORDER.map(k => `<button class="dbtn" data-diff="${k}" style="--dc:${DIFFS[k].css}" aria-pressed="${save.diff === k}">${DIFFS[k].name}</button>`).join('');
   $('#diffInfo').innerHTML = `<span style="color:${D.css}">${D.desc}</span>`;
@@ -10043,7 +10080,7 @@ function gainXP(n){
   n = Math.round(n*DF().reward);
   save.xp += n;
   let up = false;
-  while(save.level < NC_MAX_LV && save.xp >= xpNeed(save.level)){ save.xp -= xpNeed(save.level); save.level++; up = true; }
+  while(save.level < NC_MAX_LV && save.xp >= xpNeed(save.level)){ save.xp -= xpNeed(save.level); save.level++; up = true; if(save.level === NC_SPEC_LV) setTimeout(() => { try{ banner('Nível ' + NC_SPEC_LV + ': especialização liberada', 'Abra o menu Herói e escolha o seu caminho'); }catch(e){} }, 1800); }
   if(save.level >= NC_MAX_LV){ save.level = NC_MAX_LV; save.xp = 0; }
   if(up && P){
     P.S = stats(); P.hp = P.S.hp;
@@ -11436,7 +11473,11 @@ $('#hub').addEventListener('click', e => {
   const b = e.target.closest('button'); if(!b) return;
   let sel = null;
   if(b.dataset.diff){ save.diff = b.dataset.diff; persist(); renderHub(); const nb = $(`[data-diff="${b.dataset.diff}"]`); nb && nb.focus({preventScroll:true}); return; }
-  if(b.dataset.cls){ save.cls = b.dataset.cls; fixWeaponForClass(); sel = `[data-cls="${b.dataset.cls}"]`; }
+  if(b.dataset.spec){ const id = b.dataset.spec;
+    if(ncSpecAsk !== id){ ncSpecAsk = id; renderSpec(); return; }
+    ncSpecAsk = null; save.spec = save.spec || {}; save.spec[save.cls] = id; persist(); renderHub();
+    const x = ncSpec(); if(x) banner('Especialização: ' + x.n, x.d); try{ SFX.drop(); }catch(e){} return; }
+  if(b.dataset.cls){ ncSpecAsk = null; save.cls = b.dataset.cls; fixWeaponForClass(); sel = `[data-cls="${b.dataset.cls}"]`; }
   else if(b.dataset.tunic !== undefined){ save.look.tunic = +b.dataset.tunic; sel = `[data-tunic="${b.dataset.tunic}"]`; }
   else if(b.dataset.hair !== undefined){ save.look.hair = +b.dataset.hair; sel = `[data-hair="${b.dataset.hair}"]`; }
   else if(b.dataset.skin !== undefined){ save.look.skin = +b.dataset.skin; sel = `[data-skin="${b.dataset.skin}"]`; }
@@ -11918,6 +11959,7 @@ body.nc-l #hub>aside.panel::before,body.nc-r #hub>#rightPanel::before{transform:
   .nc-go{min-width:200px;padding:11px 22px;font-size:14px}
   .nc-top .logo{font-size:22px}.nc-chip{display:none}
 }
+@media (max-width:600px) and (orientation:portrait){body.nc-l .nc-top,body.nc-r .nc-top{opacity:0;transition:opacity .2s}#hub>.panel{max-height:58vh}}
 /* celular em pe: os 9 botoes cabem numa barra so, sem um passar por cima do outro */
 @media (max-width:600px) and (orientation:portrait){
   .nc-rail{gap:3px;bottom:calc(6px + env(safe-area-inset-bottom,0px))}
@@ -11928,6 +11970,14 @@ body.nc-l #hub>aside.panel::before,body.nc-r #hub>#rightPanel::before{transform:
   .nc-where{max-width:86vw;text-align:center;font-size:10px}
 }
 @media (max-width:900px) and (orientation:landscape){#hub>.panel{top:calc(8px + env(safe-area-inset-top,0px));width:47vw!important;max-height:none!important}#hub>aside.panel{right:auto!important}#hub>#rightPanel{left:auto!important}.nc-top{align-items:flex-start;left:12px;top:calc(8px + env(safe-area-inset-top,0px))}.nc-top .logo{font-size:17px}.nc-sub{font-size:8px;letter-spacing:.22em}#hub>.panel{max-height:calc(100vh - 90px)}.nc-play{left:auto;right:8px;transform:none;bottom:calc(72px + env(safe-area-inset-bottom,0px))}.nc-where{display:none}}
+.spec-lock,.spec-card{margin-top:8px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.03);display:flex;flex-direction:column;gap:3px}
+.spec-lock{color:var(--mute);font-size:13px}.spec-lock small{color:var(--ink);opacity:.7;font-size:12px}
+.spec-pick{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.spec-card b{font-family:var(--f-display);font-size:15px;color:var(--gold-hi)}.spec-card em{font-style:normal;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+.spec-card small{color:var(--mute);font-size:12px;line-height:1.35}.spec-card .btn{margin-top:6px}
+.spec-card.on{border-color:var(--gold);background:rgba(242,193,78,.08)}
+#specBox{margin:12px 0 4px}
+@media (max-width:420px){.spec-pick{grid-template-columns:1fr}}
 </style>
 <script id="nc-menu-js">
 (function(){
@@ -11943,12 +11993,13 @@ body.nc-l #hub>aside.panel::before,body.nc-r #hub>#rightPanel::before{transform:
   var rl=rail('l',['hero','play','set']),rr=rail('r',['stages','gear','forge','shop','missions','music']);
   var cur={l:null,r:null};
   function mark(){[rl,rr].forEach(function(r,i){var s=i?'r':'l';r.querySelectorAll('.nc-b').forEach(function(b){b.classList.toggle('on',cur[s]===b.dataset.nc)})})}
-  function close(s){cur[s]=null;document.body.classList.remove('nc-'+s);mark()}
+  function close(s){cur[s]=null;document.body.classList.remove('nc-'+s);mark();cam()}
+  function cam(){try{if(innerWidth<=900)dispatchEvent(new Event('resize'))}catch(e){}}
   function toggle(s,k){
     if(cur[s]===k){close(s);return}
     var src=s==='l'?L.querySelector('.stabs.main button[data-sec="'+k+'"]'):R.querySelector('.vtab[data-view="'+k+'"]');if(src)src.click();
     cur[s]=k;(s==='l'?tL:tR).textContent=NAMES[k];document.body.classList.add('nc-'+s);(s==='l'?L:R).scrollTop=0;
-    if(innerWidth<1500)close(s==='l'?'r':'l');mark()}
+    if(innerWidth<1500)close(s==='l'?'r':'l');mark();cam()}
   document.getElementById('hubSpacer').addEventListener('click',function(){if(innerWidth<=900){close('l');close('r')}});
   addEventListener('keydown',function(e){if(e.key==='Escape'&&!hub.hidden&&(cur.l||cur.r)){close('l');close('r')}});
   /* topo: nome do jogo (o mesmo elemento do jogo original, só muda de lugar) */
