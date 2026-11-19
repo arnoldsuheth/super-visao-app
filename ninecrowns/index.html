@@ -9460,6 +9460,72 @@ function makeBar(w){
   const fg = new T.Mesh(planeGeoL, bmat(0xe2504c)); fg.position.set(-w/2, 0, .01); fg.scale.set(w, .11, 1);
   g.add(bg, fg); g.visible = false; scene.add(g); return {g, fg, w};
 }
+// ===== Monstros 3D (pacote Ultimate Monsters, do Quaternius, licenca CC0) =====
+// O boneco de bloco continua existindo por baixo (a logica do jogo mexe nele); o modelo novo fica por cima e copia o que ele faz.
+const MON = {base:'assets/mon/', cache:{}, tex:null};
+const MON_STAGE = [['s_Orc','b_Orc'],['s_GreenBlob','b_Frog'],['f_Goleling','f_Goleling_Evolved'],['s_Cactoro','b_Cactoro'],['f_Ghost','b_Orc_Skull'],['f_Dragon','f_Dragon_Evolved'],
+  ['s_Yeti','b_Yeti'],['s_Mushnub','b_MushroomKing'],['s_Fish','f_Squidle'],['s_Ninja','b_Monkroose'],['f_Ghost_Skull','s_Wizard'],['f_Pigeon','b_Birb'],
+  ['f_Alpaking','f_Alpaking_Evolved'],['f_Glub','f_Glub_Evolved'],['f_Armabee','b_Dino'],['s_Alien','b_Alien'],['f_Hywirl','b_BlueDemon'],['f_Demon','b_Demon']];
+const MON_TYPE = {runner:['s_Dog','s_Cat','s_Chicken'], brute:['b_Bunny','b_Fish','f_Armabee_Evolved'], bomber:['s_PinkBlob','s_GreenSpikyBlob'], shaman:['f_Tribal','s_Mushnub_Evolved'],
+  archer:['s_Pigeon'], crossbow:['b_Ninja'], thrower:['s_Birb'], spear:['b_Tribal']};
+const monOn = () => !!T.GLTFLoader && save.mon !== false;
+function monPick(st, what){ const row = MON_STAGE[st.id % MON_STAGE.length]; if(what === 'boss') return row[1]; const l = MON_TYPE[what]; return l ? l[st.id % l.length] : row[0]; }
+function monTex(){ if(!MON.tex){ const t = new T.TextureLoader().load(MON.base + 'atlas.png'); t.flipY = false; t.encoding = T.sRGBEncoding; t.generateMipmaps = false; t.minFilter = T.LinearFilter; MON.tex = t; } return MON.tex; }
+function monLoad(key, cb){
+  let c = MON.cache[key]; if(!c) c = MON.cache[key] = {st:0, g:null, w:[]};
+  if(c.st === 2){ cb && cb(c.g); return; } if(c.st === 3){ cb && cb(null); return; }
+  if(cb) c.w.push(cb); if(c.st === 1) return; c.st = 1;
+  const fin = g => { c.g = g; c.st = g ? 2 : 3; const w = c.w; c.w = []; w.forEach(f => { try{ f(g); }catch(e){} }); };
+  try{ new T.GLTFLoader().load(MON.base + key + '.glb', g => { g.scene.traverse(o => { if(o.isMesh){ o.geometry.__keep = true; o.geometry.computeBoundingSphere(); o.geometry.boundingSphere.radius *= 2.5; } }); g.scene.updateMatrixWorld(true);
+    const b = new T.Box3().setFromObject(g.scene); g.box = b; fin(g); }, undefined, () => fin(null)); }catch(e){ fin(null); }
+}
+function monPreload(st){ if(!monOn() || !st) return; const ks = new Set([monPick(st), monPick(st, 'boss')]); for(const k in MON_TYPE) ks.add(monPick(st, k)); ks.forEach(k => monLoad(k)); }
+function monClone(src){
+  const cl = src.clone(true), a = [], b = []; src.traverse(n => a.push(n)); cl.traverse(n => b.push(n)); const map = new Map(); a.forEach((n, i) => map.set(n, b[i]));
+  a.forEach((n, i) => { if(n.isSkinnedMesh){ const sk = new T.Skeleton(n.skeleton.bones.map(x => map.get(x)), n.skeleton.boneInverses); b[i].bind(sk, n.bindMatrix); } });
+  return cl;
+}
+function monAttach(cr, key, o){
+  if(!monOn() || !key) return; o = o || {};
+  monLoad(key, g => { if(!g || cr.mon) return;
+    const model = monClone(g.scene), base = cr.mats[0] && cr.mats[0].userData.baseE, mats = [];
+    model.traverse(n => { if(n.isMesh){ const m = new T.MeshStandardMaterial({map:monTex(), skinning:!!n.isSkinnedMesh, roughness:.78, metalness:0});
+      m.userData.baseE = base ? base.clone() : new T.Color(o.elite ? 0x3a2a04 : 0x000000); m.emissive.copy(m.userData.baseE); n.material = m; mats.push(m); n.castShadow = true; } });
+    cr.body.traverse(n => { if(n.isMesh) n.visible = false; });
+    const sz = g.box.getSize(new T.Vector3()), fly = key[0] === 'f', th = key[0] === 'b' ? 2.15 : fly ? 1.7 : 1.75;
+    let k = th/Math.max(.01, sz.y); const wide = Math.max(sz.x, sz.z)*k; if(wide > 2.6) k *= 2.6/wide;
+    model.scale.setScalar(k); model.position.y = -g.box.min.y*k + (fly ? .55 : 0); cr.body.add(model);
+    mats.forEach(m => cr.mats.push(m));
+    const mixer = new T.AnimationMixer(model), find = re => g.animations.find(c => re.test(c.name)), acts = {};
+    [['idle', /^(Idle|Flying_Idle)$/], ['move', /^(Run|Walk|Fast_Flying)$/], ['atk', /^(Punch|Bite_Front|Weapon|Headbutt)$/], ['hit', /^Hit/], ['death', /^Death$/]].forEach(([n, re]) => { const c = find(re); if(c) acts[n] = mixer.clipAction(c); });
+    ['atk', 'hit', 'death'].forEach(n => { if(acts[n]){ acts[n].setLoop(T.LoopOnce, 1); acts[n].clampWhenFinished = true; } });
+    cr.mon = {model, mixer, acts, cur:null, lock:0, lg:0, mvT:0, fl:0, fly, y0:model.position.y, ph:Math.random()*6};
+    monPlay(cr.mon, 'idle'); mixer.update(Math.random());
+  });
+}
+function monPlay(m, n){
+  if(!m.acts[n]) n = 'idle'; if(m.cur === n || !m.acts[n]) return;
+  const a = m.acts[n], prev = m.cur && m.acts[m.cur]; a.reset(); a.timeScale = n === 'atk' ? 1.6 : n === 'move' ? 1.25 : 1; a.play();
+  if(prev && prev !== a){ prev.crossFadeTo(a, .12, false); } m.cur = n;
+  m.lock = n === 'atk' ? a.getClip().duration/1.6*.85 : n === 'hit' ? Math.min(.3, a.getClip().duration) : 0;
+}
+function monUpdate(e, dt){
+  const cr = e.cr, m = cr && cr.mon; if(!m) return;
+  const lg = cr.legL.rotation.x, ar = Math.min(cr.armR.rotation.x, cr.armL.rotation.x);
+  if(Math.abs(lg - m.lg) > 1e-4) m.mvT = .14; else m.mvT -= dt; m.lg = lg;
+  const hitNow = e.flashT > m.fl + .01 || (e.hitT > 0 && !(m.ht > 0)); m.fl = e.flashT || 0; m.ht = e.hitT || 0;
+  if(e.kind !== 'boss' && P && Math.abs(e.pos.x - P.pos.x) + Math.abs(e.pos.z - P.pos.z) > 46) return;   // longe da tela: nao gasta o celular animando
+  if(m.lock > 0) m.lock -= dt;
+  if(e.dying > 0 || e.dead) monPlay(m, 'death');
+  else if(ar < -1.2){ if(!m.armUp){ m.armUp = true; m.cur = m.cur === 'atk' ? null : m.cur; monPlay(m, 'atk'); } }
+  else { m.armUp = false;
+    if(m.lock > 0){ /* deixa o golpe ou o susto terminar */ }
+    else if(hitNow && e.kind !== 'boss') monPlay(m, 'hit');
+    else monPlay(m, m.mvT > 0 ? 'move' : 'idle'); }
+  if(m.fly) m.model.position.y = m.y0 + Math.sin(clock*2.4 + m.ph)*.08;
+  m.mixer.update(e.frozenT > 0 ? 0 : dt);
+}
+if(location.hash === '#nctest') window.__nc = {en:() => enemies, p:() => P, boss:id => startStage(id, true), go:id => startStage(id)};   // so para os testes automaticos
 function spawnMinion(st, x, z, awake, elite, type){
   if(elite) type = null; const ET = type ? ETYPE[type] : null;
   let col = st.minion.color; if(ET && ET.tint !== 1) col = new T.Color(col).multiplyScalar(ET.tint).getHex(); if(type === 'bomber') col = new T.Color(col).lerp(new T.Color(0xd04020), .55).getHex(); if(type === 'shaman') col = new T.Color(col).lerp(new T.Color(0x6a3aa0), .5).getHex();
@@ -9475,6 +9541,7 @@ function spawnMinion(st, x, z, awake, elite, type){
   if(type === 'thrower'){ [cr.armL, cr.armR].forEach(a => { box(.06, .55, .06, pmat(0x5a3a22), 0, -.75, .08, a); box(.3, .2, .05, pmat(0xa0a0aa, {metalness:.7, roughness:.35}), .12, -.98, .08, a); }); }
   if(type === 'spear'){ const pole = box(.06, 2.3, .06, pmat(0x6a4a2a), 0, -.35, .3, cr.armR); pole.rotation.x = .25; mesh(new T.ConeGeometry(.09, .32, 6), pmat(0xc0c0c8, {metalness:.7, roughness:.3}), 0, 1.3, 0, pole); }
   cr.root.position.set(x, heightAt(x, z), z); cr.root.rotation.y = Math.random()*6; scene.add(cr.root);
+  monAttach(cr, monPick(st, type), {elite:!!elite});
   const D = DF(), hp = Math.round(c.hp*(elite ? 5 : 1)*(ET ? ET.hp : 1)*D.hp*ESCALE.hp);
   const e = {kind:'minion', type, ET, cr, pos:cr.root.position, hp, maxHp:hp, dmg:c.dmg*(elite ? 1.6 : 1)*(ET ? ET.dmg : 1)*D.dmg*ESCALE.dmg, spd:c.spd*(.85 + Math.random()*.3)*(elite ? .9 : 1)*(ET ? ET.spd : 1)*D.spd, r:.42*sc + .15,
              ranged:isRanged, elite:!!elite, fuse:0, healT:2 + Math.random()*2, awake, atkT:.4 + Math.random(), windT:0, kb:new T.Vector3(), flashT:0, walk:Math.random()*6,
@@ -9551,6 +9618,7 @@ function spawnBoss(st){
   boss.parts = bossParts(boss);
   cr.root.scale.setScalar(M.sc);
   if(M.e) cr.mats.forEach(m => { m.userData.baseE = C(M.e); m.emissive.copy(m.userData.baseE); });
+  monAttach(cr, monPick(st, 'boss'), {});
   enemies.push(boss);
 }
 
@@ -10558,6 +10626,7 @@ const ICE = C(0x2a8ab0);
 function updateEnemies(dt){
   for(const e of enemies){
     if(e.dead) continue;
+    monUpdate(e, dt);
     if(e.burnT > 0){ e.burnT -= dt; e.burnAcc += e.burnDps*dt; if(e.burnAcc >= Math.max(1, e.burnDps*.5)){ const d = Math.round(e.burnAcc); e.burnAcc = 0; if(Math.random() < .6) burst(e.pos, e.burnCol || 0xff7a2a, 2, 1, 3, 1); damageEnemy(e, d, false, 0, 0, 0, 'dot'); if(e.dead || e.dying) continue; } }
     if(e.kind === 'boss'){ updateBoss(e, dt); unflash(e, e.cr.mats, dt); continue; }
     const dx = P.pos.x - e.pos.x, dz = P.pos.z - e.pos.z, dist = Math.hypot(dx, dz) || .001;
@@ -11030,6 +11099,7 @@ document.addEventListener('click', e => { const b = e.target.closest('[data-trav
   if(mode === 'stage'){ togglePause(false); travelTo(id, 'F'); } else startStage(id); });
 function startStage(id, onlyBoss, world, o){
   const st = STAGES[id]; if(!st || !unlocked(st)) return; o = o || {};
+  monPreload(st);
   if(realWanted() && realStage(st) && REAL.state !== 'fail' && REAL.setFail !== st.id && (REAL.state !== 'ready' || !realSetReady(st))){
     realLoad(st); banner('Carregando gráficos realistas…', 'Só na primeira vez de cada lugar');
     REAL.after = () => { clearTimeout(REAL.waitT); startStage(id, onlyBoss, world, o); };

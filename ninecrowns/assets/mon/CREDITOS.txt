@@ -1,0 +1,3 @@
+Monstros 3D: pacote "Ultimate Monsters", de Quaternius (https://quaternius.com/packs/ultimatemonsters.html)
+Licenca: CC0 1.0 (dominio publico) - uso livre, inclusive comercial.
+Arquivos convertidos para .glb e com as animacoes reduzidas para o jogo.
