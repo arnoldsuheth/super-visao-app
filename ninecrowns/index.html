@@ -5466,7 +5466,12 @@ const TIERS = [
   {model:'Ródio',       pre:'de Ródio',       n:'Mítica Suprema',   cor:'Branco e dourado', css:'#fff0c0', hex:0xfff0c0, mult:15},
   {model:'Rutênio',     pre:'de Rutênio',     n:'Divina',           cor:'Cósmica',          css:'#ff8af0', hex:0xff8af0, mult:23, prism:true},
 ];
-TIERS.forEach((t, i) => { t.name = t.model; t.star = i + 1; t.s = '★'.repeat(i + 1); t.sc = (i + 1) + '★'; t.m = 1; t.img = IMG['a' + i]; });
+/* NINE CROWNS: grades no lugar das estrelas. As 10 faixas do jogo viram 6 grades; o "+" marca a faixa mais forte dentro do mesmo grade.
+   Cada grade pede um nivel minimo para equipar: sem grade 0, D 15, C 30, B 50, A 65, S 80. */
+const GR_OF = [0,0,1,1,2,2,3,4,4,5], GR_N = ['Sem grade','Grade D','Grade C','Grade B','Grade A','Grade S'], GR_LV = [0,15,30,50,65,80], NC_MAX_LV = 80, NC_LV_K = 43/79;
+const GR = t => { t = Math.max(0, Math.min(9, Math.round(t))); return GR_N[GR_OF[t]] + (t > 0 && GR_OF[t - 1] === GR_OF[t] ? '+' : ''); };
+const grLv = t => GR_LV[GR_OF[Math.max(0, Math.min(9, Math.round(t)))]];
+TIERS.forEach((t, i) => { t.name = t.model; t.star = i + 1; t.s = GR(i); t.sc = GR(i); t.m = 1; t.img = IMG['a' + i]; });
 // habilidade especial de cada armadura (conjunto completo de 6 peças iguais)
 const SET_SPECIAL = [
   {n:'Passo Verde',        d:'+10% de velocidade',                           fx:s => { s.spd *= 1.1; }},
@@ -5510,10 +5515,10 @@ const setText0 = t => t === 9 ? 'ataque ×' + (2*1.5*(1 + .05*10)).toFixed(1).re
   : '+' + Math.round(.05*(t + 1)*100) + '% de ataque e +' + Math.round(.04*(t + 1)*100) + '% de vida';
 const SET_TEXT = TIERS.map((_, i) => setText(i));
 const COMBOS = [
-  {id:'solgelo', name:'Sol Congelado', css:'#ffd88a', req:'2 peças de 5★–6★ + 2 de 7★–8★', desc:'+15% de ataque e 15% de chance de congelar. Orbes de sol e gelo giram ao seu redor.'},
-  {id:'eclipse', name:'Eclipse', css:'#ff9a5a', req:'2 peças de 5★–6★ + 2 de 9★–10★', desc:'Críticos mais fortes e os golpes queimam. Chamas sombrias saem do corpo.'},
-  {id:'abismo', name:'Abismo Cristalino', css:'#c08aff', req:'2 peças de 7★–8★ + 2 de 9★–10★', desc:'Três cristais flutuam ao seu redor e atiram sozinhos nos inimigos.'},
-  {id:'tempestade', name:'Tempestade Tripla', css:'#bff8ff', req:'pelo menos 1 peça de 5★–6★, 1 de 7★–8★ e 1 de 9★–10★', desc:'Raios saem do corpo e cada golpe tem 20% de chance de soltar um raio em cadeia.'},
+  {id:'solgelo', name:'Sol Congelado', css:'#ffd88a', req:'2 peças de Grade C + 2 de Grade B ou A', desc:'+15% de ataque e 15% de chance de congelar. Orbes de sol e gelo giram ao seu redor.'},
+  {id:'eclipse', name:'Eclipse', css:'#ff9a5a', req:'2 peças de Grade C + 2 de Grade A+ ou S', desc:'Críticos mais fortes e os golpes queimam. Chamas sombrias saem do corpo.'},
+  {id:'abismo', name:'Abismo Cristalino', css:'#c08aff', req:'2 peças de Grade B ou A + 2 de Grade A+ ou S', desc:'Três cristais flutuam ao seu redor e atiram sozinhos nos inimigos.'},
+  {id:'tempestade', name:'Tempestade Tripla', css:'#bff8ff', req:'pelo menos 1 peça de Grade C, 1 de Grade B ou A e 1 de Grade A+ ou S', desc:'Raios saem do corpo e cada golpe tem 20% de chance de soltar um raio em cadeia.'},
 ];
 const ICON = {
   helmet:'<svg viewBox="0 0 24 24"><path d="M3 15a9 9 0 0 1 18 0v5h-6v-5H9v5H3z"/><path d="M11 2h2v5h-2z"/></svg>',
@@ -5840,7 +5845,7 @@ const ncReino = i => NC_REINOS[NC_AREA_REINO[i]], ncCoroa = i => (i in NC_AREA_R
 const ncCoroasGanhas = () => Object.keys(NC_AREA_REI).filter(i => (save.beaten || {})[i]).length;
 window.NC = {coroas:() => ncCoroasGanhas()};   // usado pelo menu novo, que fica fora deste bloco
 const STAGES = ST_DEF.map((d, i) => Object.assign({}, d, {
-  id:i, region:Math.floor(i/6), itier:BOSS_BASE(i), slot:PIECE_ORDER[i%6], lvl:1 + Math.round(i*2.5),
+  id:i, region:Math.floor(i/6), itier:BOSS_BASE(i), slot:PIECE_ORDER[i%6], lvl:Math.min(NC_MAX_LV, 1 + Math.round(i*2.5/NC_LV_K)),
   minion:{name:d.mn, color:d.mc, ranged:!!d.mr, hp:Math.round(30*Math.pow(1.27,i)), dmg:Math.round(7*Math.pow(1.2,i)), spd:3.2 + i*.05, scale:.8},
   bossCfg:{id:i, hp:Math.round(380*Math.pow(1.3,i)*(1 + i*.06)*1.3), dmg:Math.round(14*Math.pow(1.2,i)*(1 + i*.03)*1.25), spd:3 + i*.04, scale:d.bs, color:d.bc, acc:d.ba,
     attacks:d.att.concat(i >= 3 ? ['dash3'] : [], i >= 6 ? ['meteor'] : [], i >= 9 ? ['laser'] : [], i >= 12 ? ['blink'] : [])},
@@ -5871,7 +5876,7 @@ let GEARPEN = 0;
 function computeScale(st){
   const D = DF(); GEARPEN = Math.max(0, reqStar(st) - gearPower());
   if(!D.scale) ESCALE = {hp:1, dmg:1};
-  else { const S = stats(), L = Math.max(0, st.lvl - 1), a = Math.max(1, S.atk/(10 + L*3.2)), h = Math.max(1, S.hp*(1 + S.def/100)/(100 + L*24));
+  else { const S = stats(), L = Math.max(0, (st.lvl - 1)*NC_LV_K), a = Math.max(1, S.atk/(10 + L*3.2)), h = Math.max(1, S.hp*(1 + S.def/100)/(100 + L*24));
     ESCALE = {hp:Math.pow(a, D.scale), dmg:Math.pow(h, D.scale*.9)}; }
   ESCALE.hp *= 1 + .3*GEARPEN; ESCALE.dmg *= 1 + .45*GEARPEN;
 }
@@ -5880,6 +5885,7 @@ const freshSave = () => ({level:1, xp:0, gold:0, potions:3, inv:[], eq:{}, nextI
   gfx:'auto', look:{tunic:0, hair:0}, cls:'warrior', diff:'normal', best:{}, zoom:4, zoomV2:true, zoomV3:true, vol:{master:.7, music:.5, sfx:.8},
   mats:{refino:3, superior:0, ancestral:0, selo:0, bencao:0, broca:1, metal:5}, gems:{}, gemPity:{}, frags:[0,0,0,0,0,0,0,0,0,0], coins:5, cnt:{}, mq:{}, seq:{step:0, lvl:0}, pityEx:{}, evBought:{}, worldWins:{}});
 let save = loadSave();
+if(!save.nc80){ save.level = Math.min(80, Math.max(1, Math.round(1 + ((save.level || 1) - 1)*79/43))); save.nc80 = 1; }   // saves antigos: converte o nivel para a escala de 80
 save.mats = Object.assign({refino:0, superior:0, ancestral:0, selo:0, bencao:0, broca:0}, save.mats || {}); save.gems = save.gems || {}; save.gemPity = save.gemPity || {};
 if(!save.skV){ (save.inv || []).forEach(ensureSk); save.mats.refino += 3; save.mats.broca += 1; save.skV = 1; }
 save.frags = save.frags || [0,0,0,0,0,0,0,0,0,0]; save.coins = save.coins || 0; save.cnt = save.cnt || {}; save.mq = save.mq || {}; save.seq = save.seq || {step:0, lvl:0};
@@ -5916,7 +5922,7 @@ function loadSave(){
 }
 function persist(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(save)); }catch(e){} }
 
-const xpNeed = l => Math.round(40 * Math.pow(l, 1.45));
+const xpNeed = l => Math.round(40 * Math.pow(1 + (l - 1)*NC_LV_K, 1.45) * NC_LV_K);   // NINE CROWNS: 80 niveis no mesmo caminho que antes dava 44
 const baseChance = id => Math.max(.06, .12 - id*.0035);
 const chanceFor = id => (save.pity[id] || 0) >= CFG.pity.hard ? 1 : Math.min(1, (baseChance(id) + DF().drop*.3 + (save.pity[id] || 0)*CFG.pity.inc)*LUCK());
 const exChance = id => (save.pityEx[id] || 0) >= CFG.pity.exHard ? 1 : Math.min(1, (CFG.pity.exCh + (save.pityEx[id] || 0)*CFG.pity.exInc)*LUCK());
@@ -5939,7 +5945,7 @@ function bonuses(){
   return {sets, combos, counts:c, hyper:g3 === NA, cosmic:c[9] === NA};
 }
 function stats(){
-  const L = save.level - 1, c = CLS();
+  const L = (save.level - 1)*NC_LV_K, c = CLS();
   const s = {hp:100 + L*24, atk:10 + L*3.2, def:2 + Math.floor(L*.9), spd:7, aspd:0, crit:.05 + c.crit, critMult:2, block:.05, range:0, regen:0,
              atkPct:0, leech:0, stunCh:0, multi:0, elem:null, freezeCh:0, chainCh:0, burn:false, hpPct:0, defPct:0, spdPct:0, dmgRes:0, elemRes:0, pen:0, luck:0};
   const addG = (k, v) => s[k] = (s[k] || 0) + v;
@@ -5971,7 +5977,7 @@ function unlocked(st){
 function lockReason(st){
   const prev = STAGES[st.id-1];
   if(!(save.beaten[st.id-1] > 0)) return 'Derrote o ' + prev.boss + ' para liberar';
-  return 'Tenha capacete, peitoral, luvas, calças e botas com ' + (st.region*2 + 3) + '★ ou mais para liberar';
+  return 'Tenha capacete, peitoral, luvas, calças e botas com ' + GR(st.region*2 + 2) + ' ou mais para liberar';
 }
 function rollQ(bonus, maxQ){ const k = 1 + ((bonus || 0) + DF().qb)*1.5, r = Math.random(), ps = [.01, .04, .12, .28]; let c = 0, q = 0;
   for(let i=0;i<4;i++){ c += ps[i]*k; if(r < c){ q = 4 - i; break; } } return Math.min(q, maxQ === undefined ? 4 : maxQ); }
@@ -5986,11 +5992,12 @@ function randomSlot(){ const r = Math.random(); if(r < .2) return 'weapon'; if(r
 function addItem(it){
   if(save.inv.length >= INV_MAX){ const g = sellValue(it); save.gold += g; returnGems(it); return false; }
   save.inv.push(it);
-  if(!save.eq[it.slot] && (it.slot !== 'weapon' || it.wtype === CLS().wtype)) save.eq[it.slot] = it.id;
+  if(!save.eq[it.slot] && (it.slot !== 'weapon' || it.wtype === CLS().wtype) && save.level >= grLv(it.tier)) save.eq[it.slot] = it.id;
   return true;
 }
 function equipItem(it){
   if(it.slot === 'weapon' && it.wtype !== CLS().wtype) return;
+  if(save.level < grLv(it.tier)){ try{ banner('Nível ' + grLv(it.tier) + ' para usar ' + GR(it.tier), 'Você está no nível ' + save.level, 'danger'); }catch(e){} return; }
   save.eq[it.slot] = it.id;
 }
 function fixWeaponForClass(){
@@ -7442,11 +7449,11 @@ function renderStages(){
   const RN = ['Ato 1','Ato 2','Ato 3'];
   $('#tierTabs').innerHTML = [0,1,2].map(r => {
     const a = Math.min(STAGES[r*6].itier, CFG.caps.boss), b = Math.min(CFG.caps.boss, STAGES[r*6 + 5].itier + 3), t = TIERS[STAGES[r*6 + 3].itier], open = unlocked(STAGES[r*6]);
-    return `<button class="tab" role="tab" style="--tc:${t.css}" data-region="${r}" aria-selected="${hubRegion === r}" ${open ? '' : 'disabled'}>${RN[r]}<small>${open ? (a + 1) + '★ a ' + (b + 1) + '★' : 'Bloqueada'}</small></button>`;
+    return `<button class="tab" role="tab" style="--tc:${t.css}" data-region="${r}" aria-selected="${hubRegion === r}" ${open ? '' : 'disabled'}>${RN[r]}<small>${open ? GR(a) + ' a ' + GR(b) + '' : 'Bloqueada'}</small></button>`;
   }).join('');
   const T0 = TIERS[STAGES[hubRegion*6 + 3].itier], gp = gearPower();
   $('#vStages').style.setProperty('--tc', T0.css);
-  $('#regionInfo').innerHTML = `Monstros comuns soltam peças de até <b>${Math.min(CFG.caps.minion, ENEMY_MAX(hubRegion*6 + 5)) + 1}★</b>, elites e baús até <b>${Math.min(CFG.caps.elite, ELITE_MAX(hubRegion*6 + 5)) + 1}★</b>, chefes até <b>${CFG.caps.boss + 1}★</b> e Chefes Mundiais até <b>${CFG.caps.world + 1}★</b>. Cada espécie solta um material próprio. Seu equipamento hoje: <b style="color:${TIERS[Math.max(0, Math.min(9, Math.round(gp) - 1))].css}">${gp.toFixed(1).replace('.',',')}★</b> de média.`;
+  $('#regionInfo').innerHTML = `Monstros comuns soltam peças de até <b>${GR(Math.min(CFG.caps.minion, ENEMY_MAX(hubRegion*6 + 5)))}</b>, elites e baús até <b>${GR(Math.min(CFG.caps.elite, ELITE_MAX(hubRegion*6 + 5)))}</b>, chefes até <b>${GR(CFG.caps.boss)}</b> e Chefes Mundiais até <b>${GR(CFG.caps.world)}</b>. Cada espécie solta um material próprio. Seu equipamento hoje: <b style="color:${TIERS[Math.max(0, Math.min(9, Math.round(gp) - 1))].css}">${GR(Math.max(0, Math.round(gp) - 1))}</b> em média.`;
   $('#stages').innerHTML = STAGES.filter(s => s.region === hubRegion).map(st => {
     const un = unlocked(st), wins = save.beaten[st.id] || 0, has = save.inv.some(i => i.slot === st.slot && i.tier >= st.itier), rq = reqStar(st), weak = gp < rq;
     const pills = [];
@@ -7457,9 +7464,9 @@ function renderStages(){
       if(wins) pills.push(`<span class="pill">Chefe vencido ${wins}×</span>`);
       const bd = (save.best || {})[st.id]; if(bd !== undefined && bd >= 2) pills.push(`<span class="pill" style="color:${DIFFS[DIFF_ORDER[bd]].css}">Vencido no ${DIFFS[DIFF_ORDER[bd]].name}</span>`);
       if(save.level < st.lvl) pills.push(`<span class="pill warn">Nível sugerido ${st.lvl}</span>`);
-      pills.push(`<span class="pill ${weak ? 'warn' : 'ok'}">Equipamento ${rq}★${weak ? ' · o seu é fraco' : ''}</span>`);
+      pills.push(`<span class="pill ${weak ? 'warn' : 'ok'}">Equipamento ${GR(rq - 1)}${weak ? ' · o seu é fraco' : ''}</span>`);
     }
-    const [blo, bhi] = bossRange(st), prize = (st.slot === 'weapon' ? 'arma da sua classe' : SLOT_INFO[st.slot].n) + ' ' + (blo + 1) + '★–' + (bhi + 1) + '★';
+    const [blo, bhi] = bossRange(st), prize = (st.slot === 'weapon' ? 'arma da sua classe' : SLOT_INFO[st.slot].n) + ' ' + GR(blo) + '–' + GR(bhi) + '';
     return `<div class="card ${un ? '' : 'locked'} ${has ? 'done' : ''}" style="--tc:${T0.css}">
       <div class="num">${st.id + 1}</div>
       <div class="cname">${st.name}</div>
@@ -7474,7 +7481,7 @@ function renderStages(){
 function worldCard(r){
   const last = STAGES[r*6 + 5], open = save.beaten[last.id] > 0, [lo, hi] = worldRange(r), w = save.worldWins[r] || 0;
   return `<div class="card world ${open ? '' : 'locked'}" style="--tc:#ff4ae0"><div class="num">★</div><div class="cname">Chefe Mundial: ${last.boss} Ancestral</div>
-    <div class="cmeta">4× mais vida, já começa furioso. Sempre deixa uma armadura de <b>${lo + 1}★ a ${hi + 1}★</b>, Poeira Divina, pedras de até Mítica e muitos fragmentos.</div>
+    <div class="cmeta">4× mais vida, já começa furioso. Sempre deixa uma armadura de <b>${GR(lo)} a ${GR(hi)}</b>, Poeira Divina, pedras de até Mítica e muitos fragmentos.</div>
     <div class="pills">${open ? `<span class="pill">Vencido ${w}×</span>` : `<span class="pill">Derrote o ${last.boss} (fase ${last.id + 1}) para liberar</span>`}</div>
     <div class="acts"><button class="btn ${open ? 'primary' : ''}" data-world="${r}" ${open ? '' : 'disabled'}>Desafiar Chefe Mundial</button></div></div>`;
 }
@@ -7489,7 +7496,7 @@ function renderGear(){
     return `<button class="eq ${it ? 'has' : ''}" data-uneq="${slot}" style="--tc:${it ? TIERS[it.tier].css : '#3a405c'}" ${it ? '' : 'disabled'} title="${it ? 'Tirar ' + itemName(it) : 'Vazio'}">${slotIcon(slot, it && it.wtype)}<span class="en">${it ? itemName(it) : SLOT_INFO[slot].n}</span><span class="es" ${it ? `style="color:${TIERS[it.tier].css}"` : ''}>${it ? TIERS[it.tier].sc + ' · ' + TIERS[it.tier].n : 'vazio'}</span></button>`;
   }).join('');
   const B = bonuses(), c = B.counts;
-  let bl = `<div class="bon"><b>Peças vestidas:</b> ${TIERS.map((t, i) => c[i] ? `<span style="color:${t.css}">${c[i]} ${t.name}</span>` : '').filter(Boolean).join(' · ') || 'nenhuma'}<small>As combinações misturam peças de faixas de estrelas diferentes: 5★–6★, 7★–8★ e 9★–10★.</small></div>`;
+  let bl = `<div class="bon"><b>Peças vestidas:</b> ${TIERS.map((t, i) => c[i] ? `<span style="color:${t.css}">${c[i]} ${t.name}</span>` : '').filter(Boolean).join(' · ') || 'nenhuma'}<small>As combinações misturam peças de grades diferentes: Grade C, Grade B ou A e Grade A+ ou S.</small></div>`;
   bl += [9,8,7,6,5,4,3,2,1,0].map(t => `<div class="bon ${B.sets.includes(t) ? 'on' : ''}" style="--tc:${TIERS[t].css}"><b>${SET_NAMES[t]} completa</b> (6 peças iguais): ${SET_TEXT[t]}.</div>`).join('');
   bl += COMBOS.map(k => `<div class="bon ${B.combos.includes(k.id) ? 'on' : ''}" style="--tc:${k.css}"><b>${k.name}</b>: ${k.desc}<small>Precisa de ${k.req}.</small></div>`).join('');
   $('#bonusList').innerHTML = bl;
@@ -7613,7 +7620,7 @@ function forgeItems(){
   if(!forgeSel || !byId(forgeSel)) forgeSel = (eqs[0] || rest[0] || {}).id || null;
   const chip = it => `<button class="chipb" data-fsel="${it.id}" aria-pressed="${forgeSel === it.id}" style="color:${TIERS[it.tier].css}">${itemName(it)}${skDots(it)}</button>`;
   return `<div class="eyebrow">Vestidas</div><div class="fsel">${eqs.map(chip).join('') || '<span class="istat">Nada vestido</span>'}</div>` +
-    (rest.length ? `<div class="eyebrow">Na mochila (3★ ou mais)</div><div class="fsel">${rest.map(chip).join('')}</div>` : '');
+    (rest.length ? `<div class="eyebrow">Na mochila (Grade D ou mais)</div><div class="fsel">${rest.map(chip).join('')}</div>` : '');
 }
 function renderForge(){
   $('#forgeTabs').innerHTML = [['fuse','Fusão'],['craft','Fabricar'],['up','Evoluir +1 a +15'],['gems','Pedras e encaixes']].map(([k, n]) => `<button class="chipb" data-ftab="${k}" aria-pressed="${forgeTab === k}">${n}</button>`).join('');
@@ -7770,10 +7777,10 @@ function cmpText(it){ const e = equipped(it.slot); if(!e || e === it) return '';
   [['hp','vida'],['atk','ataque'],['def','defesa']].forEach(([k, n]) => { const d = (a[k] || 0) - (b[k] || 0); if(d) out.push(`<span class="${d > 0 ? 'up1' : 'dn1'}">${d > 0 ? '+' : ''}${d} ${n}</span>`); });
   return out.length ? `<div class="cmpl">vs equipado: ${out.join(' ')}</div>` : ''; }
 function fuseHTML(){
-  return `<p class="lede">Funda <b>3 peças iguais</b> (mesmo tipo e mesma estrela) para criar uma peça com <b>1 estrela a mais</b>. A fusão vai até 9★ (Ródio). A Armadura de <b class="prism">Rutênio (10★)</b> não sai da fusão: ela vem de Chefes Mundiais ou é fabricada com Poeira Divina. As pedras das peças fundidas voltam para a bolsa, e se uma delas estava em +10 ou mais, a peça nova já nasce em +5.</p><div class="blist">` + SLOTS.map(slot => {
+  return `<p class="lede">Funda <b>3 peças iguais</b> (mesmo tipo e mesma estrela) para criar uma peça com <b>uma faixa acima</b>. A fusão vai até Grade A+ (Ródio). A Armadura de <b class="prism">Rutênio (Grade S)</b> não sai da fusão: ela vem de Chefes Mundiais ou é fabricada com Poeira Divina. As pedras das peças fundidas voltam para a bolsa, e se uma delas estava em +10 ou mais, a peça nova já nasce em +5.</p><div class="blist">` + SLOTS.map(slot => {
     const f = fuseInputs(slot), w = CLS().wtype;
     if(!f){ let bt = -1, bc = 0; for(let t = 7; t >= 2; t--){ const c = save.inv.filter(i => i.slot === slot && i.tier === t && (slot !== 'weapon' || i.wtype === w)).length; if(c > bc){ bc = c; bt = t; } }
-      return `<div class="frow">${slotIcon(slot)}<div><div class="fn">${SLOT_INFO[slot].n}</div><div class="istat">${bt >= 0 ? `Você tem ${bc} de ${bt + 1}★. Faltam ${3 - bc} para fundir.` : 'Junte 3 peças iguais de 3★ a 8★.'}</div></div><button class="btn sm" disabled>Fundir</button></div>`; }
+      return `<div class="frow">${slotIcon(slot)}<div><div class="fn">${SLOT_INFO[slot].n}</div><div class="istat">${bt >= 0 ? `Você tem ${bc} de ${GR(bt)}. Faltam ${3 - bc} para fundir.` : 'Junte 3 peças iguais de Grade D a Grade A.'}</div></div><button class="btn sm" disabled>Fundir</button></div>`; }
     const T1 = TIERS[f.t + 1], cost = fuseCost(f.t), afford = save.gold >= cost;
     return `<div class="frow">${slotIcon(slot)}<div><div class="fn ${f.t + 1 === 9 ? '' : ''}" style="color:${T1.css}">${slot === 'weapon' ? 'Arma' : SLOT_INFO[slot].n} ${T1.pre} · ${T1.sc}</div>
       <div class="need"><span class="ok" style="--tc:${TIERS[f.t].css}">3× ${TIERS[f.t].sc} ${TIERS[f.t].model}</span></div></div>
@@ -9426,7 +9433,7 @@ const BMODS = {
   normal:   {n:'',          hp:1,    dmg:1,    spd:1,    sc:1,    bias:0,   ch:0,   gems:0, css:'#eef0f7', e:0x000000},
   frenesi:  {n:'Frenético', hp:1.15, dmg:1.15, spd:1.1,  sc:1,    bias:.5,  ch:.02, gems:1, css:'#ff6a4a', e:0x2a0600, d:'Fica furioso mais cedo (75% da vida) e ataca mais rápido'},
   apex:     {n:'Apex',      hp:1.35, dmg:1.25, spd:1.1,  sc:1.15, bias:1,   ch:.03, gems:1, css:'#ffb03a', e:0x2a1800, d:'Maior, mais forte e com partes 30% mais duras'},
-  mundial:  {n:'Mundial',   hp:4,    dmg:1.5,  spd:1.1,  sc:1.4,  bias:2,   ch:0,   gems:3, css:'#ff4ae0', e:0x300a30, d:'Chefe Mundial: vida enorme e recompensas de até 10★'},
+  mundial:  {n:'Mundial',   hp:4,    dmg:1.5,  spd:1.1,  sc:1.4,  bias:2,   ch:0,   gems:3, css:'#ff4ae0', e:0x300a30, d:'Chefe Mundial: vida enorme e recompensas de até Grade S'},
   temperado:{n:'Temperado', hp:1.6,  dmg:1.4,  spd:1.15, sc:1.05, bias:1.5, ch:.05, gems:2, css:'#c06aff', e:0x1a0630, d:'Furioso desde o início e nunca se cansa'},
 };
 function rollBossMod(st){
@@ -10020,7 +10027,8 @@ function gainXP(n){
   n = Math.round(n*DF().reward);
   save.xp += n;
   let up = false;
-  while(save.xp >= xpNeed(save.level)){ save.xp -= xpNeed(save.level); save.level++; up = true; }
+  while(save.level < NC_MAX_LV && save.xp >= xpNeed(save.level)){ save.xp -= xpNeed(save.level); save.level++; up = true; }
+  if(save.level >= NC_MAX_LV){ save.level = NC_MAX_LV; save.xp = 0; }
   if(up && P){
     P.S = stats(); P.hp = P.S.hp;
     floatText(P.pos, 'NÍVEL ' + save.level + '!', 'lvl'); SFX.level();
@@ -10058,8 +10066,8 @@ function wakeBoss(b){
   $('#bossBar').hidden = false; const M = BMODS[b.mod || 'normal']; $('#bName').innerHTML = curStage.boss + (M.n ? ` <b style="color:${M.css}">${M.n}</b>` : ''); renderBossParts();
   if(M.n) setTimeout(() => { if(b.hp > 0) banner('Variante: ' + M.n, M.d, 'danger'); }, 2700);
   if(b.mod === 'temperado' || b.mod === 'mundial') enrageBoss(b, b.mod === 'mundial' ? 'O Chefe Mundial já luta furioso' : 'Um chefe Temperado já luta furioso');
-  if(worldFight){ const [wl, wh] = worldRange(curStage.region); banner('Chefe Mundial: ' + curStage.boss, 'Recompensa garantida: armadura de ' + (wl + 1) + '★ a ' + (wh + 1) + '★', 'danger'); }
-  else banner(curStage.boss, 'Derrote-o para ter a chance de ganhar ' + (curStage.slot === 'weapon' ? 'uma arma' : SLOT_INFO[curStage.slot].n.toLowerCase()) + ' de ' + (bossRange(curStage)[0] + 1) + '★ a ' + (bossRange(curStage)[1] + 1) + '★', 'danger');
+  if(worldFight){ const [wl, wh] = worldRange(curStage.region); banner('Chefe Mundial: ' + curStage.boss, 'Recompensa garantida: armadura de ' + GR(wl) + ' a ' + GR(wh) + '', 'danger'); }
+  else banner(curStage.boss, 'Derrote-o para ter a chance de ganhar ' + (curStage.slot === 'weapon' ? 'uma arma' : SLOT_INFO[curStage.slot].n.toLowerCase()) + ' de ' + GR(bossRange(curStage)[0]) + ' a ' + GR(bossRange(curStage)[1]) + '', 'danger');
   b.roarT = 1.3; b.t = 1.6;
   if(DF().enraged){ b.enraged = true; $('#bossBar').classList.add('rage'); b.cr.mats.forEach(m => { m.userData.baseE = C(0x3a0a0a); m.emissive.copy(m.userData.baseE); }); }
   SFX.boss(); addShake(.4);
@@ -10990,7 +10998,7 @@ function startStage(id, onlyBoss, world, o){
   $('#hud').hidden = false; $('#touch').hidden = inputDev !== 'touch'; $('#skillbar').hidden = inputDev === 'touch'; $('#bossBar').hidden = true; $('#bossBar').classList.remove('rage');
   applyZoom(); camPos.copy(P.pos).add(camOffset());
   updateCamera(1); updateHUD(); drawMinimap();
-  if(GEARPEN > 0) setTimeout(() => { if(mode === 'stage') banner('Equipamento fraco para esta área', 'Recomendado ' + reqStar(st) + '★ · inimigos mais fortes até você melhorar', 'danger'); }, 2700);
+  if(GEARPEN > 0) setTimeout(() => { if(mode === 'stage') banner('Equipamento fraco para esta área', 'Recomendado ' + GR(reqStar(st) - 1) + ' · inimigos mais fortes até você melhorar', 'danger'); }, 2700);
   banner('Área ' + (st.id+1) + ' · ' + st.name + (save.diff !== 'normal' ? ' · ' + DF().name : ''), bossOnly ? 'Direto para o chefe: ' + st.boss : o.entry === 'N' ? 'O chefe desta área descansa até você voltar pela fogueira' : 'Liberte os 3 postos do selo para abrir a arena de ' + st.boss + '. Vencê-lo abre o portão do norte. H = cavalo');
 }
 function dropBlock(it, eyebrow, got){
@@ -11003,13 +11011,13 @@ function showResult(){
   let dh = '';
   if(main.type === 'piece'){ SFX.drop(); dh = dropBlock(main.item, lastResult.world ? 'Peça do Chefe Mundial' : 'Peça do chefe', true); discover(main.item); }
   else { SFX.miss();
-    const [lo, hi] = bossRange(st), prize = (st.slot === 'weapon' ? 'Arma' : SLOT_INFO[st.slot].n) + ' de ' + (lo + 1) + '★ a ' + (hi + 1) + '★';
+    const [lo, hi] = bossRange(st), prize = (st.slot === 'weapon' ? 'Arma' : SLOT_INFO[st.slot].n) + ' de ' + GR(lo) + ' a ' + GR(hi) + '';
     dh = `<div class="drop" style="--tc:${TIERS[st.itier].css}"><div class="drop-ic">${slotIcon(st.slot)}</div><div><div class="eyebrow">Não caiu desta vez</div><div class="drop-name">${prize}</div><div class="drop-stat">A chance era ${pct(main.chance)}. Na próxima vitória sobe para <b>${pct(main.next)}</b> · garantido em ${Math.max(1, CFG.pity.hard - (save.pity[st.id] || 0))} vitória(s).</div></div></div>`; }
   extra.forEach(it => { dh += dropBlock(it, 'Drop extra', it.tier >= 4); });
   extra.filter(it => it.ex || it.tier >= 4).forEach(discover);
   const others = runLoot.filter(it => it !== main.item && !extra.includes(it));
   const lootHtml = others.length ? `<div><div class="eyebrow" style="margin-bottom:6px">Itens coletados no mapa (${others.length})</div><div class="loot">${others.map(it => `<span style="--tc:${TIERS[it.tier].css}">${TIERS[it.tier].s} ${itemName(it)}</span>`).join('')}</div></div>` : '';
-  const setHtml = setDone ? `<div class="setdone" style="--tc:${TIERS[st.itier].css}">Você tem capacete, peitoral, luvas, calças e botas com ${st.region*2 + 3}★ ou mais! A fase da arma desta região foi liberada.</div>` : '';
+  const setHtml = setDone ? `<div class="setdone" style="--tc:${TIERS[st.itier].css}">Você tem capacete, peitoral, luvas, calças e botas com ${GR(st.region*2 + 2)} ou mais! A fase da arma desta região foi liberada.</div>` : '';
   const next = STAGES[st.id + 1];
   const nextBtn = next && unlocked(next) ? `<button class="btn" data-act="next">Ir para a próxima área: ${next.name}</button>` : '';
   $('#resultBox').innerHTML = `<h3 class="win">Vitória!</h3>
@@ -11198,7 +11206,7 @@ function renderAdmin(){
   let h = `<h3>Painel administrativo</h3><p class="istat">Mude as regras do jogo. Tudo fica salvo neste aparelho e pode voltar ao padrão a qualquer momento. Algumas mudanças de nome aparecem por completo depois de recarregar a página.</p>
     <div class="abar"><button class="btn primary" data-adm="save">Salvar e aplicar</button><button class="btn" data-adm="reset">Restaurar padrão</button><button class="btn" data-adm="close">Fechar</button></div>`;
   h += `<details open><summary>Armaduras (nome, raridade, cor da interface, força)</summary><div class="trow istat"><span></span><span>Nome</span><span>Raridade</span><span>Cor</span><span>Força</span></div>` +
-    TIERS.map((t, i) => `<div class="trow"><b style="color:${t.css}">${i + 1}★</b><input data-tier="${i}" data-tf="model" value="${t.model}"><input data-tier="${i}" data-tf="n" value="${t.n}"><input type="color" data-tier="${i}" data-tf="css" value="${t.css.length === 7 ? t.css : '#ffffff'}"><input type="number" step="any" data-tier="${i}" data-tf="mult" value="${t.mult}"></div>`).join('') + '</details>';
+    TIERS.map((t, i) => `<div class="trow"><b style="color:${t.css}">${GR(i)}</b><input data-tier="${i}" data-tf="model" value="${t.model}"><input data-tier="${i}" data-tf="n" value="${t.n}"><input type="color" data-tier="${i}" data-tf="css" value="${t.css.length === 7 ? t.css : '#ffffff'}"><input type="number" step="any" data-tier="${i}" data-tf="mult" value="${t.mult}"></div>`).join('') + '</details>';
   h += ADM.map(([title, fs]) => `<details><summary>${title}</summary>${fs.map(f => admField(...f)).join('')}</details>`).join('');
   h += `<details><summary>Monstros e chefes (nome, vida, dano e material de cada espécie)</summary><div class="srow istat"><span>Fase</span><span>Nome do chefe</span><span>Vida ×</span><span>Dano ×</span><span>Material da espécie</span></div>` +
     STAGES.map((st, i) => `<div class="srow"><span>${i + 1}. ${st.name} (${st.minion.name})</span><input data-bn="${i}" value="${st.boss}"><input type="number" step="any" data-ap="bossHp.${i}" data-at="num" value="${CFG.bossHp[i]}"><input type="number" step="any" data-ap="bossDmg.${i}" data-at="num" value="${CFG.bossDmg[i]}">
@@ -11302,7 +11310,7 @@ function renderDev(){
       <p class="istat">Mexer na barra trava o horário (só para testar). O ciclo normal leva 10 minutos.</p></div></details>
     <details><summary>Fases e itens</summary><div class="devg">
       <button class="btn sm" data-devg="stages">Liberar todas as fases</button>
-      <label class="af">Conjunto completo de <select id="devTier">${TIERS.map((t, i) => `<option value="${i}">${i + 1}★ ${t.model}</option>`).join('')}</select></label>
+      <label class="af">Conjunto completo de <select id="devTier">${TIERS.map((t, i) => `<option value="${i}">${GR(i)} ${t.model}</option>`).join('')}</select></label>
       <button class="btn sm" data-devg="set">Ganhar e equipar o conjunto</button></div></details>
     <details><summary>Desfazer e resetar</summary><div class="devg">${devResetHTML()}</div></details>
     <details><summary>Informações do aparelho</summary><div class="istat devinfo">
@@ -11331,7 +11339,7 @@ function devResetHTML(){
   return `<p class="istat">Ponto de restauração: <b>${when ? 'guardado em ' + when : 'nenhum ainda'}</b>. Ele é guardado sozinho antes da primeira coisa que o modo der.</p>
     <button class="btn sm" data-devg="bakSave">Guardar ponto agora</button><button class="btn sm" data-devg="bakLoad" ${b ? '' : 'disabled'}>Voltar ao ponto de restauração</button>
     <button class="btn sm" data-devg="rmDev" ${nDev ? '' : 'disabled'}>Tirar itens dados pelo modo (${nDev})</button>
-    <label class="af">Tirar todos os itens de <select id="devRmTier">${TIERS.map((t, i) => `<option value="${i}" ${i === 6 ? 'selected' : ''}>${i + 1}★ ${t.model}</option>`).join('')}</select> para cima</label>
+    <label class="af">Tirar todos os itens de <select id="devRmTier">${TIERS.map((t, i) => `<option value="${i}" ${i === 6 ? 'selected' : ''}>${GR(i)} ${t.model}</option>`).join('')}</select> para cima</label>
     <button class="btn sm" data-devg="rmTier">Tirar esses itens</button>
     <label class="af">Deixar abertas só as fases até a <select id="devStg">${STAGES.map(st => `<option value="${st.id}" ${st.id === 0 ? 'selected' : ''}>${st.id + 1} · ${st.name}</option>`).join('')}</select></label>
     <button class="btn sm" data-devg="lockStg">Trancar as outras fases</button><span class="istat">Hoje estão abertas até a fase ${last + 1}.</span>
@@ -11373,7 +11381,7 @@ $('#dev').addEventListener('click', async e => {
     if(g === 'bakLoad'){ if(!devArm(b)) return; const k = devBak(); if(!k || !k.save) return devMsg('Não tem ponto de restauração.', true);
       save = k.save; persist(); devMsg('Progresso restaurado. Recarregando…'); setTimeout(() => location.reload(), 700); return; }
     if(g === 'rmDev'){ if(!devArm(b)) return; const n = devRemoveItems(it => it.dev); devGearChanged(); renderDev(); return devMsg(n + ' itens do modo removidos.'); }
-    if(g === 'rmTier'){ if(!devArm(b)) return; const t = +$('#devRmTier').value, n = devRemoveItems(it => it.tier >= t); devGearChanged(); renderDev(); return devMsg(n + ' itens de ' + (t + 1) + '★ para cima removidos.'); }
+    if(g === 'rmTier'){ if(!devArm(b)) return; const t = +$('#devRmTier').value, n = devRemoveItems(it => it.tier >= t); devGearChanged(); renderDev(); return devMsg(n + ' itens de ' + GR(t) + ' para cima removidos.'); }
     if(g === 'lockStg'){ if(!devArm(b)) return; const last = +$('#devStg').value;
       for(const k in save.beaten) if(+k >= last) delete save.beaten[k]; if(save.best) for(const k in save.best) if(+k >= last) delete save.best[k];
       devApply(); renderDev(); return devMsg('Agora só as fases até a ' + (last + 1) + ' estão abertas.'); }
