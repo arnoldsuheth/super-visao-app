@@ -636,6 +636,7 @@ canvas.ncgrabok{cursor:grab}canvas.ncgrab,canvas.ncgrabok.ncgrab{cursor:grabbing
       <p class="lede">A Coroa Ancestral se partiu em nove. Cada rei ficou com uma, e cada coroa transformou o seu rei em monstro. Você é o soldado que sobrou. Reacenda as fogueiras, liberte os nove reinos e reúna as nove coroas.</p>
       <div class="eyebrow">Herói</div>
       <div class="cgrid" id="classGrid"></div>
+      <div class="nc-namebox"><div class="eyebrow">Nome do herói</div><div class="nc-cin"><input id="ncNameIn" maxlength="14" placeholder="Seu nome" autocomplete="off"><button class="btn sm" data-ncname>Salvar</button></div></div>
       <div id="ncTreeBox"></div>
       <div id="specBox"></div>
       <div id="ncPetBox"></div>
@@ -734,7 +735,7 @@ canvas.ncgrabok{cursor:grab}canvas.ncgrab,canvas.ncgrabok.ncgrab{cursor:grabbing
     <div class="hud-lv">Nível <b id="hLvl">1</b></div>
     <div class="bar hp"><i id="hHp"></i><span id="hHpT">100/100</span></div>
     <div class="bar mp" id="hMpB"><i id="hMp"></i><span id="hMpT"></span></div>
-    <div class="bar xp"><i id="hXp"></i></div>
+    <div class="bar xp"><i id="hXp"></i><span id="hXpT"></span></div>
     <div class="obj" id="hObj"></div>
   </div>
   <div class="feed" id="feed"></div>
@@ -10091,6 +10092,7 @@ const ncSkMul = i => .6 + (Math.max(1, ncSkLv(i)) - 1)*.11;        // nível 1 =
 const ncSkFast = i => 1 - (Math.max(1, ncSkLv(i)) - 1)*.03;        // recarga e gasto: até 27% menores no nível 10
 const ncSkResetCost = () => Math.round(500*NC_ECON*Math.max(1, ncLvOf(save.cls) - 14));
 let ncInSkill = 0;
+const ncName = () => (save.name || '').trim() || CLASSES[save.cls].name;
 /* Botões E e R: cada um leva a habilidade que o jogador escolher na árvore */
 const ncSkSlots = () => { save.sks = save.sks || {}; const c = CLS(), sl = save.sks[save.cls] || [0, 1]; return sl.map((v, j) => c.skills[v] ? v : j); };
 const ncSlot = j => ncSkSlots()[j];
@@ -10105,7 +10107,8 @@ function ncTreeHTML(){ const c = CLS(), u = window.ncIconUrl || (() => 'none'), 
   const used = ncSkTree().some(v => v);
   h += '</div>' + (used ? '<button class="btn sm" data-skreset style="margin-top:8px">Refazer pontos · ' + adenaTxt(ncSkResetCost()) + '</button>' : '');
   return h; }
-function ncTreeDraw(){ const b = document.getElementById('ncTreeBox'); if(b) b.innerHTML = ncTreeHTML(); const pp = document.getElementById('ncSkPop'); if(pp && !pp.hidden) ncSkillsPop(true); }
+function ncTreeDraw(){ const ni = document.getElementById('ncNameIn'); if(ni && document.activeElement !== ni) ni.value = save.name || ''; const b = document.getElementById('ncTreeBox'); if(b) b.innerHTML = ncTreeHTML(); const pp = document.getElementById('ncSkPop'); if(pp && !pp.hidden) ncSkillsPop(true); }
+document.addEventListener('click', e => { if(e.target.closest('[data-ncname]')){ const v = (document.getElementById('ncNameIn').value || '').replace(/[<>]/g, '').trim().slice(0, 14); save.name = v; persist(); try{ banner('Nome salvo', v || 'Sem nome: aparece o nome da classe'); ncCoop.track(); }catch(_){} return; } });
 document.addEventListener('click', e => { const b = e.target.closest('[data-skup],[data-skreset],[data-skslot]'); if(!b) return;
   if(b.dataset.skslot){ const [j, i] = b.dataset.skslot.split(':').map(Number); const sl = ncSkSlots().slice(); const o = sl.indexOf(i); if(o >= 0 && o !== j) sl[o] = sl[j]; sl[j] = i; save.sks[save.cls] = sl; persist(); ncTreeDraw(); try{ renderSkillbar(); }catch(_){} return; }
   if(b.dataset.skreset !== undefined){ const c = ncSkResetCost(); if(save.gold < c){ try{ banner('Adena insuficiente', 'Refazer custa ' + adenaTxt(c)); }catch(_){} return; } save.gold -= c; save.skt[save.cls] = []; persist(); try{ SFX.drop(); }catch(_){} }
@@ -10169,7 +10172,7 @@ cv.addEventListener('pointerdown', e => {
   if(mode !== 'stage' || e.pointerType !== 'mouse' || !running || inputLocked) return;
   if(e.button === 0){ attackHeld = true; attackPressed = true; } else if(e.button === 2) useSkill(0);
 });
-addEventListener('pointerup', e => { if(e.pointerType === 'mouse') attackHeld = false; if(e.pointerType === 'mouse' && e.button === 2 && e.pointerId === gdrag.id && !gdrag.moved && lookOn()) ncPick(e.clientX, e.clientY); if(e.pointerId === gdrag.id){ gdrag.id = null; gdrag.moved = false; cv.classList.remove('ncgrab'); } });
+addEventListener('pointerup', e => { if(e.pointerType === 'touch' && e.target === cv && mode === 'stage'){ const pk = ncPeerAt(e.clientX, e.clientY); if(pk) ncCoop.menu(pk); } if(e.pointerType === 'mouse') attackHeld = false; if(e.pointerType === 'mouse' && e.button === 2 && e.pointerId === gdrag.id && !gdrag.moved && lookOn()) ncPick(e.clientX, e.clientY); if(e.pointerId === gdrag.id){ gdrag.id = null; gdrag.moved = false; cv.classList.remove('ncgrab'); } });
 cv.addEventListener('pointermove', e => {
   if(!lookOn()){ mlook.x = null; return; }
   if(e.pointerType === 'mouse'){
@@ -10226,7 +10229,10 @@ function ncTgtOk(){ if(!ncTgt) return null; if(ncTgt.e && (ncTgt.e.dead || ncTgt
 function ncSetTgt(t){ ncTgt = t; if(!ncTgtMk){ ncTgtMk = new T.Mesh(new T.RingGeometry(.62, 1, 32), new T.MeshBasicMaterial({color:0xff4a4a, transparent:true, opacity:1, toneMapped:false, depthWrite:false, side:T.DoubleSide})); ncTgtMk.rotation.x = -Math.PI/2; ncTgtMk.renderOrder = 5; }
   if(!t){ if(ncTgtMk.parent) ncTgtMk.parent.remove(ncTgtMk); return; } ncTgtMk.material.color.setHex(t.e ? 0xff4a4a : 0xf2c14e); const r = t.e ? Math.max(.9, (t.e.r || .8) + .3) : .8; ncTgtMk.scale.setScalar(r); if(!ncTgtMk.parent) scene.add(ncTgtMk); }
 function ncTgtUpdate(){ const t = ncTgtOk(); if(!t || !ncTgtMk) return; const x = t.e ? t.e.pos.x : t.x, z = t.e ? t.e.pos.z : t.z; let y = 0; try{ y = heightAt(x, z); }catch(_){ y = P.pos.y; } ncTgtMk.position.set(x, y + .08, z); ncTgtMk.rotation.z += .03; }
-function ncPick(cx, cy){ if(!P) return; const r = cv.getBoundingClientRect(), v = new T.Vector3(); let best = null, bd = 70;
+function ncPeerAt(cx, cy){ try{ const r = cv.getBoundingClientRect(), v = new T.Vector3(); let best = null, bd = 60;
+  for(const k in ncCoop.peers){ const q = ncCoop.peers[k]; if(!q.h || !q.h.root.parent) continue; const p = q.h.root.position; v.set(p.x, p.y + 1.2, p.z).project(camera); if(v.z > 1) continue;
+    const d = Math.hypot(r.left + (v.x + 1)/2*r.width - cx, r.top + (1 - v.y)/2*r.height - cy); if(d < bd){ bd = d; best = k; } } return best; }catch(_){ return null; } }
+function ncPick(cx, cy){ if(!P) return; const pk = ncPeerAt(cx, cy); if(pk){ ncCoop.menu(pk); return; } const r = cv.getBoundingClientRect(), v = new T.Vector3(); let best = null, bd = 70;
   for(const e of enemies){ if(e.dead || e.dying) continue; v.set(e.pos.x, e.pos.y + 1, e.pos.z).project(camera); if(v.z > 1) continue;
     const sx = r.left + (v.x + 1)/2*r.width, sy = r.top + (1 - v.y)/2*r.height, d = Math.hypot(sx - cx, sy - cy); if(d < bd){ bd = d; best = e; } }
   if(best){ ncSetTgt({e:best}); return; }
@@ -10563,7 +10569,9 @@ function spawnPickup(type, pos, value){
   if(type === 'gold') m.rotation.x = Math.PI/2;
   scene.add(m); pickups.push({m, type, value, t:0, y0});
 }
-function gainXP(n){
+function gainXP(n, fromParty){
+  if(!fromParty){ try{ if(ncCoop.ch && mode === 'stage' && curStage && ncCoop.partyN() > 1) ncCoop.send('xp', {v:n, st:curStage.id, x:+P.pos.x.toFixed(1), z:+P.pos.z.toFixed(1)}); }catch(_){} }
+  try{ n *= 1 + (ncCoop.partyN() - 1)*.05; }catch(_){}   // grupo: +5% de XP por amigo na mesma fase, e todos ganham o mesmo
   n = Math.round(n*DF().reward);
   save.xp += n;
   let up = false;
@@ -11377,7 +11385,7 @@ function updateHUD(){
   $('#hHp').style.width = (P.hp/S.hp*100) + '%';
   $('#hHpT').textContent = Math.ceil(P.hp) + '/' + S.hp;
   { ncResInit(); const m = ncResMax(), b = $('#hMpB'); b.classList.toggle('sp', ncRes() === 'sp'); $('#hMp').style.width = (P.res/m*100) + '%'; const t = Math.floor(P.res) + '/' + m; if($('#hMpT').textContent !== t) $('#hMpT').textContent = t; }
-  $('#hXp').style.width = Math.min(100, save.xp/xpNeed(save.level)*100) + '%';
+  { const pc = save.level >= NC_MAX_LV ? 100 : Math.min(100, save.xp/xpNeed(save.level)*100); $('#hXp').style.width = pc + '%'; const t = save.level >= NC_MAX_LV ? 'XP máx.' : 'XP ' + pc.toFixed(1).replace('.', ',') + '%'; if($('#hXpT').textContent !== t) $('#hXpT').textContent = t; }
   $('#hGold').innerHTML = adenaHTML(save.gold);
   $('#hPot').textContent = save.potions;
   if(boss && bossActive) $('#bHp').style.width = Math.max(0, boss.hp/boss.maxHp*100) + '%';
@@ -12423,6 +12431,8 @@ var ncCoop = {
     const ch = this.ch = this.sb.channel('nc-room-' + code, {config:{broadcast:{self:false}, presence:{key:this.id}}});
     ch.on('broadcast', {event:'st'}, m => this.onState(m.payload))
       .on('broadcast', {event:'go'}, m => this.onGo(m.payload))
+      .on('broadcast', {event:'xp'}, m => { const p = m.payload; if(p && mode === 'stage' && curStage && p.st === curStage.id && P && Math.hypot(p.x - P.pos.x, p.z - P.pos.z) < 30) gainXP(p.v, true); })
+      .on('broadcast', {event:'gift'}, m => this.onGift(m.payload))
       .on('broadcast', {event:'hi'}, () => { if(this.host && mode === 'stage' && curStage) this.send('go', {st:curStage.id}); })
       .on('presence', {event:'sync'}, () => this.onSync())
       .on('presence', {event:'leave'}, m => { (m.leftPresences || []).forEach(p => this.drop(p.id)); this.onSync(); });
@@ -12430,7 +12440,7 @@ var ncCoop = {
       if(st === 'SUBSCRIBED'){ this.ok = true; this.msg = this.host ? 'Sala criada. Passe o código para quem vai jogar com você.' : 'Você entrou na sala.'; this.draw(); setTimeout(() => { this.track(); if(!this.host) this.send('hi', {}); }, 300); }
       else if(st === 'CHANNEL_ERROR' || st === 'TIMED_OUT'){ this.msg = 'Não consegui conectar na sala. Tente de novo.'; this.ok = false; this.draw(); } });
   },
-  track(){ const ch = this.ch; if(!ch || !this.ok) return; Promise.race([ch.track({id:this.id, cls:save.cls, at:this.at}), new Promise(ok => setTimeout(() => ok('timeout'), 4000))]).then(r => { if(r !== 'ok' && this.ch === ch) setTimeout(() => this.track(), 1500); }).catch(() => setTimeout(() => this.track(), 1500)); },
+  track(){ const ch = this.ch; if(!ch || !this.ok) return; Promise.race([ch.track({id:this.id, cls:save.cls, nm:ncName(), at:this.at}), new Promise(ok => setTimeout(() => ok('timeout'), 4000))]).then(r => { if(r !== 'ok' && this.ch === ch) setTimeout(() => this.track(), 1500); }).catch(() => setTimeout(() => this.track(), 1500)); },
   onSync(){ if(!this.ch) return; const s = this.ch.presenceState(), all = [];
     Object.keys(s).forEach(k => { const p = s[k][0]; if(p) all.push(p); }); all.sort((a, b) => a.at - b.at); this.list = all;
     const me = all.findIndex(p => p.id === this.id);
@@ -12446,31 +12456,54 @@ var ncCoop = {
     this.goId = p.st; try{ if(mode === 'stage') goHub(); }catch(_){} setTimeout(() => { try{ startStage(p.st); }catch(e){} this.goId = null; }, 300);
     try{ banner('Jogando junto', 'Entrando na fase do anfitrião'); }catch(_){} },
   onState(p){ if(!p || !p.id || p.id === this.id) return; const q = this.peers[p.id] || (this.peers[p.id] = {id:p.id}); q.d = p; q.t = performance.now(); },
-  drop(id){ const q = this.peers[id]; if(!q) return; if(q.h && q.h.root.parent) q.h.root.parent.remove(q.h.root); if(q.tag) q.tag.remove(); delete this.peers[id]; },
+  partyN(){ if(!this.ch || mode !== 'stage' || !curStage) return 1; const now = performance.now(); let n = 1; for(const k in this.peers){ const d = this.peers[k].d; if(d && d.st === curStage.id && now - this.peers[k].t < 6000 && this.near(d)) n++; } return n; },
+  near(d){ return P && d && d.x != null && Math.hypot(d.x - P.pos.x, d.z - P.pos.z) < 30; },
+  partyDraw(){ let el = document.getElementById('ncParty'); const list = Object.values(this.peers).filter(q => q.d && performance.now() - q.t < 6000);
+    if(!this.ch || !list.length || mode !== 'stage'){ if(el) el.hidden = true; return; }
+    if(!el){ el = document.createElement('div'); el.id = 'ncParty'; document.body.appendChild(el); }
+    el.hidden = false; const n = this.partyN();
+    const h = '<div class="pt-h">Grupo · +' + ((n - 1)*5) + '% XP</div>' + list.map(q => { const d = q.d, away = d.st !== (curStage && curStage.id), far = !away && !this.near(d);
+      return '<button class="pt-m' + (away ? ' away' : '') + '" data-ncpeer="' + q.id + '"><b>' + (d.nm || (CLASSES[d.cls] || {}).name || 'Herói') + ' <small>nv ' + (d.lv || 1) + '</small></b><i class="pb hp"><s style="width:' + (d.hp == null ? 100 : d.hp) + '%"></s></i><i class="pb rs' + (d.rt === 'sp' ? ' sp' : '') + '"><s style="width:' + (d.rs == null ? 100 : d.rs) + '%"></s></i>' + (away ? '<small>em outro lugar</small>' : far ? '<small>longe: sem bônus de XP</small>' : '') + '</button>'; }).join('');
+    if(el._h !== h){ el._h = h; el.innerHTML = h; } },
+  menu(id){ const q = this.peers[id]; if(!q || !q.d) return; const d = q.d; let el = document.getElementById('ncPeerPop'); if(!el){ el = document.createElement('div'); el.id = 'ncPeerPop'; document.body.appendChild(el); }
+    const inv = save.inv.filter(it => !isEquipped(it));
+    el.hidden = false; el.innerHTML = '<div class="pop-bg" data-peerclose></div><div class="pop-box"><button class="pop-x" data-peerclose>✕</button><div class="eyebrow">' + (d.nm || 'Herói') + ' · ' + ((CLASSES[d.cls] || {}).name || '') + ' nv ' + (d.lv || 1) + '</div>'
+      + '<div class="peer-sec"><b>Enviar Adena</b><small>Você tem ' + adenaTxt(save.gold) + '</small><div class="peer-row">' + [100, 1000, 10000, 100000].map(v => '<button class="btn sm" data-peergold="' + id + ':' + v + '" ' + (save.gold >= v ? '' : 'disabled') + '>' + adenaTxt(v) + '</button>').join('') + '</div></div>'
+      + '<div class="peer-sec"><b>Enviar item da mochila</b>' + (inv.length ? '<div class="bgrid">' + inv.map(it => '<button class="bcell" data-peeritem="' + id + ':' + it.id + '" title="' + itemName(it) + '">' + pieceImg(it.tier, it.slot, itemCls(it), it.wtype, it.up) + '</button>').join('') + '</div>' : '<small>Nenhum item livre na mochila.</small>') + '</div>'
+      + '<small class="istat">O que você enviar sai da sua mochila na hora e vai para a de ' + (d.nm || 'seu amigo') + '.</small></div>'; },
+  onGift(p){ if(!p || p.to !== this.id) return; const from = (this.peers[p.from] && this.peers[p.from].d && this.peers[p.from].d.nm) || 'Seu amigo';
+    if(p.gold){ save.gold += p.gold; persist(); try{ banner('Presente de ' + from, adenaTxt(p.gold) + ' de Adena'); SFX.coin(); }catch(_){} }
+    if(p.item){ const it = p.item; it.id = save.nextId++; save.inv.push(it); persist(); try{ banner('Presente de ' + from, itemName(it)); SFX.item(); }catch(_){} }
+    try{ if(mode === 'hub') renderHub(); }catch(_){} },
+  drop(id){ const q = this.peers[id]; if(!q) return; const pp = document.getElementById('ncParty'); if(pp) pp._h = ''; if(q.h && q.h.root.parent) q.h.root.parent.remove(q.h.root); if(q.tag) q.tag.remove(); delete this.peers[id]; },
   mkHero(cls){ const prev = save.cls; save.cls = cls in CLASSES ? cls : 'warrior'; let h; try{ h = makeHero(); } finally{ save.cls = prev; }
-    if(!h.mx && mxWanted(h.cls)) mxLoad(h.cls, ok => { if(ok && !h.mx) mxAttach(h); });
+    if(!h.mx && mxWanted(h.cls)) mxLoad(h.cls);
     return h; },
+  attach(h){ if(h.mx || !mxWanted(h.cls) || !mxReady(h.cls)) return; const prev = save.cls; save.cls = h.cls; try{ mxAttach(h); } finally{ save.cls = prev; } },
   tick(dt){ if(!this.ch) return;
     const inStage = mode === 'stage' && P && curStage;
     this.sendT -= dt;
     if(inStage && this.sendT <= 0){ this.sendT = .2;   // 5 avisos por segundo: cabe no plano grátis com 4 jogadores
       if(P.swingT > this.lastSw + .001 || P.castT > .17){ this.atkN++; } this.lastSw = P.swingT;
-      this.send('st', {id:this.id, cls:save.cls, st:curStage.id, x:+P.pos.x.toFixed(2), z:+P.pos.z.toFixed(2), f:+P.face.toFixed(2), mv:P.mv ? 1 : 0, a:this.atkN, hp:Math.round(P.hp/P.S.hp*100), lv:save.level}); }
+      this.send('st', {id:this.id, cls:save.cls, nm:ncName(), st:curStage.id, x:+P.pos.x.toFixed(2), y:+P.pos.y.toFixed(2), z:+P.pos.z.toFixed(2), f:+P.face.toFixed(2), mv:P.mv ? 1 : 0, a:this.atkN, hp:Math.round(P.hp/P.S.hp*100), rs:Math.round((P.res || 0)/ncResMax()*100), rt:ncRes(), lv:save.level}); }
     const now = performance.now();
     for(const k in this.peers){ const q = this.peers[k], d = q.d; if(!d) continue;
       if(now - q.t > 6000 || !inStage || d.st !== curStage.id){ if(q.h && q.h.root.parent) q.h.root.parent.remove(q.h.root); if(q.tag) q.tag.hidden = true; if(now - q.t > 15000) this.drop(k); continue; }
       if(!q.h || q.cls !== d.cls){ if(q.h && q.h.root.parent) q.h.root.parent.remove(q.h.root); q.h = this.mkHero(d.cls); q.cls = d.cls; q.h.root.position.set(d.x, 0, d.z); q.a = d.a; }
-      if(!q.h.root.parent) scene.add(q.h.root);
+      if(!q.h.root.parent) scene.add(q.h.root); if(!q.h.mx) this.attach(q.h);
+      if(!q.h.mx) q.h.body.visible = true;
       const r = q.h.root.position, dx = d.x - r.x, dz = d.z - r.z, dist = Math.hypot(dx, dz);
       if(dist > 12){ r.x = d.x; r.z = d.z; } else { const k2 = Math.min(1, dt*8); r.x += dx*k2; r.z += dz*k2; }
-      try{ r.y = heightAt(r.x, r.z); }catch(_){}
+      if(d.y != null) r.y += (d.y - r.y)*Math.min(1, dt*10); else try{ r.y = heightAt(r.x, r.z); }catch(_){}
       let df = d.f - q.h.root.rotation.y; df = Math.atan2(Math.sin(df), Math.cos(df)); q.h.root.rotation.y += df*Math.min(1, dt*10);
       const moving = d.mv || dist > .15;
       if(q.h.mx){ if(d.a !== q.a){ q.a = d.a; mxPlay(q.h, 'atk1', {once:true, restart:true, fade:.06, at:.2, speed:2.2}); q.lock = .45; }
         q.lock = Math.max(0, (q.lock || 0) - dt); if(q.lock <= 0) mxPlay(q.h, moving ? 'run' : 'idle', {fade:.15}); q.h.mx.mixer.update(dt); }
-      if(!q.tag){ q.tag = document.createElement('div'); q.tag.className = 'ltag nc-ptag'; document.body.appendChild(q.tag); }
-      const nm = (CLASSES[d.cls] || CLASSES.warrior).name + ' · nv ' + (d.lv || 1); if(q.tag.textContent !== nm) q.tag.textContent = nm;
-      placeTag(q.tag, r.x, r.y + 2.5, r.z, true); }
+      if(!q.tag){ q.tag = document.createElement('div'); q.tag.className = 'ltag nc-ptag'; q.tag.innerHTML = '<b></b><i class="pb hp"><s></s></i><i class="pb rs"><s></s></i>'; q.tag.dataset.ncpeer = k; document.body.appendChild(q.tag); }
+      const nm = (d.nm || (CLASSES[d.cls] || CLASSES.warrior).name) + ' · nv ' + (d.lv || 1); const tb = q.tag.firstChild; if(tb.textContent !== nm) tb.textContent = nm;
+      q.tag.children[1].firstChild.style.width = (d.hp == null ? 100 : d.hp) + '%'; q.tag.children[2].firstChild.style.width = (d.rs == null ? 100 : d.rs) + '%'; q.tag.children[2].classList.toggle('sp', d.rt === 'sp');
+      placeTag(q.tag, r.x, r.y + 2.6, r.z, true); }
+    this.partyDraw();
   },
   draw(){ const b = document.getElementById('ncCoopBox'); if(!b) return;
     let h = '<div class="eyebrow">Jogar junto (até ' + this.MAX + ' pessoas)</div><div class="spec-card">';
@@ -12482,9 +12515,17 @@ var ncCoop = {
         + '<div class="nc-cin"><input id="ncCoopIn" maxlength="4" placeholder="CÓDIGO" autocomplete="off" autocapitalize="characters"><button class="btn sm" data-nccoop="join">Entrar na sala</button></div>';
     h += (this.msg ? '<small class="nc-cmsg">' + this.msg + '</small>' : '') + '</div>'; b.innerHTML = h; }
 };
-document.addEventListener('click', e => { const b = e.target.closest('[data-nccoop]'); if(!b) return; const a = b.dataset.nccoop;
+document.addEventListener('click', e => {
+  const pb = e.target.closest('[data-ncpeer],[data-peerclose],[data-peergold],[data-peeritem]');
+  if(pb){ const d = pb.dataset, el = document.getElementById('ncPeerPop');
+    if(d.ncpeer) ncCoop.menu(d.ncpeer);
+    else if(d.peerclose !== undefined){ if(el) el.hidden = true; }
+    else if(d.peergold){ const [id, v] = d.peergold.split(':'); const g = +v; if(save.gold >= g){ save.gold -= g; persist(); ncCoop.send('gift', {to:id, from:ncCoop.id, gold:g}); try{ banner('Enviado', adenaTxt(g) + ' de Adena'); SFX.coin(); }catch(_){} ncCoop.menu(id); } }
+    else if(d.peeritem){ const [id, iid] = d.peeritem.split(':'); const it = byId(+iid); if(it && !isEquipped(it)){ save.inv = save.inv.filter(x => x !== it); persist(); ncCoop.send('gift', {to:id, from:ncCoop.id, item:Object.assign({}, it)}); try{ banner('Enviado', itemName(it)); SFX.item(); }catch(_){} ncCoop.menu(id); } }
+    return; }
+  const b = e.target.closest('[data-nccoop]'); if(!b) return; const a = b.dataset.nccoop;
   if(a === 'new') ncCoop.join(ncCoop.newCode(), true); else if(a === 'join'){ const i = document.getElementById('ncCoopIn'); ncCoop.join(i && i.value, false); } else if(a === 'leave') ncCoop.leave(); });
-setInterval(() => { try{ if(ncCoop.ch && mode !== 'stage') ncCoop.send('st', {id:ncCoop.id, cls:save.cls, st:-1}); if(ncCoop.ch && ncCoop.ok && !ncCoop.ch.presenceState()[ncCoop.id]) ncCoop.track(); }catch(_){} }, 3000);
+setInterval(() => { try{ if(ncCoop.ch && mode !== 'stage') ncCoop.send('st', {id:ncCoop.id, cls:save.cls, nm:ncName(), lv:save.level, st:-1}); if(ncCoop.ch && ncCoop.ok && !ncCoop.ch.presenceState()[ncCoop.id]) ncCoop.track(); }catch(_){} }, 3000);
 setTimeout(() => ncCoop.draw(), 500);
 window.ncCoop = ncCoop;
 })();
@@ -12888,6 +12929,18 @@ document.addEventListener('touchmove', e => { if(e.touches.length > 1) e.prevent
 #touch .tbtns,.skillbar{filter:drop-shadow(1.5px 0 0 #d8dfec) drop-shadow(-1.5px 0 0 #d8dfec) drop-shadow(0 1.5px 0 #d8dfec) drop-shadow(0 -1.5px 0 #d8dfec) drop-shadow(0 4px 6px rgba(0,0,0,.6))}
 .skillbar{bottom:calc(18px + env(safe-area-inset-bottom,0px))!important}
 .skillbar{pointer-events:auto}
+#hud .bar.xp{position:relative;height:13px!important;margin-top:3px;border:5px solid transparent!important;border-image:url(assets/ui/frame-d.png) 32 stretch!important;background:#0b0820!important;background-clip:padding-box!important;border-radius:0!important;overflow:visible}
+#hud .bar.xp i{background:linear-gradient(90deg,#7b3cff,#c08bff 60%,#ffe9a8)!important;box-shadow:0 0 8px rgba(192,139,255,.7);height:100%}
+#hud .bar.xp span{position:absolute;inset:0;display:grid;place-items:center;font:700 10px/1 var(--f-body);color:#fff;text-shadow:0 0 3px #000,0 1px 2px #000;letter-spacing:.04em}
+@media (max-width:600px){#hud .bar.xp{width:74%}}
+.nc-ptag{display:flex!important;flex-direction:column;align-items:center;gap:2px;padding:4px 8px!important;pointer-events:auto!important;cursor:pointer}.nc-ptag b{font:700 12px/1 var(--f-body);color:#bfe3ff;white-space:nowrap}
+.pb{display:block;width:64px;height:5px;background:rgba(0,0,0,.55);border-radius:2px;overflow:hidden}.pb s{display:block;height:100%;background:linear-gradient(90deg,#e8455a,#ff9a4a);text-decoration:none}.pb.rs s{background:linear-gradient(90deg,#2d6bff,#6fd0ff)}.pb.rs.sp s{background:linear-gradient(90deg,#d6a400,#ffe46a)}
+#ncParty{position:fixed;left:calc(10px + env(safe-area-inset-left,0px));top:150px;z-index:30;display:flex;flex-direction:column;gap:4px;max-width:150px}#ncParty[hidden]{display:none}
+.pt-h{font:700 11px/1 var(--f-body);color:#f2c14e;text-shadow:0 1px 2px #000}.pt-m{display:flex;flex-direction:column;gap:3px;align-items:flex-start;padding:5px 7px;background:rgba(20,15,40,.75);border:1px solid #6a5acd;color:#f4efe2;cursor:pointer;text-align:left}
+.pt-m b{font:700 12px/1.1 var(--f-body)}.pt-m b small,.pt-m>small{font-weight:400;color:#cfc9e6;font-size:10px}.pt-m .pb{width:120px}.pt-m.away{opacity:.6}
+#ncPeerPop{position:fixed;inset:0;z-index:82}#ncPeerPop[hidden]{display:none}.peer-sec{margin-top:10px}.peer-sec>b{display:block;color:#f4efe2}.peer-sec>small{color:var(--mute);font-size:12px}.peer-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.nc-namebox{margin:12px 0 4px}
+@media (max-width:600px){#ncParty{top:200px}}
 #ncTreeBox{margin:12px 0 4px}.tree-top{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 10px;align-items:baseline;margin:2px 0 8px}.tree-top b{color:#f2c14e;font-size:18px}.tree-top small{color:var(--mute);font-size:12px}
 .tree{display:grid;gap:6px}.tnode{display:flex;gap:10px;align-items:center;padding:8px;background:rgba(10,12,22,.5);border:1px solid #3c2f7a}.tnode.on{border-color:#c9a24a}.tnode.lock{opacity:.55}.tnode.soon{opacity:.4}
 .tnode>i{position:relative;flex:0 0 48px;height:48px;background:#0e0a20 center/cover;border:2px solid #d8dfec}.tnode.lock>i{filter:grayscale(1)}.tnode>i em{position:absolute;right:-6px;bottom:-6px;font:700 12px/1 var(--f-body);font-style:normal;background:#c9a24a;color:#14101f;padding:3px 5px;border-radius:3px}
