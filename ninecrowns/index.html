@@ -5806,13 +5806,13 @@ const upCost = it => Math.round(40*((it.up || 0) + 1)*Math.pow(1.35, it.tier));
 const upChance = it => Math.min(1, UPG[(it.up || 0) + 1].p + (it.fp || 0) + (evFx().up || 0));
 function upRisk(U){ return U.brk ? `Se falhar: ${Math.round(U.brk*100)}% de chance de rachar e voltar para +10 (a peça nunca é destruída)` : U.lose ? `Se falhar: perde ${U.lose} nível${U.lose > 1 ? 'is' : ''}` : U.p < 1 ? 'Se falhar: nada se perde' : 'Sucesso garantido'; }
 function tryUpgrade(it){
-  ensureSk(it); const nx = it.up + 1; if(nx > 15) return null; const U = UPG[nx], cost = upCost(it);
+  ensureSk(it); const nx = it.up + 1; if(nx > NC_UP_MAX) return null; const U = UPG[nx], cost = upCost(it);
   if(save.gold < cost || (save.mats[U.m] || 0) < 1) return null;
   save.gold -= cost; save.mats[U.m]--;
   let msg;
   if(Math.random() < upChance(it)){
     it.up = nx; it.fp = 0; let extra = '+' + nx*4 + '% em vida, ataque e defesa da peça';
-    if((nx === 10 && !it.w10) || (nx === 15 && !it.w15)){ it['w' + nx] = 1; if(it.sk.length < 5){ it.skx = (it.skx || 0) + 1; it.sk.push('W'); it.gm.push(null); extra = 'Ganhou um encaixe novo para pedra'; } else extra = 'Brilho de evolução +' + nx + ' desbloqueado'; }
+    if((nx === 10 && !it.w10) || (nx === NC_UP_MAX && !it.w15)){ it['w' + nx] = 1; if(it.sk.length < 5){ it.skx = (it.skx || 0) + 1; it.sk.push('W'); it.gm.push(null); extra = 'Ganhou um encaixe novo para pedra'; } else extra = 'Brilho de evolução +' + nx + ' desbloqueado'; }
     msg = ['Sucesso! ' + itemName(it), extra, '']; SFX.drop();
   } else {
     it.fp = (it.fp || 0) + .03;
@@ -5976,6 +5976,7 @@ const freshSave = () => ({level:1, xp:0, gold:0, potions:3, inv:[], eq:{}, nextI
   mats:{refino:3, superior:0, ancestral:0, selo:0, bencao:0, broca:1, metal:5}, gems:{}, gemPity:{}, frags:[0,0,0,0,0,0,0,0,0,0], coins:5, cnt:{}, mq:{}, seq:{step:0, lvl:0}, pityEx:{}, evBought:{}, worldWins:{}});
 let save = loadSave();
 if(!save.nc80){ save.level = Math.min(80, Math.max(1, Math.round(1 + ((save.level || 1) - 1)*79/43))); save.nc80 = 1; }
+(save.inv || []).forEach(it => { if(it.up > 12) it.up = 12; });
 if(!save.known){ save.known = [save.cls]; save.main = save.cls; save.lv = save.lv || {}; }
 if(!save.ncCls){ (save.inv || []).forEach(it => { if(it.slot !== 'weapon' && it.slot !== 'amulet' && !it.cls) it.cls = save.cls; }); save.ncCls = 1; }   // saves antigos: as armaduras que ja existiam ficam com a classe atual   // saves antigos: converte o nivel para a escala de 80
 save.mats = Object.assign({refino:0, superior:0, ancestral:0, selo:0, bencao:0, broca:0}, save.mats || {}); save.gems = save.gems || {}; save.gemPity = save.gemPity || {};
@@ -7624,7 +7625,7 @@ function itemRow(it, actions){
 function renderGear(){
   $('#eqGrid').innerHTML = ncSlots().map(slot => {
     const it = equipped(slot);
-    return `<button class="eq ${it ? 'has' : ''}" data-uneq="${slot}" style="--tc:${it ? TIERS[it.tier].css : '#3a405c'}" ${it ? '' : 'disabled'} title="${it ? 'Tirar ' + itemName(it) : 'Vazio'}">${it ? pieceImg(it.tier, slot, 'ps-eq', it.wtype) : slotIcon(slot)}<span class="en">${it ? itemName(it) : SLOT_INFO[slot].n}</span><span class="es" ${it ? `style="color:${TIERS[it.tier].css}"` : ''}>${it ? TIERS[it.tier].sc + ' · ' + TIERS[it.tier].n : 'vazio'}</span></button>`;
+    return `<button class="eq ${it ? 'has' : ''}" data-uneq="${slot}" style="--tc:${it ? TIERS[it.tier].css : '#3a405c'}" ${it ? '' : 'disabled'} title="${it ? 'Tirar ' + itemName(it) : 'Vazio'}">${it ? pieceImg(it.tier, slot, 'ps-eq', it.wtype, it.up) : slotIcon(slot)}<span class="en">${it ? itemName(it) : SLOT_INFO[slot].n}</span><span class="es" ${it ? `style="color:${TIERS[it.tier].css}"` : ''}>${it ? TIERS[it.tier].sc + ' · ' + TIERS[it.tier].n : 'vazio'}</span></button>`;
   }).join('');
   const B = bonuses(), c = B.counts;
   let bl = `<div class="bon"><b>Peças vestidas:</b> ${TIERS.map((t, i) => c[i] ? `<span style="color:${t.css}">${c[i]} ${t.name}</span>` : '').filter(Boolean).join(' · ') || 'nenhuma'}<small>As combinações misturam peças de grades diferentes: Grade C, Grade B ou A e Ródio (A) ou Rutênio (S).</small></div>`;
@@ -7738,6 +7739,12 @@ function pieceSrc(t, slot, wtype, lazy){
   pieceMake(key, t, slot, wtype); return ICONS[key];
 }
 // ===== Imagens dos itens (desenhos proprios do Nine Crowns; a cor de destaque e a do grade) =====
+// Evolucao +0 a +12 (pedido do Arnold): 0-2 nada, 3 um branco bem fraco, 4-6 de cinza para azul claro, 7-8 amarelo com poucas chamas, 9+ laranja ate fogo forte
+const NC_UP_MAX = 12;
+const NC_UP = [null, null, null, {c:'#ffffff', g:2, f:0, e:.10}, {c:'#c9d6e6', g:3, f:0, e:.18}, {c:'#a9d8ff', g:4, f:0, e:.28}, {c:'#6fc3ff', g:6, f:0, e:.40},
+  {c:'#ffe36a', g:6, f:30, n:2, e:.50}, {c:'#ffd03a', g:7, f:40, n:3, e:.60}, {c:'#ffa03a', g:8, f:52, n:4, e:.72}, {c:'#ff7a2a', g:9, f:64, n:5, e:.85}, {c:'#ff4a1f', g:10, f:78, n:6, e:1}, {c:'#ff2a12', g:12, f:95, n:8, e:1.2}];
+[null,null,null,null,null,null,null,'#ffb000','#ff9800','#ff6a00','#ff4800','#ff2c00','#ff1400'].forEach((w, i) => { if(w) NC_UP[i].w = w; });   // cor mais forte para o brilho em 3D (a clara estoura para branco)
+const ncUp = u => NC_UP[Math.max(0, Math.min(NC_UP_MAX, u | 0))];
 const NC_ART = {
   helmet:'<path class="m" d="M13 36a19 19 0 0 1 38 0v14H39V40H25v10H13Z"/><path class="a" d="M29 6h6v14h-6z"/><path class="k" d="M24 31h16v4H24z"/><path class="s" d="M19 30a13 13 0 0 1 9-11"/>',
   chest:'<path class="m" d="M15 12l11 5h12l11-5 7 13-9 5v25H17V30l-9-5Z"/><path class="a" d="M29 22h6v28h-6z"/><path class="a" d="M20 36h24v5H20z"/><path class="s" d="M21 20l4 10"/>',
@@ -7757,7 +7764,8 @@ const NC_ART = {
   scythe:'<path class="h" d="M12 58L40 14l6 4-28 44Z"/><path class="m" d="M30 10c14-8 26-2 30 14-8-8-18-10-28-4Z"/><path class="a" d="M36 14l8 6-4 5-8-6Z"/>',
 };
 const ncArt = (slot, wtype) => '<svg viewBox="0 0 64 64" aria-hidden="true">' + (NC_ART[slot === 'weapon' ? (wtype || CLS().wtype) : slot] || NC_ART.sword) + '</svg>';
-function pieceImg(t, slot, cls, wtype){ return `<span class="pimg nci ${cls || ''}" style="--tc:${TIERS[t].css}" role="img" aria-label="${SLOT_INFO[slot].n}">${ncArt(slot, wtype)}</span>`; }
+function pieceImg(t, slot, cls, wtype, up){ const U = ncUp(up || 0);
+  return `<span class="pimg nci ${cls || ''} ${U ? 'up' : ''} ${U && U.f ? 'fire' : ''}" ${up ? 'data-up="+' + up + '"' : ''} style="--tc:${TIERS[t].css}${U ? ';--uc:' + U.c + ';--ug:' + U.g + 'px;--fh:' + U.f + '%' : ''}" role="img" aria-label="${SLOT_INFO[slot].n}">${ncArt(slot, wtype)}</span>`; }
 function pieceImgOld(t, slot, cls, wtype){
   const src = pieceSrc(t, slot, wtype, true);
   const ic = slotIcon(slot, wtype);
@@ -7765,7 +7773,7 @@ function pieceImgOld(t, slot, cls, wtype){
   if(!src) return `<span class="pimg pico ${cls || ''}" style="--tc:${TIERS[t].css}">${ic}</span>`;
   return `<span class="pimg ${cls || ''}" style="--tc:${TIERS[t].css}" role="img" aria-label="${SLOT_INFO[slot].n}"><img src="${src}" alt=""><i>${ic}</i></span>`;
 }
-const itemImg = (it, cls) => pieceImg(it.tier, it.slot, cls, it.wtype);
+const itemImg = (it, cls) => pieceImg(it.tier, it.slot, cls, it.wtype, it.up);
 function forgeItems(){
   const eqs = SLOTS.map(equipped).filter(Boolean);
   const rest = save.inv.filter(i => !isEquipped(i) && (i.tier >= 2 || i.up)).sort((a, b) => (b.tier - a.tier) || ((b.up || 0) - (a.up || 0))).slice(0, 24);
@@ -7775,7 +7783,7 @@ function forgeItems(){
     (rest.length ? `<div class="eyebrow">Na mochila (Grade D ou mais)</div><div class="fsel">${rest.map(chip).join('')}</div>` : '');
 }
 function renderForge(){
-  $('#forgeTabs').innerHTML = [['fuse','Fusão'],['craft','Fabricar'],['up','Evoluir +1 a +15'],['gems','Pedras e encaixes']].map(([k, n]) => `<button class="chipb" data-ftab="${k}" aria-pressed="${forgeTab === k}">${n}</button>`).join('');
+  $('#forgeTabs').innerHTML = [['fuse','Fusão'],['craft','Fabricar'],['up','Evoluir +1 a +12'],['gems','Pedras e encaixes']].map(([k, n]) => `<button class="chipb" data-ftab="${k}" aria-pressed="${forgeTab === k}">${n}</button>`).join('');
   $('#forgeMats').innerHTML = matsHTML(forgeTab === 'craft' ? CRAFT_MATS : forgeTab === 'up' ? FORGE_MATS : forgeTab === 'gems' ? ['cristal','broca'] : []);
   $('#forgeBody').innerHTML = forgeTab === 'up' ? upHTML() : forgeTab === 'gems' ? gemsHTML() : forgeTab === 'craft' ? craftHTML() : fuseHTML();
 }
@@ -7800,10 +7808,10 @@ function craftItem(t){
 }
 function statsAfter(it){ const c = Object.assign({}, it, {up:(it.up || 0) + 1}); return itemStats(c); }
 function upHTML(){
-  let h = `<p class="lede">Evolua a peça de <b>+1 até +15</b>. Cada nível dá <b>+4%</b> em vida, ataque e defesa da peça. Em <b>+10</b> e <b>+15</b> ela ganha um encaixe novo (até 5) e brilho de evolução. Até +7 nunca se perde nada; depois a peça pode cair de nível e, de +13 em diante, rachar e voltar para +10. <b>Nenhuma peça é destruída.</b> Cada falha dá +3% de chance na próxima tentativa.${evFx().up ? ' <b style="color:#ff9a3a">Evento Forja Ardente: +10% de chance.</b>' : ''}</p>` + forgeItems();
+  let h = `<p class="lede">Evolua a peça de <b>+1 até +12</b>. Cada nível dá <b>+4%</b> em vida, ataque e defesa da peça. A partir de <b>+3</b> a peça começa a brilhar e de <b>+7</b> em diante pega fogo. Em <b>+10</b> e <b>+12</b> ela ganha um encaixe novo (até 5) e brilho de evolução. Até +7 nunca se perde nada; depois a peça pode cair de nível e, de +13 em diante, rachar e voltar para +10. <b>Nenhuma peça é destruída.</b> Cada falha dá +3% de chance na próxima tentativa.${evFx().up ? ' <b style="color:#ff9a3a">Evento Forja Ardente: +10% de chance.</b>' : ''}</p>` + forgeItems();
   const it = byId(forgeSel); if(!it) return h + '<div class="empty">Nenhuma peça para evoluir.</div>';
   ensureSk(it); const T = TIERS[it.tier];
-  if(it.up >= 15) return h + `<div class="fpanel" style="--tc:${T.css}"><div class="big">${itemName(it)}</div><div class="istat">Esta peça já está no máximo (+15).</div></div>`;
+  if(it.up >= NC_UP_MAX) return h + `<div class="fpanel" style="--tc:${T.css}"><div class="big">${itemName(it)}</div><div class="istat">Esta peça já está no máximo (+12).</div></div>`;
   const U = UPG[it.up + 1], cost = upCost(it), have = save.mats[U.m] || 0, ok = have >= 1 && save.gold >= cost, risky = U.lose || U.brk;
   const prot = (U.lose && forgeOpt.selo && save.mats.selo > 0) || (U.brk && !U.lose && forgeOpt.bencao && save.mats.bencao > 0);
   const confirmNow = risky && !prot && forgeConfirm === it.id;
@@ -7811,7 +7819,7 @@ function upHTML(){
     <div class="evrow">${itemImg(it, 'ps-big')}<div style="display:grid;gap:6px">
       <div class="big">${itemName(it)} <span class="up">→ +${it.up + 1}</span></div>
       <div class="cmp"><div><div class="eyebrow">Agora</div>${statText(itemStats(it))}</div><div><div class="eyebrow">Depois</div><b>${statText(statsAfter(it))}</b></div></div>
-      <div class="pbar"><i style="width:${it.up/15*100}%"></i><span>+${it.up} de +15</span></div></div></div>
+      <div class="pbar"><i style="width:${it.up/NC_UP_MAX*100}%"></i><span>+${it.up} de +${NC_UP_MAX}</span></div></div></div>
     <div class="row"><span class="pill ok">Chance ${Math.round(upChance(it)*100)}%</span><span class="pill">${MATS[U.m].n}: ${have}/1</span><span class="pill">${adenaTxt(cost)}</span></div>
     <div class="istat">${upRisk(U)}.</div>
     <div class="row">${U.lose ? `<button class="chipb" data-fopt="selo" aria-pressed="${forgeOpt.selo}">Usar Selo de Ferreiro se falhar (${save.mats.selo || 0})</button>` : ''}${U.brk ? `<button class="chipb" data-fopt="bencao" aria-pressed="${forgeOpt.bencao}">Usar Bênção da Bigorna se rachar (${save.mats.bencao || 0})</button>` : ''}</div>
@@ -8076,6 +8084,26 @@ function kkPaint(h){
   const wt = tOf('weapon'); if(wt >= 0) col.wpn = mix(0x9aa7ac, TIERS[wt].hex, .55);
   const tex = kkTex(d.model, col); if(!tex) return;
   x.m.traverse(o => { if(o.isMesh && o.material){ if(!o.userData.kkM){ o.material = o.material.clone(); o.userData.kkM = 1; } if(o.material.map !== tex){ o.material.map = tex; o.material.needsUpdate = true; } } });
+  ncWeaponFx(x.m);
+}
+// arma equipada: do +3 em diante ela brilha; do +7 em diante ganha chamas (mais chamas a cada nivel)
+let ncFlameTex = null;
+function ncWeaponFx(root){
+  const w = equipped('weapon'), U = w ? ncUp(w.up || 0) : null;
+  if(!ncFlameTex){ const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'), r = g.createRadialGradient(32, 38, 2, 32, 34, 30); r.addColorStop(0, 'rgba(255,255,255,1)'); r.addColorStop(.35, 'rgba(255,255,255,.55)'); r.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = r; g.fillRect(0, 0, 64, 64); ncFlameTex = new T.CanvasTexture(c); }
+  root.traverse(o => { if(!o.isMesh || !/Sword|Axe|Wand|Staff|Crossbow|Knife/.test(o.name) || !o.material || !o.material.emissive) return;
+    (o.userData.ncFl || []).forEach(sp => { o.remove(sp); sp.material.dispose(); }); o.userData.ncFl = [];
+    if(!U || !o.visible){ o.material.emissive.setHex(0); o.material.emissiveIntensity = 1; return; }
+    const col3 = U.w || U.c; o.material.emissive.set(col3); o.material.emissiveIntensity = .1 + U.e*.42;
+    if(!o.geometry.boundingBox) o.geometry.computeBoundingBox(); const b = o.geometry.boundingBox, sz = b.getSize(new T.Vector3()), ax = sz.y >= sz.x && sz.y >= sz.z ? 'y' : sz.x >= sz.z ? 'x' : 'z', L = sz[ax], c0 = b.getCenter(new T.Vector3());
+    if(U.e >= .18) for(let i = 0; i < 4; i++){ const sp = new T.Sprite(new T.SpriteMaterial({map:ncFlameTex, color:new T.Color(col3), blending:T.AdditiveBlending, depthWrite:false, transparent:true, opacity:U.w ? .16 : .10 + U.e*.3}));   // halo parado em volta da arma
+      sp.position.copy(c0); sp.position[ax] = b.min[ax] + L*(.3 + i*.22); sp.scale.setScalar(L*(.34 + U.e*.12)); sp.renderOrder = 4; o.add(sp); o.userData.ncFl.push(sp); }
+    if(!U.n) return;
+    for(let i = 0; i < U.n; i++){ const sp = new T.Sprite(new T.SpriteMaterial({map:ncFlameTex, color:new T.Color(col3), blending:T.AdditiveBlending, depthWrite:false, transparent:true, opacity:.8}));
+      const k = U.n === 1 ? .7 : .25 + .75*i/(U.n - 1), base = new T.Vector3().copy(c0); base[ax] = b.min[ax] + L*k; const s0 = L*(.2 + U.e*.16), ph = Math.random()*6, v = 1.4 + Math.random();
+      sp.position.copy(base); sp.scale.setScalar(s0); sp.renderOrder = 5;
+      sp.onBeforeRender = () => { const t = performance.now()/1000*v + ph, f = t % 1; sp.position.copy(base); sp.position.y += f*L*.16; sp.scale.setScalar(s0*(1.15 - f*.6)); sp.material.opacity = .95*(1 - f*.75); };
+      o.add(sp); o.userData.ncFl.push(sp); } });
 }
 const MXU = {uRim:{value:new T.Color(0x9ab8ff)}, uRimK:{value:.08}, uArm:{value:new T.Color(0xffffff)}, uArmK:{value:0}};
 const mxNeeds = d => [d.model, d.borrow ? d.borrow.from : null, d.daggers ? d.daggers.from : null, d.kk ? 'kk_weapons' : null].filter(Boolean);
@@ -9627,7 +9655,7 @@ function monUpdate(e, dt){
   if(m.fly) m.model.position.y = m.y0 + Math.sin(clock*2.4 + m.ph)*.08;
   m.mixer.update(e.frozenT > 0 ? 0 : dt);
 }
-if(location.hash === '#nctest') window.__nc = {en:() => enemies, p:() => P, boss:id => startStage(id, true), go:id => startStage(id), skill:i => useSkill(i), sv:() => save, scene:(a,b,c) => ncScene(a,b,c), fall:(id) => ncKingFall(id, true), fim:() => ncFinal(), pet:() => ncPet, cls:() => save.cls, set:(c, id) => { save.cls = c; save.level = 40; save.spec = save.spec || {}; save.spec[c] = id; P.S = stats(); }};   // so para os testes automaticos
+if(location.hash === '#nctest') window.__nc = {en:() => enemies, p:() => P, boss:id => startStage(id, true), go:id => startStage(id), skill:i => useSkill(i), sv:() => save, img:(t, sl, c, w, u) => pieceImg(t, sl, c, w, u), hub:() => { rebuildHubHero(); renderHub(); }, scene:(a,b,c) => ncScene(a,b,c), fall:(id) => ncKingFall(id, true), fim:() => ncFinal(), pet:() => ncPet, cls:() => save.cls, set:(c, id) => { save.cls = c; save.level = 40; save.spec = save.spec || {}; save.spec[c] = id; P.S = stats(); }};   // so para os testes automaticos
 const NC_PETS = [['', 'Nenhum'], ['f_Dragon', 'Dragonete'], ['s_Cat', 'Gato'], ['s_Dog', 'Cachorro'], ['f_Pigeon', 'Pombo'], ['f_Glub', 'Glub'], ['s_Chicken', 'Galinha']];
 let ncPet = null;
 function ncPetSpawn(){ try{ if(ncPet){ removeObj(ncPet.root); ncPet = null; } const key = save.pet; if(!key || !monOn()) return;
@@ -11337,7 +11365,7 @@ const inspect = {yaw:0, dist:4.6};
 function renderPauseGear(){
   const B = bonuses(), S = stats();
   const eq = ncSlots().map(slot => { const it = equipped(slot);
-    return `<button class="eq ${it ? 'has' : ''}" data-puneq="${slot}" style="--tc:${it ? TIERS[it.tier].css : '#3a405c'}" ${it ? '' : 'disabled'} title="${it ? 'Tirar ' + itemName(it) : 'Vazio'}">${it ? pieceImg(it.tier, slot, 'ps-eq', it.wtype) : slotIcon(slot)}<span class="en">${it ? itemName(it) : SLOT_INFO[slot].n}</span><span class="es" ${it ? `style="color:${TIERS[it.tier].css}"` : ''}>${it ? TIERS[it.tier].sc + ' · ' + TIERS[it.tier].n : 'vazio'}</span></button>`; }).join('');
+    return `<button class="eq ${it ? 'has' : ''}" data-puneq="${slot}" style="--tc:${it ? TIERS[it.tier].css : '#3a405c'}" ${it ? '' : 'disabled'} title="${it ? 'Tirar ' + itemName(it) : 'Vazio'}">${it ? pieceImg(it.tier, slot, 'ps-eq', it.wtype, it.up) : slotIcon(slot)}<span class="en">${it ? itemName(it) : SLOT_INFO[slot].n}</span><span class="es" ${it ? `style="color:${TIERS[it.tier].css}"` : ''}>${it ? TIERS[it.tier].sc + ' · ' + TIERS[it.tier].n : 'vazio'}</span></button>`; }).join('');
   const act = [...B.sets.map(t => `<b style="color:${TIERS[t].css}">${SET_NAMES[t]}</b>`), ...COMBOS.filter(k => B.combos.includes(k.id)).map(k => `<b style="color:${k.css}">${k.name}</b>`)];
   const fl = [['all','Todos'], ...ncSlots().map(s => [s, SLOT_INFO[s].n])];
   const list = save.inv.filter(i => !isEquipped(i) && (pFilter === 'all' || i.slot === pFilter))
@@ -12330,6 +12358,16 @@ body.nc-l #hub>aside.panel::before,body.nc-r #hub>#rightPanel::before{transform:
 #hub .eq svg,.mbox .eq svg{fill:#4a3f8a}#hub .eq .nci svg,.mbox .eq .nci svg{fill:none;width:78%;height:78%}
 #ncBag{display:inline-flex;align-items:center;gap:6px}.ncbag-t{font-size:12px}
 @media (max-width:600px){.ncbag-t{display:none}}
+/* --- evolucao +3 a +12: brilho e fogo nas imagens dos itens --- */
+.pimg.nci{position:relative;overflow:hidden}.pimg.nci svg{position:relative;z-index:1}
+.pimg.nci.up{box-shadow:inset 0 0 0 2px var(--tc),inset 0 0 0 3.5px #05050c,inset 0 0 calc(var(--ug)*1.6) var(--uc)}
+.pimg.nci.up svg{filter:drop-shadow(0 0 var(--ug) var(--uc)) drop-shadow(0 0 calc(var(--ug)*.5) var(--uc))}
+.pimg.nci.fire::before{content:"";position:absolute;left:-6%;right:-6%;bottom:0;height:var(--fh);z-index:0;transform-origin:50% 100%;
+  background:radial-gradient(ellipse 22% 100% at 14% 100%,var(--uc),transparent 72%),radial-gradient(ellipse 18% 78% at 36% 100%,#fff6c0,transparent 70%),radial-gradient(ellipse 24% 100% at 58% 100%,var(--uc),transparent 72%),radial-gradient(ellipse 20% 84% at 84% 100%,var(--uc),transparent 72%);
+  animation:ncFlame .7s ease-in-out infinite alternate;pointer-events:none}
+.pimg.nci[data-up]::after{content:attr(data-up);position:absolute;right:2px;top:1px;z-index:2;font:800 10px/1 system-ui,sans-serif;color:var(--uc,#fff);text-shadow:0 0 3px #000,0 1px 0 #000,1px 0 0 #000,-1px 0 0 #000}
+.pimg.nci.ps-card[data-up]::after{font-size:14px}
+@keyframes ncFlame{0%{transform:scaleY(.78) skewX(-5deg);opacity:.7}50%{transform:scaleY(1.06) skewX(3deg);opacity:1}100%{transform:scaleY(.9) skewX(6deg);opacity:.85}}
 /* --- partida --- */
 #hud .hud-lv{border-radius:0;clip-path:var(--gem);width:50px;height:56px;top:-8px;background:linear-gradient(180deg,#ffe36a,#ffb347);box-shadow:none}
 #hud .hud-lv b{color:#120a1e;text-shadow:none;font-weight:400}
