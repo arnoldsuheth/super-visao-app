@@ -6038,7 +6038,7 @@ const ncCloud = {
   draw(){ const b = document.getElementById('ncCloudBox'); if(!b) return;
     const pb = document.getElementById('ncPetBox'); if(pb) pb.innerHTML = '<div class="eyebrow">Mascote</div><div class="filters">' + NC_PETS.map(x => '<button class="chipb" data-ncpet="' + x[0] + '" aria-pressed="' + ((save.pet || '') === x[0]) + '">' + x[1] + '</button>').join('') + '</div><small class="nc-note">O mascote acompanha o herói nas áreas. Por enquanto é só companhia: não ataca nem dá bônus.</small>'
       + '<details class="nc-cred"><summary>Créditos</summary><p><b>Nine Crowns</b> · criação e direção: Arnold Suheth (Studio Evolution Tech).<br>Feito a partir do jogo Armadura do Sol, de Tiago.<br>Heróis: KayKit Adventurers, de Kay Lousberg (CC0).<br>Monstros: Ultimate Monsters, de Quaternius (CC0).<br>Letra: Marcellus SC, de Astigmatic (licença OFL).<br>Motor 3D: three.js (licença MIT).</p></details>';
-    if(pb) pb.innerHTML += '<div class="eyebrow" style="margin-top:14px">Controles no celular</div><button class="btn sm" style="width:100%" data-ncswapctl>' + (save.swapCtl !== false ? 'Andar na DIREITA, golpes na ESQUERDA (toque para inverter)' : 'Andar na ESQUERDA, golpes na DIREITA (toque para inverter)') + '</button>';
+    if(pb) pb.innerHTML += '<div class="eyebrow" style="margin-top:14px">Controles no celular</div><button class="btn sm" style="width:100%" data-ncswapctl>' + (save.swapCtl === true ? 'Andar na DIREITA, golpes na ESQUERDA (toque para inverter)' : 'Andar na ESQUERDA, golpes na DIREITA (toque para inverter)') + '</button>';
     b.innerHTML = '<div class="eyebrow">Salvamento na nuvem</div><div class="spec-card"><small>Seu código</small><b class="nc-code">' + this.code() + '</b><small>Anote este código. Em outro aparelho, digite ele aqui embaixo para continuar de onde parou.</small>'
       + '<small class="nc-cmsg">' + (this.msg || (save.ncAt ? 'Já está salvo na nuvem.' : 'Ainda não enviado.')) + '</small><button class="btn sm primary" data-nccloud="push">Salvar na nuvem agora</button>'
       + '<details class="nc-cred"><summary>Cópias de segurança deste aparelho</summary><p>O jogo guarda uma cópia por dia. Toque duas vezes para voltar a uma delas.</p>' + (ncBak.keys().map(k => { const t = ncBak.info(k); return t ? '<button class="btn sm" style="display:block;width:100%;margin-top:6px" data-ncbak="' + k + '">' + (ncBak.ask === k ? 'Confirmar? Troca o progresso atual' : t) + '</button>' : ''; }).join('') || '<p>Ainda não há cópias.</p>') + '</details>'
@@ -6046,7 +6046,7 @@ const ncCloud = {
 };
 addEventListener('visibilitychange', () => { if(document.visibilityState === 'hidden') try{ ncCloud.push(true); }catch(e){} });
 // Copia de seguranca: uma por dia (guarda as 5 ultimas) neste aparelho. Serve para voltar atras se alguma atualizacao estragar o progresso.
-function ncCtl(){ document.body.classList.toggle('nc-swap', save.swapCtl !== false); }   // analogico na direita e botoes na esquerda (padrao pedido pelo Arnold; da para voltar no menu Heroi)
+function ncCtl(){ document.body.classList.toggle('nc-swap', save.swapCtl === true); }   // analogico na direita e botoes na esquerda (padrao pedido pelo Arnold; da para voltar no menu Heroi)
 try{ ncCtl(); }catch(e){}
 const ncBak = {
   keys(){ const k = []; for(let i = 0; i < localStorage.length; i++){ const n = localStorage.key(i); if(n && n.indexOf('nc-bak-') === 0) k.push(n); } return k.sort().reverse(); },
@@ -8112,6 +8112,7 @@ function kkPaint(h){
   ncWeaponFx(x.m);
 }
 // Foice do Necromante (o pacote de bonecos nao traz foice; esta e feita aqui): cabo de madeira e lamina curva na cor do grade
+const KK_SCY = [0, 3.1416, 1.5708, 0, 0, 0];   // giro e posicao da foice na mao
 function kkScythe(x, tier){
   if(!x.scy){ let slot = null; x.m.traverse(o => { if(!slot && (o.name === 'handslotr' || o.name === 'handslot.r')) slot = o; }); if(!slot) return;
     const g = new T.Group(); g.name = 'Scythe_NC'; g.quaternion.set(0, -1, 0, 0);
@@ -8121,6 +8122,7 @@ function kkScythe(x, tier){
     const blade = new T.Mesh(new T.ExtrudeGeometry(sh, {depth:.045, bevelEnabled:false}), bm); blade.position.z = -.022; blade.name = 'Scythe_Blade';
     const ring = new T.Mesh(new T.CylinderGeometry(.06, .06, .12, 8), bm); ring.position.y = 1.2; ring.name = 'Scythe_Ring';
     [handle, blade, ring].forEach(o => { o.castShadow = true; g.add(o); }); slot.add(g); x.scy = {g, bm}; }
+  { const e = window.__scy || KK_SCY; x.scy.g.quaternion.set(0, -1, 0, 0).multiply(_kkQ.setFromEuler(_kkE.set(e[0], e[1], e[2]))); x.scy.g.position.set(e[3] || 0, e[4] || 0, e[5] || 0); }
   x.scy.bm.color.set(tier >= 0 ? new T.Color(0xb8c0cc).lerp(new T.Color(TIERS[tier].hex), .55) : 0xb8c0cc);
 }
 // arma equipada: do +3 em diante ela brilha; do +7 em diante ganha chamas (mais chamas a cada nivel)
@@ -9708,7 +9710,7 @@ function monUpdate(e, dt){
   if(m.fly) m.model.position.y = m.y0 + Math.sin(clock*2.4 + m.ph)*.08;
   m.mixer.update(e.frozenT > 0 ? 0 : dt);
 }
-if(location.hash === '#nctest') window.__nc = {en:() => enemies, p:() => P, boss:id => startStage(id, true), go:id => startStage(id), skill:i => useSkill(i), sv:() => save, hurt:n => hurtPlayer(n), mats:() => hero.mats.map(m => m.emissive ? m.emissive.getHexString() : '-').join(','), img:(t, sl, c, w, u) => pieceImg(t, sl, c, w, u), hub:() => { rebuildHubHero(); renderHub(); }, scene:(a,b,c) => ncScene(a,b,c), fall:(id) => ncKingFall(id, true), fim:() => ncFinal(), pet:() => ncPet, cls:() => save.cls, set:(c, id) => { save.cls = c; save.level = 40; save.spec = save.spec || {}; save.spec[c] = id; P.S = stats(); }};   // so para os testes automaticos
+if(location.hash === '#nctest') window.__nc = {en:() => enemies, p:() => P, boss:id => startStage(id, true), go:id => startStage(id), skill:i => useSkill(i), sv:() => save, scy:() => { const g = hero.mx.scy.g; g.updateWorldMatrix(true, false); const q = g.getWorldQuaternion(new T.Quaternion()), up = new T.Vector3(0, 1, 0).applyQuaternion(q), bl = new T.Vector3(1, 0, 0).applyQuaternion(q), ry = hero.root.rotation.y, f = new T.Vector3(Math.sin(ry), 0, Math.cos(ry)); return [+up.y.toFixed(2), +up.dot(f).toFixed(2), +bl.y.toFixed(2), +bl.dot(f).toFixed(2)]; }, hurt:n => hurtPlayer(n), mats:() => hero.mats.map(m => m.emissive ? m.emissive.getHexString() : '-').join(','), img:(t, sl, c, w, u) => pieceImg(t, sl, c, w, u), hub:() => { rebuildHubHero(); renderHub(); }, scene:(a,b,c) => ncScene(a,b,c), fall:(id) => ncKingFall(id, true), fim:() => ncFinal(), pet:() => ncPet, cls:() => save.cls, set:(c, id) => { save.cls = c; save.level = 40; save.spec = save.spec || {}; save.spec[c] = id; P.S = stats(); }};   // so para os testes automaticos
 const NC_PETS = [['', 'Nenhum'], ['f_Dragon', 'Dragonete'], ['s_Cat', 'Gato'], ['s_Dog', 'Cachorro'], ['f_Pigeon', 'Pombo'], ['f_Glub', 'Glub'], ['s_Chicken', 'Galinha']];
 let ncPet = null;
 function ncPetSpawn(){ try{ if(ncPet){ removeObj(ncPet.root); ncPet = null; } const key = save.pet; if(!key || !monOn()) return;
@@ -11772,7 +11774,7 @@ $('#hub').addEventListener('click', e => {
     const x = ncSpec(); if(x) banner('Especialização: ' + x.n, x.d); try{ SFX.drop(); }catch(e){} return; }
   if(b.dataset.ncpet !== undefined){ save.pet = b.dataset.ncpet; persist(); ncCloud.draw(); return; }
   if(b.dataset.ncbak){ if(ncBak.ask !== b.dataset.ncbak){ ncBak.ask = b.dataset.ncbak; ncCloud.draw(); const dd = document.querySelector('#ncCloudBox details'); if(dd) dd.open = true; } else ncBak.restore(b.dataset.ncbak); return; }
-  if(b.dataset.ncswapctl !== undefined){ save.swapCtl = save.swapCtl === false; persist(); ncCtl(); ncCloud.draw(); return; }
+  if(b.dataset.ncswapctl !== undefined){ save.swapCtl = save.swapCtl !== true; persist(); ncCtl(); ncCloud.draw(); return; }
   if(b.dataset.nccloud){ if(b.dataset.nccloud === 'push'){ save.ncDirty = 1; ncCloud.msg = 'Enviando…'; ncCloud.draw(); ncCloud.push(); }
     else { const v = (document.getElementById('ncCodeIn') || {}).value || ''; if(!ncCloud.ask){ ncCloud.ask = true; ncCloud.draw(); const i = document.getElementById('ncCodeIn'); if(i) i.value = v; } else { ncCloud.ask = false; ncCloud.enter(v); } } return; }
   if(b.dataset.ncfree !== undefined){ save.ncFree = !save.ncFree; ncSubAsk = null;
