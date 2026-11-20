@@ -6036,7 +6036,7 @@ const ncCloud = {
   boot(){ if(save.ncOff || !save.ncCode) return;   // outro aparelho salvou depois? pega o mais novo, a nao ser que este tenha progresso ainda nao enviado
     this.call('nc_load', {p_code:save.ncCode}).then(r => { if(r && r.data && r.updated_at && (!save.ncAt || new Date(r.updated_at) > new Date(save.ncAt)) && !save.ncDirty){ r.data.ncAt = r.updated_at; this.adopt(save.ncCode, r.data); } else if(save.ncDirty) this.push(); }).catch(() => {}); },
   draw(){ const b = document.getElementById('ncCloudBox'); if(!b) return;
-    const pb = document.getElementById('ncPetBox'); if(pb) pb.innerHTML = '<div class="eyebrow">Mascote</div><div class="filters">' + NC_PETS.map(x => '<button class="chipb" data-ncpet="' + x[0] + '" aria-pressed="' + ((save.pet || '') === x[0]) + '">' + x[1] + '</button>').join('') + '</div><small class="nc-note">O mascote acompanha o herói nas áreas. Por enquanto é só companhia: não ataca nem dá bônus.</small>'
+    const pb = document.getElementById('ncPetBox'); if(pb) pb.innerHTML = ncPetHTML()
       + '<details class="nc-cred"><summary>Créditos</summary><p><b>Nine Crowns</b> · criação e direção: Arnold Suheth (Studio Evolution Tech).<br>Feito a partir do jogo Armadura do Sol, de Tiago.<br>Heróis: KayKit Adventurers, de Kay Lousberg (CC0).<br>Monstros: Ultimate Monsters, de Quaternius (CC0).<br>Letra: Marcellus SC, de Astigmatic (licença OFL).<br>Motor 3D: three.js (licença MIT).</p></details>';
     if(pb) pb.innerHTML += '<div class="eyebrow" style="margin-top:14px">Controles no celular</div><button class="btn sm" style="width:100%" data-ncswapctl>' + (save.swapCtl === true ? 'Andar na DIREITA, golpes na ESQUERDA (toque para inverter)' : 'Andar na ESQUERDA, golpes na DIREITA (toque para inverter)') + '</button>';
     b.innerHTML = '<div class="eyebrow">Salvamento na nuvem</div><div class="spec-card"><small>Seu código</small><b class="nc-code">' + this.code() + '</b><small>Anote este código. Em outro aparelho, digite ele aqui embaixo para continuar de onde parou.</small>'
@@ -6089,6 +6089,7 @@ function stats(){
   for(const slot of SLOTS){ const it = equipped(slot); if(!it) continue; const b = itemStats(it); for(const k in b){ if(k === 'elem') s.elem = b.elem; else s[k] += b[k]; } gemFx(it, addG); }
   s.hp *= c.hp*(1 + s.hpPct); s.atk *= c.atk*(1 + s.atkPct); s.def *= c.def*(1 + s.defPct); s.spd *= c.spd*(1 + s.spdPct); s.block += c.block;
   const sp = ncSpec(); if(sp) sp.fx(s);
+  try{ const pd = ncPetOn(); if(pd) pd.fx(s); }catch(e){}
   if(ncHeavy()){ s.spd *= .75; s.heavy = true; }
   const B = bonuses(); s.sets = B.sets; s.combos = B.combos;
   for(const t of B.sets){ s.atk *= 1 + .05*(t + 1); s.hp *= 1 + .04*(t + 1); if(t >= 3) s.regen += .002; SET_SPECIAL[t].fx(s); }
@@ -7761,11 +7762,12 @@ const ncUp = u => NC_UP[Math.max(0, Math.min(NC_UP_MAX, u | 0))];
 // ===== BAG: grade de espacos, itens empilhados, limite de espacos e de peso =====
 const NC_W = {weapon:12, chest:14, greaves:10, helmet:8, shoulders:8, bracers:6, boots:7, shield:12, amulet:1};
 const ncItemW = it => NC_W[it.slot] || 5;
-const ncBagMax = () => Math.max(40, Math.min(120, save.bagMax || 40));
+const ncBagBase = () => Math.max(40, Math.min(120, save.bagMax || 40));
+const ncBagMax = () => { let pet = false; try{ pet = !!ncPetOn(); }catch(e){} return ncBagBase() + (pet ? 10 : 0); };   // mascote junto = +10 espaços
 const ncWeightMax = () => 300 + save.level*6;
 const ncWeight = () => Math.round(save.inv.reduce((a, it) => a + ncItemW(it), 0) + Object.keys(save.mats || {}).reduce((a, k) => a + (save.mats[k] || 0)*.05, 0));
 const ncHeavy = () => ncWeight() >= ncWeightMax()*.8;
-const ncBagCost = () => 2000*Math.pow(2, (ncBagMax() - 40)/10);   // em bronze: 20 de prata, depois dobra
+const ncBagCost = () => 2000*Math.pow(2, (ncBagBase() - 40)/10);   // em bronze: 20 de prata, depois dobra
 let bagSel = null, ncFullT = 0;
 function ncBagFull(){ if(clock - ncFullT > 8){ ncFullT = clock; try{ banner('Bag cheia ou pesada demais', 'O item fica no chão. Abra a Mochila, libere espaço e passe por cima dele.', 'danger'); }catch(e){} } }
 const ncFits = it => save.inv.length < ncBagMax() && ncWeight() + ncItemW(it) <= ncWeightMax();
@@ -7779,7 +7781,7 @@ function ncBagRefresh(){ try{ if(mode === 'hub'){ applyGear(hero); renderHub(); 
 document.addEventListener('click', e => { const b = e.target.closest('[data-bsel],[data-bagbuy],[data-bagsort],[data-bagsell],[data-bagbrk],[data-bagdel]'); if(!b) return; const d = b.dataset;
   const take = it => { returnGems(it); save.inv = save.inv.filter(i => i !== it); bagSel = null; bagConfirm = 0; persist(); };
   if(d.bsel !== undefined){ bagSel = bagSel === d.bsel ? null : d.bsel; bagConfirm = 0; }
-  else if(d.bagbuy !== undefined){ const c = ncBagCost(); if(save.gold >= c && ncBagMax() < 120){ save.gold -= c; save.bagMax = ncBagMax() + 10; persist(); try{ SFX.drop(); }catch(e){} } }
+  else if(d.bagbuy !== undefined){ const c = ncBagCost(); if(save.gold >= c && ncBagBase() < 120){ save.gold -= c; save.bagMax = ncBagBase() + 10; persist(); try{ SFX.drop(); }catch(e){} } }
   else if(d.bagsort !== undefined){ save.inv.sort((a, b) => (SLOTS.indexOf(a.slot) - SLOTS.indexOf(b.slot)) || (b.tier - a.tier) || ((b.up || 0) - (a.up || 0)) || (a.id - b.id)); bagSel = null; persist(); try{ SFX.item(); }catch(e){} }
   else { const it = byId(+(d.bagsell || d.bagbrk || d.bagdel)); if(!it || isEquipped(it)) return;
     if(d.bagsell){ save.gold += sellValue(it); take(it); try{ SFX.coin(); }catch(e){} }
@@ -7802,7 +7804,8 @@ function ncBagHTML(list, pz){
     det = itemRow(it, '<button class="btn sm primary" data-' + (pz ? 'peq' : 'eq') + '="' + it.id + '" ' + (wrong ? 'disabled' : '') + '>' + (wrong ? 'Só ' + CLASSES[itemCls(it)].name : 'Equipar') + '</button>')
       + '<div class="bag-act"><button class="btn sm" data-bagsell="' + it.id + '">Vender<small>' + adenaTxt(sellValue(it)) + '</small></button><button class="btn sm" data-bagbrk="' + it.id + '">Desmanchar<small>vira material</small></button><button class="btn sm' + (bagConfirm === it.id ? ' danger' : '') + '" data-bagdel="' + it.id + '">' + (bagConfirm === it.id ? 'Toque de novo<small>some para sempre</small>' : 'Excluir<small>joga fora</small>') + '</button></div><div class="bag-brk">Desmanchar dá: <b>' + ncBreakTxt(out) + '</b> (materiais da forja)</div>'; } }
   h += det ? '<div class="bag-det">' + det + '</div>' : '<div class="bag-det hint">Toque num item para ver os atributos, equipar, vender, desmanchar ou excluir.</div>';
-  if(cap < 120) h += '<button class="btn sm" style="width:100%;margin-top:8px" data-bagbuy ' + (save.gold >= ncBagCost() ? '' : 'disabled') + '>Aumentar a bag: +10 espaços por ' + adenaTxt(ncBagCost()) + '</button>';
+  if(ncPetOn()) h += '<div class="bag-more">Inclui +10 espaços do mascote</div>';
+  if(ncBagBase() < 120) h += '<button class="btn sm" style="width:100%;margin-top:8px" data-bagbuy ' + (save.gold >= ncBagCost() ? '' : 'disabled') + '>Aumentar a bag: +10 espaços por ' + adenaTxt(ncBagCost()) + '</button>';
   return h;
 }
 const NC_ART = {
@@ -9761,19 +9764,45 @@ if(location.hash === '#nctest') window.__nc = {drop:t => dropLoot(P.pos, t), loo
     o.mats = o.mats.size; o.big = Object.entries(o.big).sort((a, b) => b[1] - a[1]).slice(0, 8).map(x => x[0] + ':' + Math.round(x[1])); return o; }, scy:() => { const g = hero.mx.scy.g; g.updateWorldMatrix(true, false); const q = g.getWorldQuaternion(new T.Quaternion()), up = new T.Vector3(0, 1, 0).applyQuaternion(q), bl = new T.Vector3(1, 0, 0).applyQuaternion(q), ry = hero.root.rotation.y, f = new T.Vector3(Math.sin(ry), 0, Math.cos(ry)); return [+up.y.toFixed(2), +up.dot(f).toFixed(2), +bl.y.toFixed(2), +bl.dot(f).toFixed(2)]; }, hurt:n => hurtPlayer(n), mats:() => hero.mats.map(m => m.emissive ? m.emissive.getHexString() : '-').join(','), img:(t, sl, c, w, u) => pieceImg(t, sl, c, w, u), hub:() => { rebuildHubHero(); renderHub(); }, scene:(a,b,c) => ncScene(a,b,c), fall:(id) => ncKingFall(id, true), fim:() => ncFinal(), pet:() => ncPet, cls:() => save.cls, set:(c, id) => { save.cls = c; save.level = 40; save.spec = save.spec || {}; save.spec[c] = id; P.S = stats(); }};   // so para os testes automaticos
 const NC_PETS = [['', 'Nenhum'], ['f_Dragon', 'Dragonete'], ['s_Cat', 'Gato'], ['s_Dog', 'Cachorro'], ['f_Pigeon', 'Pombo'], ['f_Glub', 'Glub'], ['s_Chicken', 'Galinha']];
 let ncPet = null;
-function ncPetSpawn(){ try{ if(ncPet){ removeObj(ncPet.root); ncPet = null; } const key = save.pet; if(!key || !monOn()) return;
+/* Mascotes: comprados com Adena. Cada um dá um bônus fixo enquanto acompanha, ajuda a bater, dá +10 espaços na bag e pode evoluir (nível 1 a 10) para bater mais forte.
+   Preços e bônus são um primeiro chute para o Arnold ajustar. */
+const NC_PET_DEF = {
+  s_Chicken:{p:5000,   b:'+5% velocidade de ataque', fx:s => { s.aspd += .05; }},
+  s_Cat:    {p:20000,  b:'+6% chance de crítico',    fx:s => { s.crit += .06; }},
+  s_Dog:    {p:20000,  b:'+10% vida',                fx:s => { s.hp *= 1.10; }},
+  f_Pigeon: {p:20000,  b:'+8% velocidade de andar',  fx:s => { s.spd *= 1.08; }},
+  f_Glub:   {p:40000,  b:'+10% defesa',              fx:s => { s.def *= 1.10; }},
+  f_Dragon: {p:100000, b:'+8% ataque',               fx:s => { s.atk *= 1.08; }}};
+const NC_PET_MAX = 10;
+const ncPetLv = k => (save.pets && save.pets[k]) || 0;
+const ncPetOn = () => (save.pet && ncPetLv(save.pet) > 0 && NC_PET_DEF[save.pet]) || null;
+const ncPetUpCost = k => Math.round(NC_PET_DEF[k].p*.4*ncPetLv(k));
+const ncPetHit = k => .22 + .06*ncPetLv(k);     // parte do ataque do herói a cada golpe do mascote
+if(save.pet && !ncPetLv(save.pet)) save.pet = '';   // mascote agora precisa ser comprado
+function ncPetHTML(){ let h = '<div class="eyebrow">Mascote</div><small class="nc-note" style="margin:0 0 8px">Comprado com Adena. Enquanto acompanha: dá o bônus dele, ajuda a bater e aumenta a bag em 10 espaços. Evoluir deixa o golpe dele mais forte.</small><div class="petl">';
+  NC_PETS.forEach(x => { const k = x[0]; if(!k) return; const D = NC_PET_DEF[k], lv = ncPetLv(k), on = save.pet === k && lv > 0, uc = lv ? ncPetUpCost(k) : 0;
+    h += '<div class="petc' + (on ? ' on' : '') + '"><div><b>' + x[1] + (lv ? ' <i>nv ' + lv + '</i>' : '') + '</b><span>' + D.b + (lv ? ' · golpe ' + Math.round(ncPetHit(k)*100) + '% do seu ataque' : '') + '</span></div><div class="petb">'
+      + (lv ? '<button class="btn sm' + (on ? '' : ' primary') + '" data-ncpet="' + (on ? '' : k) + '">' + (on ? 'Guardar' : 'Levar') + '</button>' + (lv < NC_PET_MAX ? '<button class="btn sm" data-ncpetup="' + k + '" ' + (save.gold >= uc ? '' : 'disabled') + '>Evoluir<small>' + adenaTxt(uc) + '</small></button>' : '<span class="petmax">nível máximo</span>')
+            : '<button class="btn sm primary" data-ncpetbuy="' + k + '" ' + (save.gold >= D.p ? '' : 'disabled') + '>Comprar<small>' + adenaTxt(D.p) + '</small></button>') + '</div></div>'; });
+  return h + '</div>'; }
+function ncPetSpawn(){ try{ if(ncPet){ removeObj(ncPet.root); ncPet = null; } const key = save.pet; if(!key || !ncPetLv(key) || !monOn()) return;
   monLoad(key, g => { if(!g || save.pet !== key || !P) return; const model = monClone(g.scene), root = new T.Group(), fly = key[0] === 'f';
     model.traverse(n => { if(n.isMesh){ n.material = new T.MeshLambertMaterial({map:monTex(), skinning:!!n.isSkinnedMesh}); n.castShadow = !COARSE; } });
     const sz = g.box.getSize(new T.Vector3()), k = .95/Math.max(.01, sz.y); model.scale.setScalar(k); model.position.y = -g.box.min.y*k + (fly ? .9 : 0); root.add(model);
     root.position.set(P.pos.x - 1.4, P.pos.y, P.pos.z - 1.4); scene.add(root);
     const mixer = new T.AnimationMixer(model), f = re => { const c = g.animations.find(c => re.test(c.name)); return c ? mixer.clipAction(c) : null; };
-    ncPet = {root, mixer, idle:f(/^(Idle|Flying_Idle)$/), move:f(/^(Walk|Run|Fast_Flying)$/), cur:null}; }); }catch(e){} }
+    ncPet = {root, mixer, key, at:1, idle:f(/^(Idle|Flying_Idle)$/), move:f(/^(Walk|Run|Fast_Flying)$/), hit:f(/^(Attack|Bite_Front|Punch|Headbutt|Weapon)$/), cur:null}; }); }catch(e){} }
 let ncHvT = 0, ncHvOn = null;
 function ncHeavyFx(dt){ ncHvT -= dt; if(ncHvT > 0 || !hero || !hero.mats) return; ncHvT = .7; const hv = ncHeavy(); if(hv === ncHvOn) return; ncHvOn = hv;
   hero.mats.forEach(m => { if(!m.emissive || (m.userData.baseE && m.userData.ncKeep)) return; const b = m.userData.baseE || (m.userData.baseE = new T.Color(0)); if(hv){ m.userData.ncE0 = m.userData.ncE0 || b.clone(); b.setHex(0x6a0c0c); } else if(m.userData.ncE0) b.copy(m.userData.ncE0); m.emissive.copy(b); });
   try{ if(P) P.S = stats(); if(hv) banner('Você está pesado demais', 'O herói anda mais devagar. Venda itens da bag.', 'danger'); }catch(e){} }
 function ncPetUpdate(dt){ ncHeavyFx(dt); const p = ncPet; if(!p || !P) return; if(!p.root.parent){ ncPet = null; return; }
-  const tx = P.pos.x - Math.sin(P.face)*1.5 + Math.cos(P.face)*1.1, tz = P.pos.z - Math.cos(P.face)*1.5 - Math.sin(P.face)*1.1, dx = tx - p.root.position.x, dz = tz - p.root.position.z, d = Math.hypot(dx, dz);
+  let tx = P.pos.x - Math.sin(P.face)*1.5 + Math.cos(P.face)*1.1, tz = P.pos.z - Math.cos(P.face)*1.5 - Math.sin(P.face)*1.1;
+  // ajuda a bater: vai no inimigo acordado mais perto do herói e golpeia a cada 1,4 s
+  p.at -= dt; let tg = null; try{ if(!P.dead){ let nd = 7; for(const e of enemies){ if(e.dead || e.dying || !e.awake) continue; const de = Math.hypot(e.pos.x - P.pos.x, e.pos.z - P.pos.z); if(de < nd){ nd = de; tg = e; } } } }catch(e){}
+  if(tg){ const ax = p.root.position.x - tg.pos.x, az = p.root.position.z - tg.pos.z, ad = Math.hypot(ax, az) || 1; tx = tg.pos.x + ax/ad*1.1; tz = tg.pos.z + az/ad*1.1;
+    if(ad < 2 && p.at <= 0){ p.at = 1.4; try{ damageEnemy(tg, Math.max(1, Math.round(P.S.atk*ncPetHit(p.key))), false, -ax/ad, -az/ad, 0, false); burst(tg.pos, 0xffe08a, 5, 3, 3); if(p.hit){ p.hit.reset().setLoop(T.LoopOnce, 1).play(); p.cur = null; } }catch(e){} } }
+  const dx = tx - p.root.position.x, dz = tz - p.root.position.z, d = Math.hypot(dx, dz);
   if(d > 14){ p.root.position.x = tx; p.root.position.z = tz; } else if(d > .25){ const v = Math.min(d, (4 + d*2.2)*dt); p.root.position.x += dx/d*v; p.root.position.z += dz/d*v; p.root.rotation.y = Math.atan2(dx, dz); }
   try{ p.root.position.y = heightAt(p.root.position.x, p.root.position.z); }catch(e){ p.root.position.y = P.pos.y; }
   const want = d > .4 && p.move ? p.move : p.idle; if(want && want !== p.cur){ want.reset().play(); if(p.cur) p.cur.crossFadeTo(want, .15, false); p.cur = want; }
@@ -11824,7 +11853,9 @@ $('#hub').addEventListener('click', e => {
     if(ncSpecAsk !== id){ ncSpecAsk = id; renderSpec(); return; }
     ncSpecAsk = null; save.spec = save.spec || {}; save.spec[save.cls] = id; persist(); renderHub();
     const x = ncSpec(); if(x) banner('Especialização: ' + x.n, x.d); try{ SFX.drop(); }catch(e){} return; }
-  if(b.dataset.ncpet !== undefined){ save.pet = b.dataset.ncpet; persist(); ncCloud.draw(); return; }
+  if(b.dataset.ncpet !== undefined){ save.pet = b.dataset.ncpet && ncPetLv(b.dataset.ncpet) ? b.dataset.ncpet : ''; persist(); ncCloud.draw(); try{ renderHub(); }catch(e){} return; }
+  if(b.dataset.ncpetbuy){ const k = b.dataset.ncpetbuy, D = NC_PET_DEF[k]; if(D && !ncPetLv(k) && save.gold >= D.p){ save.gold -= D.p; save.pets = save.pets || {}; save.pets[k] = 1; save.pet = k; persist(); try{ SFX.drop(); banner('Mascote comprado', D.b + ' · +10 espaços na bag'); }catch(e){} ncCloud.draw(); try{ renderHub(); }catch(e){} } return; }
+  if(b.dataset.ncpetup){ const k = b.dataset.ncpetup, lv = ncPetLv(k), c = lv ? ncPetUpCost(k) : 0; if(lv && lv < NC_PET_MAX && save.gold >= c){ save.gold -= c; save.pets[k] = lv + 1; persist(); try{ SFX.drop(); banner('Mascote evoluiu: nível ' + (lv + 1), 'Golpe de ' + Math.round(ncPetHit(k)*100) + '% do seu ataque'); }catch(e){} ncCloud.draw(); try{ renderHub(); }catch(e){} } return; }
   if(b.dataset.ncbak){ if(ncBak.ask !== b.dataset.ncbak){ ncBak.ask = b.dataset.ncbak; ncCloud.draw(); const dd = document.querySelector('#ncCloudBox details'); if(dd) dd.open = true; } else ncBak.restore(b.dataset.ncbak); return; }
   if(b.dataset.ncswapctl !== undefined){ save.swapCtl = save.swapCtl !== true; persist(); ncCtl(); ncCloud.draw(); return; }
   if(b.dataset.nccloud){ if(b.dataset.nccloud === 'push'){ save.ncDirty = 1; ncCloud.msg = 'Enviando…'; ncCloud.draw(); ncCloud.push(); }
@@ -12352,6 +12383,7 @@ body.nc-l #hub>aside.panel::before,body.nc-r #hub>#rightPanel::before{transform:
 .spec-card b{font-family:var(--f-display);font-size:15px;color:var(--gold-hi)}.spec-card em{font-style:normal;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
 .spec-card small{color:var(--mute);font-size:12px;line-height:1.35}.spec-card .btn{margin-top:6px}
 .spec-card.on{border-color:var(--gold);background:rgba(242,193,78,.08)}
+.petl{display:grid;gap:6px}.petc{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;background:rgba(10,12,22,.5);border:1px solid rgba(138,106,255,.35)}.petc.on{border-color:var(--gold-hi,#ffd24a)}.petc b{display:block}.petc b i{font-style:normal;color:var(--gold-hi,#ffd24a);font-size:12px}.petc span{font-size:12px;color:var(--mute)}.petb{display:flex;gap:6px;flex-shrink:0}.petb .btn{display:flex;flex-direction:column;align-items:center;line-height:1.1;padding:6px 10px}.petb .btn small{font-size:10px;opacity:.8;font-family:var(--f-body);text-transform:none;letter-spacing:0}.petmax{font-size:11px;color:var(--mute);align-self:center}
 #specBox{margin:12px 0 4px}#ncPetBox{margin:14px 0 4px}.nc-note{display:block;color:var(--mute);font-size:12px;margin-top:6px}.nc-cred{margin-top:12px;font-size:13px;color:var(--mute)}.nc-cred summary{cursor:pointer;color:var(--vink,#cdb8ff);font-family:var(--f-display)}.nc-cred p{line-height:1.5;margin:8px 0 0}
 #ncScene{position:fixed;inset:0;z-index:9000;display:grid;place-items:center;padding:20px;background:radial-gradient(ellipse at 50% 40%,rgba(44,33,96,.82),rgba(5,5,12,.94));animation:ncScIn .6s ease}#ncScene[hidden]{display:none}
 .ncsc-box{max-width:520px;width:100%;text-align:center;padding:30px 24px;clip-path:var(--cut);background:linear-gradient(135deg,#1c1640 0 33%,#16203f 33% 66%,#231a40 66%);box-shadow:inset 0 0 0 3px #05050c,inset 0 0 0 4px #8a6aff;font-family:var(--f-display);color:#f4efe2}
