@@ -701,13 +701,11 @@ body.nocur, body.nocur *{cursor:none !important}
     <div id="vGear" class="panel" style="padding:0;border:0;background:none;backdrop-filter:none" hidden>
       <h2>Equipado <small>toque numa peça para tirar</small></h2>
       <div class="eqgrid" id="eqGrid"></div>
-      <h2>Conjuntos e combinações</h2>
-      <div class="blist" id="bonusList"></div>
-      <h2>Bolsa <small>materiais, fragmentos e pedras</small></h2>
-      <div id="bagList"></div>
-      <h2>Mochila <small id="invCap"></small></h2>
-      <div class="filters" id="invFilters"></div>
+      <h2>Mochila</h2>
+      <div class="filters bag-f" id="invFilters"></div>
       <div class="invlist" id="invList"></div>
+      <details class="nc-more"><summary>Pedras e fragmentos</summary><div id="bagList"></div></details>
+      <details class="nc-more"><summary>Conjuntos e combinações</summary><div class="blist" id="bonusList"></div></details>
       <button class="btn" id="sellIron">Vender todos os itens de Ferro da mochila</button>
     </div>
     <div id="vForge" class="panel" style="padding:0;border:0;background:none;backdrop-filter:none" hidden>
@@ -7653,10 +7651,9 @@ function renderGear(){
   bl += [9,8,7,6,5,4,3,2,1,0].map(t => `<div class="bon ${B.sets.includes(t) ? 'on' : ''}" style="--tc:${TIERS[t].css}"><b>${SET_NAMES[t]} completa</b> (6 peças iguais): ${SET_TEXT[t]}.</div>`).join('');
   bl += COMBOS.map(k => `<div class="bon ${B.combos.includes(k.id) ? 'on' : ''}" style="--tc:${k.css}"><b>${k.name}</b>: ${k.desc}<small>Precisa de ${k.req}.</small></div>`).join('');
   $('#bonusList').innerHTML = bl;
-  $('#invCap').textContent = save.inv.length + ' / ' + INV_MAX;
   $('#bagList').innerHTML = bagHTML();
   const fl = [['all','Todos'], ...ncSlots().map(s => [s, SLOT_INFO[s].n])];
-  $('#invFilters').innerHTML = fl.map(([k, n]) => `<button class="chipb" data-filter="${k}" aria-pressed="${invFilter === k}">${n}</button>`).join('');
+  $('#invFilters').innerHTML = fl.map(([k, n]) => [k, NC_SHORT[k] || n]).map(([k, n]) => `<button class="chipb" data-filter="${k}" aria-pressed="${invFilter === k}">${n}</button>`).join('');
   const list = save.inv.filter(i => !isEquipped(i) && (invFilter === 'all' || i.slot === invFilter))
     .sort((a, b) => (b.tier - a.tier) || (b.q - a.q) || (SLOTS.indexOf(a.slot) - SLOTS.indexOf(b.slot)));
   $('#invList').innerHTML = ncBagHTML(list);
@@ -7766,6 +7763,7 @@ const ncUp = u => NC_UP[Math.max(0, Math.min(NC_UP_MAX, u | 0))];
 // ===== BAG: grade de espacos, itens empilhados, limite de espacos e de peso =====
 const NC_W = {weapon:12, chest:14, greaves:10, helmet:8, shoulders:8, bracers:6, boots:7, shield:12, amulet:1};
 const ncItemW = it => NC_W[it.slot] || 5;
+const NC_SHORT = {helmet:'Elmo', chest:'Peito', shoulders:'Ombro', bracers:'Luva', greaves:'Calça', boots:'Bota', weapon:'Arma', amulet:'Amuleto', shield:'Escudo'};
 const ncBagBase = () => Math.max(40, Math.min(120, save.bagMax || 40));
 const ncBagMax = () => { let pet = false; try{ pet = !!ncPetOn(); }catch(e){} return ncBagBase() + (pet ? 10 : 0); };   // mascote junto = +10 espaços
 const ncWeightMax = () => 300 + save.level*6;
@@ -7781,8 +7779,25 @@ function ncBreak(it){ const R = recipe(it.tier).mats, out = {}; for(const m in R
   if(!Object.keys(out).length) out[Object.keys(R)[0]] = 1; const u = Math.floor((it.up || 0)/3); if(u > 0) out.refino = (out.refino || 0) + u; return out; }
 const ncBreakTxt = out => Object.keys(out).map(m => '+' + out[m] + ' ' + MATS[m].n).join(', ');
 let bagConfirm = 0;
+function ncPopHTML(){ const pz = mode !== 'hub';
+  let det = '';
+  if(typeof bagSel === 'string' && bagSel.indexOf('m:') === 0){ const k = bagSel.slice(2), M = MATS[k]; if(M && save.mats[k] > 0) det = '<div class="irow" style="--tc:' + M.css + '"><span class="bcell mat" style="--tc:' + M.css + ';width:44px">' + MAT_ICO(k) + '</span><div><div class="iname">' + M.n + ' × ' + save.mats[k] + '</div><div class="istat">Material de forja. Cai dos monstros e é usado em Fabricar e Evoluir.</div></div></div>'; }
+  else { const it = save.inv.find(i => String(i.id) === String(bagSel) && !isEquipped(i)); if(it){ const wrong = !itemOk(it);
+    const out = ncBreak(it);
+    const cur = equipped(it.slot);
+    det = itemRow(it, '<button class="btn sm primary" data-bagequip="' + it.id + '" ' + (wrong || save.level < grLv(it.tier) ? 'disabled' : '') + '>' + (wrong ? 'Só ' + CLASSES[itemCls(it)].name : save.level < grLv(it.tier) ? 'Nível ' + grLv(it.tier) : 'Equipar') + '</button>')
+      + (cur ? '<div class="pop-eq"><div class="eyebrow">Você está usando</div>' + itemRow(cur, '') + '</div>' : '<div class="pop-eq istat">Nada equipado neste lugar: esta peça só soma.</div>')
+      + '<div class="bag-act"><button class="btn sm" data-bagsell="' + it.id + '">Vender<small>' + adenaTxt(sellValue(it)) + '</small></button><button class="btn sm" data-bagbrk="' + it.id + '">Desmanchar<small>vira material</small></button><button class="btn sm' + (bagConfirm === it.id ? ' danger' : '') + '" data-bagdel="' + it.id + '">' + (bagConfirm === it.id ? 'Toque de novo<small>some para sempre</small>' : 'Excluir<small>joga fora</small>') + '</button></div><div class="bag-brk">Desmanchar dá: <b>' + ncBreakTxt(out) + '</b> (materiais da forja)</div>'; } }
+  return det; }
+function ncPopDraw(){ let el = document.getElementById('ncPop'); if(!el){ el = document.createElement('div'); el.id = 'ncPop'; document.body.appendChild(el); }
+  const vis = [...document.querySelectorAll('#invList .bgrid, #pauseGear .bgrid')].some(h => h.offsetParent !== null);
+  const det = bagSel !== null && vis ? ncPopHTML() : '';
+  el.hidden = !det; el.innerHTML = det ? '<div class="pop-bg" data-bagclose></div><div class="pop-box"><button class="pop-x" data-bagclose aria-label="Fechar">✕</button>' + det + '</div>' : ''; }
 function ncBagRefresh(){ try{ if(mode === 'hub'){ applyGear(hero); renderHub(); } else { try{ refreshGearInStage(); }catch(e){} renderPauseGear(); } }catch(e){} }
-document.addEventListener('click', e => { const b = e.target.closest('[data-bsel],[data-bagbuy],[data-bagsort],[data-bagsell],[data-bagbrk],[data-bagdel]'); if(!b) return; const d = b.dataset;
+document.addEventListener('click', e => { const b = e.target.closest('[data-bsel],[data-bagbuy],[data-bagsort],[data-bagsell],[data-bagbrk],[data-bagdel],[data-bagclose],[data-bagequip]');
+  if(!b){ if(bagSel !== null && !e.target.closest('#ncPop')){ bagSel = null; bagConfirm = 0; ncPopDraw(); } return; } const d = b.dataset;
+  if(d.bagclose !== undefined){ bagSel = null; bagConfirm = 0; ncPopDraw(); return; }
+  if(d.bagequip){ const it = byId(+d.bagequip); if(it){ equipItem(it); persist(); bagSel = null; try{ SFX.item(); }catch(e){} } ncBagRefresh(); ncPopDraw(); return; }
   const take = it => { returnGems(it); save.inv = save.inv.filter(i => i !== it); bagSel = null; bagConfirm = 0; persist(); };
   if(d.bsel !== undefined){ bagSel = bagSel === d.bsel ? null : d.bsel; bagConfirm = 0; }
   else if(d.bagbuy !== undefined){ const c = ncBagCost(); if(save.gold >= c && ncBagBase() < 120){ save.gold -= c; save.bagMax = ncBagBase() + 10; persist(); try{ SFX.drop(); }catch(e){} } }
@@ -7794,20 +7809,14 @@ document.addEventListener('click', e => { const b = e.target.closest('[data-bsel
   ncBagRefresh(); });
 function ncBagHTML(list, pz){
   const used = save.inv.length, cap = ncBagMax(), w = ncWeight(), wm = ncWeightMax(), heavy = w >= wm*.8;
-  let h = '<div class="bag-tools"><button class="btn sm" data-bagsort="1">Organizar</button></div><div class="bag-top"><span>Espaços <b>' + used + ' / ' + cap + '</b></span><span class="' + (heavy ? 'hv' : '') + '">Peso <b>' + w + ' / ' + wm + '</b></span></div><div class="bag-w"><i style="width:' + Math.min(100, w/wm*100) + '%;background:' + (heavy ? 'linear-gradient(90deg,#ff5a5a,#c81e1e)' : 'linear-gradient(90deg,#5ad8ff,#8a6aff)') + '"></i></div>'
+  let h = '<div class="bag-coins"><span>Adena <b>' + adenaHTML(save.gold) + '</b></span><span>Moedas Reais <b>' + save.coins + '</b></span></div><div class="bag-top"><span>Espaços <b>' + used + ' / ' + cap + '</b></span><span class="' + (heavy ? 'hv' : '') + '">Peso <b>' + w + ' / ' + wm + '</b></span><button class="btn sm" data-bagsort="1">Organizar</button></div><div class="bag-w"><i style="width:' + Math.min(100, w/wm*100) + '%;background:' + (heavy ? 'linear-gradient(90deg,#ff5a5a,#c81e1e)' : 'linear-gradient(90deg,#5ad8ff,#8a6aff)') + '"></i></div>'
     + (heavy ? '<div class="bag-hv">Pesado demais: o herói fica vermelho e anda 25% mais devagar. Venda ou desmanche itens para aliviar.</div>' : '');
   const cells = list.map(it => '<button class="bcell' + (String(bagSel) === String(it.id) ? ' on' : '') + (itemOk(it) ? '' : ' no') + '" data-bsel="' + it.id + '">' + itemImg(it, 'ps-bag') + '</button>');
   if((pz ? pFilter : invFilter) === 'all') Object.keys(MATS).forEach(k => { const q = save.mats[k] || 0; if(q > 0) cells.push('<button class="bcell mat' + (bagSel === 'm:' + k ? ' on' : '') + '" data-bsel="m:' + k + '" style="--tc:' + MATS[k].css + '">' + MAT_ICO(k) + '<em>' + q + '</em></button>'); });
   const free = Math.max(0, Math.min(15, cap - used)); for(let i = 0; i < free; i++) cells.push('<span class="bcell empty"></span>');
   h += '<div class="bgrid">' + cells.join('') + '</div>';
   if(cap - used > 15) h += '<div class="bag-more">+ ' + (cap - used - 15) + ' espaços vazios</div>';
-  let det = '';
-  if(typeof bagSel === 'string' && bagSel.indexOf('m:') === 0){ const k = bagSel.slice(2), M = MATS[k]; if(M && save.mats[k] > 0) det = '<div class="irow" style="--tc:' + M.css + '"><span class="bcell mat" style="--tc:' + M.css + ';width:44px">' + MAT_ICO(k) + '</span><div><div class="iname">' + M.n + ' × ' + save.mats[k] + '</div><div class="istat">Material de forja. Cai dos monstros e é usado em Fabricar e Evoluir.</div></div></div>'; }
-  else { const it = save.inv.find(i => String(i.id) === String(bagSel) && !isEquipped(i)); if(it){ const wrong = !itemOk(it);
-    const out = ncBreak(it);
-    det = itemRow(it, '<button class="btn sm primary" data-' + (pz ? 'peq' : 'eq') + '="' + it.id + '" ' + (wrong ? 'disabled' : '') + '>' + (wrong ? 'Só ' + CLASSES[itemCls(it)].name : 'Equipar') + '</button>')
-      + '<div class="bag-act"><button class="btn sm" data-bagsell="' + it.id + '">Vender<small>' + adenaTxt(sellValue(it)) + '</small></button><button class="btn sm" data-bagbrk="' + it.id + '">Desmanchar<small>vira material</small></button><button class="btn sm' + (bagConfirm === it.id ? ' danger' : '') + '" data-bagdel="' + it.id + '">' + (bagConfirm === it.id ? 'Toque de novo<small>some para sempre</small>' : 'Excluir<small>joga fora</small>') + '</button></div><div class="bag-brk">Desmanchar dá: <b>' + ncBreakTxt(out) + '</b> (materiais da forja)</div>'; } }
-  h += det ? '<div class="bag-det">' + det + '</div>' : '<div class="bag-det hint">Toque num item para ver os atributos, equipar, vender, desmanchar ou excluir.</div>';
+  setTimeout(ncPopDraw, 0);
   if(ncPetOn()) h += '<div class="bag-more">Inclui +10 espaços do mascote</div>';
   if(ncBagBase() < 120) h += '<button class="btn sm" style="width:100%;margin-top:8px" data-bagbuy ' + (save.gold >= ncBagCost() ? '' : 'disabled') + '>Aumentar a bag: +10 espaços por ' + adenaTxt(ncBagCost()) + '</button>';
   return h;
@@ -7991,9 +8000,7 @@ function renderMissions(){
 /* ===== BOLSA ===== */
 function bagHTML(){
   const st = Object.keys(save.gems).filter(k => save.gems[k] > 0 && GEMS[k.split(':')[0]]).sort((a, b) => +b.split(':')[1] - +a.split(':')[1]);
-  return `<div class="bag"><div class="eyebrow">Moedas</div><div class="mats"><span style="--c:#f2c14e">Adena <b>${adenaHTML(save.gold)}</b></span><span style="--c:#ffd23a">Moedas Reais <b>${save.coins}</b></span></div>
-    <div class="eyebrow">Materiais</div><div class="mats">${MAT_KEYS.filter(k => save.mats[k]).map(k => `<span style="--c:${MATS[k].css}">${MATS[k].n} <b>${save.mats[k]}</b></span>`).join('') || '<span>nenhum</span>'}</div>
-    <div class="eyebrow">Fragmentos de armadura</div><div class="mats">${TIERS.map((T, t) => save.frags[t] ? `<span style="--c:${T.css}">${T.model} ${T.sc} <b>${save.frags[t]}${CFG.frag[t] ? '/' + CFG.frag[t] : ''}</b></span>` : '').join('') || '<span>nenhum</span>'}</div>
+  return `<div class="bag"><div class="eyebrow">Fragmentos de armadura</div><div class="mats">${TIERS.map((T, t) => save.frags[t] ? `<span style="--c:${T.css}">${T.model} ${T.sc} <b>${save.frags[t]}${CFG.frag[t] ? '/' + CFG.frag[t] : ''}</b></span>` : '').join('') || '<span>nenhum</span>'}</div>
     <div class="eyebrow">Pedras</div><div class="stones">${st.map(k => { const [g, r] = k.split(':'); return `<span title="${stoneName(g, +r)}: ${stoneDesc(g, +r)}" style="--tc:${RAR[r - 1].css}">${stoneImg(g, 30)}<b>${save.gems[k]}</b></span>`; }).join('') || '<span class="istat">nenhuma</span>'}</div></div>`;
 }
 /* ===== DESCOBERTA DE ITEM RARO ===== */
@@ -12559,7 +12566,13 @@ body.nc-swap .tbtns button{transform:scaleX(-1)}
 .bcell.mat .mico{width:56%;height:56%;margin:0}
 .bcell em{position:absolute;right:4px;bottom:2px;font:800 12px/1 system-ui,sans-serif;font-style:normal;color:#fff;text-shadow:0 0 3px #000,0 1px 0 #000,1px 0 0 #000,-1px 0 0 #000}
 .bag-more{text-align:center;font-size:12px;color:var(--mute);margin-top:6px}
-.bag-tools{display:flex;justify-content:flex-end;margin-bottom:6px}.bag-act{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}.bag-act .btn{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;line-height:1.15}.bag-act .btn small{font-size:10px;opacity:.75;font-family:var(--f-body);text-transform:none;letter-spacing:0;white-space:normal}.bag-act .btn.danger{border-color:#ff5a5a;color:#ff8a8a}
+.bag-coins{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--mute);margin:0 0 6px}.bag-coins b{color:#f4efe2}
+.bag-top{align-items:center;gap:8px}.bag-top .btn{margin-left:auto;padding:4px 12px;min-height:0}
+.bag-f{flex-wrap:nowrap!important;overflow-x:auto;scrollbar-width:none;padding-bottom:4px;margin-bottom:6px}.bag-f::-webkit-scrollbar{display:none}.bag-f .chipb{flex-shrink:0}
+details.nc-more{margin-top:12px;border:1px solid rgba(138,106,255,.3);padding:8px 10px}details.nc-more summary{cursor:pointer;font-size:14px;color:var(--mute)}
+#ncPop{position:fixed;inset:0;z-index:80}#ncPop[hidden]{display:none}.pop-bg{position:absolute;inset:0;background:rgba(4,5,10,.55)}
+.pop-box{position:absolute;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);width:min(440px,calc(100vw - 20px));max-height:72vh;overflow-y:auto;box-sizing:border-box;padding:16px 12px 12px;background:linear-gradient(180deg,#221a46,#15122b);border:1px solid #8a6aff;box-shadow:0 10px 40px rgba(0,0,0,.6)}
+.pop-x{position:absolute;top:4px;right:6px;background:none;border:0;color:#f4efe2;font-size:18px;padding:6px 10px;cursor:pointer}.pop-eq{margin-top:10px;opacity:.85}.pop-eq .irow{border-style:dashed}.bag-act{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}.bag-act .btn{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;line-height:1.15}.bag-act .btn small{font-size:10px;opacity:.75;font-family:var(--f-body);text-transform:none;letter-spacing:0;white-space:normal}.bag-act .btn.danger{border-color:#ff5a5a;color:#ff8a8a}
 html{position:fixed;inset:0;width:100%;overscroll-behavior:none;touch-action:pan-x pan-y;-webkit-text-size-adjust:100%}
 .bag-brk{font-size:12px;color:var(--mute);margin-top:6px;text-align:center}.bag-brk b{color:#f4efe2;font-weight:600}
 .bag-det{margin-top:10px}.bag-det.hint{font-size:13px;color:var(--mute);text-align:center;padding:8px}
