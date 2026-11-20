@@ -344,6 +344,7 @@ canvas.ncgrabok{cursor:grab}canvas.ncgrab,canvas.ncgrabok.ncgrab{cursor:grabbing
 #tSk2{right:82px;bottom:84px;width:62px;height:62px;background:rgba(80,60,140,.7)}
 #tDash{right:4px;bottom:102px;width:58px;height:58px}
 #tMount{right:20px;bottom:170px;width:52px;height:52px;background:rgba(122,74,42,.75);font-size:11px}
+#tPot{right:84px;bottom:160px;width:52px;height:52px;background:rgba(150,40,70,.78) var(--nc-pot) center/26px no-repeat}#tPot b{position:absolute;right:-2px;bottom:-2px;font:700 12px/1 var(--f-body);background:#c9a24a;color:#14101f;padding:2px 5px;border-radius:8px}
 
 /* ---------- modals ---------- */
 .modal{position:fixed;inset:0;z-index:8;display:flex;align-items:center;justify-content:center;background:rgba(6,7,12,.55);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px;box-sizing:border-box;overflow-y:auto}
@@ -763,6 +764,7 @@ canvas.ncgrabok{cursor:grab}canvas.ncgrab,canvas.ncgrabok.ncgrab{cursor:grabbing
 <div id="touch" hidden>
   <div id="joy"><div id="knob"></div></div>
   <div class="tbtns">
+    <button id="tPot" aria-label="Poção"><b id="tPotN">3</b></button>
     <button id="tMount">Cavalo</button>
     <button id="tDash">Esquiva</button>
     <button id="tSk2">H2</button>
@@ -784,7 +786,7 @@ canvas.ncgrabok{cursor:grab}canvas.ncgrab,canvas.ncgrabok.ncgrab{cursor:grabbing
 <div class="modal" id="dead" hidden><div class="mbox" id="deadBox"></div></div>
 <div class="modal" id="pause" hidden>
   <div class="mbox tabhost">
-    <div class="phead"><h3>Pausado</h3><div class="pbtns"><button class="btn primary" id="resumeBtn">Continuar</button><button class="btn" id="quitBtn">Sair para o mapa</button></div></div>
+    <button class="pop-x pz-x" id="pauseX" aria-label="Fechar">✕</button><div class="phead"><h3>Pausado</h3><div class="pbtns"><button class="btn primary" id="resumeBtn">Continuar</button><button class="btn" id="quitBtn">Sair para o mapa</button></div></div>
     <p id="pauseInfo"></p>
     <div class="stabs sub" role="tablist">
       <button data-sec="gear">Equipamento</button><button data-sec="trav">Viagem</button><button data-sec="gfx">Gráficos</button><button data-sec="perf">Desempenho</button><button data-sec="dev">Aparelho</button><button data-sec="snd">Som e tela</button><button data-sec="ctl">Controles</button>
@@ -9722,6 +9724,9 @@ function drawMinimap(){
   g.fillStyle = 'rgba(255,90,70,.9)'; for(const e of enemies) if(e.kind === 'minion' && e.awake && !e.dead && !e.post) g.fillRect(mmX(e.pos.x) - 1, mmY(e.pos.z) - 1, 2, 2);
   const x = mmX(P.pos.x), y = mmY(P.pos.z);
   g.save(); g.translate(x, y); g.rotate(Math.PI - P.face);
+  try{ for(const k in ncCoop.peers){ const q = ncCoop.peers[k], d = q.d; if(!d || !curStage || d.st !== curStage.id || d.x == null) continue; const fx = mmX(d.x), fy = mmY(d.z);
+    g.fillStyle = '#4fd8ff'; g.strokeStyle = '#06243a'; g.lineWidth = 1; g.beginPath(); g.arc(fx, fy, big ? 2.4 : 3.2, 0, Math.PI*2); g.fill(); g.stroke();
+    if(big){ g.font = '600 3.2px system-ui,sans-serif'; g.textAlign = 'center'; g.fillStyle = '#bfefff'; g.fillText((d.nm || 'Amigo').slice(0, 12), fx, fy - 3.6); g.textAlign = 'left'; } } }catch(_){}
   g.fillStyle = P.mounted ? '#ffe08a' : '#fff'; g.strokeStyle = '#000'; g.lineWidth = 1;
   g.beginPath(); g.moveTo(0, -4.5); g.lineTo(3, 3.5); g.lineTo(-3, 3.5); g.closePath(); g.fill(); g.stroke(); g.restore();
   if(big){ g.fillStyle = 'rgba(13,10,34,.88)'; g.fillRect(0, 138, 120, 12); g.font = '600 3.1px system-ui,sans-serif'; g.textBaseline = 'middle';
@@ -10208,6 +10213,8 @@ $('#tDash').addEventListener('pointerdown', e => { e.preventDefault(); if(runnin
 $('#tSk1').addEventListener('pointerdown', e => { e.preventDefault(); useSkill(0); });
 $('#tSk2').addEventListener('pointerdown', e => { e.preventDefault(); useSkill(1); });
 $('#tMount').addEventListener('pointerdown', e => { e.preventDefault(); toggleMount(); });
+$('#tPot').addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); usePotion(); });
+$('#potBtn').addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); usePotion(); });
 let touchMode = matchMedia('(pointer: coarse)').matches;
 addEventListener('touchstart', () => { if(!touchMode){ touchMode = true; if(mode === 'stage'){ $('#touch').hidden = false; $('#skillbar').hidden = true; } } }, {passive:true});
 
@@ -11402,7 +11409,7 @@ function updateHUD(){
   { const left = [0, P.cd[ncSlot(0)], P.cd[ncSlot(1)], 0]; const txt = v => v > 0 ? (v < 1 ? v.toFixed(1) : String(Math.ceil(v))) : '';
     for(let i = 1; i < 3; i++){ const si = ncSlot(i - 1), lk = !ncSkLv(si), t = lk ? (ncLvOf(save.cls) < NC_SK_REQ[si] ? 'Nv' + NC_SK_REQ[si] : '🔒') : txt(left[i]), el = document.getElementById('sk' + i); if(el){ let n = el.querySelector('.cdn'); if(!n){ n = document.createElement('em'); n.className = 'cdn'; el.appendChild(n); } if(n.textContent !== t) n.textContent = t; el.classList.toggle('cding', !!t); }
       const tb = document.getElementById(i === 1 ? 'tSk1' : 'tSk2'); if(tb){ if(t) tb.setAttribute('data-cd', t); else if(tb.hasAttribute('data-cd')){ tb.removeAttribute('data-cd'); tb.classList.remove('nc-ready'); void tb.offsetWidth; tb.classList.add('nc-ready'); } } } }
-  $('#tMount').textContent = P.mounted ? 'Descer' : 'Cavalo';
+  $('#tMount').textContent = P.mounted ? 'Descer' : 'Cavalo'; { const n = String(save.potions || 0); if($('#tPotN').textContent !== n) $('#tPotN').textContent = n; }
 }
 let mmTick = 0, revealT = 0;
 function updateStage(dt){
@@ -12078,8 +12085,9 @@ $('#dead').addEventListener('click', e => {
 $('#resumeBtn').onclick = () => togglePause(false);
 $('#quitBtn').onclick = () => goHub();
 $('#pauseBtn').onclick = () => togglePause(true);
-$('#ncBag').onclick = () => { togglePause(true); try{ const b = document.querySelector('#pause .stabs button[data-sec="gear"]'); if(b) b.click(); const g = document.getElementById('pauseGear'); if(g) g.scrollIntoView({block:'start'}); }catch(e){} };
-$('#potBtn').onclick = () => usePotion();
+$('#pauseX').onclick = () => togglePause(false);
+$('#ncBag').onclick = () => { if(!$('#pause').hidden){ togglePause(false); return; } togglePause(true); try{ const b = document.querySelector('#pause .stabs button[data-sec="gear"]'); if(b) b.click(); const g = document.getElementById('pauseGear'); if(g) g.scrollIntoView({block:'start'}); }catch(e){} };
+
 function syncVolUI(){ const v = save.vol || (save.vol = {master:.7, music:.5, sfx:.8}); document.querySelectorAll('[data-vol]').forEach(el => { el.value = Math.round(v[el.dataset.vol]*100); }); }
 document.addEventListener('input', e => { const el = e.target; if(!el.dataset || !el.dataset.vol) return; save.vol = save.vol || {master:.7, music:.5, sfx:.8};
   save.vol[el.dataset.vol] = el.value/100; audio(); applyVolume(); syncVolUI(); });
@@ -12929,6 +12937,7 @@ document.addEventListener('touchmove', e => { if(e.touches.length > 1) e.prevent
 #touch .tbtns,.skillbar{filter:drop-shadow(1.5px 0 0 #d8dfec) drop-shadow(-1.5px 0 0 #d8dfec) drop-shadow(0 1.5px 0 #d8dfec) drop-shadow(0 -1.5px 0 #d8dfec) drop-shadow(0 4px 6px rgba(0,0,0,.6))}
 .skillbar{bottom:calc(18px + env(safe-area-inset-bottom,0px))!important}
 .skillbar{pointer-events:auto}
+#pause .mbox{position:relative}.pz-x{position:sticky!important;top:0;align-self:flex-end;margin:-10px -10px -34px 0;z-index:5;width:40px;height:40px;font-size:20px!important;background:#2a1f55!important;border:1px solid #c9a24a!important;border-radius:50%;color:#fff}
 #hud .bar.xp{position:relative;height:13px!important;margin-top:3px;border:5px solid transparent!important;border-image:url(assets/ui/frame-d.png) 32 stretch!important;background:#0b0820!important;background-clip:padding-box!important;border-radius:0!important;overflow:visible}
 #hud .bar.xp i{background:linear-gradient(90deg,#7b3cff,#c08bff 60%,#ffe9a8)!important;box-shadow:0 0 8px rgba(192,139,255,.7);height:100%}
 #hud .bar.xp span{position:absolute;inset:0;display:grid;place-items:center;font:700 10px/1 var(--f-body);color:#fff;text-shadow:0 0 3px #000,0 1px 2px #000;letter-spacing:.04em}
