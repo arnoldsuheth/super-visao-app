@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Nine Crowns</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="mobile-web-app-capable" content="yes">
@@ -6089,6 +6089,7 @@ function stats(){
   for(const slot of SLOTS){ const it = equipped(slot); if(!it) continue; const b = itemStats(it); for(const k in b){ if(k === 'elem') s.elem = b.elem; else s[k] += b[k]; } gemFx(it, addG); }
   s.hp *= c.hp*(1 + s.hpPct); s.atk *= c.atk*(1 + s.atkPct); s.def *= c.def*(1 + s.defPct); s.spd *= c.spd*(1 + s.spdPct); s.block += c.block;
   const sp = ncSpec(); if(sp) sp.fx(s);
+  if(ncHeavy()){ s.spd *= .75; s.heavy = true; }
   const B = bonuses(); s.sets = B.sets; s.combos = B.combos;
   for(const t of B.sets){ s.atk *= 1 + .05*(t + 1); s.hp *= 1 + .04*(t + 1); if(t >= 3) s.regen += .002; SET_SPECIAL[t].fx(s); }
   if(B.hyper){ s.atk *= 1.5; s.hyper = true; }
@@ -6130,7 +6131,6 @@ function newItem(slot, tier, o){
 }
 function randomSlot(){ const r = Math.random(); if(r < .2) return 'weapon'; if(r < .3) return 'shield'; if(r < .4) return 'amulet'; return ARMOR[Math.floor(Math.random()*ARMOR.length)]; }
 function addItem(it){
-  if(save.inv.length >= INV_MAX){ const g = sellValue(it); save.gold += g; returnGems(it); return false; }
   save.inv.push(it);
   if(!save.eq[it.slot] && itemOk(it) && save.level >= grLv(it.tier)) save.eq[it.slot] = it.id;
   return true;
@@ -7654,10 +7654,7 @@ function renderGear(){
   $('#invFilters').innerHTML = fl.map(([k, n]) => `<button class="chipb" data-filter="${k}" aria-pressed="${invFilter === k}">${n}</button>`).join('');
   const list = save.inv.filter(i => !isEquipped(i) && (invFilter === 'all' || i.slot === invFilter))
     .sort((a, b) => (b.tier - a.tier) || (b.q - a.q) || (SLOTS.indexOf(a.slot) - SLOTS.indexOf(b.slot)));
-  $('#invList').innerHTML = list.length ? list.map(it => {
-    const wrong = !itemOk(it);
-    return itemRow(it, `<button class="btn sm primary" data-eq="${it.id}" ${wrong ? 'disabled' : ''}>${wrong ? 'Só ' + CLASSES[itemCls(it)].name : 'Equipar'}</button><button class="btn sm" data-sell="${it.id}">Vender ${sellValue(it)}</button>`);
-  }).join('') : `<div class="empty">Nada guardado aqui. Itens caem de inimigos, baús e chefes durante as fases.</div>`;
+  $('#invList').innerHTML = ncBagHTML(list);
   const irons = save.inv.filter(i => i.tier === 0 && !isEquipped(i)).length;
   $('#sellIron').disabled = !irons; $('#sellIron').textContent = irons ? `Vender os ${irons} itens de Ferro da mochila` : 'Nenhum item de Ferro na mochila';
 }
@@ -7761,6 +7758,53 @@ const NC_UP = [null, null, null, {c:'#ffffff', g:2, f:0, e:.10}, {c:'#c9d6e6', g
   {c:'#ffe36a', g:6, f:30, n:2, e:.50}, {c:'#ffd03a', g:7, f:40, n:3, e:.60}, {c:'#ffa03a', g:8, f:52, n:4, e:.72}, {c:'#ff7a2a', g:9, f:64, n:5, e:.85}, {c:'#ff4a1f', g:10, f:78, n:6, e:1}, {c:'#ff2a12', g:12, f:95, n:8, e:1.2}];
 [null,null,null,null,null,null,null,'#ffb000','#ff9800','#ff6a00','#ff4800','#ff2c00','#ff1400'].forEach((w, i) => { if(w) NC_UP[i].w = w; });   // cor mais forte para o brilho em 3D (a clara estoura para branco)
 const ncUp = u => NC_UP[Math.max(0, Math.min(NC_UP_MAX, u | 0))];
+// ===== BAG: grade de espacos, itens empilhados, limite de espacos e de peso =====
+const NC_W = {weapon:12, chest:14, greaves:10, helmet:8, shoulders:8, bracers:6, boots:7, shield:12, amulet:1};
+const ncItemW = it => NC_W[it.slot] || 5;
+const ncBagMax = () => Math.max(40, Math.min(120, save.bagMax || 40));
+const ncWeightMax = () => 300 + save.level*6;
+const ncWeight = () => Math.round(save.inv.reduce((a, it) => a + ncItemW(it), 0) + Object.keys(save.mats || {}).reduce((a, k) => a + (save.mats[k] || 0)*.05, 0));
+const ncHeavy = () => ncWeight() >= ncWeightMax()*.8;
+const ncBagCost = () => 2000*Math.pow(2, (ncBagMax() - 40)/10);   // em bronze: 20 de prata, depois dobra
+let bagSel = null, ncFullT = 0;
+function ncBagFull(){ if(clock - ncFullT > 8){ ncFullT = clock; try{ banner('Bag cheia ou pesada demais', 'O item fica no chão. Abra a Mochila, libere espaço e passe por cima dele.', 'danger'); }catch(e){} } }
+const ncFits = it => save.inv.length < ncBagMax() && ncWeight() + ncItemW(it) <= ncWeightMax();
+function ncRoom(slot){ if(ncFits({slot})) return true; try{ banner('Bag cheia ou pesada demais', 'Libere espaço na bag antes de pegar mais uma peça.', 'danger'); }catch(e){} return false; }
+// desmanchar: a peça vira metade dos materiais da receita dela (e pedras de refino se estava evoluída)
+function ncBreak(it){ const R = recipe(it.tier).mats, out = {}; for(const m in R){ const q = Math.floor(R[m]*.5); if(q > 0) out[m] = q; }
+  if(!Object.keys(out).length) out[Object.keys(R)[0]] = 1; const u = Math.floor((it.up || 0)/3); if(u > 0) out.refino = (out.refino || 0) + u; return out; }
+const ncBreakTxt = out => Object.keys(out).map(m => '+' + out[m] + ' ' + MATS[m].n).join(', ');
+let bagConfirm = 0;
+function ncBagRefresh(){ try{ if(mode === 'hub'){ applyGear(hero); renderHub(); } else { try{ refreshGearInStage(); }catch(e){} renderPauseGear(); } }catch(e){} }
+document.addEventListener('click', e => { const b = e.target.closest('[data-bsel],[data-bagbuy],[data-bagsort],[data-bagsell],[data-bagbrk],[data-bagdel]'); if(!b) return; const d = b.dataset;
+  const take = it => { returnGems(it); save.inv = save.inv.filter(i => i !== it); bagSel = null; bagConfirm = 0; persist(); };
+  if(d.bsel !== undefined){ bagSel = bagSel === d.bsel ? null : d.bsel; bagConfirm = 0; }
+  else if(d.bagbuy !== undefined){ const c = ncBagCost(); if(save.gold >= c && ncBagMax() < 120){ save.gold -= c; save.bagMax = ncBagMax() + 10; persist(); try{ SFX.drop(); }catch(e){} } }
+  else if(d.bagsort !== undefined){ save.inv.sort((a, b) => (SLOTS.indexOf(a.slot) - SLOTS.indexOf(b.slot)) || (b.tier - a.tier) || ((b.up || 0) - (a.up || 0)) || (a.id - b.id)); bagSel = null; persist(); try{ SFX.item(); }catch(e){} }
+  else { const it = byId(+(d.bagsell || d.bagbrk || d.bagdel)); if(!it || isEquipped(it)) return;
+    if(d.bagsell){ save.gold += sellValue(it); take(it); try{ SFX.coin(); }catch(e){} }
+    else if(d.bagbrk){ const out = ncBreak(it); for(const m in out) save.mats[m] = (save.mats[m] || 0) + out[m]; take(it); try{ SFX.drop(); banner('Desmanchado', ncBreakTxt(out)); }catch(e){} }
+    else if(d.bagdel){ if(bagConfirm !== it.id){ bagConfirm = it.id; } else take(it); } }
+  ncBagRefresh(); });
+function ncBagHTML(list, pz){
+  const used = save.inv.length, cap = ncBagMax(), w = ncWeight(), wm = ncWeightMax(), heavy = w >= wm*.8;
+  let h = '<div class="bag-tools"><button class="btn sm" data-bagsort="1">Organizar</button></div><div class="bag-top"><span>Espaços <b>' + used + ' / ' + cap + '</b></span><span class="' + (heavy ? 'hv' : '') + '">Peso <b>' + w + ' / ' + wm + '</b></span></div><div class="bag-w"><i style="width:' + Math.min(100, w/wm*100) + '%;background:' + (heavy ? 'linear-gradient(90deg,#ff5a5a,#c81e1e)' : 'linear-gradient(90deg,#5ad8ff,#8a6aff)') + '"></i></div>'
+    + (heavy ? '<div class="bag-hv">Pesado demais: o herói fica vermelho e anda 25% mais devagar. Venda ou desmanche itens para aliviar.</div>' : '');
+  const cells = list.map(it => '<button class="bcell' + (String(bagSel) === String(it.id) ? ' on' : '') + (itemOk(it) ? '' : ' no') + '" data-bsel="' + it.id + '">' + itemImg(it, 'ps-bag') + '</button>');
+  if((pz ? pFilter : invFilter) === 'all') Object.keys(MATS).forEach(k => { const q = save.mats[k] || 0; if(q > 0) cells.push('<button class="bcell mat' + (bagSel === 'm:' + k ? ' on' : '') + '" data-bsel="m:' + k + '" style="--tc:' + MATS[k].css + '">' + MAT_ICO(k) + '<em>' + q + '</em></button>'); });
+  const free = Math.max(0, Math.min(15, cap - used)); for(let i = 0; i < free; i++) cells.push('<span class="bcell empty"></span>');
+  h += '<div class="bgrid">' + cells.join('') + '</div>';
+  if(cap - used > 15) h += '<div class="bag-more">+ ' + (cap - used - 15) + ' espaços vazios</div>';
+  let det = '';
+  if(typeof bagSel === 'string' && bagSel.indexOf('m:') === 0){ const k = bagSel.slice(2), M = MATS[k]; if(M && save.mats[k] > 0) det = '<div class="irow" style="--tc:' + M.css + '"><span class="bcell mat" style="--tc:' + M.css + ';width:44px">' + MAT_ICO(k) + '</span><div><div class="iname">' + M.n + ' × ' + save.mats[k] + '</div><div class="istat">Material de forja. Cai dos monstros e é usado em Fabricar e Evoluir.</div></div></div>'; }
+  else { const it = save.inv.find(i => String(i.id) === String(bagSel) && !isEquipped(i)); if(it){ const wrong = !itemOk(it);
+    const out = ncBreak(it);
+    det = itemRow(it, '<button class="btn sm primary" data-' + (pz ? 'peq' : 'eq') + '="' + it.id + '" ' + (wrong ? 'disabled' : '') + '>' + (wrong ? 'Só ' + CLASSES[itemCls(it)].name : 'Equipar') + '</button>')
+      + '<div class="bag-act"><button class="btn sm" data-bagsell="' + it.id + '">Vender<small>' + adenaTxt(sellValue(it)) + '</small></button><button class="btn sm" data-bagbrk="' + it.id + '">Desmanchar<small>vira material</small></button><button class="btn sm' + (bagConfirm === it.id ? ' danger' : '') + '" data-bagdel="' + it.id + '">' + (bagConfirm === it.id ? 'Toque de novo<small>some para sempre</small>' : 'Excluir<small>joga fora</small>') + '</button></div><div class="bag-brk">Desmanchar dá: <b>' + ncBreakTxt(out) + '</b> (materiais da forja)</div>'; } }
+  h += det ? '<div class="bag-det">' + det + '</div>' : '<div class="bag-det hint">Toque num item para ver os atributos, equipar, vender, desmanchar ou excluir.</div>';
+  if(cap < 120) h += '<button class="btn sm" style="width:100%;margin-top:8px" data-bagbuy ' + (save.gold >= ncBagCost() ? '' : 'disabled') + '>Aumentar a bag: +10 espaços por ' + adenaTxt(ncBagCost()) + '</button>';
+  return h;
+}
 const NC_ART = {
   helmet:'<path class="m" d="M13 36a19 19 0 0 1 38 0v14H39V40H25v10H13Z"/><path class="a" d="M29 6h6v14h-6z"/><path class="k" d="M24 31h16v4H24z"/><path class="s" d="M19 30a13 13 0 0 1 9-11"/>',
   chest:'<path class="m" d="M15 12l11 5h12l11-5 7 13-9 5v25H17V30l-9-5Z"/><path class="a" d="M29 22h6v28h-6z"/><path class="a" d="M20 36h24v5H20z"/><path class="s" d="M21 20l4 10"/>',
@@ -7823,7 +7867,7 @@ function craftHTML(){
   return h;
 }
 function craftItem(t){
-  if(!canCraft(t)) return; const R = recipe(t), k = evFx().craft || 1;
+  if(!canCraft(t) || !ncRoom(craftSlot)) return; const R = recipe(t), k = evFx().craft || 1;
   save.gold -= Math.round(R.gold*k); for(const m in R.mats) save.mats[m] -= Math.ceil(R.mats[m]*k);
   const it = newItem(craftSlot, t, {wtype:CLS().wtype, cls:save.cls}); addItem(it); persist(); SFX.drop();
   banner('Fabricado: ' + itemName(it), TIERS[t].sc + ' · ' + TIERS[t].n); discover(it);
@@ -9710,7 +9754,11 @@ function monUpdate(e, dt){
   if(m.fly) m.model.position.y = m.y0 + Math.sin(clock*2.4 + m.ph)*.08;
   m.mixer.update(e.frozenT > 0 ? 0 : dt);
 }
-if(location.hash === '#nctest') window.__nc = {en:() => enemies, p:() => P, boss:id => startStage(id, true), go:id => startStage(id), skill:i => useSkill(i), sv:() => save, scy:() => { const g = hero.mx.scy.g; g.updateWorldMatrix(true, false); const q = g.getWorldQuaternion(new T.Quaternion()), up = new T.Vector3(0, 1, 0).applyQuaternion(q), bl = new T.Vector3(1, 0, 0).applyQuaternion(q), ry = hero.root.rotation.y, f = new T.Vector3(Math.sin(ry), 0, Math.cos(ry)); return [+up.y.toFixed(2), +up.dot(f).toFixed(2), +bl.y.toFixed(2), +bl.dot(f).toFixed(2)]; }, hurt:n => hurtPlayer(n), mats:() => hero.mats.map(m => m.emissive ? m.emissive.getHexString() : '-').join(','), img:(t, sl, c, w, u) => pieceImg(t, sl, c, w, u), hub:() => { rebuildHubHero(); renderHub(); }, scene:(a,b,c) => ncScene(a,b,c), fall:(id) => ncKingFall(id, true), fim:() => ncFinal(), pet:() => ncPet, cls:() => save.cls, set:(c, id) => { save.cls = c; save.level = 40; save.spec = save.spec || {}; save.spec[c] = id; P.S = stats(); }};   // so para os testes automaticos
+if(location.hash === '#nctest') window.__nc = {drop:t => dropLoot(P.pos, t), loot:() => loot.length, unp:() => togglePause(false), en:() => enemies, p:() => P, boss:id => startStage(id, true), go:id => startStage(id), skill:i => useSkill(i), sv:() => save, gfx:g => { save.gfx = g; save.gfxAuto = false; setupFX(); resize(); },
+  info:() => { const r = renderer.info.render, o = {calls:r.calls, tris:r.triangles, geo:renderer.info.memory.geometries, tex:renderer.info.memory.textures, pr:curPR, vis:0, skinned:0, skinnedVis:0, inst:0, caster:0, mats:new Set(), big:{}};
+    scene.traverse(n => { if(!n.isMesh && !n.isPoints && !n.isSprite) return; let v = true; for(let q = n; q; q = q.parent) if(!q.visible){ v = false; break; } if(n.isSkinnedMesh){ o.skinned++; if(v) o.skinnedVis++; } if(!v) return; o.vis++; if(n.isInstancedMesh) o.inst++; if(n.castShadow) o.caster++; if(n.material) o.mats.add(n.material.uuid);
+      const tr = n.geometry && n.geometry.index ? n.geometry.index.count/3 : n.geometry && n.geometry.attributes.position ? n.geometry.attributes.position.count/3 : 0, t2 = tr*(n.isInstancedMesh ? n.count : 1); let top = n; while(top.parent && top.parent !== scene) top = top.parent; const k = (top.name || top.type) + (n.isInstancedMesh ? '[inst]' : ''); o.big[k] = (o.big[k] || 0) + t2; });
+    o.mats = o.mats.size; o.big = Object.entries(o.big).sort((a, b) => b[1] - a[1]).slice(0, 8).map(x => x[0] + ':' + Math.round(x[1])); return o; }, scy:() => { const g = hero.mx.scy.g; g.updateWorldMatrix(true, false); const q = g.getWorldQuaternion(new T.Quaternion()), up = new T.Vector3(0, 1, 0).applyQuaternion(q), bl = new T.Vector3(1, 0, 0).applyQuaternion(q), ry = hero.root.rotation.y, f = new T.Vector3(Math.sin(ry), 0, Math.cos(ry)); return [+up.y.toFixed(2), +up.dot(f).toFixed(2), +bl.y.toFixed(2), +bl.dot(f).toFixed(2)]; }, hurt:n => hurtPlayer(n), mats:() => hero.mats.map(m => m.emissive ? m.emissive.getHexString() : '-').join(','), img:(t, sl, c, w, u) => pieceImg(t, sl, c, w, u), hub:() => { rebuildHubHero(); renderHub(); }, scene:(a,b,c) => ncScene(a,b,c), fall:(id) => ncKingFall(id, true), fim:() => ncFinal(), pet:() => ncPet, cls:() => save.cls, set:(c, id) => { save.cls = c; save.level = 40; save.spec = save.spec || {}; save.spec[c] = id; P.S = stats(); }};   // so para os testes automaticos
 const NC_PETS = [['', 'Nenhum'], ['f_Dragon', 'Dragonete'], ['s_Cat', 'Gato'], ['s_Dog', 'Cachorro'], ['f_Pigeon', 'Pombo'], ['f_Glub', 'Glub'], ['s_Chicken', 'Galinha']];
 let ncPet = null;
 function ncPetSpawn(){ try{ if(ncPet){ removeObj(ncPet.root); ncPet = null; } const key = save.pet; if(!key || !monOn()) return;
@@ -9720,7 +9768,11 @@ function ncPetSpawn(){ try{ if(ncPet){ removeObj(ncPet.root); ncPet = null; } co
     root.position.set(P.pos.x - 1.4, P.pos.y, P.pos.z - 1.4); scene.add(root);
     const mixer = new T.AnimationMixer(model), f = re => { const c = g.animations.find(c => re.test(c.name)); return c ? mixer.clipAction(c) : null; };
     ncPet = {root, mixer, idle:f(/^(Idle|Flying_Idle)$/), move:f(/^(Walk|Run|Fast_Flying)$/), cur:null}; }); }catch(e){} }
-function ncPetUpdate(dt){ const p = ncPet; if(!p || !P) return; if(!p.root.parent){ ncPet = null; return; }
+let ncHvT = 0, ncHvOn = null;
+function ncHeavyFx(dt){ ncHvT -= dt; if(ncHvT > 0 || !hero || !hero.mats) return; ncHvT = .7; const hv = ncHeavy(); if(hv === ncHvOn) return; ncHvOn = hv;
+  hero.mats.forEach(m => { if(!m.emissive || (m.userData.baseE && m.userData.ncKeep)) return; const b = m.userData.baseE || (m.userData.baseE = new T.Color(0)); if(hv){ m.userData.ncE0 = m.userData.ncE0 || b.clone(); b.setHex(0x6a0c0c); } else if(m.userData.ncE0) b.copy(m.userData.ncE0); m.emissive.copy(b); });
+  try{ if(P) P.S = stats(); if(hv) banner('Você está pesado demais', 'O herói anda mais devagar. Venda itens da bag.', 'danger'); }catch(e){} }
+function ncPetUpdate(dt){ ncHeavyFx(dt); const p = ncPet; if(!p || !P) return; if(!p.root.parent){ ncPet = null; return; }
   const tx = P.pos.x - Math.sin(P.face)*1.5 + Math.cos(P.face)*1.1, tz = P.pos.z - Math.cos(P.face)*1.5 - Math.sin(P.face)*1.1, dx = tx - p.root.position.x, dz = tz - p.root.position.z, d = Math.hypot(dx, dz);
   if(d > 14){ p.root.position.x = tx; p.root.position.z = tz; } else if(d > .25){ const v = Math.min(d, (4 + d*2.2)*dt); p.root.position.x += dx/d*v; p.root.position.z += dz/d*v; p.root.rotation.y = Math.atan2(dx, dz); }
   try{ p.root.position.y = heightAt(p.root.position.x, p.root.position.z); }catch(e){ p.root.position.y = P.pos.y; }
@@ -11015,12 +11067,13 @@ function updateWorld(dt){
   for(let i = loot.length-1; i >= 0; i--){
     const l = loot[i]; l.t += dt; l.g.rotation.y += dt*2; l.g.position.y = l.y0 + Math.sin(l.t*3)*.15;
     if(l.t > .5 && Math.hypot(P.pos.x - l.x, P.pos.z - l.z) < 1.8 && !P.dead){
+      if(!ncFits(l.item)){ ncBagFull(); } else {
       const css = TIERS[l.item.tier].css;
       if(addItem(l.item)){ runLoot.push(l.item); feed(TIERS[l.item.tier].s + ' ' + itemName(l.item), TIERS[l.item.tier].css); itemCard(l.item); if(l.item.tier >= 4) discover(l.item); }
       else feed('Mochila cheia: vendido por ' + adenaTxt(sellValue(l.item)), '#f2c14e');
       SFX.item(); burst(l.g.position, TIERS[l.item.tier].hex, 10 + l.item.tier*3, 3, 4, 0);
       if(l.item.slot !== 'weapon' || l.item.wtype === CLS().wtype){ if(isEquipped(l.item)){ P.S = stats(); applyGear(hero); } }
-      removeObj(l.g); if(l.tag) l.tag.remove(); loot.splice(i, 1); continue;
+      removeObj(l.g); if(l.tag) l.tag.remove(); loot.splice(i, 1); continue; }
     }
     if(l.tag){ const d = Math.hypot(P.pos.x - l.x, P.pos.z - l.z); placeTag(l.tag, l.x, l.g.position.y + (l === lootNear ? 1.8 : .9), l.z, d < 13 && running); l.tag.classList.toggle('mini', l !== lootNear); }
   }
@@ -11430,8 +11483,7 @@ function renderPauseGear(){
     <div class="eqgrid">${eq}</div>
     <div class="pbon">Vida <b>${S.hp}</b> · Ataque <b>${S.atk}</b> · Defesa <b>${S.def}</b> · Crítico <b>${Math.round(S.crit*100)}%</b>${act.length ? '<br>Ativo: ' + act.join(' · ') : ''}</div>
     <div class="filters">${fl.map(([k, n]) => `<button class="chipb" data-pfilter="${k}" aria-pressed="${pFilter === k}">${n}</button>`).join('')}</div>
-    <div class="invlist">${list.length ? list.map(it => { const wrong = !itemOk(it);
-      return itemRow(it, `<button class="btn sm primary" data-peq="${it.id}" ${wrong ? 'disabled' : ''}>${wrong ? 'Só ' + CLASSES[itemCls(it)].name : 'Equipar'}</button>`); }).join('') : '<div class="empty">Nada na mochila para este tipo.</div>'}</div>`;
+    <div class="invlist">${ncBagHTML(list, true)}</div>`;
 }
 function refreshGearInStage(){
   const ratio = P.hp/P.S.hp; P.S = stats(); P.hp = Math.max(1, Math.min(P.S.hp, Math.round(P.S.hp*ratio)));
@@ -11469,10 +11521,10 @@ $('#rightPanel').addEventListener('click', e => {
   if(d.craft !== undefined){ craftItem(+d.craft); applyGear(hero); renderHub(); return; }
   if(d.sfilter){ stoneFilter = d.sfilter; renderHub(); return; }
   if(d.sslot){ shopSlot = d.sslot; renderHub(); return; }
-  if(d.sbuy !== undefined){ const t = +d.sbuy, p = piecePrice(t); if(save.coins >= p && t <= CFG.shopMaxTier){ save.coins -= p; buyPiece(t); applyGear(hero); } renderHub(); return; }
+  if(d.sbuy !== undefined){ const t = +d.sbuy, p = piecePrice(t); if(save.coins >= p && t <= CFG.shopMaxTier && ncRoom(shopSlot)){ save.coins -= p; buyPiece(t); applyGear(hero); } renderHub(); return; }
   if(d.mbuy !== undefined){ const o = SHOP[+d.mbuy], p = shopPrice(o.p); if(save.coins >= p){ save.coins -= p; o.g(); persist(); SFX.coin(); } renderHub(); return; }
-  if(d.evbuy){ const E = curEvent(), p = shopPrice(60); if(E && save.coins >= p && !save.evBought[evKey()]){ save.coins -= p; save.evBought[evKey()] = 1; const t = clamp(Math.round(gearPower()) - 1, 1, CFG.shopMaxTier); buyPiece(t, 'ev:' + E.id); } renderHub(); return; }
-  if(d.fragx !== undefined){ const t = +d.fragx, need = CFG.frag[t]; if(need && (save.frags[t] || 0) >= need){ save.frags[t] -= need; buyPiece(t); applyGear(hero); } renderHub(); return; }
+  if(d.evbuy){ const E = curEvent(), p = shopPrice(60); if(E && save.coins >= p && !save.evBought[evKey()] && ncRoom(shopSlot)){ save.coins -= p; save.evBought[evKey()] = 1; const t = clamp(Math.round(gearPower()) - 1, 1, CFG.shopMaxTier); buyPiece(t, 'ev:' + E.id); } renderHub(); return; }
+  if(d.fragx !== undefined){ const t = +d.fragx, need = CFG.frag[t]; if(need && (save.frags[t] || 0) >= need && ncRoom(shopSlot)){ save.frags[t] -= need; buyPiece(t); applyGear(hero); } renderHub(); return; }
   if(d.mclaim){ const m = MISSIONS.find(x => x.id === d.mclaim), p = mProg(m); if(p.cur >= p.goal){ grantRw(m.rw(p.q.lvl)); p.q.lvl++; delete p.q.base; delete p.q.tgt; persist(); SFX.level(); banner('Missão concluída: ' + m.n, rwText(m.rw(p.q.lvl - 1))); } renderHub(); return; }
   if(d.seq){ const q = seqState(); if(q.cur >= q.goal){ const rw = seqReward(q.q.lvl, q.q.step); grantRw(rw); q.q.step++; if(q.q.step >= SEQ.length){ q.q.step = 0; q.q.lvl++; } delete q.q.base; persist(); SFX.level(); banner('Campanha das Coroas', rwText(rw)); } renderHub(); return; }
   if(d.world !== undefined){ startStage(+d.world*6 + 5, true, true); return; }
@@ -11814,7 +11866,7 @@ const toggleMute = () => { save.muted = !save.muted; persist(); audio(); applyVo
 $('#muteBtn').onclick = toggleMute; $('#pMute').onclick = toggleMute;
 $('#camBtn').onclick = () => setZoom(((save.zoom ?? 4) + 1) % ZOOMS.length);
 $('#hCamBtn').onclick = () => setZoom(((save.zoom ?? 4) + 1) % ZOOMS.length, true);
-function setGfx(k){ save.gfxo = null; if(k === 'auto'){ save.gfxAuto = true; save.gfx = CHIP.preset; } else { save.gfxAuto = false; save.gfx = k; } persist(); setupFX(); resize(); realLoad(); if(mode === 'hub') goHub(); else renderGfxUI(); }
+function setGfx(k){ save.gfxo = null; save.ncAuto = null; if(k === 'auto'){ save.gfxAuto = true; save.gfx = CHIP.preset; } else { save.gfxAuto = false; save.gfx = k; } persist(); setupFX(); resize(); realLoad(); if(mode === 'hub') goHub(); else renderGfxUI(); }
 /* ================= ABAS (mapa e pausa) =================
    Cada .stabs troca os .sec irmãos (mesmo pai). Lembra a última aba escolhida de cada grupo. */
 const TABMEM = {};
@@ -11839,6 +11891,7 @@ function renderGfxUI(){
       <div class="qticks">${names.map((n, i) => `<span class="${i === lv ? 'on' : ''}">${n}</span>`).join('')}</div>
       <div class="istat gqd">${save.gfxAuto ? 'O jogo escolheu pelo seu aparelho (' + (CHIP.soc || CHIP.name) + ') e baixa sozinho se ficar lento. ' : ''}${GFX_DESC[save.gfx]}</div>
     </div>
+    <button class="btn primary" style="width:100%;margin:12px 0 4px" data-ncauto="1">Ajustar para o meu celular</button><div class="istat" style="margin-bottom:8px">${ncAutoTxt()}</div>
     ${gfxAdvHTML()}
     <div class="tgl">
       <button class="trow" data-real="1" aria-pressed="${realWanted()}" ${med ? '' : 'disabled'}><span><b>Gráficos realistas</b><small>${med ? 'Chão, construções, madeira, pedra e céu com texturas de foto em todas as fases. Vale a partir da próxima fase.' : 'Precisa da qualidade Médio ou maior.'}</small></span><i>${on(realWanted(), 'Ligado', 'Desligado')}</i></button>
@@ -11879,8 +11932,8 @@ function applyGfxNow(){
 }
 document.addEventListener('toggle', e => { if(e.target.classList && e.target.classList.contains('gadv')) gfxAdvOpen = e.target.open; }, true);
 document.addEventListener('click', e => {
-  const g = e.target.closest('[data-go]'); if(g){ save.gfxo = Object.assign({}, save.gfxo || {}, {[g.dataset.go]:JSON.parse(g.dataset.v)}); persist(); applyGfxNow(); }
-  if(e.target.closest('[data-goreset]')){ save.gfxo = null; persist(); applyGfxNow(); }
+  const g = e.target.closest('[data-go]'); if(g){ save.ncAuto = null; save.gfxo = Object.assign({}, save.gfxo || {}, {[g.dataset.go]:JSON.parse(g.dataset.v)}); persist(); applyGfxNow(); }
+  if(e.target.closest('[data-goreset]')){ save.ncAuto = null; save.gfxo = null; persist(); applyGfxNow(); }
 });
 document.addEventListener('input', e => { const r = e.target.closest('[data-gq]'); if(!r) return; const v = +r.value, box = r.closest('.gq');
   box.querySelector('.gqv').textContent = v ? GFX_LABEL[GFX_NAMES[v - 1]] : 'Automático';
@@ -12072,10 +12125,29 @@ function pollPad(dt){
 /* ================= LOOP ================= */
 const TORCH = pmat(0xffc860,{emissive:0xff8a1a,emissiveIntensity:3}), FIRE = pmat(0xffa040,{emissive:0xff6a1a,emissiveIntensity:2.5});
 let fpsN = 0, fpsT = 0, lowFps = 0, resBad = 0, resGood = 0, resHold = 0;
+/* "Ajustar para o meu celular": começa no Alto e, jogando, tira uma coisa pesada por vez (reflexo e resolução primeiro) só enquanto estiver lento */
+const NC_AUTO = [['tudo ligado (Alto)', {}], ['sem reflexo na água', {refl:0}], ['resolução um pouco menor', {pr:1.5}], ['sombras mais simples', {shadow:1024}],
+  ['menos grama e enfeites', {grass:4000, detail:false}], ['resolução menor', {pr:1.2}], ['sem brilho nas luzes', {bloom:false}], ['resolução mínima', {pr:1}]];
+function ncAutoApply(){ const A = save.ncAuto; if(!A) return; const o = {adapt:false}, dpr = window.devicePixelRatio || 1;
+  for(let i = 0; i <= A.i; i++){ const st = NC_AUTO[i][1]; for(const k in st){ if(k === 'pr') o.res = Math.min(1, st.pr/dpr); else o[k] = st[k]; } }
+  if(o.res == null) o.res = Math.min(1, 2/dpr);
+  save.gfx = 'alto'; save.gfxAuto = false; save.gfxo = o; persist(); applyGfxNow(); }
+function ncAutoStep(fps){ const A = save.ncAuto; if(!A || A.stop) return false;
+  A.n = (A.n || 0) + 1; if(A.n < 2) return false;                       // a primeira medida depois de mudar não vale (travadinha da troca)
+  if(A.i === 0 && !A.f0) A.f0 = fps;
+  if(fps >= 48){ A.bad = 0; return false; }
+  A.bad = (A.bad || 0) + 1; if(A.bad < 2) return false;
+  if(A.i >= 2 && A.f0 > 26 && A.f0 < 32 && fps > 26 && fps < 32){ A.i = 0; A.stop = 'cap'; ncAutoApply(); try{ banner('Seu aparelho está segurando em 30 quadros', 'É o modo economia de bateria. Deixei o gráfico no Alto.'); }catch(e){} return true; }
+  if(A.i >= NC_AUTO.length - 1){ A.stop = 'min'; persist(); return false; }
+  A.i++; A.n = 0; A.bad = 0; ncAutoApply(); try{ banner('Ajustando para o seu celular', NC_AUTO[A.i][0]); }catch(e){} return true; }
+function ncAutoTxt(){ const A = save.ncAuto; if(!A) return 'Começa no gráfico Alto e, durante a partida, tira só o que pesa no seu aparelho (reflexo e resolução primeiro). Sombras, brilho e cores ficam o máximo que der.';
+  if(A.stop === 'cap') return 'Seu aparelho segura o jogo em 30 quadros (modo economia de bateria). Gráfico no Alto.';
+  return 'Ligado · agora: <b>' + NC_AUTO[A.i][0] + '</b>' + (A.stop === 'min' ? ' (já está no mais leve deste modo).' : '. Jogue uma partida: se ficar lento, o jogo tira o próximo item sozinho.'); }
+document.addEventListener('click', e => { if(!e.target.closest('[data-ncauto]')) return; save.ncAuto = {i:0, n:0}; ncAutoApply(); try{ banner('Ajuste ligado', 'Jogue uma partida. O jogo vai se acertando sozinho no primeiro minuto.'); }catch(e){} });
 function adaptRes(dt){
   if(mode !== 'stage' || !running){ fpsN = 0; fpsT = 0; return; }
   fpsT += dt; fpsN++; if(fpsT < 2.5) return;
-  const fps = fpsN/fpsT; fpsT = 0; fpsN = 0; devFps = fps;
+  const fps = fpsN/fpsT; fpsT = 0; fpsN = 0; devFps = fps; if(ncAutoStep(fps)) return;
   const q = Q(), max = Math.min(window.devicePixelRatio || 1, q.pr); let np = curPR;
   // histerese: baixa só depois de 2 medições ruins seguidas; sobe só depois de ~12 s bons e nunca logo depois de baixar
   // (antes ficava sobe/desce a cada 2,5 s perto de 50-60 fps e cada troca recriava os alvos de efeito = travadinha)
@@ -12436,6 +12508,23 @@ body.nc-swap .tbtns{right:auto!important;left:max(16px,env(safe-area-inset-left,
 body.nc-swap .tbtns button{transform:scaleX(-1)}
 #hub .scard{align-content:start;padding:10px 6px}#hub .scard small{line-height:1.25;text-align:center}#hub .scard:disabled{opacity:.55}
 #hub .shopgrid{grid-template-columns:repeat(2,1fr)!important}
+.bag-top{display:flex;justify-content:space-between;font-size:13px;color:var(--mute);margin:2px 0 4px}.bag-top b{color:#f4efe2}.bag-top .hv b{color:#ff6a5a}
+.bag-w{height:6px;background:#05050c;margin-bottom:8px}.bag-w i{display:block;height:100%}
+.bag-hv{font-size:12.5px;color:#ff8a7a;margin:-2px 0 8px}
+.bgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.bcell{position:relative;aspect-ratio:1;padding:0;border:0;background:#120e2c;clip-path:var(--cuts);box-shadow:inset 0 0 0 1.5px #3c2f7a;display:grid;place-items:center;color:inherit;min-width:0}
+.bcell .pimg.nci{--s:100%;width:100%;height:100%}
+.bcell.on{box-shadow:inset 0 0 0 3px #ffe36a}.bcell.on .pimg.nci{box-shadow:inset 0 0 0 3px #ffe36a}
+.bcell.no .pimg.nci{opacity:.45}
+.bcell.empty{box-shadow:inset 0 0 0 1.5px #2a2158;background:#0e0b24}
+.bcell.mat{background:radial-gradient(circle at 50% 40%,color-mix(in srgb,var(--tc) 30%,#1a1438),#0d0a22 78%);box-shadow:inset 0 0 0 2px var(--tc),inset 0 0 0 3.5px #05050c}
+.bcell.mat .mico{width:56%;height:56%;margin:0}
+.bcell em{position:absolute;right:4px;bottom:2px;font:800 12px/1 system-ui,sans-serif;font-style:normal;color:#fff;text-shadow:0 0 3px #000,0 1px 0 #000,1px 0 0 #000,-1px 0 0 #000}
+.bag-more{text-align:center;font-size:12px;color:var(--mute);margin-top:6px}
+.bag-tools{display:flex;justify-content:flex-end;margin-bottom:6px}.bag-act{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}.bag-act .btn{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;line-height:1.15}.bag-act .btn small{font-size:10px;opacity:.75;font-family:var(--f-body);text-transform:none;letter-spacing:0;white-space:normal}.bag-act .btn.danger{border-color:#ff5a5a;color:#ff8a8a}
+html{position:fixed;inset:0;width:100%;overscroll-behavior:none;touch-action:pan-x pan-y;-webkit-text-size-adjust:100%}
+.bag-brk{font-size:12px;color:var(--mute);margin-top:6px;text-align:center}.bag-brk b{color:#f4efe2;font-weight:600}
+.bag-det{margin-top:10px}.bag-det.hint{font-size:13px;color:var(--mute);text-align:center;padding:8px}
 /* --- partida --- */
 #hud .hud-lv{border-radius:0;clip-path:var(--gem);width:50px;height:56px;top:-8px;background:linear-gradient(180deg,#ffe36a,#ffb347);box-shadow:none}
 #hud .hud-lv b{color:#120a1e;text-shadow:none;font-weight:400}
@@ -12460,6 +12549,11 @@ body.nc-swap .tbtns button{transform:scaleX(-1)}
 @media (max-width:600px) and (orientation:portrait){.nc-b{height:56px}.nc-go{padding:12px 36px;font-size:16px}.ncs-logo{font-size:clamp(30px,8.6vw,84px)}}
 </style>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><linearGradient id="ncMetal" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".45" stop-color="#c9d0e2"/><stop offset="1" stop-color="#6f7892"/></linearGradient></defs></svg>
+<script id="nc-nozoom">/* sem zoom de pinça nem toque duplo: a tela não sai mais do lugar no celular */
+['gesturestart','gesturechange','gestureend'].forEach(n => document.addEventListener(n, e => e.preventDefault(), {passive:false}));
+document.addEventListener('touchmove', e => { if(e.touches.length > 1) e.preventDefault(); }, {passive:false});
+(function(){ let t = 0; document.addEventListener('touchend', e => { const n = Date.now(); if(n - t < 320 && !e.target.closest('input,textarea,button,[data-s],a,summary,canvas,.tbtns,#joy')) e.preventDefault(); t = n; }, {passive:false}); })();
+</script>
 <script id="nc-vitral-js">
 (function(){
   var SW='<svg class="nc-sword" viewBox="0 0 90 260" aria-hidden="true"><defs><linearGradient id="ncSwG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff0b8"/><stop offset=".45" stop-color="#f2c14e"/><stop offset="1" stop-color="#b9801f"/></linearGradient><linearGradient id="ncSwS" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#aab0cc"/></linearGradient></defs><path fill="url(#ncSwG)" d="M22 40 L16 14 L32 24 L45 4 L58 24 L74 14 L68 40 Z"/><rect fill="url(#ncSwG)" x="10" y="52" width="70" height="10" rx="4"/><rect x="39" y="44" width="12" height="46" fill="#8a5a2a"/><path fill="url(#ncSwS)" d="M34 64 H56 V215 L45 250 L34 215 Z"/><path d="M45 66 V240" stroke="#7d84a6" stroke-width="2"/></svg>';
