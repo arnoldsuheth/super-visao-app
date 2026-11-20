@@ -636,6 +636,7 @@ canvas.ncgrabok{cursor:grab}canvas.ncgrab,canvas.ncgrabok.ncgrab{cursor:grabbing
       <p class="lede">A Coroa Ancestral se partiu em nove. Cada rei ficou com uma, e cada coroa transformou o seu rei em monstro. Você é o soldado que sobrou. Reacenda as fogueiras, liberte os nove reinos e reúna as nove coroas.</p>
       <div class="eyebrow">Herói</div>
       <div class="cgrid" id="classGrid"></div>
+      <div id="ncTreeBox"></div>
       <div id="specBox"></div>
       <div id="ncPetBox"></div>
       <div id="ncCoopBox"></div>
@@ -7574,7 +7575,7 @@ function pulseMats(ms){ const k = .65 + Math.sin(clock*3)*.35; for(const m of ms
 function renderHub(){
   const S = stats(), c = CLS();
   $('#classGrid').innerHTML = CLASS_ORDER.map(k => `<button class="cbtn" data-cls="${k}" aria-pressed="${save.cls === k}"><b>${CLASSES[k].name}</b><small>${ncClassTag(k)}</small></button>`).join('');
-  renderSpec(); try{ ncCloud.draw(); }catch(e){}
+  renderSpec(); try{ ncTreeDraw(); }catch(e){} try{ ncCloud.draw(); }catch(e){}
   const D = DF();
   $('#diffGrid').innerHTML = DIFF_ORDER.map(k => `<button class="dbtn" data-diff="${k}" style="--dc:${DIFFS[k].css}" aria-pressed="${save.diff === k}">${DIFFS[k].name}</button>`).join('');
   $('#diffInfo').innerHTML = `<span style="color:${D.css}">${D.desc}</span>`;
@@ -10074,13 +10075,37 @@ addEventListener('keydown', e => { if(!ncRebind) return; e.preventDefault(); e.s
 document.addEventListener('click', e => { const b = e.target.closest('[data-rebind],[data-rebindreset]'); if(!b) return;
   if(b.dataset.rebindreset !== undefined){ save.keys = {}; persist(); ncRebind = null; } else ncRebind = b.dataset.rebind;
   try{ renderControls(); renderSkillbar(); }catch(_){} });
+/* ===== Árvore de habilidades (aprovada pelo Arnold em 20/11) =====
+   No Grade (nível 1-14): só ataque básico. Do nível 15 em diante cada nível dá 1 ponto.
+   Cada habilidade vai do nível 1 ao 10: começa fraca e cada ponto aumenta o dano e diminui a recarga e o gasto.
+   Parte 1: as 2 habilidades que já existem. As outras 4 de cada classe entram nas próximas partes. */
+const NC_SK_REQ = [15, 20, 30, 40, 50, 65], NC_SK_MAX = 10;
+const ncSkTree = () => { save.skt = save.skt || {}; const t = save.skt[save.cls] || (save.skt[save.cls] = []); return t; };
+const ncSkLv = i => ncSkTree()[i] || 0;
+const ncSkPts = () => Math.max(0, ncLvOf(save.cls) - 14) - ncSkTree().reduce((a, b) => a + (b || 0), 0);
+const ncSkMul = i => .6 + (Math.max(1, ncSkLv(i)) - 1)*.11;        // nível 1 = 60% do dano de hoje, nível 10 = 160%
+const ncSkFast = i => 1 - (Math.max(1, ncSkLv(i)) - 1)*.03;        // recarga e gasto: até 27% menores no nível 10
+const ncSkResetCost = () => Math.round(500*NC_ECON*Math.max(1, ncLvOf(save.cls) - 14));
+let ncInSkill = 0;
+function ncTreeHTML(){ const c = CLS(), u = window.ncIconUrl || (() => 'none'), pts = ncSkPts(), lv = ncLvOf(save.cls);
+  let h = '<div class="eyebrow">Árvore de habilidades · ' + c.name + '</div><div class="tree-top"><span>Pontos para usar: <b>' + pts + '</b></span>' + (lv < 15 ? '<small>No Grade: só ataque básico. O 1º ponto vem no nível 15.</small>' : '<small>1 ponto por nível a partir do 15</small>') + '</div><div class="tree">';
+  for(let i = 0; i < NC_SK_REQ.length; i++){ const sk = c.skills[i], l = ncSkLv(i), req = NC_SK_REQ[i], open = lv >= req;
+    if(!sk){ h += '<div class="tnode soon"><i></i><div><b>Habilidade ' + (i + 1) + (i === 5 ? ' · Suprema' : '') + '</b><small>Nível ' + req + ' · chega na próxima atualização</small></div></div>'; continue; }
+    const can = open && pts > 0 && l < NC_SK_MAX;
+    h += '<div class="tnode' + (l ? ' on' : '') + (open ? '' : ' lock') + '"><i style=\'background-image:' + u(sk.id) + '\'>' + (l ? '<em>' + l + '</em>' : '') + '</i><div><b>' + sk.full + '</b><small>' + (open ? (l ? 'Nível ' + l + ' de ' + NC_SK_MAX + ' · dano ' + Math.round(ncSkMul(i)*100) + '% · recarga ' + (sk.cd*ncSkFast(i)).toFixed(1) + ' s' : 'Ainda não aprendida') : 'Libera no nível ' + req) + '</small><span>' + sk.desc + '</span></div>'
+      + '<button class="btn sm' + (can ? ' primary' : '') + '" data-skup="' + i + '" ' + (can ? '' : 'disabled') + '>' + (l ? (l >= NC_SK_MAX ? 'Máx.' : '+1') : 'Aprender') + '</button></div>'; }
+  const used = ncSkTree().some(v => v);
+  h += '</div>' + (used ? '<button class="btn sm" data-skreset style="margin-top:8px">Refazer pontos · ' + adenaTxt(ncSkResetCost()) + '</button>' : '');
+  return h; }
+function ncTreeDraw(){ const b = document.getElementById('ncTreeBox'); if(b) b.innerHTML = ncTreeHTML(); const pp = document.getElementById('ncSkPop'); if(pp && !pp.hidden) ncSkillsPop(true); }
+document.addEventListener('click', e => { const b = e.target.closest('[data-skup],[data-skreset]'); if(!b) return;
+  if(b.dataset.skreset !== undefined){ const c = ncSkResetCost(); if(save.gold < c){ try{ banner('Adena insuficiente', 'Refazer custa ' + adenaTxt(c)); }catch(_){} return; } save.gold -= c; save.skt[save.cls] = []; persist(); try{ SFX.drop(); }catch(_){} }
+  else { const i = +b.dataset.skup, t = ncSkTree(); if(ncLvOf(save.cls) >= NC_SK_REQ[i] && ncSkPts() > 0 && (t[i] || 0) < NC_SK_MAX && CLS().skills[i]){ t[i] = (t[i] || 0) + 1; persist(); try{ SFX.item(); }catch(_){} } }
+  ncTreeDraw(); try{ renderSkillbar(); }catch(_){} });
 function ncSkillsPop(open){ let el = document.getElementById('ncSkPop'); if(!el){ el = document.createElement('div'); el.id = 'ncSkPop'; el.hidden = true; document.body.appendChild(el);
     el.addEventListener('click', e => { if(e.target === el || e.target.closest('[data-skclose]')) ncSkillsPop(false); }); }
   if(open === undefined) open = el.hidden !== false; el.hidden = !open; if(!open) return;
-  const c = CLS(), u = window.ncIconUrl || (() => 'none');
-  el.innerHTML = '<div class="skp-box"><button class="pop-x" data-skclose>✕</button><div class="eyebrow">Habilidades · ' + c.name + '</div>' + c.skills.map((k, i) =>
-    '<div class="skp-row"><i style=\'background-image:' + u(k.id) + '\'></i><div><b>' + k.full + '</b> <kbd>' + keyLabel(bindOf(i ? 's2' : 's1')) + '</kbd><small>Recarga ' + k.cd + ' s</small><span>' + k.desc + '</span></div></div>').join('')
-    + '<div class="istat" style="margin-top:8px">Em breve: árvore de habilidades para liberar e melhorar cada uma.</div></div>'; }
+  el.innerHTML = '<div class="skp-box"><button class="pop-x" data-skclose>✕</button>' + ncTreeHTML() + '</div>'; }
 let attackHeld = false, attackPressed = false, dashPressed = false, joyX = 0, joyZ = 0;
 addEventListener('keydown', e => {
   if(e.repeat && !['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) { if(e.code === 'Space' && mode === 'stage') e.preventDefault(); return; }
@@ -10247,6 +10272,7 @@ function hitEnemy(e, mult, o){
   if(e.dead || e.dying) return false;
   if(e.kind !== 'boss' && !o.anyY && !yOk(e.pos.y, o.y !== undefined ? o.y : P.pos.y, o.ytol)) return false;
   const S = P.S, crit = o.crit || Math.random() < S.crit;
+  if(o.skm) mult *= o.skm; else if(ncInSkill || P.skill) mult *= ncSkMul(P.skLvI || 0);
   const dmg = Math.max(1, Math.round(S.atk * mult * (.9 + Math.random()*.2) * (crit ? S.critMult : 1) * (e.kind === 'boss' || e.elite ? 1 + (S.pen || 0) : 1)));
   let heal = 0;
   if(P.rageT > 0) heal += dmg*.08;
@@ -10338,7 +10364,7 @@ function mxMuzzle(ang){
   v.x += Math.sin(ang)*.35; v.z += Math.cos(ang)*.35; return v;
 }
 function firePlayer(o){
-  const S = P.S;
+  const S = P.S; if(ncInSkill && !o.skm) o.skm = ncSkMul(P.skLvI || 0);
   const col = o.col || {dark:0x8a2cff, bolt: S.elem ? ELEM_COL[S.elem] : 0x9ad0ff, fireball:0xff8a2a, arrow:0xf0e2c0, pierce:0xbff4ff, dagger:0xd8dce8, shard:0xc080ff}[o.kind];
   const m = projVis(o.kind, col);
   // com o boneco novo, o tiro sai da arma/mão de verdade (antes saía de um ponto fixo na frente do herói)
@@ -10352,7 +10378,8 @@ function useSkill(i){
   if(P && P.skill && P.cd[i] <= 0){ P.qSk = {i, t:clock}; return; }   // apertou durante outra habilidade: guarda e solta assim que ela acabar
   if(mode !== 'stage' || !running || inputLocked || !P || P.dead || P.cd[i] > 0 || P.skill) return;
   if(P.mounted) toggleMount(false);
-  const sk = CLS().skills[i]; if(!ncSpend(ncSkCost(sk))) return; P.cd[i] = sk.cd;
+  if(!ncSkLv(i)){ if(clock - (P.lockMsgT || 0) > 1.2){ P.lockMsgT = clock; floatText(P.pos, ncLvOf(save.cls) < NC_SK_REQ[i] ? 'Libera no nível ' + NC_SK_REQ[i] : 'Aprenda na árvore (H)', 'hurt'); } return; }
+  const sk = CLS().skills[i]; if(!ncSpend(Math.round(ncSkCost(sk)*ncSkFast(i)))) return; P.cd[i] = sk.cd*ncSkFast(i); P.skLvI = i; ncInSkill = 1; setTimeout(() => { ncInSkill = 0; }, 0);
   const dirOf = a => new T.Vector3(Math.sin(a), 0, Math.cos(a));
   switch(sk.id){
     case 'bash': { const a = aimAngle(9); if(a !== null) P.face = P.targetFace = a;
@@ -10515,7 +10542,7 @@ function gainXP(n){
   n = Math.round(n*DF().reward);
   save.xp += n;
   let up = false;
-  while(save.level < NC_MAX_LV && save.xp >= xpNeed(save.level)){ save.xp -= xpNeed(save.level); save.level++; up = true; if(save.level === NC_SPEC_LV) setTimeout(() => { try{ banner('Nível ' + NC_SPEC_LV + ': especialização liberada', 'Abra o menu Herói e escolha o seu caminho'); }catch(e){} }, 1800); }
+  while(save.level < NC_MAX_LV && save.xp >= xpNeed(save.level)){ save.xp -= xpNeed(save.level); save.level++; up = true; if(save.level >= 15 && save.level !== NC_SPEC_LV) setTimeout(() => { try{ banner('Novo ponto de habilidade', (NC_SK_REQ.includes(save.level) ? 'Habilidade nova liberada! ' : '') + 'Abra a árvore (Herói ou tecla H).'); }catch(_){} }, 600); if(save.level === NC_SPEC_LV) setTimeout(() => { try{ banner('Nível ' + NC_SPEC_LV + ': especialização liberada', 'Abra o menu Herói e escolha o seu caminho'); }catch(e){} }, 1800); }
   if(save.level >= NC_MAX_LV){ save.level = NC_MAX_LV; save.xp = 0; }
   if(up && P){
     P.S = stats(); P.hp = P.S.hp;
@@ -11156,12 +11183,12 @@ function updateWorld(dt){
         if(p.aoe){ gone = true; break; }
         const sp = Math.hypot(p.vx, p.vz);
         if(e.kind !== 'boss' && !yOk(e.pos.y, p.y0, 2)) continue;
-        hitEnemy(e, p.mult, {nx:p.vx/sp, nz:p.vz/sp, kb:p.pierce ? 4 : 5, noProc:p.kind === 'shard', y:p.y0, ytol:2});
+        hitEnemy(e, p.mult, {skm:p.skm || 1, nx:p.vx/sp, nz:p.vz/sp, kb:p.pierce ? 4 : 5, noProc:p.kind === 'shard', y:p.y0, ytol:2});
         if(p.pierce) p.hit.add(e); else gone = true;
       }
     }
     if(gone){
-      if(p.aoe){ aoe(p.m.position.x, p.m.position.z, p.aoe, p.mult, {kb:10}); fxRing(p.m.position.x, p.m.position.z, p.aoe + .4, 0xff8a2a, .35); burst(p.m.position, 0xffa040, 22, 7, 5, 0); addShake(.2); SFX.slam(); }
+      if(p.aoe){ aoe(p.m.position.x, p.m.position.z, p.aoe, p.mult, {kb:10, skm:p.skm || 1}); fxRing(p.m.position.x, p.m.position.z, p.aoe + .4, 0xff8a2a, .35); burst(p.m.position, 0xffa040, 22, 7, 5, 0); addShake(.2); SFX.slam(); }
       scene.remove(p.m); p.m.material.dispose(); pprojs.splice(i, 1);
     }
   }
@@ -11338,7 +11365,7 @@ function updateHUD(){
   const s4 = document.getElementById('sk4'); if(s4) s4.classList.toggle('on', P.mounted);
   $('#tSk1').style.setProperty('--cd', fr[1]); $('#tSk2').style.setProperty('--cd', fr[2]); $('#tDash').style.setProperty('--cd', fr[3]);
   { const left = [0, P.cd[0], P.cd[1], 0]; const txt = v => v > 0 ? (v < 1 ? v.toFixed(1) : String(Math.ceil(v))) : '';
-    for(let i = 1; i < 3; i++){ const t = txt(left[i]), el = document.getElementById('sk' + i); if(el){ let n = el.querySelector('.cdn'); if(!n){ n = document.createElement('em'); n.className = 'cdn'; el.appendChild(n); } if(n.textContent !== t) n.textContent = t; el.classList.toggle('cding', !!t); }
+    for(let i = 1; i < 3; i++){ const lk = !ncSkLv(i - 1), t = lk ? (ncLvOf(save.cls) < NC_SK_REQ[i - 1] ? 'Nv' + NC_SK_REQ[i - 1] : '🔒') : txt(left[i]), el = document.getElementById('sk' + i); if(el){ let n = el.querySelector('.cdn'); if(!n){ n = document.createElement('em'); n.className = 'cdn'; el.appendChild(n); } if(n.textContent !== t) n.textContent = t; el.classList.toggle('cding', !!t); }
       const tb = document.getElementById(i === 1 ? 'tSk1' : 'tSk2'); if(tb){ if(t) tb.setAttribute('data-cd', t); else if(tb.hasAttribute('data-cd')){ tb.removeAttribute('data-cd'); tb.classList.remove('nc-ready'); void tb.offsetWidth; tb.classList.add('nc-ready'); } } } }
   $('#tMount').textContent = P.mounted ? 'Descer' : 'Cavalo';
 }
@@ -12834,6 +12861,10 @@ document.addEventListener('touchmove', e => { if(e.touches.length > 1) e.prevent
 #touch .tbtns,.skillbar{filter:drop-shadow(1.5px 0 0 #d8dfec) drop-shadow(-1.5px 0 0 #d8dfec) drop-shadow(0 1.5px 0 #d8dfec) drop-shadow(0 -1.5px 0 #d8dfec) drop-shadow(0 4px 6px rgba(0,0,0,.6))}
 .skillbar{bottom:calc(18px + env(safe-area-inset-bottom,0px))!important}
 .skillbar{pointer-events:auto}
+#ncTreeBox{margin:12px 0 4px}.tree-top{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 10px;align-items:baseline;margin:2px 0 8px}.tree-top b{color:#f2c14e;font-size:18px}.tree-top small{color:var(--mute);font-size:12px}
+.tree{display:grid;gap:6px}.tnode{display:flex;gap:10px;align-items:center;padding:8px;background:rgba(10,12,22,.5);border:1px solid #3c2f7a}.tnode.on{border-color:#c9a24a}.tnode.lock{opacity:.55}.tnode.soon{opacity:.4}
+.tnode>i{position:relative;flex:0 0 48px;height:48px;background:#0e0a20 center/cover;border:2px solid #d8dfec}.tnode.lock>i{filter:grayscale(1)}.tnode>i em{position:absolute;right:-6px;bottom:-6px;font:700 12px/1 var(--f-body);font-style:normal;background:#c9a24a;color:#14101f;padding:3px 5px;border-radius:3px}
+.tnode>div{flex:1;min-width:0}.tnode b{display:block;color:#f4efe2;font-size:14px}.tnode small{display:block;color:#cfc9e6;font-size:11px;margin:2px 0}.tnode span{display:block;font-size:11.5px;color:var(--mute);line-height:1.3}.tnode .btn{flex:0 0 auto;min-width:74px}
 .headsw{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 10px}.hsw{font:600 12px/1 var(--f-body);padding:8px 10px;background:#1a1438;color:#f4efe2;border:1px solid #3c2f7a;cursor:pointer}.hsw[aria-pressed="true"]{background:#c9a24a;color:#14101f;border-color:#f2c14e}
 #ncCoopBox{margin:14px 0 4px}.nc-plist{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}.nc-plist span{font-size:12px;padding:3px 8px;background:#1a1438;border:1px solid #3c2f7a}
 .nc-cin{display:flex;gap:6px;margin-top:8px}.nc-cin input{flex:1;min-width:0;font:700 16px/1 monospace;letter-spacing:.2em;text-transform:uppercase;padding:8px;background:#0e0a20;color:#f4efe2;border:1px solid #8a6aff}
