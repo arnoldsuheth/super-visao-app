@@ -12328,6 +12328,91 @@ hubRegion = defaultRegion();
 goHub(); resize(); initTabs(); renderPerfUI();
 requestAnimationFrame(loop);
 })();
+
+
+/* ===== JOGAR JUNTO (fase 1): até 4 pessoas na mesma sala, cada uma no seu aparelho.
+   Usa o canal de tempo real do Supabase (projeto nine-crowns). O anfitrião escolhe a fase e os outros entram junto.
+   Nesta primeira versão cada um vê os outros heróis andando e atacando, mas os monstros ainda são de cada aparelho. ===== */
+const ncCoop = {
+  url:'https://xdcsxcopyfdufdtyywhu.supabase.co', key:'sb_publishable_ctr8HbFHDdS6WEyB21E8eg_Iu8VF6uq', MAX:4,
+  sb:null, ch:null, code:'', host:false, id:Math.random().toString(36).slice(2, 8), at:Date.now(), peers:{}, list:[], msg:'', sendT:0, hubT:0, atkN:0, lastSw:0, ok:false,
+  async lib(){ if(window.supabase && window.supabase.createClient) return window.supabase;
+    await new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js'; s.onload = ok; s.onerror = no; document.head.appendChild(s); });
+    return window.supabase; },
+  newCode(){ const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let c = ''; for(let i = 0; i < 4; i++) c += A[Math.floor(Math.random()*A.length)]; return c; },
+  async join(code, host){
+    code = (code || '').toUpperCase().replace(/[^A-Z2-9]/g, ''); if(code.length !== 4){ this.msg = 'O código da sala tem 4 letras ou números.'; this.draw(); return; }
+    await this.leave(true); this.msg = 'Conectando…'; this.draw();
+    try{ const lib = await this.lib(); if(!this.sb) this.sb = lib.createClient(this.url, this.key); }catch(e){ this.msg = 'Sem internet para jogar junto agora.'; this.draw(); return; }
+    this.code = code; this.host = !!host; this.at = Date.now(); this.ok = false;
+    const ch = this.ch = this.sb.channel('nc-room-' + code, {config:{broadcast:{self:false}, presence:{key:this.id}}});
+    ch.on('broadcast', {event:'st'}, m => this.onState(m.payload))
+      .on('broadcast', {event:'go'}, m => this.onGo(m.payload))
+      .on('broadcast', {event:'hi'}, () => { if(this.host && mode === 'stage' && curStage) this.send('go', {st:curStage.id}); })
+      .on('presence', {event:'sync'}, () => this.onSync())
+      .on('presence', {event:'leave'}, m => { (m.leftPresences || []).forEach(p => this.drop(p.id)); this.onSync(); });
+    ch.subscribe(async st => {
+      if(st === 'SUBSCRIBED'){ this.ok = true; this.msg = this.host ? 'Sala criada. Passe o código para quem vai jogar com você.' : 'Você entrou na sala.'; this.draw(); setTimeout(() => { this.track(); if(!this.host) this.send('hi', {}); }, 300); }
+      else if(st === 'CHANNEL_ERROR' || st === 'TIMED_OUT'){ this.msg = 'Não consegui conectar na sala. Tente de novo.'; this.ok = false; this.draw(); } });
+  },
+  track(){ const ch = this.ch; if(!ch || !this.ok) return; Promise.race([ch.track({id:this.id, cls:save.cls, at:this.at}), new Promise(ok => setTimeout(() => ok('timeout'), 4000))]).then(r => { if(r !== 'ok' && this.ch === ch) setTimeout(() => this.track(), 1500); }).catch(() => setTimeout(() => this.track(), 1500)); },
+  onSync(){ if(!this.ch) return; const s = this.ch.presenceState(), all = [];
+    Object.keys(s).forEach(k => { const p = s[k][0]; if(p) all.push(p); }); all.sort((a, b) => a.at - b.at); this.list = all;
+    const me = all.findIndex(p => p.id === this.id);
+    if(me >= this.MAX){ this.leave(); this.msg = 'Sala cheia: o máximo é ' + this.MAX + ' jogadores.'; }
+    if(all.length && all[0].id === this.id) this.host = true;   // quem chegou primeiro é o anfitrião (se ele sair, passa para o próximo)
+    this.draw(); },
+  async leave(quiet){ const ch = this.ch; this.ch = null; this.ok = false; this.list = []; Object.keys(this.peers).forEach(k => this.drop(k));
+    if(ch){ try{ await ch.untrack(); }catch(_){} try{ await this.sb.removeChannel(ch); }catch(_){} }
+    if(!quiet){ this.code = ''; this.host = false; this.msg = 'Você saiu da sala.'; this.draw(); } },
+  send(ev, payload){ if(this.ch && this.ok) try{ this.ch.send({type:'broadcast', event:ev, payload}); }catch(_){} },
+  onGo(p){ if(this.host || !p || p.st == null) return; const st = STAGES[p.st]; if(!st) return;
+    if(mode === 'stage' && curStage && curStage.id === p.st) return;
+    this.goId = p.st; try{ if(mode === 'stage') goHub(); }catch(_){} setTimeout(() => { try{ startStage(p.st); }catch(e){} this.goId = null; }, 300);
+    try{ banner('Jogando junto', 'Entrando na fase do anfitrião'); }catch(_){} },
+  onState(p){ if(!p || !p.id || p.id === this.id) return; const q = this.peers[p.id] || (this.peers[p.id] = {id:p.id}); q.d = p; q.t = performance.now(); },
+  drop(id){ const q = this.peers[id]; if(!q) return; if(q.h && q.h.root.parent) q.h.root.parent.remove(q.h.root); if(q.tag) q.tag.remove(); delete this.peers[id]; },
+  mkHero(cls){ const prev = save.cls; save.cls = cls in CLASSES ? cls : 'warrior'; let h; try{ h = makeHero(); } finally{ save.cls = prev; }
+    if(!h.mx && mxWanted(h.cls)) mxLoad(h.cls, ok => { if(ok && !h.mx) mxAttach(h); });
+    return h; },
+  tick(dt){ if(!this.ch) return;
+    const inStage = mode === 'stage' && P && curStage;
+    this.sendT -= dt;
+    if(inStage && this.sendT <= 0){ this.sendT = .2;   // 5 avisos por segundo: cabe no plano grátis com 4 jogadores
+      if(P.swingT > this.lastSw + .001 || P.castT > .17){ this.atkN++; } this.lastSw = P.swingT;
+      this.send('st', {id:this.id, cls:save.cls, st:curStage.id, x:+P.pos.x.toFixed(2), z:+P.pos.z.toFixed(2), f:+P.face.toFixed(2), mv:P.mv ? 1 : 0, a:this.atkN, hp:Math.round(P.hp/P.S.hp*100), lv:save.level}); }
+    const now = performance.now();
+    for(const k in this.peers){ const q = this.peers[k], d = q.d; if(!d) continue;
+      if(now - q.t > 6000 || !inStage || d.st !== curStage.id){ if(q.h && q.h.root.parent) q.h.root.parent.remove(q.h.root); if(q.tag) q.tag.hidden = true; if(now - q.t > 15000) this.drop(k); continue; }
+      if(!q.h || q.cls !== d.cls){ if(q.h && q.h.root.parent) q.h.root.parent.remove(q.h.root); q.h = this.mkHero(d.cls); q.cls = d.cls; q.h.root.position.set(d.x, 0, d.z); q.a = d.a; }
+      if(!q.h.root.parent) scene.add(q.h.root);
+      const r = q.h.root.position, dx = d.x - r.x, dz = d.z - r.z, dist = Math.hypot(dx, dz);
+      if(dist > 12){ r.x = d.x; r.z = d.z; } else { const k2 = Math.min(1, dt*8); r.x += dx*k2; r.z += dz*k2; }
+      try{ r.y = heightAt(r.x, r.z); }catch(_){}
+      let df = d.f - q.h.root.rotation.y; df = Math.atan2(Math.sin(df), Math.cos(df)); q.h.root.rotation.y += df*Math.min(1, dt*10);
+      const moving = d.mv || dist > .15;
+      if(q.h.mx){ if(d.a !== q.a){ q.a = d.a; mxPlay(q.h, 'atk1', {once:true, restart:true, fade:.06, at:.2, speed:2.2}); q.lock = .45; }
+        q.lock = Math.max(0, (q.lock || 0) - dt); if(q.lock <= 0) mxPlay(q.h, moving ? 'run' : 'idle', {fade:.15}); q.h.mx.mixer.update(dt); }
+      if(!q.tag){ q.tag = document.createElement('div'); q.tag.className = 'ltag nc-ptag'; document.body.appendChild(q.tag); }
+      const nm = (CLASSES[d.cls] || CLASSES.warrior).name + ' · nv ' + (d.lv || 1); if(q.tag.textContent !== nm) q.tag.textContent = nm;
+      placeTag(q.tag, r.x, r.y + 2.5, r.z, true); }
+  },
+  draw(){ const b = document.getElementById('ncCoopBox'); if(!b) return;
+    let h = '<div class="eyebrow">Jogar junto (até ' + this.MAX + ' pessoas)</div><div class="spec-card">';
+    if(this.ch){ h += '<small>Código da sala</small><b class="nc-code">' + this.code + '</b><small>' + this.list.length + ' de ' + this.MAX + ' jogadores' + (this.host ? ' · você é o anfitrião' : '') + '</small>'
+        + '<div class="nc-plist">' + this.list.map((p, i) => '<span>' + (i === 0 ? '♛ ' : '') + ((CLASSES[p.cls] || {}).name || 'Herói') + (p.id === this.id ? ' (você)' : '') + '</span>').join('') + '</div>'
+        + '<small>' + (this.host ? 'Escolha a fase no Mundo: quem está na sala entra junto.' : 'Espere o anfitrião escolher a fase: você entra junto.') + ' Nesta primeira versão cada um luta com os próprios monstros.</small>'
+        + '<button class="btn sm" data-nccoop="leave" style="margin-top:8px">Sair da sala</button>'; }
+    else h += '<small>Cada um no seu aparelho. Um cria a sala e passa o código de 4 letras; os outros entram com ele.</small><button class="btn sm primary" data-nccoop="new" style="margin-top:8px">Criar sala</button>'
+        + '<div class="nc-cin"><input id="ncCoopIn" maxlength="4" placeholder="CÓDIGO" autocomplete="off" autocapitalize="characters"><button class="btn sm" data-nccoop="join">Entrar na sala</button></div>';
+    h += (this.msg ? '<small class="nc-cmsg">' + this.msg + '</small>' : '') + '</div>'; b.innerHTML = h; }
+};
+document.addEventListener('click', e => { const b = e.target.closest('[data-nccoop]'); if(!b) return; const a = b.dataset.nccoop;
+  if(a === 'new') ncCoop.join(ncCoop.newCode(), true); else if(a === 'join'){ const i = document.getElementById('ncCoopIn'); ncCoop.join(i && i.value, false); } else if(a === 'leave') ncCoop.leave(); });
+setInterval(() => { try{ if(ncCoop.ch && mode !== 'stage') ncCoop.send('st', {id:ncCoop.id, cls:save.cls, st:-1}); if(ncCoop.ch && ncCoop.ok && !ncCoop.ch.presenceState()[ncCoop.id]) ncCoop.track(); }catch(_){} }, 3000);
+setTimeout(() => ncCoop.draw(), 500);
+window.ncCoop = ncCoop;
+
 </script>
 
 <!-- ===== NINE CROWNS: tela do jogo (vida, botoes e atalhos) com icones no lugar de texto ===== -->
@@ -12700,89 +12785,7 @@ details.nc-more{margin-top:12px;border:1px solid rgba(138,106,255,.3);padding:8p
 @media (max-width:600px) and (orientation:portrait){.nc-b{height:56px}.nc-go{padding:12px 36px;font-size:16px}.ncs-logo{font-size:clamp(30px,8.6vw,84px)}}
 </style>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><linearGradient id="ncMetal" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".45" stop-color="#c9d0e2"/><stop offset="1" stop-color="#6f7892"/></linearGradient></defs></svg>
-<script id="nc-coop-js">
-/* ===== JOGAR JUNTO (fase 1): até 4 pessoas na mesma sala, cada uma no seu aparelho.
-   Usa o canal de tempo real do Supabase (projeto nine-crowns). O anfitrião escolhe a fase e os outros entram junto.
-   Nesta primeira versão cada um vê os outros heróis andando e atacando, mas os monstros ainda são de cada aparelho. ===== */
-const ncCoop = {
-  url:'https://xdcsxcopyfdufdtyywhu.supabase.co', key:'sb_publishable_ctr8HbFHDdS6WEyB21E8eg_Iu8VF6uq', MAX:4,
-  sb:null, ch:null, code:'', host:false, id:Math.random().toString(36).slice(2, 8), at:Date.now(), peers:{}, list:[], msg:'', sendT:0, hubT:0, atkN:0, lastSw:0, ok:false,
-  async lib(){ if(window.supabase && window.supabase.createClient) return window.supabase;
-    await new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js'; s.onload = ok; s.onerror = no; document.head.appendChild(s); });
-    return window.supabase; },
-  newCode(){ const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let c = ''; for(let i = 0; i < 4; i++) c += A[Math.floor(Math.random()*A.length)]; return c; },
-  async join(code, host){
-    code = (code || '').toUpperCase().replace(/[^A-Z2-9]/g, ''); if(code.length !== 4){ this.msg = 'O código da sala tem 4 letras ou números.'; this.draw(); return; }
-    await this.leave(true); this.msg = 'Conectando…'; this.draw();
-    try{ const lib = await this.lib(); if(!this.sb) this.sb = lib.createClient(this.url, this.key); }catch(e){ this.msg = 'Sem internet para jogar junto agora.'; this.draw(); return; }
-    this.code = code; this.host = !!host; this.at = Date.now(); this.ok = false;
-    const ch = this.ch = this.sb.channel('nc-room-' + code, {config:{broadcast:{self:false}, presence:{key:this.id}}});
-    ch.on('broadcast', {event:'st'}, m => this.onState(m.payload))
-      .on('broadcast', {event:'go'}, m => this.onGo(m.payload))
-      .on('broadcast', {event:'hi'}, () => { if(this.host && mode === 'stage' && curStage) this.send('go', {st:curStage.id}); })
-      .on('presence', {event:'sync'}, () => this.onSync())
-      .on('presence', {event:'leave'}, m => { (m.leftPresences || []).forEach(p => this.drop(p.id)); this.onSync(); });
-    ch.subscribe(async st => {
-      if(st === 'SUBSCRIBED'){ this.ok = true; this.msg = this.host ? 'Sala criada. Passe o código para quem vai jogar com você.' : 'Você entrou na sala.'; this.draw(); setTimeout(() => { this.track(); if(!this.host) this.send('hi', {}); }, 300); }
-      else if(st === 'CHANNEL_ERROR' || st === 'TIMED_OUT'){ this.msg = 'Não consegui conectar na sala. Tente de novo.'; this.ok = false; this.draw(); } });
-  },
-  track(){ const ch = this.ch; if(!ch || !this.ok) return; Promise.race([ch.track({id:this.id, cls:save.cls, at:this.at}), new Promise(ok => setTimeout(() => ok('timeout'), 4000))]).then(r => { if(r !== 'ok' && this.ch === ch) setTimeout(() => this.track(), 1500); }).catch(() => setTimeout(() => this.track(), 1500)); },
-  onSync(){ if(!this.ch) return; const s = this.ch.presenceState(), all = [];
-    Object.keys(s).forEach(k => { const p = s[k][0]; if(p) all.push(p); }); all.sort((a, b) => a.at - b.at); this.list = all;
-    const me = all.findIndex(p => p.id === this.id);
-    if(me >= this.MAX){ this.leave(); this.msg = 'Sala cheia: o máximo é ' + this.MAX + ' jogadores.'; }
-    if(all.length && all[0].id === this.id) this.host = true;   // quem chegou primeiro é o anfitrião (se ele sair, passa para o próximo)
-    this.draw(); },
-  async leave(quiet){ const ch = this.ch; this.ch = null; this.ok = false; this.list = []; Object.keys(this.peers).forEach(k => this.drop(k));
-    if(ch){ try{ await ch.untrack(); }catch(_){} try{ await this.sb.removeChannel(ch); }catch(_){} }
-    if(!quiet){ this.code = ''; this.host = false; this.msg = 'Você saiu da sala.'; this.draw(); } },
-  send(ev, payload){ if(this.ch && this.ok) try{ this.ch.send({type:'broadcast', event:ev, payload}); }catch(_){} },
-  onGo(p){ if(this.host || !p || p.st == null) return; const st = STAGES[p.st]; if(!st) return;
-    if(mode === 'stage' && curStage && curStage.id === p.st) return;
-    this.goId = p.st; try{ if(mode === 'stage') goHub(); }catch(_){} setTimeout(() => { try{ startStage(p.st); }catch(e){} this.goId = null; }, 300);
-    try{ banner('Jogando junto', 'Entrando na fase do anfitrião'); }catch(_){} },
-  onState(p){ if(!p || !p.id || p.id === this.id) return; const q = this.peers[p.id] || (this.peers[p.id] = {id:p.id}); q.d = p; q.t = performance.now(); },
-  drop(id){ const q = this.peers[id]; if(!q) return; if(q.h && q.h.root.parent) q.h.root.parent.remove(q.h.root); if(q.tag) q.tag.remove(); delete this.peers[id]; },
-  mkHero(cls){ const prev = save.cls; save.cls = cls in CLASSES ? cls : 'warrior'; let h; try{ h = makeHero(); } finally{ save.cls = prev; }
-    if(!h.mx && mxWanted(h.cls)) mxLoad(h.cls, ok => { if(ok && !h.mx) mxAttach(h); });
-    return h; },
-  tick(dt){ if(!this.ch) return;
-    const inStage = mode === 'stage' && P && curStage;
-    this.sendT -= dt;
-    if(inStage && this.sendT <= 0){ this.sendT = .2;   // 5 avisos por segundo: cabe no plano grátis com 4 jogadores
-      if(P.swingT > this.lastSw + .001 || P.castT > .17){ this.atkN++; } this.lastSw = P.swingT;
-      this.send('st', {id:this.id, cls:save.cls, st:curStage.id, x:+P.pos.x.toFixed(2), z:+P.pos.z.toFixed(2), f:+P.face.toFixed(2), mv:P.mv ? 1 : 0, a:this.atkN, hp:Math.round(P.hp/P.S.hp*100), lv:save.level}); }
-    const now = performance.now();
-    for(const k in this.peers){ const q = this.peers[k], d = q.d; if(!d) continue;
-      if(now - q.t > 6000 || !inStage || d.st !== curStage.id){ if(q.h && q.h.root.parent) q.h.root.parent.remove(q.h.root); if(q.tag) q.tag.hidden = true; if(now - q.t > 15000) this.drop(k); continue; }
-      if(!q.h || q.cls !== d.cls){ if(q.h && q.h.root.parent) q.h.root.parent.remove(q.h.root); q.h = this.mkHero(d.cls); q.cls = d.cls; q.h.root.position.set(d.x, 0, d.z); q.a = d.a; }
-      if(!q.h.root.parent) scene.add(q.h.root);
-      const r = q.h.root.position, dx = d.x - r.x, dz = d.z - r.z, dist = Math.hypot(dx, dz);
-      if(dist > 12){ r.x = d.x; r.z = d.z; } else { const k2 = Math.min(1, dt*8); r.x += dx*k2; r.z += dz*k2; }
-      try{ r.y = heightAt(r.x, r.z); }catch(_){}
-      let df = d.f - q.h.root.rotation.y; df = Math.atan2(Math.sin(df), Math.cos(df)); q.h.root.rotation.y += df*Math.min(1, dt*10);
-      const moving = d.mv || dist > .15;
-      if(q.h.mx){ if(d.a !== q.a){ q.a = d.a; mxPlay(q.h, 'atk1', {once:true, restart:true, fade:.06, at:.2, speed:2.2}); q.lock = .45; }
-        q.lock = Math.max(0, (q.lock || 0) - dt); if(q.lock <= 0) mxPlay(q.h, moving ? 'run' : 'idle', {fade:.15}); q.h.mx.mixer.update(dt); }
-      if(!q.tag){ q.tag = document.createElement('div'); q.tag.className = 'ltag nc-ptag'; document.body.appendChild(q.tag); }
-      const nm = (CLASSES[d.cls] || CLASSES.warrior).name + ' · nv ' + (d.lv || 1); if(q.tag.textContent !== nm) q.tag.textContent = nm;
-      placeTag(q.tag, r.x, r.y + 2.5, r.z, true); }
-  },
-  draw(){ const b = document.getElementById('ncCoopBox'); if(!b) return;
-    let h = '<div class="eyebrow">Jogar junto (até ' + this.MAX + ' pessoas)</div><div class="spec-card">';
-    if(this.ch){ h += '<small>Código da sala</small><b class="nc-code">' + this.code + '</b><small>' + this.list.length + ' de ' + this.MAX + ' jogadores' + (this.host ? ' · você é o anfitrião' : '') + '</small>'
-        + '<div class="nc-plist">' + this.list.map((p, i) => '<span>' + (i === 0 ? '♛ ' : '') + ((CLASSES[p.cls] || {}).name || 'Herói') + (p.id === this.id ? ' (você)' : '') + '</span>').join('') + '</div>'
-        + '<small>' + (this.host ? 'Escolha a fase no Mundo: quem está na sala entra junto.' : 'Espere o anfitrião escolher a fase: você entra junto.') + ' Nesta primeira versão cada um luta com os próprios monstros.</small>'
-        + '<button class="btn sm" data-nccoop="leave" style="margin-top:8px">Sair da sala</button>'; }
-    else h += '<small>Cada um no seu aparelho. Um cria a sala e passa o código de 4 letras; os outros entram com ele.</small><button class="btn sm primary" data-nccoop="new" style="margin-top:8px">Criar sala</button>'
-        + '<div class="nc-cin"><input id="ncCoopIn" maxlength="4" placeholder="CÓDIGO" autocomplete="off" autocapitalize="characters"><button class="btn sm" data-nccoop="join">Entrar na sala</button></div>';
-    h += (this.msg ? '<small class="nc-cmsg">' + this.msg + '</small>' : '') + '</div>'; b.innerHTML = h; }
-};
-document.addEventListener('click', e => { const b = e.target.closest('[data-nccoop]'); if(!b) return; const a = b.dataset.nccoop;
-  if(a === 'new') ncCoop.join(ncCoop.newCode(), true); else if(a === 'join'){ const i = document.getElementById('ncCoopIn'); ncCoop.join(i && i.value, false); } else if(a === 'leave') ncCoop.leave(); });
-setInterval(() => { try{ if(ncCoop.ch && mode !== 'stage') ncCoop.send('st', {id:ncCoop.id, cls:save.cls, st:-1}); if(ncCoop.ch && ncCoop.ok && !ncCoop.ch.presenceState()[ncCoop.id]) ncCoop.track(); }catch(_){} }, 3000);
-setTimeout(() => ncCoop.draw(), 500);
-</script>
+
 <script id="nc-nozoom">/* sem zoom de pinça nem toque duplo: a tela não sai mais do lugar no celular */
 ['gesturestart','gesturechange','gestureend'].forEach(n => document.addEventListener(n, e => e.preventDefault(), {passive:false}));
 document.addEventListener('touchmove', e => { if(e.touches.length > 1) e.preventDefault(); }, {passive:false});
