@@ -12097,5 +12097,94 @@ body.nc-l #hub>aside.panel::before,body.nc-r #hub>#rightPanel::before{transform:
   if(!visto){var esp=setInterval(function(){if(!document.getElementById('adsPreT')&&!document.getElementById('ncSplash')){clearInterval(esp);historia()}},400)}
 })();
 </script>
+
+<style id="nc-vitral-css">
+/* ===== Estilo VITRAL (escolha do Arnold): letra Marcellus, logo da espada coroada, formas cortadas e cores de joia ===== */
+@font-face{font-family:"NCDisplay";src:url(assets/fonts/marcellus-sc.woff2) format("woff2");font-display:swap}
+:root{--f-display:"NCDisplay",ui-rounded,"Segoe UI",system-ui,sans-serif;--vj:linear-gradient(90deg,#ff5a7a,#ffb347 35%,#ffe36a 50%,#5ad8ff 75%,#8a6aff);--vlead:#05050c;--vline:#8a6aff;--vink:#cdb8ff;--vgold:#ffe36a;
+  --hex:polygon(16px 0,calc(100% - 16px) 0,100% 50%,calc(100% - 16px) 100%,16px 100%,0 50%);--hexs:polygon(10px 0,calc(100% - 10px) 0,100% 50%,calc(100% - 10px) 100%,10px 100%,0 50%);
+  --gem:polygon(50% 0,100% 22%,100% 78%,50% 100%,0 78%,0 22%);--cut:polygon(18px 0,calc(100% - 18px) 0,100% 18px,100% calc(100% - 18px),calc(100% - 18px) 100%,18px 100%,0 calc(100% - 18px),0 18px);
+  --cuts:polygon(8px 0,calc(100% - 8px) 0,100% 8px,100% calc(100% - 8px),calc(100% - 8px) 100%,8px 100%,0 calc(100% - 8px),0 8px)}
+.nc-sword{height:1.55em;width:auto;flex:none;vertical-align:middle;filter:drop-shadow(0 0 10px rgba(242,193,78,.55))}
+/* --- abertura --- */
+#ncSplash{font-family:var(--f-display)}
+.ncs-logo{gap:.22em;align-items:center;letter-spacing:.06em;font-weight:400}
+.ncs-logo .nc-sword{opacity:0;transform:translateY(-1.2em) scale(1.25);transition:opacity .5s 2.5s,transform .7s cubic-bezier(.2,1.5,.4,1) 2.5s}
+#ncSplash.on .ncs-logo .nc-sword{opacity:1;transform:none}
+.ncs-ros{position:absolute;inset:-34%;border-radius:50%;background:conic-gradient(#ff5a7a,#ffb347,#ffe36a,#7dff8a,#5ad8ff,#6a8aff,#8a6aff,#ff7ae0,#ff5a7a);
+  -webkit-mask:radial-gradient(circle,transparent 44%,#000 45%,#000 57%,transparent 58%);mask:radial-gradient(circle,transparent 44%,#000 45%,#000 57%,transparent 58%);opacity:0;transition:opacity 2s 1s;animation:ncsSpin 120s linear infinite}
+.ncs-ros::after{content:"";position:absolute;inset:0;border-radius:50%;background:repeating-conic-gradient(from 0deg,#05050c 0deg 1.6deg,transparent 1.6deg 20deg)}
+.ncs-ros.b{inset:-52%;-webkit-mask:radial-gradient(circle,transparent 51%,#000 52%,#000 56%,transparent 57%);mask:radial-gradient(circle,transparent 51%,#000 52%,#000 56%,transparent 57%);animation-direction:reverse;animation-duration:180s}
+.ncs-ros.b::after{background:repeating-conic-gradient(from 10deg,#05050c 0deg 1deg,transparent 1deg 40deg)}
+#ncSplash.on .ncs-ros{opacity:.5}#ncSplash.on .ncs-ros.b{opacity:.75}
+.ncs-gem{width:12px;height:12px;margin:-6px;border-color:rgba(255,255,255,.35);--r:calc(var(--s)*.86)}
+.ncs-gem.on{background:var(--gc,#f2c14e);border-color:#fff;box-shadow:0 0 16px 3px var(--gc,#f2c14e)}
+.ncs-beam{position:absolute;left:50%;top:38%;width:160vmax;height:160vmax;margin:-80vmax;pointer-events:none;background:conic-gradient(from 200deg,transparent 0 8deg,rgba(255,227,106,.10) 12deg,transparent 18deg 40deg,rgba(90,216,255,.08) 46deg,transparent 54deg 96deg,rgba(255,90,122,.07) 104deg,transparent 112deg 150deg,rgba(138,106,255,.09) 158deg,transparent 166deg);
+  -webkit-mask:radial-gradient(circle,transparent 6%,#000 14%,transparent 60%);mask:radial-gradient(circle,transparent 6%,#000 14%,transparent 60%);opacity:0;transition:opacity 3s 1.2s;animation:ncsSway 16s ease-in-out infinite alternate}
+#ncSplash.on .ncs-beam{opacity:1}
+@keyframes ncsSway{from{transform:rotate(-7deg)}to{transform:rotate(7deg)}}
+.ncs-land{position:absolute;left:-4%;right:-4%;bottom:0;height:34vh;pointer-events:none;background:no-repeat bottom/100% 100%;opacity:0;transform:translateY(30px);transition:opacity 2s .4s,transform 2.6s cubic-bezier(.2,.8,.2,1) .4s}
+.ncs-land.l1{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 300' preserveAspectRatio='none'%3E%3Cpath fill='%23141a44' d='M0 300V190l90-70 70 60 110-120 90 90 80-50 110 90 100-110 120 100 90-60 140 80v100z'/%3E%3C/svg%3E");height:40vh;animation:ncsLand 40s ease-in-out infinite alternate}
+.ncs-land.l2{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 300' preserveAspectRatio='none'%3E%3Cpath fill='%2307081a' d='M0 300V230h60v-40h14v-22h10v22h14v40h80l40-30 50 30h70v-70h12v-30l14-26 14 26v30h30v-52h10v-20h8v-34l12-22 12 22v34h8v20h10v52h30v-30l14-26 14 26v30h12v70h90l60-36 60 36h50v-50h12v-22h10v22h12v50h60v70z'/%3E%3C/svg%3E");height:26vh;transition-delay:.9s}
+#ncSplash.on .ncs-land{opacity:1;transform:none}
+@keyframes ncsLand{to{transform:translateX(-2.5%)}}
+.ncs-foot{background:linear-gradient(135deg,rgba(28,22,64,.72) 0 33%,rgba(22,32,63,.72) 33% 66%,rgba(35,26,64,.72) 66%);border:0;border-radius:0;clip-path:var(--cut);box-shadow:inset 0 0 0 3px var(--vlead),inset 0 0 0 4px var(--vline);padding:16px 26px}
+.ncs-bar i{background:var(--vj);box-shadow:0 0 10px #ffb347}
+.ncs-go{clip-path:var(--hex);background:var(--vj);background-size:200% 100%;color:#120a1e;padding:13px 52px;letter-spacing:.24em;animation:ncsJewel 6s linear infinite alternate}
+.ncs-go::before,.ncs-go::after{display:none}.ncs-go:hover{color:#000;text-shadow:none;letter-spacing:.3em;filter:brightness(1.12)}
+@keyframes ncsJewel{to{background-position:100% 0}}
+/* --- menu --- */
+.nc-top .logo{display:flex;align-items:center;justify-content:center;gap:.25em;letter-spacing:.06em;font-family:var(--f-display);font-weight:400}
+.nc-top .logo br{display:none}
+.nc-go{clip-path:var(--hex);border:0;border-radius:0;background:var(--vj);background-size:200% 100%;color:#120a1e;box-shadow:none;padding:14px 46px;font-weight:400;font-size:18px;animation:ncsJewel 6s linear infinite alternate}
+.nc-go:hover{box-shadow:none;filter:brightness(1.1)}
+.nc-play{filter:drop-shadow(0 0 16px rgba(255,179,71,.45))}
+.nc-b{clip-path:var(--gem);border-radius:0;background:#241a44;color:var(--vink);backdrop-filter:none;-webkit-backdrop-filter:none;height:64px}
+.nc-b::before,.nc-b::after{display:none}
+.nc-b:hover{background:#34276a;color:#fff}.nc-b.on{background:linear-gradient(180deg,#ffe36a,#ffb347);color:#120a1e;box-shadow:none}
+.nc-rail{filter:drop-shadow(0 0 0 #000) drop-shadow(0 3px 8px rgba(0,0,0,.5))}
+#hub>.panel{border:0!important;border-radius:0!important;clip-path:var(--cut);background:linear-gradient(135deg,#1c1640f2 0 33%,#16203ff2 33% 66%,#231a40f2 66%)!important;box-shadow:inset 0 0 0 3px var(--vlead),inset 0 0 0 4px var(--vline)!important;backdrop-filter:none}
+#hub>.panel .nc-head b{color:var(--vgold);font-weight:400;letter-spacing:.08em}
+.nc-x{border-radius:0;clip-path:var(--cuts);background:#241a44;border:0;color:var(--vink)}
+#hub .btn,#pause .btn,.modal .btn{border:0;border-radius:0;clip-path:var(--hexs);background:#241a44;color:var(--vink);box-shadow:inset 0 0 0 2px var(--vline);padding:9px 18px;font-family:var(--f-display)}
+#hub .btn.primary,#pause .btn.primary,.modal .btn.primary{background:var(--vj);color:#120a1e;box-shadow:none}
+#hub .btn:disabled{opacity:.45}
+#hub .cbtn,#hub .eq,#hub .dbtn,.spec-card,.spec-lock{border:0!important;border-radius:0!important;clip-path:var(--cuts);background:#1a1438;box-shadow:inset 0 0 0 1.5px #3c2f7a}
+#hub .cbtn[aria-pressed="true"],#hub .dbtn[aria-pressed="true"],.spec-card.on{background:#2c2160;box-shadow:inset 0 0 0 2px var(--vgold)}
+#hub .cbtn[aria-pressed="true"] b,.spec-card b{color:var(--vgold)}
+#hub .eq.has{box-shadow:inset 0 0 0 2px var(--tc,#8a6aff)}
+#hub .chipb{border-radius:0;clip-path:var(--hexs);background:#241a44;border:0;color:var(--vink);padding:5px 16px}
+#hub .chipb[aria-pressed="true"]{background:linear-gradient(180deg,#ffe36a,#ffb347);color:#120a1e}
+#hub h2,#hub h3,#hub .eyebrow{font-family:var(--f-display)}
+.nc-chip{border-radius:0;clip-path:var(--cuts);background:#1a1438;border:0;box-shadow:inset 0 0 0 1.5px var(--vline)}
+/* --- partida --- */
+#hud .hud-lv{border-radius:0;clip-path:var(--gem);width:50px;height:56px;top:-8px;background:linear-gradient(180deg,#ffe36a,#ffb347);box-shadow:none}
+#hud .hud-lv b{color:#120a1e;text-shadow:none;font-weight:400}
+#hud .bar{border-radius:0;clip-path:polygon(9px 0,100% 0,calc(100% - 9px) 100%,0 100%);background:var(--vlead);box-shadow:none}
+#hud .bar.hp i{border-radius:0;background:linear-gradient(90deg,#ff5a7a,#ffb347)}#hud .bar.hp::after{display:none}
+#hud .bar.xp i{background:linear-gradient(90deg,#5ad8ff,#8a6aff)}
+#hud .chip{border:0;border-radius:0;clip-path:var(--hexs);background:rgba(36,26,68,.88);color:#f4efe2;padding-left:16px;padding-right:16px;box-shadow:none}
+#hud #mm{border-radius:0;clip-path:var(--cut);border:0;box-shadow:none;outline:0}
+.sk{border-radius:0;clip-path:var(--gem);width:66px;height:74px;box-shadow:none;background:linear-gradient(160deg,#3a2c7a,#1a1438)}
+.sk.atk{background:linear-gradient(160deg,#ff5a7a,#8a1f3a)}.sk.skl{background:linear-gradient(160deg,#8a6aff,#34206e)}
+.tbtns button{border-radius:0!important;clip-path:var(--gem);box-shadow:none!important}
+#joy{border-color:rgba(138,106,255,.7)!important}#knob{background:linear-gradient(160deg,#ffe36a,#ffb347)!important}
+@media (max-width:600px){.skillbar{gap:5px}.sk{width:54px;height:62px}}
+@media (max-width:600px) and (orientation:portrait){.nc-b{height:56px}.nc-go{padding:12px 36px;font-size:16px}.ncs-logo{font-size:clamp(30px,8.6vw,84px)}}
+</style>
+<script id="nc-vitral-js">
+(function(){
+  var SW='<svg class="nc-sword" viewBox="0 0 90 260" aria-hidden="true"><defs><linearGradient id="ncSwG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff0b8"/><stop offset=".45" stop-color="#f2c14e"/><stop offset="1" stop-color="#b9801f"/></linearGradient><linearGradient id="ncSwS" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#aab0cc"/></linearGradient></defs><path fill="url(#ncSwG)" d="M22 40 L16 14 L32 24 L45 4 L58 24 L74 14 L68 40 Z"/><rect fill="url(#ncSwG)" x="10" y="52" width="70" height="10" rx="4"/><rect x="39" y="44" width="12" height="46" fill="#8a5a2a"/><path fill="url(#ncSwS)" d="M34 64 H56 V215 L45 250 L34 215 Z"/><path d="M45 66 V240" stroke="#7d84a6" stroke-width="2"/></svg>';
+  function tmp(h){var d=document.createElement('div');d.innerHTML=h;return d.firstChild}
+  try{ // abertura: espada no meio do nome, rosacea de vitral, feixes de luz, montanhas e castelo
+    var lg=document.querySelector('.ncs-logo'),w2=lg&&lg.querySelector('.ncs-w2'); if(w2) lg.insertBefore(tmp(SW),w2);
+    var ecl=document.querySelector('.ncs-ecl'); if(ecl){ ['ncs-ros b','ncs-ros'].forEach(function(c){var e=document.createElement('div');e.className=c;ecl.insertBefore(e,ecl.firstChild)});
+      var cs=['#ff5a7a','#ffb347','#ffe36a','#7dff8a','#5ad8ff','#6a8aff','#8a6aff','#ff7ae0','#ffffff']; ecl.querySelectorAll('.ncs-gem').forEach(function(g,i){g.style.setProperty('--gc',cs[i%9])}); }
+    var sp=document.getElementById('ncSplash'),st=document.getElementById('ncsStage'); if(sp&&st){ ['ncs-beam','ncs-land l1','ncs-land l2'].forEach(function(c){var e=document.createElement('div');e.className=c;sp.insertBefore(e,st)}); }
+  }catch(e){}
+  function menu(){ try{ var l=document.querySelector('.nc-top .logo'); if(l&&!l.querySelector('.nc-sword')){ var sp=l.querySelector('span'); if(sp) l.insertBefore(tmp(SW.replace(/ncSw/g,'ncSx')),sp); return true } }catch(e){} return false }
+  if(!menu()){ var n=0,t=setInterval(function(){ if(menu()||++n>60) clearInterval(t) },250) }
+})();
+</script>
 </body>
 </html>
