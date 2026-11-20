@@ -659,7 +659,7 @@ canvas.ncgrabok{cursor:grab}canvas.ncgrab,canvas.ncgrabok.ncgrab{cursor:grabbing
       <div id="ncTreeBox"></div>
       <div id="specBox"></div>
       <div id="ncPetBox"></div>
-      <div id="ncCoopBox"></div>
+      <div id="ncCoopBox" hidden></div>
       <div id="ncCloudBox"></div>
       <div class="cinfo" id="classInfo"></div>
       <div class="look">
@@ -7490,6 +7490,7 @@ const bossRange = st => { const hi = Math.min(CFG.caps.boss, st.itier + 3); retu
 const worldRange = r => [Math.min(9, 3 + r*2), Math.min(CFG.caps.world, 7 + r)];
 let hero = null, P = null, boss = null, bossActive = false;
 let allies = [];
+let ncNid = 0, ncAiPeer = false;   // ncNid: número de cada monstro (o mesmo em todos os aparelhos da sala)
 let enemies = [], projs = [], pprojs = [], tels = [], parts = [], pickups = [], floats = [], waves = [], rings = [], volleys = [], bolts = [], loot = [];
 let runes = [], chests = [], gateOpen = false, runLoot = [];
 let dirLight = null, barrier = null, dropFx = null;
@@ -9934,7 +9935,7 @@ function spawnMinion(st, x, z, awake, elite, type){
   const e = {kind:'minion', type, ET, cr, pos:cr.root.position, hp, maxHp:hp, dmg:c.dmg*(elite ? 1.6 : 1)*(ET ? ET.dmg : 1)*D.dmg*ESCALE.dmg, spd:c.spd*(.85 + Math.random()*.3)*(elite ? .9 : 1)*(ET ? ET.spd : 1)*D.spd, r:.42*sc + .15,
              ranged:isRanged, elite:!!elite, fuse:0, healT:2 + Math.random()*2, awake, atkT:.4 + Math.random(), windT:0, kb:new T.Vector3(), flashT:0, walk:Math.random()*6,
              bar:makeBar(elite ? 1.4 : .9), barY:sc*1.9 + .35, stunT:0, frozenT:0, burnT:0, burnDps:0, burnAcc:0};
-  enemies.push(e); return e;
+  e.nid = ++ncNid; enemies.push(e); try{ ncCoop.onSpawn(e); }catch(_){} return e;
 }
 /* ===== Variantes, partes quebráveis e cansaço dos chefes (GDD de monstros) ===== */
 const BMODS = {
@@ -10007,7 +10008,7 @@ function spawnBoss(st){
   cr.root.scale.setScalar(M.sc);
   if(M.e) cr.mats.forEach(m => { m.userData.baseE = C(M.e); m.emissive.copy(m.userData.baseE); });
   monAttach(cr, monPick(st, 'boss'), {boss:true});
-  enemies.push(boss);
+  boss.nid = ++ncNid; enemies.push(boss);
 }
 
 /* ================= HELPERS ================= */
@@ -10371,7 +10372,8 @@ function hitEnemy(e, mult, o){
   if(!o.noProc && S.chainCh && Math.random() < S.chainCh) chainLightning(e, .6);
 }
 function damageEnemy(e, dmg, crit, nx, nz, kb, quiet){
-  if(e.dead || e.dying) return; // evita recompensa dupla (ex.: queimadura batendo no chefe já derrotado)
+  if(e.dead || e.dying) return;
+  if(e.rem){ ncCoop.send('dmg', {n:e.rem, f:dmg/e.maxHp}); e.hp = Math.max(1, e.hp - dmg); floatText(e.pos, dmg + (crit ? '!' : ''), crit ? 'crit' : ''); if(!quiet){ flash(e, e.cr.mats, 0xffffff, .09); crit ? SFX.crit() : SFX.hit(); } return; } // evita recompensa dupla (ex.: queimadura batendo no chefe já derrotado)
   e.hp -= dmg;
   e.awake = true;
   floatText(e.pos, dmg + (crit ? '!' : ''), crit ? 'crit' : quiet ? quiet : '');
@@ -10542,6 +10544,7 @@ function updateAllies(dt){
   }
 }
 function killMinion(e){
+  try{ if(!e.rem) ncCoop.sendKill(e); }catch(_){}
   e.dead = true; removeObj(e.cr.root); removeObj(e.bar.g);
   if(e.post && !e.post.taken){ e.post.guards--; if(e.post.guards <= 0) postFreed(e.post); else floatText(e.pos, 'Guardas: ' + e.post.guards, 'gold'); }
   burst(e.pos, curStage.minion.color, 12, 6, 6);
@@ -10564,14 +10567,18 @@ function killMinion(e){
 }
 function dropLoot(pos, tier, o){
   o = o || {};
-  const it = newItem(o.slot || randomSlot(), tier, o);
-  const g = new T.Group(); const x = pos.x + (Math.random()-.5)*1.6, z = pos.z + (Math.random()-.5)*1.6, y0 = heightAt(x, z) + .7;
+  if(ncCoop.noDrop) return null;   // jogando junto: o drop é um só, quem cai é o do anfitrião
+  const it = o.item || newItem(o.slot || randomSlot(), tier, o); tier = it.tier;
+  const x = o.x != null ? o.x : pos.x + (Math.random()-.5)*1.6, z = o.z != null ? o.z : pos.z + (Math.random()-.5)*1.6;
+  const g = new T.Group(); const y0 = heightAt(x, z) + .7;
   g.position.set(x, y0, z); scene.add(g);
   mesh(new T.OctahedronGeometry(.32), mat(TIERS[tier].hex, {emissive:TIERS[tier].hex, emissiveIntensity: tier ? 1.2 : .5, metalness:.6, roughness:.3, envMap:ENV}), 0, 0, 0, g);
   const bh = 3 + it.tier*1.4, bw = .07 + it.tier*.013;
   const beam = new T.Mesh(new T.CylinderGeometry(bw, bw, bh, 8, 1, true), bmat(TIERS[it.tier].hex, Object.assign({opacity:.3 + it.tier*.06}, ADD))); beam.position.y = bh/2; g.add(beam);
   if(it.tier >= 4){ const ring = new T.Mesh(new T.RingGeometry(.5, .75, 24), bmat(TIERS[it.tier].hex, Object.assign({opacity:.7}, ADD))); ring.rotation.x = -Math.PI/2; ring.position.y = -.6; g.add(ring); }
-  loot.push({g, item:it, t:0, y0, x, z, tag:lootTag(it)});
+  const lid = o.lid || (ncCoop.shared && ncCoop.host ? ncCoop.id + (++ncCoop.lootN) : 0);
+  loot.push({g, item:it, t:0, y0, x, z, tag:lootTag(it), lid});
+  if(lid && !o.lid) ncCoop.send('lt', {lid, it, x, z});   // mostra o mesmo drop para todos
   return it;
 }
 /* Etiqueta em cima do que caiu no chão (como nos RPGs atuais): ícone, nome na cor da estrela,
@@ -10631,7 +10638,7 @@ function spawnPickup(type, pos, value){
   scene.add(m); pickups.push({m, type, value, t:0, y0});
 }
 function gainXP(n, fromParty){
-  if(!fromParty){ try{ if(ncCoop.ch && mode === 'stage' && curStage && ncCoop.partyN() > 1) ncCoop.send('xp', {v:n, st:curStage.id, x:+P.pos.x.toFixed(1), z:+P.pos.z.toFixed(1)}); }catch(_){} }
+  if(!fromParty){ try{ if(ncCoop.ch && !ncCoop.shared && mode === 'stage' && curStage && ncCoop.partyN() > 1) ncCoop.send('xp', {v:n, st:curStage.id, x:+P.pos.x.toFixed(1), z:+P.pos.z.toFixed(1)}); }catch(_){} }
   try{ n *= 1 + (ncCoop.partyN() - 1)*.05; }catch(_){}   // grupo: +5% de XP por amigo na mesma fase, e todos ganham o mesmo
   n = Math.round(n*DF().reward);
   save.xp += n;
@@ -10645,6 +10652,7 @@ function gainXP(n, fromParty){
   }
 }
 function hurtPlayer(raw, elemental){
+  if(ncAiPeer) return;   // o monstro está atacando o amigo: o dano é no aparelho dele
   if(P.inv > 0 || P.dead || inputLocked) return;
   if(DEV.god){ P.inv = .2; return; }
   if(P.aegisT > 0){ floatText(P.pos, 'Imune', 'heal'); P.inv = .2; return; }
@@ -10937,6 +10945,7 @@ const projGeo = new T.SphereGeometry(.32, 10, 8);
 const PGEO = {arrow:new T.BoxGeometry(.05, .05, .78), bolt:new T.BoxGeometry(.08, .08, .5), axe:new T.BoxGeometry(.5, .07, .3)};
 const PCOL = {arrow:0xe8d8b0, bolt:0xc8d0d8, axe:0xb8b8c4};
 function fireProj(from, ang, spd, dmg, y, kind){
+  if(ncAiPeer) return;
   const m = new T.Mesh(kind ? PGEO[kind] : projGeo, bmat(kind ? PCOL[kind] : curStage.proj));
   m.position.set(from.x + Math.sin(ang)*1.2, (from.y || 0) + (y || 1.2), from.z + Math.cos(ang)*1.2);
   if(kind && kind !== 'axe') m.rotation.y = ang;
@@ -10947,6 +10956,7 @@ function fireProj(from, ang, spd, dmg, y, kind){
 }
 function solidAt(x, z){ const a = grid.get(gkey(Math.floor(x/CELL), Math.floor(z/CELL))); if(a) for(const c of a) if(Math.hypot(x - c.x, z - c.z) < c.r*.85) return true; return false; }
 function bossDefeated(b){
+  try{ if(!b.rem) ncCoop.sendKill(b); }catch(_){}
   b.dying = 1.5; b.hp = 0; bossActive = false;
   barrier.visible = false; $('#bossBar').hidden = true; $('#bossBar').classList.remove('rage');
   SFX.bossdie(); addShake(.7); playMusic(null); rumble(1, 1, 600); timeScale = .35;
@@ -11167,11 +11177,13 @@ const ICE = C(0x2a8ab0);
 function updateEnemies(dt){
   ncPetUpdate(dt);
   for(const e of enemies){
-    if(e.dead) continue;
+    ncAiPeer = false; if(e.dead) continue;
     monUpdate(e, dt);
     if(e.burnT > 0){ e.burnT -= dt; e.burnAcc += e.burnDps*dt; if(e.burnAcc >= Math.max(1, e.burnDps*.5)){ const d = Math.round(e.burnAcc); e.burnAcc = 0; if(Math.random() < .6) burst(e.pos, e.burnCol || 0xff7a2a, 2, 1, 3, 1); damageEnemy(e, d, false, 0, 0, 0, 'dot'); if(e.dead || e.dying) continue; } }
+    if(e.rem){ ncCoop.remUpd(e, dt); unflash(e, e.cr.mats, dt); continue; }   // monstro do anfitrião: só copia o que ele manda
     if(e.kind === 'boss'){ updateBoss(e, dt); unflash(e, e.cr.mats, dt); continue; }
-    const dx = P.pos.x - e.pos.x, dz = P.pos.z - e.pos.z, dist = Math.hypot(dx, dz) || .001;
+    const TP = ncCoop.tgtFor(e); ncAiPeer = !!TP.peer; e.tg = TP.id;
+    const dx = TP.x - e.pos.x, dz = TP.z - e.pos.z, dist = Math.hypot(dx, dz) || .001;
     const cr = e.cr;
     cr.root.visible = dist < (COARSE ? 34 : 80);   // celular: so desenha quem esta perto
     if(!e.awake){ if(dist < DF().aggro) e.awake = true; else { e.bar.g.visible = false; continue; } }
@@ -11339,6 +11351,7 @@ function updateWorld(dt){
       else feed('Mochila cheia: vendido por ' + adenaTxt(sellValue(l.item)), '#f2c14e');
       SFX.item(); burst(l.g.position, TIERS[l.item.tier].hex, 10 + l.item.tier*3, 3, 4, 0);
       if(l.item.slot !== 'weapon' || l.item.wtype === CLS().wtype){ if(isEquipped(l.item)){ P.S = stats(); applyGear(hero); } }
+      if(l.lid) ncCoop.send('pk', {lid:l.lid});   // peguei: some do chão dos outros
       removeObj(l.g); if(l.tag) l.tag.remove(); loot.splice(i, 1); continue; }
     }
     if(l.tag){ const d = Math.hypot(P.pos.x - l.x, P.pos.z - l.z); placeTag(l.tag, l.x, l.g.position.y + (l === lootNear ? 1.8 : .9), l.z, d < 13 && running); l.tag.classList.toggle('mini', l !== lootNear); }
@@ -11654,7 +11667,7 @@ document.addEventListener('click', e => { const b = e.target.closest('[data-trav
   if(mode === 'stage'){ togglePause(false); travelTo(id, 'F'); } else startStage(id); });
 function startStage(id, onlyBoss, world, o){
   try{ ncSetTgt(null); }catch(_){}
-  try{ if(ncCoop.ch && ncCoop.host) setTimeout(() => ncCoop.send('go', {st:id}), 400); }catch(_){}
+  try{ if(ncCoop.ch && ncCoop.host) setTimeout(() => ncCoop.send('go', {st:id, at:ncCoop.at}), 400); }catch(_){}
   const st = STAGES[id]; if(!st || !unlocked(st)) return; o = o || {};
   monPreload(st); setTimeout(ncPetSpawn, 1500);
   if(realWanted() && realStage(st) && REAL.state !== 'fail' && REAL.setFail !== st.id && (REAL.state !== 'ready' || !realSetReady(st))){
@@ -12496,8 +12509,13 @@ var ncCoop = {
       .on('broadcast', {event:'go'}, m => this.onGo(m.payload))
       .on('broadcast', {event:'xp'}, m => { const p = m.payload; if(p && mode === 'stage' && curStage && p.st === curStage.id && P && Math.hypot(p.x - P.pos.x, p.z - P.pos.z) < 30) gainXP(p.v, true); })
       .on('broadcast', {event:'gift'}, m => this.onGift(m.payload))
+      .on('broadcast', {event:'en'}, m => this.onEn(m.payload))
+      .on('broadcast', {event:'lt'}, m => { const p = m.payload; if(p && this.shared && mode === 'stage' && !loot.some(l => l.lid === p.lid)){ const it = p.it; it.id = save.nextId++; dropLoot({x:p.x, z:p.z}, it.tier, {item:it, x:p.x, z:p.z, lid:p.lid}); } })
+      .on('broadcast', {event:'pk'}, m => { const p = m.payload; const i = p ? loot.findIndex(l => l.lid === p.lid) : -1; if(i >= 0){ const l = loot[i]; removeObj(l.g); if(l.tag) l.tag.remove(); loot.splice(i, 1); } })
+      .on('broadcast', {event:'dmg'}, m => this.onDmg(m.payload))
+      .on('broadcast', {event:'kill'}, m => this.onKill(m.payload))
       .on('broadcast', {event:'chat'}, m => { const p = m.payload; if(p && p.tx) this.chatAdd(p.nm || 'Amigo', p.tx); })
-      .on('broadcast', {event:'hi'}, () => { if(this.host && mode === 'stage' && curStage) this.send('go', {st:curStage.id}); })
+      .on('broadcast', {event:'hi'}, () => { if(this.host && mode === 'stage' && curStage) this.send('go', {st:curStage.id, at:this.at}); })
       .on('presence', {event:'sync'}, () => this.onSync())
       .on('presence', {event:'leave'}, m => { (m.leftPresences || []).forEach(p => this.drop(p.id)); this.onSync(); });
     ch.subscribe(async st => {
@@ -12510,17 +12528,19 @@ var ncCoop = {
     const seen = (save.roomSeen = save.roomSeen || {})[this.code] = save.roomSeen[this.code] || []; let chg = false; all.forEach(p => { if(p.nm && !seen.includes(p.nm)){ seen.push(p.nm); chg = true; } }); if(chg) try{ persist(); }catch(_){}   // guarda quem já entrou nesta sala
     const me = all.findIndex(p => p.id === this.id);
     if(me >= this.MAX){ this.leave(); this.msg = 'Sala cheia: o máximo é ' + this.MAX + ' jogadores.'; }
-    if(all.length && all[0].id === this.id) this.host = true;   // quem chegou primeiro é o anfitrião (se ele sair, passa para o próximo)
+    if(all.length) this.host = all[0].id === this.id;   // quem chegou primeiro é o anfitrião (se ele sair, passa para o próximo)
     this.draw(); },
   async leave(quiet){ const ch = this.ch; this.ch = null; this.ok = false; this.list = []; Object.keys(this.peers).forEach(k => this.drop(k));
     if(ch){ try{ await ch.untrack(); }catch(_){} try{ await this.sb.removeChannel(ch); }catch(_){} }
     if(!quiet){ this.code = ''; this.host = false; save.room = ''; try{ persist(); }catch(_){} this.msg = 'Você saiu da sala. O código ' + (save.myRoom || '') + ' continua sendo seu.'; this.draw(); } },
   send(ev, payload){ if(this.ch && this.ok) try{ this.ch.send({type:'broadcast', event:ev, payload}); }catch(_){} },
-  onGo(p){ if(this.host || !p || p.st == null) return; const st = STAGES[p.st]; if(!st) return;
+  onGo(p){ if(!p || p.st == null || (p.at != null && p.at > this.at)) return; if(p.rep && mode !== 'stage') return;   // segue quem entrou na sala primeiro const st = STAGES[p.st]; if(!st) return;
     if(mode === 'stage' && curStage && curStage.id === p.st) return;
     this.goId = p.st; try{ if(mode === 'stage') goHub(); }catch(_){} setTimeout(() => { try{ startStage(p.st); }catch(e){} this.goId = null; }, 300);
     try{ banner('Jogando junto', 'Entrando na fase do anfitrião'); }catch(_){} },
-  onState(p){ if(!p || !p.id || p.id === this.id) return; const q = this.peers[p.id] || (this.peers[p.id] = {id:p.id}); q.d = p; q.t = performance.now(); },
+  onState(p){ if(!p || !p.id || p.id === this.id) return; const q = this.peers[p.id] || (this.peers[p.id] = {id:p.id});
+    if(q.d && q.h && p.hv != null && q.d.hv != null && p.hv !== q.d.hv && p.st === q.d.st){ const dv = p.hv - q.d.hv; try{ floatText(q.h.root.position, (dv > 0 ? '+' : '') + dv, dv > 0 ? 'heal' : 'hurt'); }catch(_){} }   /* dano/cura que o amigo recebeu */
+    q.d = p; q.t = performance.now(); },
   partyN(){ if(!this.ch || mode !== 'stage' || !curStage) return 1; const now = performance.now(); let n = 1; for(const k in this.peers){ const d = this.peers[k].d; if(d && d.st === curStage.id && now - this.peers[k].t < 6000 && this.near(d)) n++; } return n; },
   near(d){ return P && d && d.x != null && Math.hypot(d.x - P.pos.x, d.z - P.pos.z) < 30; },
   partyDraw(){ let el = document.getElementById('ncParty'); const list = Object.values(this.peers).filter(q => q.d && performance.now() - q.t < 6000);
@@ -12550,7 +12570,7 @@ var ncCoop = {
     this.sendT -= dt;
     if(inStage && this.sendT <= 0){ this.sendT = .2;   // 5 avisos por segundo: cabe no plano grátis com 4 jogadores
       if(P.swingT > this.lastSw + .001 || P.castT > .17){ this.atkN++; } this.lastSw = P.swingT;
-      this.send('st', {id:this.id, cls:save.cls, nm:ncName(), st:curStage.id, x:+P.pos.x.toFixed(2), y:+P.pos.y.toFixed(2), z:+P.pos.z.toFixed(2), f:+P.face.toFixed(2), mv:P.mv ? 1 : 0, a:this.atkN, hp:Math.round(P.hp/P.S.hp*100), rs:Math.round((P.res || 0)/ncResMax()*100), rt:ncRes(), lv:save.level}); }
+      this.send('st', {id:this.id, cls:save.cls, nm:ncName(), st:curStage.id, x:+P.pos.x.toFixed(2), y:+P.pos.y.toFixed(2), z:+P.pos.z.toFixed(2), f:+P.face.toFixed(2), mv:P.mv ? 1 : 0, a:this.atkN, hp:Math.round(P.hp/P.S.hp*100), hv:Math.round(P.hp), rs:Math.round((P.res || 0)/ncResMax()*100), rt:ncRes(), lv:save.level}); }
     const now = performance.now();
     for(const k in this.peers){ const q = this.peers[k], d = q.d; if(!d) continue;
       if(now - q.t > 6000 || !inStage || d.st !== curStage.id){ if(q.h && q.h.root.parent) q.h.root.parent.remove(q.h.root); if(q.tag) q.tag.hidden = true; if(now - q.t > 15000) this.drop(k); continue; }
@@ -12568,15 +12588,87 @@ var ncCoop = {
       const nm = (d.nm || (CLASSES[d.cls] || CLASSES.warrior).name) + ' · nv ' + (d.lv || 1); const tb = q.tag.firstChild; if(tb.textContent !== nm) tb.textContent = nm;
       q.tag.children[1].firstChild.style.width = (d.hp == null ? 100 : d.hp) + '%'; q.tag.children[2].firstChild.style.width = (d.rs == null ? 100 : d.rs) + '%'; q.tag.children[2].classList.toggle('sp', d.rt === 'sp');
       placeTag(q.tag, r.x, r.y + 2.6, r.z, true); }
+    if(inStage && this.host) this.shared = this.list.length > 1;
+    if(inStage && this.host && this.list.length > 1){ this.enT -= dt; if(this.enT <= 0){ this.enT = .2; this.enSend(); } }
+    if(!inStage){ this.shared = false; this.rems = {}; }
     this.partyDraw();
   },
+  /* ===== MUNDO COMPARTILHADO: o anfitrião manda nos monstros, os outros veem os mesmos =====
+     Anfitrião: cada monstro persegue o jogador mais perto; 5x por segundo envia onde cada um está e quanta vida tem.
+     Convidado: apaga os monstros próprios e mostra só os do anfitrião; o dano que ele dá vai para o anfitrião;
+     quando um monstro morre, todo mundo ganha XP e drop no próprio aparelho. */
+  shared:false, rems:{}, enT:0, mk:false, noDrop:false, lootN:0,
+  hostIn(){ return this.ch && this.ok && !this.host && mode === 'stage' && curStage && this.hostSt === curStage.id && performance.now() - (this.hostEnT || 0) < 4000; },
+  tgtFor(e){ let b = {x:P.pos.x, z:P.pos.z, id:this.id, peer:false}, bd = P.dead ? 1e9 : Math.hypot(P.pos.x - e.pos.x, P.pos.z - e.pos.z);
+    if(this.ch && this.host && curStage){ const now = performance.now(); for(const k in this.peers){ const q = this.peers[k], d = q.d; if(!d || d.st !== curStage.id || now - q.t > 4000 || d.hp === 0) continue; const dd = Math.hypot(d.x - e.pos.x, d.z - e.pos.z); if(dd < bd){ bd = dd; b = {x:d.x, z:d.z, id:d.id, peer:true}; } } }
+    return b; },
+  onSpawn(e){ if(this.mk || !this.hostIn()) return; e.cr.root.visible = false; e.dead = true; removeObj(e.cr.root); removeObj(e.bar.g); },   // convidado: monstro próprio some
+  enSend(){ const list = [], now = performance.now(); const near = (x, z) => { if(Math.hypot(x - P.pos.x, z - P.pos.z) < 55) return true; for(const k in this.peers){ const d = this.peers[k].d; if(d && d.st === curStage.id && now - this.peers[k].t < 4000 && Math.hypot(x - d.x, z - d.z) < 55) return true; } return false; };
+    for(const e of enemies){ if(e.dead || !e.nid || !near(e.pos.x, e.pos.z)) continue; if(list.length >= 45) break;
+      list.push([e.nid, e.kind === 'boss' ? 'b' : (e.type || ''), e.elite ? 1 : 0, +e.pos.x.toFixed(1), +e.pos.z.toFixed(1), Math.round(Math.max(0, e.hp)/e.maxHp*1000), e.awake ? 1 : 0, e.tg || '', +e.cr.root.rotation.y.toFixed(2), e.dying ? 1 : 0]); }
+    this.send('en', {st:curStage.id, l:list}); },
+  onEn(p){ if(!p || this.host) return; this.hostSt = p.st; this.hostEnT = performance.now(); if(!(mode === 'stage' && curStage && curStage.id === p.st)) return;
+    if(!this.shared){ this.shared = true; enemies.forEach(e => { if(!e.rem && !e.dead && e.kind !== 'boss'){ e.dead = true; removeObj(e.cr.root); removeObj(e.bar.g); } }); enemies = enemies.filter(e => !e.dead || e.dying); }
+    const seen = {};
+    p.l.forEach(a => { const [n, ty, el, x, z, hp, aw, tg, ry, dy] = a; seen[n] = 1; let e = this.rems[n];
+      if(!e || (e.dead && !e.dying)){ if(dy) return;
+        if(ty === 'b'){ e = enemies.find(o => o.kind === 'boss' && !o.dead); if(!e) return; }
+        else { this.mk = true; try{ e = spawnMinion(curStage, x, z, true, !!el, ty || undefined); } finally{ this.mk = false; } }
+        e.rem = n; this.rems[n] = e; }
+      e.net = {x, z, ry, aw, tg, t:performance.now()}; const nh = hp/1000*e.maxHp; if(e.net0 && nh < e.hp - .5){ try{ floatText(e.pos, Math.round(e.hp - nh), 'zap'); }catch(_){} } e.net0 = 1; if(nh < e.hp || hp >= 1000) e.hp = Math.max(1, nh);   /* número do dano que o amigo deu */
+      e.awake = !!aw; });
+    for(const n in this.rems){ const e = this.rems[n]; if(!seen[n] && !e.dead && performance.now() - ((e.net && e.net.t) || 0) > 3000){ if(e.kind !== 'boss'){ e.dead = true; removeObj(e.cr.root); removeObj(e.bar.g); } delete this.rems[n]; } } },
+  remUpd(e, dt){ const n = e.net; if(!n) return; const dx = n.x - e.pos.x, dz = n.z - e.pos.z, d = Math.hypot(dx, dz);
+    if(d > 8){ e.pos.x = n.x; e.pos.z = n.z; } else { const k = Math.min(1, dt*8); e.pos.x += dx*k; e.pos.z += dz*k; }
+    try{ e.pos.y = heightAt(e.pos.x, e.pos.z); }catch(_){}
+    e.cr.root.rotation.y = lerpAngle(e.cr.root.rotation.y, n.ry, Math.min(1, dt*10)); e.cr.root.visible = true;
+    if(e.cr.legL && d > .05){ e.walk = (e.walk || 0) + dt*12; e.cr.legL.rotation.x = Math.sin(e.walk)*.7; e.cr.legR.rotation.x = -Math.sin(e.walk)*.7; }
+    if(e.kind === 'boss'){ e.awake = true; try{ if(bossActive !== undefined){ $('#bossBar').hidden = false; } }catch(_){} }
+    // o monstro está atrás de mim: o dano é calculado aqui no meu aparelho
+    e.atkT = (e.atkT || 0) - dt; const md = Math.hypot(P.pos.x - e.pos.x, P.pos.z - e.pos.z), rng = (e.ranged || (e.ET && e.ET.shoot) || e.type === 'shaman') ? 11 : e.r + (e.kind === 'boss' ? 2.6 : 1.3);
+    if(n.tg === this.id && n.aw && md < rng && e.atkT <= 0 && !P.dead){ e.atkT = (e.kind === 'boss' ? 1.8 : 1.4)*DF().atkCd; if(e.cr.armR){ e.cr.armR.rotation.x = -1.6; setTimeout(() => { try{ e.cr.armR.rotation.x = 0; }catch(_){} }, 220); } hurtPlayer(e.dmg); }
+    if(e.bar && e.bar.g){ e.bar.g.visible = e.awake && e.hp < e.maxHp; } },
+  onDmg(p){ if(!this.host || !p) return; const e = enemies.find(o => o.nid === p.n && !o.dead && !o.dying); if(!e) return; damageEnemy(e, Math.max(1, Math.round(p.f*e.maxHp)), false, 0, 0, 1, 'zap'); },
+  sendKill(e){ if(this.ch && this.host && e.nid && mode === 'stage') this.send('kill', {n:e.nid, st:curStage && curStage.id}); },
+  onKill(p){ if(!p || this.host) return; const e = this.rems[p.n]; if(!e || e.dead || e.dying) return; delete this.rems[p.n]; e.hp = 0; const n = e.rem; e.rem = 0;
+    this.noDrop = e.kind !== 'boss'; try{ e.kind === 'boss' ? bossDefeated(e) : killMinion(e); }catch(err){ e.dead = true; } finally{ this.noDrop = false; } },
   /* Plaquinha da sala (em cima do herói no menu, embaixo durante a luta): código, quem está online e quem já jogou nela. */
-  hud(){ let el = document.getElementById('ncRoomHud'); if(!this.code){ if(el) el.hidden = true; return; }
+  hud(){ let el = document.getElementById('ncRoomHud'), w = document.getElementById('ncWorlds');
     if(!el){ el = document.createElement('div'); el.id = 'ncRoomHud'; document.body.appendChild(el); }
-    const on = this.list.map(p => p.nm || 'Herói'), seen = ((save.roomSeen || {})[this.code] || []).filter(n => !on.includes(n));
-    const h = '<div class="rh-t"><i class="' + (this.ok ? 'on' : 'off') + '"></i>Sala ' + this.code + ' · ' + (this.ok ? on.length + ' online' : 'conectando…') + '</div><div class="rh-n">'
-      + on.map(n => '<span class="on">' + n + '</span>').join('') + seen.map(n => '<span>' + n + '</span>').join('') + '</div>';
-    el.hidden = false; el.classList.toggle('st', mode === 'stage'); if(el._h !== h){ el._h = h; el.innerHTML = h; } },
+    if(!w){ w = document.createElement('div'); w.id = 'ncWorlds'; document.body.appendChild(w); }
+    const hub = mode === 'hub' && !document.body.classList.contains('nc-l') && !document.body.classList.contains('nc-r');
+    // canto: minha sala (quem está online e quem já jogou nela) + amigos
+    if(!hub){ el.hidden = true; } else {
+      const on = this.list.map(p => p.nm || 'Herói'), seen = this.code ? ((save.roomSeen || {})[this.code] || []).filter(n => !on.includes(n)) : [];
+      const h = (this.code ? '<div class="rh-t"><i class="' + (this.ok ? 'on' : 'off') + '"></i>' + (this.host ? 'Meu mundo' : 'Mundo de ' + ((this.list[0] || {}).nm || '…')) + ' · ' + (this.ok ? on.length + '/' + this.MAX : '…') + '</div><div class="rh-n">'
+          + on.map(n => '<span class="on">' + n + '</span>').join('') + seen.map(n => '<span>' + n + '</span>').join('') + '</div><button data-nccoop="leave">Sair do mundo</button>'
+          : '<div class="rh-t"><i class="off"></i>Jogando sozinho</div>')
+        + '<button data-ncfr="1">Amigos · ranking</button>';
+      el.hidden = false; if(el._h !== h){ el._h = h; el.innerHTML = h; } }
+    // em cima do herói: mundos abertos para entrar com um toque (sem código)
+    if(!hub){ w.hidden = true; return; }
+    const ws = this.lobby.filter(p => p.room && p.host && p.pid !== save.pid && p.room !== this.code);
+    const hw = (this.code ? '' : '<button class="wd me" data-nccoop="new">＋ Abrir meu mundo</button>')
+      + ws.slice(0, 4).map(p => '<button class="wd" data-ncworld="' + p.room + '"><i></i><b>Mundo de ' + p.nm + '</b><small>nv ' + p.lv + ' · ' + (p.n || 1) + '/' + this.MAX + ' · entrar</small></button>').join('');
+    w.hidden = !hw; if(w._h !== hw){ w._h = hw; w.innerHTML = hw; } },
+  /* Saguão: todo mundo online fica aqui (nome, nível e mundo aberto). Serve para achar mundos e amigos sem código. */
+  lobby:[], lb:null,
+  async lobbyOn(){ if(this.lb) return; try{ const lib = await this.lib(); if(!this.sb) this.sb = lib.createClient(this.url, this.key); }catch(e){ return; }
+    if(!save.pid){ save.pid = Math.random().toString(36).slice(2, 10); try{ persist(); }catch(_){} }
+    const lb = this.lb = this.sb.channel('nc-lobby', {config:{presence:{key:save.pid}}});
+    lb.on('presence', {event:'sync'}, () => this.lobbySync()).subscribe(st => { if(st === 'SUBSCRIBED'){ this.lbOk = true; this.lobbyTrack(); } }); },
+  lobbyMeta(){ return {pid:save.pid, nm:ncName(), lv:save.level, cls:save.cls, room:this.code || '', host:!!(this.code && this.host), n:this.list.length || 1}; },
+  lobbyTrack(){ if(!this.lb || !this.lbOk) return; const m = this.lobbyMeta(), k = JSON.stringify(m); if(k === this.lbK) return; this.lbK = k; try{ this.lb.track(m); }catch(_){} },
+  lobbySync(){ if(!this.lb) return; const s = this.lb.presenceState(), all = []; Object.keys(s).forEach(k => { const p = s[k][0]; if(p) all.push(p); }); this.lobby = all;
+    let ch = false; const fr = save.friends || {}; all.forEach(p => { const f = fr[p.pid]; if(f && (f.lv !== p.lv || f.nm !== p.nm)){ f.lv = p.lv; f.nm = p.nm; ch = true; } }); if(ch) try{ persist(); }catch(_){}
+    this.hud(); if(!document.getElementById('ncFriends')?.hidden) this.friends(); },
+  friends(){ let el = document.getElementById('ncFriends'); if(!el){ el = document.createElement('div'); el.id = 'ncFriends'; document.body.appendChild(el); }
+    const fr = save.friends || {}, onl = {}; this.lobby.forEach(p => onl[p.pid] = p);
+    const rank = Object.keys(fr).map(k => ({pid:k, nm:fr[k].nm, lv:(onl[k] || fr[k]).lv, on:!!onl[k], room:onl[k] && onl[k].host ? onl[k].room : ''})).concat([{pid:save.pid, nm:ncName() + ' (você)', lv:save.level, on:true, me:1}]).sort((a, b) => b.lv - a.lv);
+    const others = this.lobby.filter(p => p.pid !== save.pid && !fr[p.pid]);
+    el.hidden = false; el.innerHTML = '<div class="pop-bg" data-frclose></div><div class="pop-box"><button class="pop-x" data-frclose>✕</button><div class="eyebrow">Ranking dos amigos</div>'
+      + '<ol class="fr-rank">' + rank.map((f, i) => '<li class="' + (f.me ? 'me' : '') + '"><b>' + (i + 1) + 'º</b><i class="' + (f.on ? 'on' : '') + '"></i><span>' + f.nm + '</span><em>nv ' + f.lv + '</em>' + (f.room ? '<button class="btn sm" data-ncworld="' + f.room + '">Entrar</button>' : '') + (f.me ? '' : '<button class="btn sm fr-x" data-frdel="' + f.pid + '">✕</button>') + '</li>').join('') + '</ol>'
+      + '<div class="eyebrow" style="margin-top:12px">Jogando agora</div>' + (others.length ? '<div class="fr-on">' + others.map(p => '<div><i class="on"></i><span>' + p.nm + ' <small>nv ' + p.lv + '</small></span><button class="btn sm primary" data-fradd="' + p.pid + '">＋ Amigo</button></div>').join('') + '</div>' : '<small class="istat">Ninguém online fora seus amigos agora.</small>') + '</div>'; },
   /* Chat flutuante: as mensagens somem sozinhas depois de 20 s; fundo transparente. */
   chat:[], chatAdd(nm, tx){ tx = String(tx).slice(0, 120); this.chat.push({nm, tx, t:Date.now()}); if(this.chat.length > 6) this.chat.shift(); this.chatDraw(); },
   chatSend(tx){ tx = (tx || '').trim().slice(0, 120); if(!tx || !this.ok) return; this.send('chat', {nm:ncName(), tx}); this.chatAdd(ncName(), tx); },
@@ -12608,11 +12700,21 @@ document.addEventListener('click', e => {
     else if(d.peergold){ const [id, v] = d.peergold.split(':'); const g = +v; if(save.gold >= g){ save.gold -= g; persist(); ncCoop.send('gift', {to:id, from:ncCoop.id, gold:g}); try{ banner('Enviado', adenaTxt(g) + ' de Adena'); SFX.coin(); }catch(_){} ncCoop.menu(id); } }
     else if(d.peeritem){ const [id, iid] = d.peeritem.split(':'); const it = byId(+iid); if(it && !isEquipped(it)){ save.inv = save.inv.filter(x => x !== it); persist(); ncCoop.send('gift', {to:id, from:ncCoop.id, item:Object.assign({}, it)}); try{ banner('Enviado', itemName(it)); SFX.item(); }catch(_){} ncCoop.menu(id); } }
     return; }
+  const fb = e.target.closest('[data-ncfr],[data-frclose],[data-fradd],[data-frdel],[data-ncworld]');
+  if(fb){ const d = fb.dataset, el = document.getElementById('ncFriends');
+    if(d.ncfr) ncCoop.friends();
+    else if(d.frclose !== undefined){ if(el) el.hidden = true; }
+    else if(d.fradd){ const p = ncCoop.lobby.find(x => x.pid === d.fradd); if(p){ (save.friends = save.friends || {})[p.pid] = {nm:p.nm, lv:p.lv}; persist(); try{ banner('Amigo adicionado', p.nm); }catch(_){} } ncCoop.friends(); }
+    else if(d.frdel){ if(save.friends) delete save.friends[d.frdel]; persist(); ncCoop.friends(); }
+    else if(d.ncworld){ if(el) el.hidden = true; ncCoop.join(d.ncworld, false); }
+    return; }
   const b = e.target.closest('[data-nccoop]'); if(!b) return; const a = b.dataset.nccoop;
   if(a === 'new') ncCoop.join(save.myRoom || ncCoop.newCode(), true); else if(a === 'join'){ const i = document.getElementById('ncCoopIn'); ncCoop.join(i && i.value, false); } else if(a === 'leave') ncCoop.leave(); });
-setInterval(() => { try{ if(ncCoop.ch && mode !== 'stage') ncCoop.send('st', {id:ncCoop.id, cls:save.cls, nm:ncName(), lv:save.level, st:-1}); if(ncCoop.ch && ncCoop.ok && !ncCoop.ch.presenceState()[ncCoop.id]) ncCoop.track(); }catch(_){} }, 3000);
+setInterval(() => { try{ if(ncCoop.ch && mode !== 'stage') ncCoop.send('st', {id:ncCoop.id, cls:save.cls, nm:ncName(), lv:save.level, st:-1}); if(ncCoop.ch && ncCoop.ok && !ncCoop.ch.presenceState()[ncCoop.id]) ncCoop.track(); if(ncCoop.ch && ncCoop.ok) ncCoop.onSync(); if(ncCoop.ch && ncCoop.host && mode === 'stage' && curStage) ncCoop.send('go', {st:curStage.id, at:ncCoop.at, rep:1}); }catch(_){} }, 3000);
 setTimeout(() => ncCoop.draw(), 500);
-setInterval(() => { try{ ncCoop.hud(); ncCoop.chatDraw(); }catch(_){} }, 1000);
+setInterval(() => { try{ ncCoop.hud(); ncCoop.chatDraw(); ncCoop.lobbyTrack(); }catch(_){} }, 1000);
+setTimeout(() => { try{ ncCoop.lobbyOn(); }catch(_){} }, 2500);
+window.__ncT = {drop:(x, z, t) => dropLoot({x, z}, t), loot:() => loot, en:() => enemies};
 window.__ncHub = c => { save.cls = c; fixWeaponForClass(); buildHub(); hubCamera(); renderHub(); };
 setTimeout(() => { try{ if(save.room && !ncCoop.ch) ncCoop.join(save.room, save.room === save.myRoom); }catch(_){} }, 1500);   // volta sozinho para a última sala
 window.ncCoop = ncCoop;
@@ -13073,6 +13175,21 @@ body #hub>#rightPanel.panel::before,body #hub>#rightPanel.panel::after{display:n
 .nc-ptag{background:none!important;border:0!important;box-shadow:none!important;padding:0!important;text-shadow:0 1px 2px #000,0 0 4px #000}
 .nc-ptag .pb{width:56px!important;height:4px!important}.nc-ptag b{font-size:11px!important}
 #ncChat.st{top:50vh!important}
+
+#ncRoomHud{left:calc(8px + env(safe-area-inset-left,0px))!important;top:calc(env(safe-area-inset-top) + 78px)!important;transform:none!important;text-align:left!important;white-space:normal!important;max-width:150px!important;background:rgba(18,14,36,.9);border:1px solid #f2c14e66;border-radius:10px;padding:7px 9px;pointer-events:auto!important;font-size:12px!important}
+#ncRoomHud .rh-n{justify-content:flex-start!important;font-size:11px}
+#ncRoomHud button{display:block;width:100%;margin-top:6px;background:#2a2150;border:1px solid #6a5acd;color:#f4efe2;border-radius:7px;padding:5px 6px;font:600 11px system-ui,sans-serif;cursor:pointer}
+#ncWorlds{position:fixed;left:50%;transform:translateX(-50%);top:calc(env(safe-area-inset-top) + 150px);z-index:30;display:flex;flex-direction:column;gap:6px;align-items:center;width:min(300px,80vw)}
+#ncWorlds[hidden]{display:none}
+#ncWorlds .wd{width:100%;display:flex;flex-direction:column;align-items:center;background:none;border:0;color:#fff;text-shadow:0 1px 3px #000,0 0 6px #000;cursor:pointer;font:600 14px system-ui,sans-serif;padding:2px}
+#ncWorlds .wd b:before{content:'● ';color:#3ce05a}#ncWorlds .wd small{font-weight:500;opacity:.85;font-size:11px}
+#ncWorlds .wd.me{font-size:13px;color:#ffd36a}
+#ncFriends[hidden]{display:none}#ncFriends{position:fixed;inset:0;z-index:80}
+.fr-rank{list-style:none;padding:0;margin:6px 0;display:flex;flex-direction:column;gap:4px}
+.fr-rank li,.fr-on>div{display:flex;align-items:center;gap:8px;padding:5px 6px;background:#1a1438;border:1px solid #3c2f7a;border-radius:6px}
+.fr-rank li.me{border-color:#f2c14e}.fr-rank b{color:#f2c14e;min-width:24px}.fr-rank span,.fr-on span{flex:1}.fr-rank em{font-style:normal;color:#cfc9e6;font-size:12px}
+.fr-rank i,.fr-on i{width:8px;height:8px;border-radius:50%;background:#666}.fr-rank i.on,.fr-on i.on{background:#3ce05a}
+.fr-on{display:flex;flex-direction:column;gap:4px;margin-top:6px}.fr-x{padding:2px 7px!important}
 </style>
 </body>
 </html>
