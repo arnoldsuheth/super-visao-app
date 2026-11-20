@@ -12290,6 +12290,14 @@ body.nc-l #hub>aside.panel::before,body.nc-r #hub>#rightPanel::before{transform:
 .sk.atk{background:linear-gradient(160deg,#ff5a7a,#8a1f3a)}.sk.skl{background:linear-gradient(160deg,#8a6aff,#34206e)}
 .tbtns button{border-radius:0!important;clip-path:var(--gem);box-shadow:none!important}
 #joy{border-color:rgba(138,106,255,.7)!important}#knob{background:linear-gradient(160deg,#ffe36a,#ffb347)!important}
+/* celular: alto da tela so com o essencial, e a barra do chefe sem passar por cima de nada */
+@media (pointer:coarse),(max-width:900px){
+  #hud #hTime,#hud #hWx,#hud #fsBtn,#hud #hCamBtn{display:none!important}
+  #hud:has(#bossBar:not([hidden])) #mm{display:none}
+  .bossbar{top:calc(98px + env(safe-area-inset-top,0px));width:min(520px,calc(100vw - 28px))}
+  .bossbar .bname{font-size:15px}
+}
+@media (max-height:500px){#hud:has(#bossBar:not([hidden])) ~ #banner,#banner{top:calc(150px + env(safe-area-inset-top,0px))!important}}
 @media (max-width:600px){.skillbar{gap:5px}.sk{width:54px;height:62px}}
 @media (max-width:600px) and (orientation:portrait){.nc-b{height:56px}.nc-go{padding:12px 36px;font-size:16px}.ncs-logo{font-size:clamp(30px,8.6vw,84px)}}
 </style>
