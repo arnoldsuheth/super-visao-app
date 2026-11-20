@@ -7540,7 +7540,7 @@ const HUB_THEMES = {
   necro:    {nm:'Cemitério esquecido',           top:0x0c1610, hor:0x34502c, fog:0x22301e, floor:0x2c2c26, ped:0x3a3a34, ring:0x7a2ad8, sky:0xa0ffa0, gnd:0x181810, rim:0x50ff70, mote:0x60ff80, props:'grave'}
 };
 const HUB_CLASSIC = {top:0x0a0d1c, hor:0x2a3360, fog:0x161b2e, floor:0x1c2136, ped:0x3a3f58, ring:0x5a78ff, sky:0x8a99ff, gnd:0x2a2010, rim:0x6f8cff, mote:0xffd36a, props:'pillars'};
-const HUB_THEME_ON = false;   // cenário por classe: liga quando o Arnold aprovar
+const HUB_THEME_ON = true;   // cenário por classe: liga quando o Arnold aprovar
 let hubTheme = '';
 function hubDeco(t){   // enfeites simples em volta do pedestal (poucos objetos: leve no celular)
   const ring = (n, rad, f) => { for(let i=0;i<n;i++){ const a = i/n*Math.PI*2 + .3, x = Math.cos(a)*rad, z = Math.sin(a)*rad - 2; if(z > 2.5) continue; f(x, z, i); } };
@@ -13189,6 +13189,15 @@ body #hub>#rightPanel.panel::before,body #hub>#rightPanel.panel::after{display:n
 .fr-rank li.me{border-color:#f2c14e}.fr-rank b{color:#f2c14e;min-width:24px}.fr-rank span,.fr-on span{flex:1}.fr-rank em{font-style:normal;color:#cfc9e6;font-size:12px}
 .fr-rank i,.fr-on i{width:8px;height:8px;border-radius:50%;background:#666}.fr-rank i.on,.fr-on i.on{background:#3ce05a}
 .fr-on{display:flex;flex-direction:column;gap:4px;margin-top:6px}.fr-x{padding:2px 7px!important}
+
+/* ===== Estilo A: vidro escuro (escolhido) — nível redondo, barras arredondadas, botões translúcidos ===== */
+#hud .hud-lv{clip-path:none!important;border-radius:50%!important;width:48px!important;height:48px!important;top:-2px!important;background:rgba(15,12,30,.6)!important;backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);box-shadow:0 0 0 2px #ffd36a,0 3px 10px rgba(0,0,0,.45)!important}
+#hud .hud-lv b{color:#fff!important;font-weight:800!important;text-shadow:0 1px 3px #000!important}
+#hud .bar,#hud .bar.hp,#hud .bar.mp,#hud .bar.xp{clip-path:none!important;border:1px solid rgba(255,255,255,.22)!important;border-image:none!important;border-radius:10px!important;background:rgba(0,0,0,.45)!important;box-shadow:0 2px 8px rgba(0,0,0,.35)!important;overflow:hidden!important;margin-top:4px!important}
+#hud .bar i{border-radius:10px!important}
+#hud .bar span{text-shadow:0 1px 2px #000!important}
+#hud .chip{clip-path:none!important;border:1px solid rgba(255,255,255,.25)!important;border-image:none!important;border-radius:12px!important;background:rgba(15,12,30,.55)!important;backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);box-shadow:0 2px 8px rgba(0,0,0,.3)!important;padding-left:10px!important;padding-right:10px!important}
+#hub .nc-sub,#hub .nc-top,#hub .nc-top *{text-shadow:0 2px 6px rgba(0,0,0,.65),0 0 2px rgba(0,0,0,.8)}
 </style>
 </body>
 </html>
