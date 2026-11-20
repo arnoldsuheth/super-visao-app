@@ -12327,9 +12327,6 @@ setupFX(); realLoad();
 hubRegion = defaultRegion();
 goHub(); resize(); initTabs(); renderPerfUI();
 requestAnimationFrame(loop);
-})();
-
-
 /* ===== JOGAR JUNTO (fase 1): até 4 pessoas na mesma sala, cada uma no seu aparelho.
    Usa o canal de tempo real do Supabase (projeto nine-crowns). O anfitrião escolhe a fase e os outros entram junto.
    Nesta primeira versão cada um vê os outros heróis andando e atacando, mas os monstros ainda são de cada aparelho. ===== */
@@ -12412,6 +12409,10 @@ document.addEventListener('click', e => { const b = e.target.closest('[data-ncco
 setInterval(() => { try{ if(ncCoop.ch && mode !== 'stage') ncCoop.send('st', {id:ncCoop.id, cls:save.cls, st:-1}); if(ncCoop.ch && ncCoop.ok && !ncCoop.ch.presenceState()[ncCoop.id]) ncCoop.track(); }catch(_){} }, 3000);
 setTimeout(() => ncCoop.draw(), 500);
 window.ncCoop = ncCoop;
+})();
+
+
+
 
 </script>
 
