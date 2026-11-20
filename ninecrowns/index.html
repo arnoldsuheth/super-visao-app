@@ -5993,7 +5993,7 @@ if(!save.ncCls){ (save.inv || []).forEach(it => { if(it.slot !== 'weapon' && it.
 save.mats = Object.assign({refino:0, superior:0, ancestral:0, selo:0, bencao:0, broca:0}, save.mats || {}); save.gems = save.gems || {}; save.gemPity = save.gemPity || {};
 if(!save.skV){ (save.inv || []).forEach(ensureSk); save.mats.refino += 3; save.mats.broca += 1; save.skV = 1; }
 save.frags = save.frags || [0,0,0,0,0,0,0,0,0,0]; save.coins = save.coins || 0; save.cnt = save.cnt || {}; save.mq = save.mq || {}; save.seq = save.seq || {step:0, lvl:0};
-save.look = Object.assign({tunic:0, hair:0, skin:0}, save.look || {}); save.pityEx = save.pityEx || {}; save.evBought = save.evBought || {}; save.worldWins = save.worldWins || {};
+save.look = Object.assign({tunic:0, hair:0, skin:0}, save.look || {}); if(save.look.head === 'kk_rogue_hooded') save.look.head = ''; save.pityEx = save.pityEx || {}; save.evBought = save.evBought || {}; save.worldWins = save.worldWins || {};
 if(!save.stoneV){ // gemas antigas viram pedras novas; encaixes passam a aceitar qualquer pedra (máx. 5)
   const ng = {}; for(const k in save.gems){ if(save.gems[k] > 0){ const nk = migrateKey(k); ng[nk] = (ng[nk] || 0) + save.gems[k]; } } save.gems = ng; save.gemPity = {};
   (save.inv || []).forEach(it => { ensureSk(it); it.gm = it.gm.map(g => g ? migrateKey(g) : null); while(it.sk.length > 5){ const g = it.gm.pop(); it.sk.pop(); if(g){ const [k, r] = g.split(':'); save.gems[g] = (save.gems[g] || 0) + 1; } } it.sk = it.sk.map(() => 'W'); });
@@ -8161,9 +8161,11 @@ function kkTex(model, col){
 }
 /* Rosto e cabelo (aprovado pelo Arnold em 20/11): troca a cabeça inteira por a de outro boneco KayKit, que usa o mesmo esqueleto.
    Assim não fica cabelo por cima de cabelo. A cor do cabelo e da pele continua valendo, pela cartela de cores de cada modelo. */
-const NC_HEADS = [['', 'Da classe'], ['kk_knight', 'Loiro curto'], ['kk_barbarian', 'Careca de barba'], ['kk_mage', 'Cabelo escuro'], ['kk_rogue', 'Cabelo comprido'], ['kk_rogue_hooded', 'Capuz']];
+const NC_HEADS = [['', 'Da classe'], ['kk_knight', 'Loiro curto'], ['kk_barbarian', 'Careca de barba'], ['kk_mage', 'Cabelo escuro'], ['kk_rogue', 'Cabelo comprido']];   // capuz não é cabelo: é acessório de cabeça (aparece com o capacete equipado)
 const NC_HEAD_CLS = {kk_knight:'warrior', kk_barbarian:'barbarian', kk_mage:'mage', kk_rogue:'assassin', kk_rogue_hooded:'archer'};
-function ncHead(h, col){ const x = h.mx; if(!x || !x.d.kk2) return; const want = (save.look && save.look.head) || '';
+function ncHead(h, col0){ const x = h.mx; if(!x || !x.d.kk2) return; const col = {}; if(col0.hair) col.hair = col0.hair; if(col0.skin) col.skin = col0.skin;   // o rosto só recebe cor de cabelo e pele
+  let want = (save.look && save.look.head) || ''; if(want === 'kk_rogue_hooded') want = '';
+  if(x.d.model === 'kk_rogue_hooded') want = equipped('helmet') ? 'kk_rogue_hooded' : (want || 'kk_rogue');   // Arqueira: capuz só com algo equipado na cabeça
   let own = null; x.m.traverse(o => { if(o.isSkinnedMesh && /_Head(_Hooded)?$/.test(o.name) && !o.userData.ncHead) own = o; }); if(!own) return;
   if(x.headM && (x.headKey !== want || !want || want === x.d.model)){ x.headM.parent && x.headM.parent.remove(x.headM); x.headM = null; x.headKey = ''; }
   if(!want || want === x.d.model){ return; }
