@@ -5565,7 +5565,11 @@ const SKINS  = [{c:0xf1c7a0,n:'Clara'},{c:0xe0ac84,n:'Média'},{c:0xc08a60,n:'Mo
 const CLASSES = {
   warrior:{name:'Guerreiro', tag:'Espada de duas mãos', wtype:'sword', desc:'Equilibrado e resistente, com golpes largos da espada de duas mãos.', hp:1.1, atk:1, def:1.2, spd:1, block:.1, crit:0, cd:.42, attack:'slash', dash:'Esquiva',
     skills:[{id:'bash', name:'Investida', full:'Investida Brutal', cd:6, desc:'avança com a espada, causa dano e atordoa'},
-            {id:'whirl', name:'Giro', full:'Giro da Lâmina', cd:8, desc:'gira e acerta tudo ao redor três vezes'}]},
+            {id:'whirl', name:'Giro', full:'Giro da Lâmina', cd:8, desc:'gira e acerta tudo ao redor três vezes'},
+            {id:'wcry', name:'Grito', full:'Grito de Guerra', cd:18, desc:'+20% de ataque por 8 s e assusta quem estiver perto'},
+            {id:'cleave', name:'Fendente', full:'Golpe Fendente', cd:7, desc:'corte largo à frente que derruba e atordoa'},
+            {id:'wall', name:'Muralha', full:'Muralha de Aço', cd:20, desc:'leva metade do dano por 5 s e puxa os monstros para você'},
+            {id:'kingblade', name:'Lâmina', full:'Lâmina do Rei', cd:30, desc:'SUPREMA: corte gigante de luz em linha, muito dano'}]},
   barbarian:{name:'Bárbaro', tag:'Machado gigante', wtype:'axe', desc:'Muita vida e golpes lentos que acertam vários inimigos de uma vez.', hp:1.35, atk:1.45, def:.95, spd:.96, block:0, crit:0, cd:.62, attack:'cleave', dash:'Esquiva',
     skills:[{id:'leap', name:'Salto', full:'Salto Esmagador', cd:7, desc:'salta e esmaga o chão, atordoando quem estiver perto'},
             {id:'rage', name:'Fúria', full:'Fúria', cd:16, desc:'por 6 s, golpes 60% mais rápidos e cada acerto recupera vida'}]},
@@ -8843,7 +8847,7 @@ function buildStage(st, onlyBoss){
   hero = makeHero(); scene.add(hero.root);
   const S = stats();
   P = {pos:hero.root.position, hp:S.hp, S, face:Math.PI, targetFace:Math.PI, atkCd:0, swingT:0, swingDur:.24, dashT:0, dashCd:0, inv:1, dashDir:new T.Vector3(),
-       walk:0, flashT:0, dead:false, blockT:0, potT:0, cd:[0,0], skill:null, rageT:0, castT:0, aegisT:0, mounted:false, turretT:0, strikeT:0, alt:0};
+       walk:0, flashT:0, dead:false, blockT:0, potT:0, cd:[0,0,0,0,0,0], skill:null, rageT:0, castT:0, aegisT:0, mounted:false, turretT:0, strikeT:0, alt:0};
   gateOpen = !!onlyBoss;
   if(onlyBoss){ P.pos.set(0, 0, ARENA_Z + ARENA_R + 5);
     for(const p of LAY.pois){ if(p.type === 'house') buildHouse(p, st, false); else if(p.type === 'castle') buildCastle(p, st, false); else if(p.type === 'mesa') buildMesa(p, st, false); else if(p.type === 'puddle') buildPuddle(p, st); } }
@@ -10087,18 +10091,23 @@ const ncSkMul = i => .6 + (Math.max(1, ncSkLv(i)) - 1)*.11;        // nível 1 =
 const ncSkFast = i => 1 - (Math.max(1, ncSkLv(i)) - 1)*.03;        // recarga e gasto: até 27% menores no nível 10
 const ncSkResetCost = () => Math.round(500*NC_ECON*Math.max(1, ncLvOf(save.cls) - 14));
 let ncInSkill = 0;
+/* Botões E e R: cada um leva a habilidade que o jogador escolher na árvore */
+const ncSkSlots = () => { save.sks = save.sks || {}; const c = CLS(), sl = save.sks[save.cls] || [0, 1]; return sl.map((v, j) => c.skills[v] ? v : j); };
+const ncSlot = j => ncSkSlots()[j];
 function ncTreeHTML(){ const c = CLS(), u = window.ncIconUrl || (() => 'none'), pts = ncSkPts(), lv = ncLvOf(save.cls);
   let h = '<div class="eyebrow">Árvore de habilidades · ' + c.name + '</div><div class="tree-top"><span>Pontos para usar: <b>' + pts + '</b></span>' + (lv < 15 ? '<small>No Grade: só ataque básico. O 1º ponto vem no nível 15.</small>' : '<small>1 ponto por nível a partir do 15</small>') + '</div><div class="tree">';
   for(let i = 0; i < NC_SK_REQ.length; i++){ const sk = c.skills[i], l = ncSkLv(i), req = NC_SK_REQ[i], open = lv >= req;
     if(!sk){ h += '<div class="tnode soon"><i></i><div><b>Habilidade ' + (i + 1) + (i === 5 ? ' · Suprema' : '') + '</b><small>Nível ' + req + ' · chega na próxima atualização</small></div></div>'; continue; }
     const can = open && pts > 0 && l < NC_SK_MAX;
     h += '<div class="tnode' + (l ? ' on' : '') + (open ? '' : ' lock') + '"><i style=\'background-image:' + u(sk.id) + '\'>' + (l ? '<em>' + l + '</em>' : '') + '</i><div><b>' + sk.full + '</b><small>' + (open ? (l ? 'Nível ' + l + ' de ' + NC_SK_MAX + ' · dano ' + Math.round(ncSkMul(i)*100) + '% · recarga ' + (sk.cd*ncSkFast(i)).toFixed(1) + ' s' : 'Ainda não aprendida') : 'Libera no nível ' + req) + '</small><span>' + sk.desc + '</span></div>'
-      + '<button class="btn sm' + (can ? ' primary' : '') + '" data-skup="' + i + '" ' + (can ? '' : 'disabled') + '>' + (l ? (l >= NC_SK_MAX ? 'Máx.' : '+1') : 'Aprender') + '</button></div>'; }
+      + '<div class="tbtn"><button class="btn sm' + (can ? ' primary' : '') + '" data-skup="' + i + '" ' + (can ? '' : 'disabled') + '>' + (l ? (l >= NC_SK_MAX ? 'Máx.' : '+1') : 'Aprender') + '</button>'
+      + (l ? '<span class="tslot">' + [0, 1].map(j => '<button class="' + (ncSlot(j) === i ? 'on' : '') + '" data-skslot="' + j + ':' + i + '" title="Colocar no botão ' + keyLabel(bindOf(j ? 's2' : 's1')) + '">' + keyLabel(bindOf(j ? 's2' : 's1')) + '</button>').join('') + '</span>' : '') + '</div></div>'; }
   const used = ncSkTree().some(v => v);
   h += '</div>' + (used ? '<button class="btn sm" data-skreset style="margin-top:8px">Refazer pontos · ' + adenaTxt(ncSkResetCost()) + '</button>' : '');
   return h; }
 function ncTreeDraw(){ const b = document.getElementById('ncTreeBox'); if(b) b.innerHTML = ncTreeHTML(); const pp = document.getElementById('ncSkPop'); if(pp && !pp.hidden) ncSkillsPop(true); }
-document.addEventListener('click', e => { const b = e.target.closest('[data-skup],[data-skreset]'); if(!b) return;
+document.addEventListener('click', e => { const b = e.target.closest('[data-skup],[data-skreset],[data-skslot]'); if(!b) return;
+  if(b.dataset.skslot){ const [j, i] = b.dataset.skslot.split(':').map(Number); const sl = ncSkSlots().slice(); const o = sl.indexOf(i); if(o >= 0 && o !== j) sl[o] = sl[j]; sl[j] = i; save.sks[save.cls] = sl; persist(); ncTreeDraw(); try{ renderSkillbar(); }catch(_){} return; }
   if(b.dataset.skreset !== undefined){ const c = ncSkResetCost(); if(save.gold < c){ try{ banner('Adena insuficiente', 'Refazer custa ' + adenaTxt(c)); }catch(_){} return; } save.gold -= c; save.skt[save.cls] = []; persist(); try{ SFX.drop(); }catch(_){} }
   else { const i = +b.dataset.skup, t = ncSkTree(); if(ncLvOf(save.cls) >= NC_SK_REQ[i] && ncSkPts() > 0 && (t[i] || 0) < NC_SK_MAX && CLS().skills[i]){ t[i] = (t[i] || 0) + 1; persist(); try{ SFX.item(); }catch(_){} } }
   ncTreeDraw(); try{ renderSkillbar(); }catch(_){} });
@@ -10273,6 +10282,7 @@ function hitEnemy(e, mult, o){
   if(e.kind !== 'boss' && !o.anyY && !yOk(e.pos.y, o.y !== undefined ? o.y : P.pos.y, o.ytol)) return false;
   const S = P.S, crit = o.crit || Math.random() < S.crit;
   if(o.skm) mult *= o.skm; else if(ncInSkill || P.skill) mult *= ncSkMul(P.skLvI || 0);
+  if(P.cryT > 0) mult *= 1.2;
   const dmg = Math.max(1, Math.round(S.atk * mult * (.9 + Math.random()*.2) * (crit ? S.critMult : 1) * (e.kind === 'boss' || e.elite ? 1 + (S.pen || 0) : 1)));
   let heal = 0;
   if(P.rageT > 0) heal += dmg*.08;
@@ -10374,8 +10384,9 @@ function firePlayer(o){
   scene.add(m);
   pprojs.push(Object.assign({m, vx:Math.sin(o.ang)*o.spd, vz:Math.cos(o.ang)*o.spd, hit:new Set(), y0:oy - 1.3}, o));
 }
-function useSkill(i){
-  if(P && P.skill && P.cd[i] <= 0){ P.qSk = {i, t:clock}; return; }   // apertou durante outra habilidade: guarda e solta assim que ela acabar
+function useSkill(j){
+  const i = ncSlot(j);
+  if(P && P.skill && P.cd[i] <= 0){ P.qSk = {i:j, t:clock}; return; }   // apertou durante outra habilidade: guarda e solta assim que ela acabar
   if(mode !== 'stage' || !running || inputLocked || !P || P.dead || P.cd[i] > 0 || P.skill) return;
   if(P.mounted) toggleMount(false);
   if(!ncSkLv(i)){ if(clock - (P.lockMsgT || 0) > 1.2){ P.lockMsgT = clock; floatText(P.pos, ncLvOf(save.cls) < NC_SK_REQ[i] ? 'Libera no nível ' + NC_SK_REQ[i] : 'Aprenda na árvore (H)', 'hurt'); } return; }
@@ -10385,6 +10396,20 @@ function useSkill(i){
     case 'bash': { const a = aimAngle(9); if(a !== null) P.face = P.targetFace = a;
       P.skill = {id:'bash', t:0, dur:.3, dir:dirOf(P.face), hit:new Set()}; P.inv = Math.max(P.inv, .4); P.blockT = .3; SFX.dash(); break; }
     case 'whirl': P.skill = {id:'whirl', t:0, dur:.7, ticks:0}; SFX.heavy(); break;
+    case 'wcry': { P.cryT = 8; floatText(P.pos, 'GRITO DE GUERRA!', 'hurt'); fxRing(P.pos.x, P.pos.z, 5, 0xffb03a, .5); burst(P.pos, 0xffb03a, 20, 5, 6, 1); SFX.boss(); addShake(.25);
+      for(const e of enemies){ if(e.dead || e.dying || e.kind === 'boss') continue; if(Math.hypot(e.pos.x - P.pos.x, e.pos.z - P.pos.z) < 5 + e.r) e.stunT = Math.max(e.stunT || 0, 1.2); } break; }
+    case 'cleave': { const a = aimAngle(6); if(a !== null) P.face = P.targetFace = a; const fx = Math.sin(P.face), fz = Math.cos(P.face);
+      for(const e of enemies.slice()){ if(e.dead || e.dying) continue; const dx = e.pos.x - P.pos.x, dz = e.pos.z - P.pos.z, d = Math.hypot(dx, dz);
+        if(d < 4.8 + e.r && (d < 1.2 || angDiff(Math.atan2(dx, dz), P.face) < .95)) hitEnemy(e, 2.4, {stun:1.2, kb:16, nx:dx/(d||1), nz:dz/(d||1)}); }
+      for(let k = -4; k <= 4; k++){ const a2 = P.face + k*.22; burst({x:P.pos.x + Math.sin(a2)*3.2, z:P.pos.z + Math.cos(a2)*3.2, y:P.pos.y}, 0xdfe6f2, 3, 2, 4, .4); }
+      fxRing(P.pos.x + fx*2.4, P.pos.z + fz*2.4, 2.6, 0xdfe6f2, .25); SFX.heavy(); addShake(.25); break; }
+    case 'wall': { P.wallT = 5; floatText(P.pos, 'MURALHA!', 'heal'); fxRing(P.pos.x, P.pos.z, 2, 0xc8cfdc, .6); burst(P.pos, 0xc8cfdc, 16, 3, 4, 1); SFX.dash();
+      for(const e of enemies){ if(e.dead || e.dying) continue; const dx = P.pos.x - e.pos.x, dz = P.pos.z - e.pos.z, d = Math.hypot(dx, dz); if(d < 12){ e.awake = true; if(e.kind !== 'boss' && d > 2.2){ const k = Math.min(d - 2, 4); e.pos.x += dx/d*k; e.pos.z += dz/d*k; } } } break; }
+    case 'kingblade': { const a = aimAngle(14); if(a !== null) P.face = P.targetFace = a; const fx = Math.sin(P.face), fz = Math.cos(P.face);
+      for(const e of enemies.slice()){ if(e.dead || e.dying) continue; const dx = e.pos.x - P.pos.x, dz = e.pos.z - P.pos.z, along = dx*fx + dz*fz, side = Math.abs(dx*fz - dz*fx);
+        if(along > -1 && along < 14 + e.r && side < 1.8 + e.r) hitEnemy(e, 5.5, {crit:true, stun:1.5, kb:14, nx:fx, nz:fz}); }
+      for(let k = 0; k <= 14; k++){ const pt = {x:P.pos.x + fx*k, z:P.pos.z + fz*k, y:P.pos.y}; burst(pt, 0xfff2b0, 4, 2, 6, .3); if(k % 3 === 0) fxRing(pt.x, pt.z, 1.4, 0xffd24a, .45); }
+      floatText(P.pos, 'LÂMINA DO REI!', 'hurt'); SFX.slam(); SFX.boss(); addShake(.6); P.inv = Math.max(P.inv, .5); break; }
     case 'leap': { const tg = nearestEnemy(11); let a = P.face, dist = 7;
       if(tg){ a = Math.atan2(tg.pos.x - P.pos.x, tg.pos.z - P.pos.z); dist = clamp(Math.hypot(tg.pos.x - P.pos.x, tg.pos.z - P.pos.z) - tg.r - .4, 1.5, 10); }
       P.face = P.targetFace = a; const to = P.pos.clone().add(dirOf(a).multiplyScalar(dist)); clampPos(to, bossActive);
@@ -10554,6 +10579,7 @@ function hurtPlayer(raw, elemental){
   if(P.inv > 0 || P.dead || inputLocked) return;
   if(DEV.god){ P.inv = .2; return; }
   if(P.aegisT > 0){ floatText(P.pos, 'Imune', 'heal'); P.inv = .2; return; }
+  if(P.wallT > 0) raw *= .5;
   if(Math.random() < P.S.block){
     P.inv = .3; P.blockT = .25; floatText(P.pos, 'Bloqueou!', 'block'); SFX.block(); burst(P.pos, 0x9af0ff, 6, 3, 3, 1.2); return;
   }
@@ -10918,7 +10944,7 @@ function bossDefeated(b){
 function updatePlayer(dt){
   const S = P.S, c = CLS();
   P.atkCd -= dt; P.dashCd -= dt; P.inv -= dt; P.blockT -= dt; P.castT -= dt;
-  P.cd[0] = Math.max(0, P.cd[0] - dt); P.cd[1] = Math.max(0, P.cd[1] - dt); ncTgtUpdate(); ncResTick(dt);
+  for(let k = 0; k < P.cd.length; k++) P.cd[k] = Math.max(0, P.cd[k] - dt); if(P.cryT > 0) P.cryT -= dt; if(P.wallT > 0) P.wallT -= dt; ncTgtUpdate(); ncResTick(dt);
   if(P.qSk && !P.skill){ const q = P.qSk; P.qSk = null; if(clock - q.t < 1.2) useSkill(q.i); }
   if(P.rageT > 0){ P.rageT -= dt; if(Math.random() < .3) burst(P.pos, 0xff4a2a, 1, 1, 3, 1); }
   if(P.aegisT > 0){ P.aegisT -= dt; P.hp = Math.min(S.hp, P.hp + S.hp*.04*dt); }
@@ -11306,7 +11332,7 @@ const KBMAP = {bag:'bag', hero:'hero', skills:'skills', atk:'atk', s1:'s1', s2:'
 const k1 = k => KBMAP[k] ? `<button class="kbind${ncRebind === KBMAP[k] ? ' on' : ''}" data-rebind="${KBMAP[k]}">${ncRebind === KBMAP[k] ? 'aperte…' : keyLabel(bindOf(KBMAP[k]))}</button>` + (k === 'atk' ? ' <kbd>Espaço</kbd> <kbd>Clique</kbd>' : k === 'cam' ? ' <kbd>Roda do mouse</kbd>' : '') : KB[k].map(x => `<kbd>${x}</kbd>`).join(' ');
 function actionList(){ const c = CLS(); return [
   ['move', 'Andar', 'stick', 'Joystick na esquerda'], ['atk', 'Atacar (segure para golpes seguidos)', 'a', 'Botão vermelho Atacar'],
-  ['s1', c.skills[0].full + ': ' + c.skills[0].desc, 'x', 'Botão roxo de baixo'], ['s2', c.skills[1].full + ': ' + c.skills[1].desc, 'y', 'Botão roxo de cima'],
+  ['s1', c.skills[ncSlot(0)].full + ': ' + c.skills[ncSlot(0)].desc, 'x', 'Botão roxo de baixo'], ['s2', c.skills[ncSlot(1)].full + ': ' + c.skills[ncSlot(1)].desc, 'y', 'Botão roxo de cima'],
   ['dash', c.dash + ': esquiva rápida, fica invencível por um instante', 'b', 'Botão Esquiva'], ['mount', 'Montar ou descer do cavalo', 'view', 'Botão Cavalo'],
   ['pot', 'Beber poção', 'lb', 'Botão Poção no topo'], ['map', 'Mapa grande', 'rs', 'Toque no minimapa'], ['cam', 'Trocar a distância da câmera', 'ls', 'Pinça com dois dedos ou botão da câmera'],
   ['pause', 'Pausar, trocar armadura e configurações', 'menu', 'Botão II no topo']].concat(inputDev === 'pad' || inputDev === 'touch' ? [] : [['bag', 'Abrir o inventário (mochila)', 'menu', ''], ['hero', 'Abrir o personagem (equipamento e atributos)', 'menu', ''], ['skills', 'Ver as habilidades', 'menu', '']]); }
@@ -11337,11 +11363,12 @@ document.getElementById('skillbar').addEventListener('pointerdown', e => { const
 function renderSkillbar(){
   const c = CLS(), pad = inputDev === 'pad';
   const kk = a => '<kbd>' + keyLabel(bindOf(a)) + '</kbd>';
-  const items = [['Ataque', pad ? g1('a') : kk('atk')], [c.skills[0].full, pad ? g1('x') : kk('s1')], [c.skills[1].full, pad ? g1('y') : kk('s2')], [c.dash, pad ? g1('b') : kk('dash')], ['Montaria', pad ? g1('view') : kk('mount')], ['Poção', pad ? g1('lb') : kk('pot')]];
+  const items = [['Ataque', pad ? g1('a') : kk('atk')], [c.skills[ncSlot(0)].full, pad ? g1('x') : kk('s1')], [c.skills[ncSlot(1)].full, pad ? g1('y') : kk('s2')], [c.dash, pad ? g1('b') : kk('dash')], ['Montaria', pad ? g1('view') : kk('mount')], ['Poção', pad ? g1('lb') : kk('pot')]];
   $('#skillbar').innerHTML = items.map((it, i) => `<div class="sk ${i === 0 ? 'atk' : i < 3 ? 'skl' : ''}" id="sk${i}" title="${it[0]}"><div class="ov"></div><i class="ic${i === 1 || i === 2 ? ' pic' : ''}" style='background-image:${window.ncIconUrl ? window.ncIconUrl(['atk', c.skills[0].id, c.skills[1].id, 'dash', 'horse', 'potion'][i]) : 'none'}'></i><b>${it[0]}</b>${it[1]}</div>`).join('');
-  $('#tSk1').textContent = c.skills[0].name; $('#tSk2').textContent = c.skills[1].name; $('#tDash').textContent = c.dash;
-  if(window.ncHud) window.ncHud(c.skills[0].id, c.skills[1].id);
-  $('#tSk1').title = c.skills[0].full + ': ' + c.skills[0].desc; $('#tSk2').title = c.skills[1].full + ': ' + c.skills[1].desc;
+  const s0 = c.skills[ncSlot(0)], s1b = c.skills[ncSlot(1)];
+  $('#tSk1').textContent = s0.name; $('#tSk2').textContent = s1b.name; $('#tDash').textContent = c.dash;
+  if(window.ncHud) window.ncHud(s0.id, s1b.id);
+  $('#tSk1').title = s0.full + ': ' + s0.desc; $('#tSk2').title = s1b.full + ': ' + s1b.desc;
   document.body.dataset.input = inputDev;
 }
 function updateHUD(){
@@ -11359,13 +11386,13 @@ function updateHUD(){
   $('#hObj').innerHTML = bossActive ? `Derrote o <b>${curStage.boss}</b>` : boss && boss.dying ? 'Vitória!' :
     gateOpen ? 'Portal aberto: siga para a <b>arena no norte</b>' :
     `Postos libertados <b>${nR}/${runes.length}</b>` + (near ? (nd < 22 ? `<br>Guardas neste posto: <b>${near.guards}</b>` : '<br>Siga os feixes roxos e derrote os guardas marcados') : '');
-  const fr = [Math.max(0, P.atkCd)/atkCooldown(), P.cd[0]/c.skills[0].cd, P.cd[1]/c.skills[1].cd, Math.max(0, P.dashCd)/(c.attack === 'bolt' || c.attack === 'dark' ? .9 : .7), 0];
+  const fr = [Math.max(0, P.atkCd)/atkCooldown(), P.cd[ncSlot(0)]/(c.skills[ncSlot(0)].cd*ncSkFast(ncSlot(0))), P.cd[ncSlot(1)]/(c.skills[ncSlot(1)].cd*ncSkFast(ncSlot(1))), Math.max(0, P.dashCd)/(c.attack === 'bolt' || c.attack === 'dark' ? .9 : .7), 0];
   for(let i=0;i<5;i++){ const el = document.getElementById('sk' + i); if(el){ el.firstChild.style.setProperty('--p', fr[i]); if(i > 0 && i < 3 && el._f > 0 && fr[i] <= 0){ el.classList.remove('nc-ready'); void el.offsetWidth; el.classList.add('nc-ready'); } el._f = fr[i]; el.classList.toggle('ready', fr[i] <= 0 && i > 0 && i < 4); } }
   const s2 = document.getElementById('sk2'); if(s2) s2.classList.toggle('on', P.rageT > 0 || P.aegisT > 0);
   const s4 = document.getElementById('sk4'); if(s4) s4.classList.toggle('on', P.mounted);
   $('#tSk1').style.setProperty('--cd', fr[1]); $('#tSk2').style.setProperty('--cd', fr[2]); $('#tDash').style.setProperty('--cd', fr[3]);
-  { const left = [0, P.cd[0], P.cd[1], 0]; const txt = v => v > 0 ? (v < 1 ? v.toFixed(1) : String(Math.ceil(v))) : '';
-    for(let i = 1; i < 3; i++){ const lk = !ncSkLv(i - 1), t = lk ? (ncLvOf(save.cls) < NC_SK_REQ[i - 1] ? 'Nv' + NC_SK_REQ[i - 1] : '🔒') : txt(left[i]), el = document.getElementById('sk' + i); if(el){ let n = el.querySelector('.cdn'); if(!n){ n = document.createElement('em'); n.className = 'cdn'; el.appendChild(n); } if(n.textContent !== t) n.textContent = t; el.classList.toggle('cding', !!t); }
+  { const left = [0, P.cd[ncSlot(0)], P.cd[ncSlot(1)], 0]; const txt = v => v > 0 ? (v < 1 ? v.toFixed(1) : String(Math.ceil(v))) : '';
+    for(let i = 1; i < 3; i++){ const si = ncSlot(i - 1), lk = !ncSkLv(si), t = lk ? (ncLvOf(save.cls) < NC_SK_REQ[si] ? 'Nv' + NC_SK_REQ[si] : '🔒') : txt(left[i]), el = document.getElementById('sk' + i); if(el){ let n = el.querySelector('.cdn'); if(!n){ n = document.createElement('em'); n.className = 'cdn'; el.appendChild(n); } if(n.textContent !== t) n.textContent = t; el.classList.toggle('cding', !!t); }
       const tb = document.getElementById(i === 1 ? 'tSk1' : 'tSk2'); if(tb){ if(t) tb.setAttribute('data-cd', t); else if(tb.hasAttribute('data-cd')){ tb.removeAttribute('data-cd'); tb.classList.remove('nc-ready'); void tb.offsetWidth; tb.classList.add('nc-ready'); } } } }
   $('#tMount').textContent = P.mounted ? 'Descer' : 'Cavalo';
 }
@@ -12522,7 +12549,7 @@ window.ncCoop = ncCoop;
     army:'M12 3a7 7 0 0 0-7 7c0 2.500 1 4 2.500 5v3h9v-3c1.500-1 2.500-2.500 2.500-5a7 7 0 0 0-7-7z M9 11v.01 M15 11v.01 M10 18v-2 M14 18v-2',dash:'M5 6l6 6-6 6 M12 6l6 6-6 6',
     horse:'M7 21v-9a5 5 0 0 1 10 0v9 M5 21h4 M15 21h4 M8.500 14h.01 M15.500 14h.01',potion:'M10 3h4 M10.500 3v5L6 16a3.500 3.500 0 0 0 3 5h6a3.500 3.500 0 0 0 3-5l-4.500-8V3 M7.500 14h9'};
   /* ícones pintados das habilidades (Painterly Spell Icons, eleazzaar, CC-BY 3.0): escolha do Arnold em 20/11 */
-  var PIC={bash:1,whirl:1,leap:1,rage:1,fireball:1,frost:1,volley:1,pierce:1,holy:1,aegis:1,shadow:1,fan:1,quake:1,cyclone:1,drain:1,army:1};
+  var PIC={wcry:1,cleave:1,wall:1,kingblade:1,bash:1,whirl:1,leap:1,rage:1,fireball:1,frost:1,volley:1,pierce:1,holy:1,aegis:1,shadow:1,fan:1,quake:1,cyclone:1,drain:1,army:1};
   function url(k,c){if(PIC[k]&&!c)return 'url("assets/skills/'+k+'.jpg")';var d=P[k]||P.atk;return "url(\"data:image/svg+xml,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="'+(c||'#fff')+'" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="'+d+'"/></svg>')+"\")"}
   var G={atk:'radial-gradient(circle at 35% 26%,#ff8a7c,#c0303a 60%,#6e141c)',skl:'radial-gradient(circle at 35% 26%,#a88bff,#5a36c0 60%,#281259)',dash:'radial-gradient(circle at 35% 26%,#6fe0d0,#1f8f8a 60%,#0d3f47)',horse:'radial-gradient(circle at 35% 26%,#ffd27a,#b9801f 60%,#5a380a)'};
   window.ncIconUrl=url;
@@ -12864,7 +12891,7 @@ document.addEventListener('touchmove', e => { if(e.touches.length > 1) e.prevent
 #ncTreeBox{margin:12px 0 4px}.tree-top{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 10px;align-items:baseline;margin:2px 0 8px}.tree-top b{color:#f2c14e;font-size:18px}.tree-top small{color:var(--mute);font-size:12px}
 .tree{display:grid;gap:6px}.tnode{display:flex;gap:10px;align-items:center;padding:8px;background:rgba(10,12,22,.5);border:1px solid #3c2f7a}.tnode.on{border-color:#c9a24a}.tnode.lock{opacity:.55}.tnode.soon{opacity:.4}
 .tnode>i{position:relative;flex:0 0 48px;height:48px;background:#0e0a20 center/cover;border:2px solid #d8dfec}.tnode.lock>i{filter:grayscale(1)}.tnode>i em{position:absolute;right:-6px;bottom:-6px;font:700 12px/1 var(--f-body);font-style:normal;background:#c9a24a;color:#14101f;padding:3px 5px;border-radius:3px}
-.tnode>div{flex:1;min-width:0}.tnode b{display:block;color:#f4efe2;font-size:14px}.tnode small{display:block;color:#cfc9e6;font-size:11px;margin:2px 0}.tnode span{display:block;font-size:11.5px;color:var(--mute);line-height:1.3}.tnode .btn{flex:0 0 auto;min-width:74px}
+.tnode>div{flex:1;min-width:0}.tnode b{display:block;color:#f4efe2;font-size:14px}.tnode small{display:block;color:#cfc9e6;font-size:11px;margin:2px 0}.tnode span{display:block;font-size:11.5px;color:var(--mute);line-height:1.3}.tnode .btn{flex:0 0 auto;min-width:74px}.tbtn{display:flex;flex-direction:column;gap:5px;align-items:stretch}.tslot{display:flex;gap:4px}.tslot button{flex:1;min-width:34px;min-height:28px;font:700 13px/1 var(--f-body);padding:6px 0;background:#1a1438;color:#cfc9e6;border:1px solid #3c2f7a;cursor:pointer}.tslot button.on{background:#d8dfec;color:#14101f;border-color:#fff}
 .headsw{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 10px}.hsw{font:600 12px/1 var(--f-body);padding:8px 10px;background:#1a1438;color:#f4efe2;border:1px solid #3c2f7a;cursor:pointer}.hsw[aria-pressed="true"]{background:#c9a24a;color:#14101f;border-color:#f2c14e}
 #ncCoopBox{margin:14px 0 4px}.nc-plist{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}.nc-plist span{font-size:12px;padding:3px 8px;background:#1a1438;border:1px solid #3c2f7a}
 .nc-cin{display:flex;gap:6px;margin-top:8px}.nc-cin input{flex:1;min-width:0;font:700 16px/1 monospace;letter-spacing:.2em;text-transform:uppercase;padding:8px;background:#0e0a20;color:#f4efe2;border:1px solid #8a6aff}
