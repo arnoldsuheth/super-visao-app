@@ -10109,7 +10109,7 @@ cv.addEventListener('pointerdown', e => {
   if(mode !== 'stage' || e.pointerType !== 'mouse' || !running || inputLocked) return;
   if(e.button === 0){ attackHeld = true; attackPressed = true; } else if(e.button === 2) useSkill(0);
 });
-addEventListener('pointerup', e => { if(e.pointerType === 'mouse') attackHeld = false; if(e.pointerId === gdrag.id){ gdrag.id = null; gdrag.moved = false; cv.classList.remove('ncgrab'); } });
+addEventListener('pointerup', e => { if(e.pointerType === 'mouse') attackHeld = false; if(e.pointerType === 'mouse' && e.button === 2 && e.pointerId === gdrag.id && !gdrag.moved && lookOn()) ncPick(e.clientX, e.clientY); if(e.pointerId === gdrag.id){ gdrag.id = null; gdrag.moved = false; cv.classList.remove('ncgrab'); } });
 cv.addEventListener('pointermove', e => {
   if(!lookOn()){ mlook.x = null; return; }
   if(e.pointerType === 'mouse'){
@@ -10160,17 +10160,31 @@ function toggleMount(force){
 }
 
 /* ================= COMBAT ================= */
+/* Alvo escolhido com o botão direito no computador (pedido do Arnold, 20/11): monstro ou ponto no chão. Ataques e habilidades miram nele. */
+let ncTgt = null, ncTgtMk = null;
+function ncTgtOk(){ if(!ncTgt) return null; if(ncTgt.e && (ncTgt.e.dead || ncTgt.e.dying)){ ncSetTgt(null); return null; } if(!ncTgt.e && clock - ncTgt.t > 8){ ncSetTgt(null); return null; } return ncTgt; }
+function ncSetTgt(t){ ncTgt = t; if(!ncTgtMk){ ncTgtMk = new T.Mesh(new T.RingGeometry(.62, 1, 32), new T.MeshBasicMaterial({color:0xff4a4a, transparent:true, opacity:1, toneMapped:false, depthWrite:false, side:T.DoubleSide})); ncTgtMk.rotation.x = -Math.PI/2; ncTgtMk.renderOrder = 5; }
+  if(!t){ if(ncTgtMk.parent) ncTgtMk.parent.remove(ncTgtMk); return; } ncTgtMk.material.color.setHex(t.e ? 0xff4a4a : 0xf2c14e); const r = t.e ? Math.max(.9, (t.e.r || .8) + .3) : .8; ncTgtMk.scale.setScalar(r); if(!ncTgtMk.parent) scene.add(ncTgtMk); }
+function ncTgtUpdate(){ const t = ncTgtOk(); if(!t || !ncTgtMk) return; const x = t.e ? t.e.pos.x : t.x, z = t.e ? t.e.pos.z : t.z; let y = 0; try{ y = heightAt(x, z); }catch(_){ y = P.pos.y; } ncTgtMk.position.set(x, y + .08, z); ncTgtMk.rotation.z += .03; }
+function ncPick(cx, cy){ if(!P) return; const r = cv.getBoundingClientRect(), v = new T.Vector3(); let best = null, bd = 70;
+  for(const e of enemies){ if(e.dead || e.dying) continue; v.set(e.pos.x, e.pos.y + 1, e.pos.z).project(camera); if(v.z > 1) continue;
+    const sx = r.left + (v.x + 1)/2*r.width, sy = r.top + (1 - v.y)/2*r.height, d = Math.hypot(sx - cx, sy - cy); if(d < bd){ bd = d; best = e; } }
+  if(best){ ncSetTgt({e:best}); return; }
+  const ray = new T.Raycaster(); ray.setFromCamera(new T.Vector2((cx - r.left)/r.width*2 - 1, -((cy - r.top)/r.height*2 - 1)), camera);
+  const pt = new T.Vector3(); if(ray.ray.intersectPlane(new T.Plane(new T.Vector3(0, 1, 0), -P.pos.y), pt)) ncSetTgt({x:pt.x, z:pt.z, t:clock}); }
 function nearestEnemy(range, from){
+  if(!from){ const t = ncTgtOk(); if(t && t.e && Math.hypot(t.e.pos.x - P.pos.x, t.e.pos.z - P.pos.z) - t.e.r < range + 6) return t.e; }
   const o = from || P.pos; let best_ = null, bd = range;
   for(const e of enemies){ if(e.dead || e.dying) continue; if(e.kind === 'boss' && !e.awake) continue;
     const d = Math.hypot(e.pos.x - o.x, e.pos.z - o.z) - e.r; if(d < bd){ bd = d; best_ = e; } }
   return best_;
 }
-function aimAngle(range){ const e = nearestEnemy(range); return e ? Math.atan2(e.pos.x - P.pos.x, e.pos.z - P.pos.z) : null; }
+function aimAngle(range){ const t = ncTgtOk(); if(t && !t.e) return Math.atan2(t.x - P.pos.x, t.z - P.pos.z); const e = nearestEnemy(range); return e ? Math.atan2(e.pos.x - P.pos.x, e.pos.z - P.pos.z) : null; }
 function atkCooldown(){ return CLS().cd/(1 + P.S.aspd + (P.rageT > 0 ? .6 : 0)); }
 function doAttack(){
   const S = P.S, c = CLS();
   if(P.mounted) toggleMount(false);
+  { const t = ncTgtOk(); if(t){ const tx = t.e ? t.e.pos.x : t.x, tz = t.e ? t.e.pos.z : t.z; if(Math.hypot(tx - P.pos.x, tz - P.pos.z) < 18) P.face = P.targetFace = Math.atan2(tx - P.pos.x, tz - P.pos.z); } }
   P.atkCd = atkCooldown();
   if(c.attack === 'bolt' || c.attack === 'arrow' || c.attack === 'dark'){
     const a = aimAngle(c.attack === 'arrow' ? 17 : 15); if(a !== null) P.face = P.targetFace = a;
@@ -10838,7 +10852,7 @@ function bossDefeated(b){
 function updatePlayer(dt){
   const S = P.S, c = CLS();
   P.atkCd -= dt; P.dashCd -= dt; P.inv -= dt; P.blockT -= dt; P.castT -= dt;
-  P.cd[0] = Math.max(0, P.cd[0] - dt); P.cd[1] = Math.max(0, P.cd[1] - dt);
+  P.cd[0] = Math.max(0, P.cd[0] - dt); P.cd[1] = Math.max(0, P.cd[1] - dt); ncTgtUpdate();
   if(P.qSk && !P.skill){ const q = P.qSk; P.qSk = null; if(clock - q.t < 1.2) useSkill(q.i); }
   if(P.rageT > 0){ P.rageT -= dt; if(Math.random() < .3) burst(P.pos, 0xff4a2a, 1, 1, 3, 1); }
   if(P.aegisT > 0){ P.aegisT -= dt; P.hp = Math.min(S.hp, P.hp + S.hp*.04*dt); }
@@ -11236,7 +11250,7 @@ function ctrlHTML(dev){
   let rows = L.map(([k, txt, pk, tt]) => `<div class="crow"><span class="cbtns">${d === 'pad' ? (k === 'dash' ? g1('b') + g1('rb') : k === 'pot' ? g1('lb') + g1('lt') : g1(pk)) : d === 'touch' ? `<span class="tchip">${tt}</span>` : k1(k)}</span><span>${txt}</span></div>`).join('');
   if(d === 'pad') rows += `<div class="crow"><span class="cbtns">${g1('rstick')}</span><span>Girar e inclinar a câmera para cima e para baixo (em todas as distâncias, no mapa e na pausa)</span></div><div class="crow"><span class="cbtns">${g1('dpad')} ${g1('a')}</span><span>Navegar nos menus · ${g1('lb')} ${g1('rb')} trocam de aba no mapa · ${g1('b')} volta</span></div>`;
   if(d === 'kb') rows += `<div class="crow"><span class="cbtns"><button class="kbind" data-rebindreset>Voltar ao padrão</button></span><span>Toque numa tecla da lista para trocar: o jogo pede a nova tecla. Andar (WASD e setas), Esc e Espaço não mudam. As teclas ficam guardadas neste computador.</span></div>`;
-  if(d === 'kb') rows += `<div class="crow"><span class="cbtns"><kbd>Clique e arraste</kbd></span><span>Gira e inclina a câmera (o cursor vira uma manopla fechada enquanto arrasta)</span></div><div class="crow"><span class="cbtns"><kbd>+</kbd> <kbd>−</kbd></span><span>Aproximar e afastar a câmera</span></div>`;
+  if(d === 'kb') rows += `<div class="crow"><span class="cbtns"><kbd>Clique direito</kbd></span><span>Escolhe o alvo: num monstro (círculo vermelho) ou num ponto do chão (círculo dourado). Ataques e habilidades miram nele.</span></div><div class="crow"><span class="cbtns"><kbd>Clique esquerdo</kbd></span><span>Ataque normal</span></div><div class="crow"><span class="cbtns"><kbd>Clique e arraste</kbd></span><span>Gira e inclina a câmera (o cursor vira uma manopla fechada enquanto arrasta)</span></div><div class="crow"><span class="cbtns"><kbd>+</kbd> <kbd>−</kbd></span><span>Aproximar e afastar a câmera</span></div>`;
   return `<div class="ctabs">${[['kb','Teclado'],['pad','Controle'],['touch','Toque']].map(([k, n]) => `<button class="chipb" data-ctab="${k}" aria-pressed="${k === d}">${n}${k === inputDev ? ' •' : ''}</button>`).join('')}</div><div class="istat chead">${head}${(dev && dev !== inputDev) ? ' (mostrando outro aparelho)' : ''}</div><div class="clist">${rows}</div>`;
 }
 let ctrlView = null;
@@ -11475,6 +11489,7 @@ function renderTravel(){
 document.addEventListener('click', e => { const b = e.target.closest('[data-travel]'); if(!b) return; const id = +b.dataset.travel;
   if(mode === 'stage'){ togglePause(false); travelTo(id, 'F'); } else startStage(id); });
 function startStage(id, onlyBoss, world, o){
+  try{ ncSetTgt(null); }catch(_){}
   const st = STAGES[id]; if(!st || !unlocked(st)) return; o = o || {};
   monPreload(st); setTimeout(ncPetSpawn, 1500);
   if(realWanted() && realStage(st) && REAL.state !== 'fail' && REAL.setFail !== st.id && (REAL.state !== 'ready' || !realSetReady(st))){
