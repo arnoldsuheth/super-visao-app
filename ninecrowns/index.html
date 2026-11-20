@@ -642,9 +642,11 @@ canvas.ncgrabok{cursor:grab}canvas.ncgrab,canvas.ncgrabok.ncgrab{cursor:grabbing
       <div id="ncCloudBox"></div>
       <div class="cinfo" id="classInfo"></div>
       <div class="look">
+        <div class="eyebrow">Rosto e cabelo</div>
+        <div class="headsw" id="swHead"></div>
         <div class="eyebrow">Cor da roupa</div>
         <div class="swatches" id="swTunic"></div>
-        <div class="eyebrow">Cabelo</div>
+        <div class="eyebrow">Cor do cabelo e da barba</div>
         <div class="swatches" id="swHair"></div>
         <div class="eyebrow">Pele</div>
         <div class="swatches" id="swSkin"></div>
@@ -7589,6 +7591,7 @@ function renderHub(){
   $('#uPot').textContent = save.potions + ' / 9';
   $('#buyPot').disabled = save.gold < 25*NC_ECON || save.potions >= 9;
   $('#swTunic').innerHTML = TUNICS.map((t, i) => `<button class="sw" style="--c:#${t.c.toString(16).padStart(6,'0')}" data-tunic="${i}" aria-pressed="${save.look.tunic === i}" aria-label="Roupa ${t.n}" title="${t.n}"></button>`).join('');
+  $('#swHead').innerHTML = NC_HEADS.map(([k, n]) => `<button class="hsw" data-nchead="${k}" aria-pressed="${((save.look && save.look.head) || '') === k}">${n}</button>`).join('');
   $('#swHair').innerHTML = HAIRS.map((t, i) => `<button class="sw" style="--c:#${t.c.toString(16).padStart(6,'0')}" data-hair="${i}" aria-pressed="${save.look.hair === i}" aria-label="Cabelo ${t.n}" title="${t.n}"></button>`).join('');
   $('#swSkin').innerHTML = SKINS.map((t, i) => `<button class="sw" style="--c:#${t.c.toString(16).padStart(6,'0')}" data-skin="${i}" aria-pressed="${(save.look.skin || 0) === i}" aria-label="Pele ${t.n}" title="${t.n}"></button>`).join('');
   document.querySelectorAll('.vtab').forEach(b => b.setAttribute('aria-selected', b.dataset.view === hubView));
@@ -8156,6 +8159,23 @@ function kkTex(model, col){
     const t = new T.CanvasTexture(cv); t.flipY = base.flipY; t.encoding = base.encoding; t.wrapS = base.wrapS; t.wrapT = base.wrapT; t.magFilter = base.magFilter; t.minFilter = base.minFilter; t.needsUpdate = true; return KK_TEX[key] = t;
   }catch(e){ return base; }
 }
+/* Rosto e cabelo (aprovado pelo Arnold em 20/11): troca a cabeça inteira por a de outro boneco KayKit, que usa o mesmo esqueleto.
+   Assim não fica cabelo por cima de cabelo. A cor do cabelo e da pele continua valendo, pela cartela de cores de cada modelo. */
+const NC_HEADS = [['', 'Da classe'], ['kk_knight', 'Loiro curto'], ['kk_barbarian', 'Careca de barba'], ['kk_mage', 'Cabelo escuro'], ['kk_rogue', 'Cabelo comprido'], ['kk_rogue_hooded', 'Capuz']];
+const NC_HEAD_CLS = {kk_knight:'warrior', kk_barbarian:'barbarian', kk_mage:'mage', kk_rogue:'assassin', kk_rogue_hooded:'archer'};
+function ncHead(h, col){ const x = h.mx; if(!x || !x.d.kk2) return; const want = (save.look && save.look.head) || '';
+  let own = null; x.m.traverse(o => { if(o.isSkinnedMesh && /_Head(_Hooded)?$/.test(o.name) && !o.userData.ncHead) own = o; }); if(!own) return;
+  if(x.headM && (x.headKey !== want || !want || want === x.d.model)){ x.headM.parent && x.headM.parent.remove(x.headM); x.headM = null; x.headKey = ''; }
+  if(!want || want === x.d.model){ return; }
+  own.visible = false;
+  if(x.headM){ const tex = kkTex(want, col); if(tex && x.headM.material.map !== tex){ x.headM.material.map = tex; x.headM.material.needsUpdate = true; } return; }
+  const md = MX.models[want]; if(!md){ if(!x.headWait){ x.headWait = 1; mxLoad(NC_HEAD_CLS[want], ok => { x.headWait = 0; if(ok) try{ kkPaint(h); }catch(_){} }); } return; }
+  let src = null; md.scene.traverse(o => { if(o.isSkinnedMesh && /_Head(_Hooded)?$/.test(o.name)) src = o; }); if(!src) return;
+  const by = {}; own.skeleton.bones.forEach(b => by[b.name] = b); const nb = src.skeleton.bones.map(b => by[b.name]); if(nb.some(b => !b)) return;
+  const me = new T.SkinnedMesh(src.geometry, src.material.clone()); me.name = 'NC_Head'; me.userData.ncHead = 1; me.userData.kkM = 1;
+  me.bind(new T.Skeleton(nb, src.skeleton.boneInverses), own.bindMatrix); me.frustumCulled = false; me.castShadow = true; me.receiveShadow = true;
+  const tex = kkTex(want, col); if(tex) me.material.map = tex; me.material.needsUpdate = true;
+  own.parent.add(me); x.headM = me; x.headKey = want; }
 /* aplica no heroi: pecas visiveis (elmo so com capacete equipado, escudo conforme a estrela) e cores */
 function kkPaint(h){
   const x = h.mx; if(!x) return; const d = x.d, k = d.kk2, tOf = s => { const it = equipped(s); return it ? it.tier : -1; }, mix = (a, b, t) => new T.Color(a).lerp(new T.Color(b), t).getHex();
@@ -8171,8 +8191,9 @@ function kkPaint(h){
   const ct = tOf('chest'); if(ct >= 0) col.metal = mix(0x9aa7ac, TIERS[ct].hex, .6); else if(k.metal) col.metal = k.metal;
   const wt = tOf('weapon'); if(wt >= 0) col.wpn = mix(0x9aa7ac, TIERS[wt].hex, .55);
   const tex = kkTex(d.model, col); if(!tex) return;
-  x.m.traverse(o => { if(o.isMesh && o.material && o.name.indexOf('Scythe_') !== 0){ if(!o.userData.kkM){ o.material = o.material.clone(); o.userData.kkM = 1; } if(o.material.map !== tex){ o.material.map = tex; o.material.needsUpdate = true; } } });
+  x.m.traverse(o => { if(o.isMesh && o.material && o.name.indexOf('Scythe_') !== 0 && o.name !== 'NC_Head'){ if(!o.userData.kkM){ o.material = o.material.clone(); o.userData.kkM = 1; } if(o.material.map !== tex){ o.material.map = tex; o.material.needsUpdate = true; } } });
   if(k.scythe) kkScythe(x, wt);
+  ncHead(h, col);
   ncWeaponFx(x.m);
 }
 // Foice do Necromante (o pacote de bonecos nao traz foice; esta e feita aqui): cabo de madeira e lamina curva na cor do grade
@@ -11970,6 +11991,7 @@ $('#hub').addEventListener('click', e => {
     persist(); renderHub(); return; }
   if(b.dataset.cls){ ncSpecAsk = null; if(!ncSetClass(b.dataset.cls)){ renderHub(); return; } ncSubAsk = null; fixWeaponForClass(); sel = `[data-cls="${b.dataset.cls}"]`; }
   else if(b.dataset.tunic !== undefined){ save.look.tunic = +b.dataset.tunic; sel = `[data-tunic="${b.dataset.tunic}"]`; }
+  else if(b.dataset.nchead !== undefined){ save.look.head = b.dataset.nchead; sel = `[data-nchead="${b.dataset.nchead}"]`; }
   else if(b.dataset.hair !== undefined){ save.look.hair = +b.dataset.hair; sel = `[data-hair="${b.dataset.hair}"]`; }
   else if(b.dataset.skin !== undefined){ save.look.skin = +b.dataset.skin; sel = `[data-skin="${b.dataset.skin}"]`; }
   if(!sel) return;
@@ -12810,6 +12832,7 @@ document.addEventListener('touchmove', e => { if(e.touches.length > 1) e.prevent
 #touch .tbtns,.skillbar{filter:drop-shadow(1.5px 0 0 #d8dfec) drop-shadow(-1.5px 0 0 #d8dfec) drop-shadow(0 1.5px 0 #d8dfec) drop-shadow(0 -1.5px 0 #d8dfec) drop-shadow(0 4px 6px rgba(0,0,0,.6))}
 .skillbar{bottom:calc(18px + env(safe-area-inset-bottom,0px))!important}
 .skillbar{pointer-events:auto}
+.headsw{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 10px}.hsw{font:600 12px/1 var(--f-body);padding:8px 10px;background:#1a1438;color:#f4efe2;border:1px solid #3c2f7a;cursor:pointer}.hsw[aria-pressed="true"]{background:#c9a24a;color:#14101f;border-color:#f2c14e}
 #ncCoopBox{margin:14px 0 4px}.nc-plist{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}.nc-plist span{font-size:12px;padding:3px 8px;background:#1a1438;border:1px solid #3c2f7a}
 .nc-cin{display:flex;gap:6px;margin-top:8px}.nc-cin input{flex:1;min-width:0;font:700 16px/1 monospace;letter-spacing:.2em;text-transform:uppercase;padding:8px;background:#0e0a20;color:#f4efe2;border:1px solid #8a6aff}
 .nc-ptag{pointer-events:none;font:700 12px/1 var(--f-body);color:#bfe3ff;--tc:#6fd0ff;padding:4px 8px}
