@@ -5608,7 +5608,32 @@ function renderSpec(){
   if(save.level < NC_SPEC_LV) h += '<div class="spec-lock">Libera no nível ' + NC_SPEC_LV + '. Você está no nível ' + save.level + '.<small>' + list.map(x => x.n).join(' ou ') + '</small></div>';
   else if(cur) h += '<div class="spec-card on"><b>' + cur.n + '</b><em>' + cur.r + '</em><small>' + cur.d + '</small></div>';
   else h += '<div class="spec-pick">' + list.map(x => '<div class="spec-card"><b>' + x.n + '</b><em>' + x.r + '</em><small>' + x.d + '</small><button class="btn sm primary" data-spec="' + x.id + '">' + (ncSpecAsk === x.id ? 'Confirmar? Não dá para trocar' : 'Escolher') + '</button></div>').join('') + '</div>';
+  h += '<button class="btn sm nc-free" data-ncfree>' + (save.ncFree ? 'Modo teste LIGADO: troca de classe livre (toque para desligar)' : 'Modo teste: liberar todas as classes') + '</button>';
   box.innerHTML = h;
+}
+// Subclasse (nivel 80): aprende outra classe, que comeca do nivel 1, e mantem tudo (itens, Adena, coroas). Cada classe guarda o proprio nivel.
+const NC_SUB_LV = 80;
+let ncSubAsk = null;
+const ncKnown = () => save.known || (save.known = [save.cls]);
+const ncLvOf = k => k === save.cls ? save.level : ((save.lv && save.lv[k]) || {level:1}).level;
+const ncTopLv = () => Math.max.apply(null, ncKnown().map(ncLvOf));
+const ncFresh = () => ncKnown().length === 1 && save.level === 1 && !save.xp && !Object.keys(save.beaten || {}).length;   // ainda nao jogou: pode escolher a classe a vontade
+function ncSwap(k){ save.lv = save.lv || {}; save.lv[save.cls] = {level:save.level, xp:save.xp || 0}; const v = save.lv[k] || {level:1, xp:0}; save.cls = k; save.level = v.level; save.xp = v.xp; }
+function ncSetClass(k){
+  if(k === save.cls) return true;
+  if(save.ncFree){ save.cls = k; return true; }                       // modo teste: troca livre, mesmo nivel
+  if(ncFresh()){ save.cls = k; save.known = [k]; save.main = k; return true; }
+  if(ncKnown().includes(k)){ ncSwap(k); return true; }
+  if(ncTopLv() < NC_SUB_LV){ try{ banner('Subclasse libera no nível ' + NC_SUB_LV, 'Leve uma classe ao nível ' + NC_SUB_LV + ' para aprender outra'); }catch(e){} return false; }
+  if(ncSubAsk !== k){ ncSubAsk = k; return false; }
+  ncSubAsk = null; save.known.push(k); ncSwap(k); try{ banner('Subclasse aprendida: ' + CLASSES[k].name, 'Começa no nível 1 e mantém seus itens, Adena e coroas'); SFX.drop(); }catch(e){} return true;
+}
+function ncClassTag(k){
+  if(save.ncFree) return CLASSES[k].tag;
+  if(ncKnown().includes(k)) return (k === (save.main || ncKnown()[0]) ? 'Principal' : 'Subclasse') + ' · nível ' + ncLvOf(k);
+  if(ncFresh()) return CLASSES[k].tag;
+  if(ncTopLv() < NC_SUB_LV) return 'Subclasse · libera no nível ' + NC_SUB_LV;
+  return ncSubAsk === k ? 'Toque de novo para confirmar' : 'Aprender · começa no nível 1';
 }
 const classOfW = w => CLASS_ORDER.find(k => CLASSES[k].wtype === w);
 // Regra do Nine Crowns: cada classe so usa a propria arma e a propria armadura (o amuleto serve para todas).
@@ -5927,6 +5952,7 @@ const freshSave = () => ({level:1, xp:0, gold:0, potions:3, inv:[], eq:{}, nextI
   mats:{refino:3, superior:0, ancestral:0, selo:0, bencao:0, broca:1, metal:5}, gems:{}, gemPity:{}, frags:[0,0,0,0,0,0,0,0,0,0], coins:5, cnt:{}, mq:{}, seq:{step:0, lvl:0}, pityEx:{}, evBought:{}, worldWins:{}});
 let save = loadSave();
 if(!save.nc80){ save.level = Math.min(80, Math.max(1, Math.round(1 + ((save.level || 1) - 1)*79/43))); save.nc80 = 1; }
+if(!save.known){ save.known = [save.cls]; save.main = save.cls; save.lv = save.lv || {}; }
 if(!save.ncCls){ (save.inv || []).forEach(it => { if(it.slot !== 'weapon' && it.slot !== 'amulet' && !it.cls) it.cls = save.cls; }); save.ncCls = 1; }   // saves antigos: as armaduras que ja existiam ficam com a classe atual   // saves antigos: converte o nivel para a escala de 80
 save.mats = Object.assign({refino:0, superior:0, ancestral:0, selo:0, bencao:0, broca:0}, save.mats || {}); save.gems = save.gems || {}; save.gemPity = save.gemPity || {};
 if(!save.skV){ (save.inv || []).forEach(ensureSk); save.mats.refino += 3; save.mats.broca += 1; save.skV = 1; }
@@ -6050,7 +6076,7 @@ function fixWeaponForClass(){
   // ao trocar de classe: tira o que nao e da classe e veste a melhor peca da classe em cada lugar vazio
   for(const slot of SLOTS){
     const cur = equipped(slot);
-    if(cur && itemOk(cur)) continue;
+    if(cur && itemOk(cur) && save.level >= grLv(cur.tier)) continue;
     delete save.eq[slot];
     const best = save.inv.filter(i => i.slot === slot && itemOk(i) && save.level >= grLv(i.tier)).sort((a,b) => (b.tier - a.tier) || (b.q - a.q))[0];
     if(best) save.eq[slot] = best.id;
@@ -7467,7 +7493,7 @@ function pulseMats(ms){ const k = .65 + Math.sin(clock*3)*.35; for(const m of ms
 
 function renderHub(){
   const S = stats(), c = CLS();
-  $('#classGrid').innerHTML = CLASS_ORDER.map(k => `<button class="cbtn" data-cls="${k}" aria-pressed="${save.cls === k}"><b>${CLASSES[k].name}</b><small>${CLASSES[k].tag}</small></button>`).join('');
+  $('#classGrid').innerHTML = CLASS_ORDER.map(k => `<button class="cbtn" data-cls="${k}" aria-pressed="${save.cls === k}"><b>${CLASSES[k].name}</b><small>${ncClassTag(k)}</small></button>`).join('');
   renderSpec();
   const D = DF();
   $('#diffGrid').innerHTML = DIFF_ORDER.map(k => `<button class="dbtn" data-diff="${k}" style="--dc:${DIFFS[k].css}" aria-pressed="${save.diff === k}">${DIFFS[k].name}</button>`).join('');
@@ -11547,7 +11573,8 @@ $('#hub').addEventListener('click', e => {
     if(ncSpecAsk !== id){ ncSpecAsk = id; renderSpec(); return; }
     ncSpecAsk = null; save.spec = save.spec || {}; save.spec[save.cls] = id; persist(); renderHub();
     const x = ncSpec(); if(x) banner('Especialização: ' + x.n, x.d); try{ SFX.drop(); }catch(e){} return; }
-  if(b.dataset.cls){ ncSpecAsk = null; save.cls = b.dataset.cls; fixWeaponForClass(); sel = `[data-cls="${b.dataset.cls}"]`; }
+  if(b.dataset.ncfree !== undefined){ save.ncFree = !save.ncFree; ncSubAsk = null; persist(); renderHub(); return; }
+  if(b.dataset.cls){ ncSpecAsk = null; if(!ncSetClass(b.dataset.cls)){ renderHub(); return; } ncSubAsk = null; fixWeaponForClass(); sel = `[data-cls="${b.dataset.cls}"]`; }
   else if(b.dataset.tunic !== undefined){ save.look.tunic = +b.dataset.tunic; sel = `[data-tunic="${b.dataset.tunic}"]`; }
   else if(b.dataset.hair !== undefined){ save.look.hair = +b.dataset.hair; sel = `[data-hair="${b.dataset.hair}"]`; }
   else if(b.dataset.skin !== undefined){ save.look.skin = +b.dataset.skin; sel = `[data-skin="${b.dataset.skin}"]`; }
@@ -12046,7 +12073,7 @@ body.nc-l #hub>aside.panel::before,body.nc-r #hub>#rightPanel::before{transform:
 .spec-card b{font-family:var(--f-display);font-size:15px;color:var(--gold-hi)}.spec-card em{font-style:normal;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
 .spec-card small{color:var(--mute);font-size:12px;line-height:1.35}.spec-card .btn{margin-top:6px}
 .spec-card.on{border-color:var(--gold);background:rgba(242,193,78,.08)}
-#specBox{margin:12px 0 4px}
+#specBox{margin:12px 0 4px}.nc-free{margin-top:10px;font-size:11px!important;opacity:.7;width:100%}
 @media (max-width:420px){.spec-pick{grid-template-columns:1fr}}
 </style>
 <script id="nc-menu-js">
