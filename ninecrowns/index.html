@@ -636,6 +636,7 @@ body.nocur, body.nocur *{cursor:none !important}
       <div class="eyebrow">Herói</div>
       <div class="cgrid" id="classGrid"></div>
       <div id="specBox"></div>
+      <div id="ncCloudBox"></div>
       <div class="cinfo" id="classInfo"></div>
       <div class="look">
         <div class="eyebrow">Cor da roupa</div>
@@ -6006,7 +6007,33 @@ function loadSave(){
   }catch(e){}
   return freshSave();
 }
-function persist(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(save)); }catch(e){} }
+function persist(){ try{ // so marca "tem coisa nova para enviar" quando o progresso mudou de verdade
+    const o = Object.assign({}, save); delete o.ncDirty; delete o.ncAt; const str = JSON.stringify(o);
+    if(str !== ncCloud.last){ if(ncCloud.last !== null) save.ncDirty = 1; ncCloud.last = str; }
+    localStorage.setItem(SAVE_KEY, JSON.stringify(save)); }catch(e){} try{ if(save.ncDirty) ncCloud.later(); }catch(e){} }
+// ===== Salvamento na nuvem (Supabase, projeto nine-crowns). Sem senha: quem tem o codigo de 6 letras entra no progresso. =====
+const ncCloud = {
+  url:'https://xdcsxcopyfdufdtyywhu.supabase.co/rest/v1/rpc/', key:'sb_publishable_ctr8HbFHDdS6WEyB21E8eg_Iu8VF6uq', t:0, busy:false, msg:'', ask:false, last:null,
+  code(){ if(!save.ncCode){ const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let c = ''; const r = new Uint32Array(6); (self.crypto || {getRandomValues:a => { for(let i = 0; i < a.length; i++) a[i] = Math.random()*4294967296; }}).getRandomValues(r); for(let i = 0; i < 6; i++) c += A[r[i] % A.length]; save.ncCode = c; } return save.ncCode; },
+  call(fn, body, keep){ return fetch(this.url + fn, {method:'POST', keepalive:!!keep, headers:{'Content-Type':'application/json', apikey:this.key, Authorization:'Bearer ' + this.key}, body:JSON.stringify(body)}).then(r => r.ok ? r.json() : r.text().then(t => Promise.reject(new Error(t.slice(0, 120))))); },
+  later(){ if(save.ncOff) return; clearTimeout(this.t); this.t = setTimeout(() => this.push(), 15000); },
+  push(keep){ if(save.ncOff || this.busy || !save.ncDirty) return Promise.resolve(false); this.busy = true; const code = this.code(), copy = JSON.parse(JSON.stringify(save)); delete copy.ncDirty;
+    return this.call('nc_save', {p_code:code, p_data:copy}, keep).then(at => { this.busy = false; save.ncAt = at; save.ncDirty = 0; try{ localStorage.setItem(SAVE_KEY, JSON.stringify(save)); }catch(e){} this.msg = 'Salvo na nuvem às ' + new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'}); this.draw(); return true; })
+      .catch(e => { this.busy = false; this.msg = 'Sem conexão com a nuvem. O jogo continua salvo neste aparelho.'; this.draw(); return false; }); },
+  adopt(code, data){ data.ncCode = code; data.ncDirty = 0; localStorage.setItem(SAVE_KEY, JSON.stringify(data)); location.reload(); },
+  enter(code){ code = (code || '').toUpperCase().replace(/[^A-Z2-9]/g, ''); if(code.length !== 6){ this.msg = 'O código tem 6 letras ou números.'; this.draw(); return; }
+    this.msg = 'Procurando…'; this.draw();
+    this.call('nc_load', {p_code:code}).then(r => { if(!r || !r.data){ this.msg = 'Não achei esse código. Confira as letras.'; this.draw(); return; } r.data.ncAt = r.updated_at; this.adopt(code, r.data); })
+      .catch(() => { this.msg = 'Sem conexão com a nuvem. Tente de novo.'; this.draw(); }); },
+  boot(){ if(save.ncOff || !save.ncCode) return;   // outro aparelho salvou depois? pega o mais novo, a nao ser que este tenha progresso ainda nao enviado
+    this.call('nc_load', {p_code:save.ncCode}).then(r => { if(r && r.data && r.updated_at && (!save.ncAt || new Date(r.updated_at) > new Date(save.ncAt)) && !save.ncDirty){ r.data.ncAt = r.updated_at; this.adopt(save.ncCode, r.data); } else if(save.ncDirty) this.push(); }).catch(() => {}); },
+  draw(){ const b = document.getElementById('ncCloudBox'); if(!b) return;
+    b.innerHTML = '<div class="eyebrow">Salvamento na nuvem</div><div class="spec-card"><small>Seu código</small><b class="nc-code">' + this.code() + '</b><small>Anote este código. Em outro aparelho, digite ele aqui embaixo para continuar de onde parou.</small>'
+      + '<small class="nc-cmsg">' + (this.msg || (save.ncAt ? 'Já está salvo na nuvem.' : 'Ainda não enviado.')) + '</small><button class="btn sm primary" data-nccloud="push">Salvar na nuvem agora</button>'
+      + '<div class="nc-cin"><input id="ncCodeIn" maxlength="6" placeholder="CÓDIGO" autocomplete="off" autocapitalize="characters" spellcheck="false"><button class="btn sm" data-nccloud="enter">' + (this.ask ? 'Confirmar? Troca o progresso deste aparelho' : 'Entrar com código') + '</button></div></div>'; },
+};
+addEventListener('visibilitychange', () => { if(document.visibilityState === 'hidden') try{ ncCloud.push(true); }catch(e){} });
+setTimeout(() => { try{ ncCloud.boot(); }catch(e){} }, 2500);
 
 const xpNeed = l => Math.round(40 * Math.pow(1 + (l - 1)*NC_LV_K, 1.45) * NC_LV_K);   // NINE CROWNS: 80 niveis no mesmo caminho que antes dava 44
 const baseChance = id => Math.max(.06, .12 - id*.0035);
@@ -7512,7 +7539,7 @@ function pulseMats(ms){ const k = .65 + Math.sin(clock*3)*.35; for(const m of ms
 function renderHub(){
   const S = stats(), c = CLS();
   $('#classGrid').innerHTML = CLASS_ORDER.map(k => `<button class="cbtn" data-cls="${k}" aria-pressed="${save.cls === k}"><b>${CLASSES[k].name}</b><small>${ncClassTag(k)}</small></button>`).join('');
-  renderSpec();
+  renderSpec(); try{ ncCloud.draw(); }catch(e){}
   const D = DF();
   $('#diffGrid').innerHTML = DIFF_ORDER.map(k => `<button class="dbtn" data-diff="${k}" style="--dc:${DIFFS[k].css}" aria-pressed="${save.diff === k}">${DIFFS[k].name}</button>`).join('');
   $('#diffInfo').innerHTML = `<span style="color:${D.css}">${D.desc}</span>`;
@@ -11616,6 +11643,8 @@ $('#hub').addEventListener('click', e => {
     if(ncSpecAsk !== id){ ncSpecAsk = id; renderSpec(); return; }
     ncSpecAsk = null; save.spec = save.spec || {}; save.spec[save.cls] = id; persist(); renderHub();
     const x = ncSpec(); if(x) banner('Especialização: ' + x.n, x.d); try{ SFX.drop(); }catch(e){} return; }
+  if(b.dataset.nccloud){ if(b.dataset.nccloud === 'push'){ save.ncDirty = 1; ncCloud.msg = 'Enviando…'; ncCloud.draw(); ncCloud.push(); }
+    else { const v = (document.getElementById('ncCodeIn') || {}).value || ''; if(!ncCloud.ask){ ncCloud.ask = true; ncCloud.draw(); const i = document.getElementById('ncCodeIn'); if(i) i.value = v; } else { ncCloud.ask = false; ncCloud.enter(v); } } return; }
   if(b.dataset.ncfree !== undefined){ save.ncFree = !save.ncFree; ncSubAsk = null; persist(); renderHub(); return; }
   if(b.dataset.cls){ ncSpecAsk = null; if(!ncSetClass(b.dataset.cls)){ renderHub(); return; } ncSubAsk = null; fixWeaponForClass(); sel = `[data-cls="${b.dataset.cls}"]`; }
   else if(b.dataset.tunic !== undefined){ save.look.tunic = +b.dataset.tunic; sel = `[data-tunic="${b.dataset.tunic}"]`; }
@@ -12117,7 +12146,7 @@ body.nc-l #hub>aside.panel::before,body.nc-r #hub>#rightPanel::before{transform:
 .spec-card b{font-family:var(--f-display);font-size:15px;color:var(--gold-hi)}.spec-card em{font-style:normal;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
 .spec-card small{color:var(--mute);font-size:12px;line-height:1.35}.spec-card .btn{margin-top:6px}
 .spec-card.on{border-color:var(--gold);background:rgba(242,193,78,.08)}
-#specBox{margin:12px 0 4px}.spec-t{color:#f4efe2!important;margin-top:4px}.spec-t i{font-style:normal;color:var(--vgold,#f2c14e)}.nc-free{margin-top:10px;font-size:11px!important;opacity:.7;width:100%}
+#specBox{margin:12px 0 4px}#ncCloudBox{margin:14px 0 4px}.nc-code{font-size:30px!important;letter-spacing:.3em;font-family:ui-monospace,Menlo,Consolas,monospace!important}.nc-cmsg{color:#f4efe2!important}.nc-cin{display:flex;gap:8px;margin-top:8px;align-items:center}.nc-cin input{flex:1;min-width:0;height:38px;padding:0 12px;background:#0d0a22;border:1.5px solid #8a6aff;color:#fff;font:600 16px ui-monospace,Menlo,Consolas,monospace;letter-spacing:.2em;text-transform:uppercase}.spec-t{color:#f4efe2!important;margin-top:4px}.spec-t i{font-style:normal;color:var(--vgold,#f2c14e)}.nc-free{margin-top:10px;font-size:11px!important;opacity:.7;width:100%}
 @media (max-width:420px){.spec-pick{grid-template-columns:1fr}}
 </style>
 <script id="nc-menu-js">
