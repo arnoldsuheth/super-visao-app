@@ -5586,23 +5586,36 @@ const CLS = () => CLASSES[save.cls] || CLASSES.warrior;
 // Especializacao (nivel 30): cada classe escolhe 1 de 2 caminhos. A escolha fica guardada por classe.
 const NC_SPEC_LV = 30;
 const NC_SPEC = {
-  warrior:[{id:'guardiao', n:'Guardião', r:'Tanque', d:'+25% de vida, +20% de defesa e 8% menos dano recebido', fx:s => { s.hp *= 1.25; s.def *= 1.2; s.dmgRes += .08; }},
-           {id:'duelista', n:'Duelista', r:'Ataque', d:'+18% de ataque, +10% de chance de crítico e golpes 10% mais rápidos', fx:s => { s.atk *= 1.18; s.crit += .1; s.aspd += .1; }}],
-  paladin:[{id:'templario', n:'Templário', r:'Proteção', d:'+20% de vida, +8% de bloqueio e recupera vida o tempo todo', fx:s => { s.hp *= 1.2; s.block += .08; s.regen += .004; }},
-           {id:'cruzado', n:'Cruzado', r:'Ataque', d:'+20% de ataque e 15% de chance de atordoar', fx:s => { s.atk *= 1.2; s.stunCh += .15; }}],
-  barbarian:[{id:'berserker', n:'Berserker', r:'Fúria', d:'+25% de ataque, golpes 12% mais rápidos e rouba 3% de vida, mas com 10% menos defesa', fx:s => { s.atk *= 1.25; s.aspd += .12; s.leech += .03; s.def *= .9; }},
-             {id:'chefe', n:'Chefe de Clã', r:'Resistência', d:'+30% de vida, +10% de defesa e 12% de chance de atordoar', fx:s => { s.hp *= 1.3; s.def *= 1.1; s.stunCh += .12; }}],
-  archer:[{id:'cacadora', n:'Caçadora', r:'Velocidade', d:'Anda 10% mais rápido, atira 12% mais rápido e cada tiro solta uma segunda flecha', fx:s => { s.spd *= 1.1; s.aspd += .12; s.multi = (s.multi || 0) + 1; }},
-          {id:'elite', n:'Atiradora de Elite', r:'Precisão', d:'+15% de chance de crítico, crítico 50% mais forte e +8% de ataque', fx:s => { s.crit += .15; s.critMult += .5; s.atk *= 1.08; }}],
-  mage:[{id:'elementalista', n:'Elementalista', r:'Elementos', d:'+12% de ataque, 15% de chance de congelar e 15% de chance de raio em cadeia', fx:s => { s.atk *= 1.12; s.freezeCh += .15; s.chainCh += .15; }},
-        {id:'arcano', n:'Arcano', r:'Poder puro', d:'+25% de ataque e +8% de chance de crítico', fx:s => { s.atk *= 1.25; s.crit += .08; }}],
-  necro:[{id:'ossudo', n:'Lorde Ossudo', r:'Resistência', d:'+25% de vida, +15% de defesa e recupera vida o tempo todo', fx:s => { s.hp *= 1.25; s.def *= 1.15; s.regen += .003; }},
-         {id:'ceifador', n:'Ceifador', r:'Dreno', d:'+18% de ataque e rouba 5% de vida a cada golpe', fx:s => { s.atk *= 1.18; s.leech += .05; }}],
-  assassin:[{id:'sombra', n:'Sombra', r:'Crítico', d:'+12% de chance de crítico, crítico 60% mais forte e anda 6% mais rápido', fx:s => { s.crit += .12; s.critMult += .6; s.spd *= 1.06; }},
-            {id:'venenosa', n:'Venenosa', r:'Veneno', d:'Todo golpe deixa o inimigo queimando de veneno, +10% de ataque e rouba 3% de vida', fx:s => { s.burn = true; s.atk *= 1.1; s.leech += .03; }}],
-  monk:[{id:'ferro', n:'Punho de Ferro', r:'Força', d:'+20% de ataque, 15% de chance de atordoar e +10% de defesa', fx:s => { s.atk *= 1.2; s.stunCh += .15; s.def *= 1.1; }},
-        {id:'vento', n:'Mestre do Vento', r:'Velocidade', d:'Anda 12% mais rápido, golpes 18% mais rápidos e 6% menos dano recebido', fx:s => { s.spd *= 1.12; s.aspd += .18; s.dmgRes += .06; }}],
+  warrior:[{id:'guardiao', tn:'Muralha', td:'ao usar uma habilidade, fica 1,5 s sem levar dano e recupera 6% da vida', tf:() => { ncT.inv(1.5); ncT.heal(.06); }, n:'Guardião', r:'Tanque', d:'+25% de vida, +20% de defesa e 8% menos dano recebido', fx:s => { s.hp *= 1.25; s.def *= 1.2; s.dmgRes += .08; }},
+           {id:'duelista', tn:'Corte Final', td:'toda habilidade solta um corte extra em volta que causa dano forte', tf:() => { ncT.nova(4.2, 1.6, 0xffe36a); }, n:'Duelista', r:'Ataque', d:'+18% de ataque, +10% de chance de crítico e golpes 10% mais rápidos', fx:s => { s.atk *= 1.18; s.crit += .1; s.aspd += .1; }}],
+  paladin:[{id:'templario', tn:'Bênção', td:'ao usar uma habilidade, recupera 10% da vida', tf:() => { ncT.heal(.10); }, n:'Templário', r:'Proteção', d:'+20% de vida, +8% de bloqueio e recupera vida o tempo todo', fx:s => { s.hp *= 1.2; s.block += .08; s.regen += .004; }},
+           {id:'cruzado', tn:'Julgamento', td:'toda habilidade solta uma onda de luz que atordoa quem está perto', tf:() => { ncT.nova(5, 1.1, 0xfff0b0, 1.2); }, n:'Cruzado', r:'Ataque', d:'+20% de ataque e 15% de chance de atordoar', fx:s => { s.atk *= 1.2; s.stunCh += .15; }}],
+  barbarian:[{id:'berserker', tn:'Sede de Sangue', td:'toda habilidade liga 3 s de fúria (golpes muito mais rápidos)', tf:() => { ncT.rage(3); }, n:'Berserker', r:'Fúria', d:'+25% de ataque, golpes 12% mais rápidos e rouba 3% de vida, mas com 10% menos defesa', fx:s => { s.atk *= 1.25; s.aspd += .12; s.leech += .03; s.def *= .9; }},
+             {id:'chefe', tn:'Grito de Guerra', td:'toda habilidade atordoa os inimigos próximos e recupera 5% da vida', tf:() => { ncT.nova(5.5, .6, 0xffb347, 1.5); ncT.heal(.05); }, n:'Chefe de Clã', r:'Resistência', d:'+30% de vida, +10% de defesa e 12% de chance de atordoar', fx:s => { s.hp *= 1.3; s.def *= 1.1; s.stunCh += .12; }}],
+  archer:[{id:'cacadora', tn:'Rajada', td:'toda habilidade dispara mais 5 flechas em leque', tf:() => { ncT.fan('arrow', 5, .9); }, n:'Caçadora', r:'Velocidade', d:'Anda 10% mais rápido, atira 12% mais rápido e cada tiro solta uma segunda flecha', fx:s => { s.spd *= 1.1; s.aspd += .12; s.multi = (s.multi || 0) + 1; }},
+          {id:'elite', tn:'Tiro Certeiro', td:'toda habilidade dispara uma flecha perfurante muito forte', tf:() => { ncT.fan('pierce', 1, 2.6); }, n:'Atiradora de Elite', r:'Precisão', d:'+15% de chance de crítico, crítico 50% mais forte e +8% de ataque', fx:s => { s.crit += .15; s.critMult += .5; s.atk *= 1.08; }}],
+  mage:[{id:'elementalista', tn:'Nova Gelada', td:'toda habilidade congela os inimigos próximos', tf:() => { ncT.nova(5, .8, 0x8fe9ff, 0, 2); }, n:'Elementalista', r:'Elementos', d:'+12% de ataque, 15% de chance de congelar e 15% de chance de raio em cadeia', fx:s => { s.atk *= 1.12; s.freezeCh += .15; s.chainCh += .15; }},
+        {id:'arcano', tn:'Eco Arcano', td:'toda habilidade dispara mais 3 projéteis mágicos', tf:() => { ncT.fan('bolt', 3, 1.3); }, n:'Arcano', r:'Poder puro', d:'+25% de ataque e +8% de chance de crítico', fx:s => { s.atk *= 1.25; s.crit += .08; }}],
+  necro:[{id:'ossudo', tn:'Guarda Óssea', td:'toda habilidade levanta um esqueleto para lutar por você', tf:() => { ncT.ally(); }, n:'Lorde Ossudo', r:'Resistência', d:'+25% de vida, +15% de defesa e recupera vida o tempo todo', fx:s => { s.hp *= 1.25; s.def *= 1.15; s.regen += .003; }},
+         {id:'ceifador', tn:'Colheita', td:'toda habilidade drena os inimigos próximos e cura 8% da vida', tf:() => { ncT.nova(4.5, 1.2, 0xa06aff); ncT.heal(.08); }, n:'Ceifador', r:'Dreno', d:'+18% de ataque e rouba 5% de vida a cada golpe', fx:s => { s.atk *= 1.18; s.leech += .05; }}],
+  assassin:[{id:'sombra', tn:'Véu', td:'ao usar uma habilidade, fica 1,2 s intocável', tf:() => { ncT.inv(1.2); }, n:'Sombra', r:'Crítico', d:'+12% de chance de crítico, crítico 60% mais forte e anda 6% mais rápido', fx:s => { s.crit += .12; s.critMult += .6; s.spd *= 1.06; }},
+            {id:'venenosa', tn:'Nuvem Tóxica', td:'toda habilidade solta uma nuvem de veneno em volta', tf:() => { ncT.nova(4.5, 1.3, 0x7dff8a); }, n:'Venenosa', r:'Veneno', d:'Todo golpe deixa o inimigo queimando de veneno, +10% de ataque e rouba 3% de vida', fx:s => { s.burn = true; s.atk *= 1.1; s.leech += .03; }}],
+  monk:[{id:'ferro', tn:'Impacto', td:'toda habilidade solta uma onda de choque que atordoa', tf:() => { ncT.nova(4.5, 1.4, 0xffb347, 1); }, n:'Punho de Ferro', r:'Força', d:'+20% de ataque, 15% de chance de atordoar e +10% de defesa', fx:s => { s.atk *= 1.2; s.stunCh += .15; s.def *= 1.1; }},
+        {id:'vento', tn:'Brisa', td:'ao usar uma habilidade, fica 1 s intocável e recupera 4% da vida', tf:() => { ncT.inv(1); ncT.heal(.04); }, n:'Mestre do Vento', r:'Velocidade', d:'Anda 12% mais rápido, golpes 18% mais rápidos e 6% menos dano recebido', fx:s => { s.spd *= 1.12; s.aspd += .18; s.dmgRes += .06; }}],
 };
+// Tecnica da especializacao: dispara junto com qualquer habilidade da classe
+const ncT = {
+  heal(p){ const h = Math.round(P.S.hp*p); if(h > 0 && P.hp < P.S.hp){ P.hp = Math.min(P.S.hp, P.hp + h); try{ floatText(P.pos, '+' + h, 'heal'); }catch(e){} } },
+  inv(t){ P.inv = Math.max(P.inv, t); try{ fxRing(P.pos.x, P.pos.z, 2.2, 0xcdb8ff, .5); }catch(e){} },
+  rage(t){ P.rageT = Math.max(P.rageT || 0, t); },
+  nova(R, mult, col, stun, freeze){ try{ fxRing(P.pos.x, P.pos.z, R, col, .45); }catch(e){}
+    for(const e of enemies){ if(e.dead || e.dying) continue; if(Math.hypot(e.pos.x - P.pos.x, e.pos.z - P.pos.z) > R + (e.r || 0)) continue;
+      hitEnemy(e, mult, {noProc:true}); if(stun && e.kind !== 'boss') e.stunT = Math.max(e.stunT || 0, stun); if(freeze && e.kind !== 'boss') e.frozenT = Math.max(e.frozenT || 0, freeze); } },
+  fan(kind, n, mult){ for(let k = 0; k < n; k++) firePlayer(kind === 'pierce' ? {kind:'pierce', ang:P.face, spd:34, mult, life:.75, r:.75, pierce:true}
+    : {kind, ang:P.face + (k - (n - 1)/2)*.16, spd:kind === 'bolt' ? 20 : 30, mult, life:.8, r:.45}); },
+  ally(){ try{ spawnAlly(P.pos.x + Math.sin(P.face + 2)*2, P.pos.z + Math.cos(P.face + 2)*2); }catch(e){} },
+};
+function ncTech(){ const sp = ncSpec(); if(!sp || !sp.tf) return; setTimeout(() => { try{ if(P && !P.dead && mode === 'stage'){ sp.tf(); floatText(P.pos, sp.tn, 'heal'); } }catch(e){} }, 260); }
 const ncSpec = () => { const id = save.spec && save.spec[save.cls]; return (id && save.level >= NC_SPEC_LV && (NC_SPEC[save.cls] || []).find(x => x.id === id)) || null; };
 let ncSpecAsk = null;
 function renderSpec(){
@@ -5610,8 +5623,8 @@ function renderSpec(){
   const list = NC_SPEC[save.cls] || [], cur = ncSpec();
   let h = '<div class="eyebrow">Especialização · nível ' + NC_SPEC_LV + '</div>';
   if(save.level < NC_SPEC_LV) h += '<div class="spec-lock">Libera no nível ' + NC_SPEC_LV + '. Você está no nível ' + save.level + '.<small>' + list.map(x => x.n).join(' ou ') + '</small></div>';
-  else if(cur) h += '<div class="spec-card on"><b>' + cur.n + '</b><em>' + cur.r + '</em><small>' + cur.d + '</small></div>';
-  else h += '<div class="spec-pick">' + list.map(x => '<div class="spec-card"><b>' + x.n + '</b><em>' + x.r + '</em><small>' + x.d + '</small><button class="btn sm primary" data-spec="' + x.id + '">' + (ncSpecAsk === x.id ? 'Confirmar? Não dá para trocar' : 'Escolher') + '</button></div>').join('') + '</div>';
+  else if(cur) h += '<div class="spec-card on"><b>' + cur.n + '</b><em>' + cur.r + '</em><small>' + cur.d + '</small><small class="spec-t"><i>Técnica · ' + cur.tn + ':</i> ' + cur.td + '</small></div>';
+  else h += '<div class="spec-pick">' + list.map(x => '<div class="spec-card"><b>' + x.n + '</b><em>' + x.r + '</em><small>' + x.d + '</small><small class="spec-t"><i>Técnica · ' + x.tn + ':</i> ' + x.td + '</small><button class="btn sm primary" data-spec="' + x.id + '">' + (ncSpecAsk === x.id ? 'Confirmar? Não dá para trocar' : 'Escolher') + '</button></div>').join('') + '</div>';
   h += '<button class="btn sm nc-free" data-ncfree>' + (save.ncFree ? 'Modo teste LIGADO: troca de classe livre (toque para desligar)' : 'Modo teste: liberar todas as classes') + '</button>';
   box.innerHTML = h;
 }
@@ -9555,7 +9568,7 @@ function monUpdate(e, dt){
   if(m.fly) m.model.position.y = m.y0 + Math.sin(clock*2.4 + m.ph)*.08;
   m.mixer.update(e.frozenT > 0 ? 0 : dt);
 }
-if(location.hash === '#nctest') window.__nc = {en:() => enemies, p:() => P, boss:id => startStage(id, true), go:id => startStage(id)};   // so para os testes automaticos
+if(location.hash === '#nctest') window.__nc = {en:() => enemies, p:() => P, boss:id => startStage(id, true), go:id => startStage(id), skill:i => useSkill(i), cls:() => save.cls, set:(c, id) => { save.cls = c; save.level = 40; save.spec = save.spec || {}; save.spec[c] = id; P.S = stats(); }};   // so para os testes automaticos
 function spawnMinion(st, x, z, awake, elite, type){
   if(elite) type = null; const ET = type ? ETYPE[type] : null;
   let col = st.minion.color; if(ET && ET.tint !== 1) col = new T.Color(col).multiplyScalar(ET.tint).getHex(); if(type === 'bomber') col = new T.Color(col).lerp(new T.Color(0xd04020), .55).getHex(); if(type === 'shaman') col = new T.Color(col).lerp(new T.Color(0x6a3aa0), .5).getHex();
@@ -10062,6 +10075,7 @@ function useSkill(i){
     case 'fan': { const a = aimAngle(14); if(a !== null) P.face = P.targetFace = a; P.castT = .2;
       for(let k=0;k<9;k++) firePlayer({kind:'dagger', ang:P.face - .6 + k*.15, spd:24, mult:.9, life:.45, r:.45}); SFX.stab(); SFX.bow(); break; }
   }
+  ncTech();
 }
 function spawnAlly(x, z){
   const p = new T.Vector3(x, 0, z); clampPos(p, bossActive);
@@ -12077,7 +12091,7 @@ body.nc-l #hub>aside.panel::before,body.nc-r #hub>#rightPanel::before{transform:
 .spec-card b{font-family:var(--f-display);font-size:15px;color:var(--gold-hi)}.spec-card em{font-style:normal;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
 .spec-card small{color:var(--mute);font-size:12px;line-height:1.35}.spec-card .btn{margin-top:6px}
 .spec-card.on{border-color:var(--gold);background:rgba(242,193,78,.08)}
-#specBox{margin:12px 0 4px}.nc-free{margin-top:10px;font-size:11px!important;opacity:.7;width:100%}
+#specBox{margin:12px 0 4px}.spec-t{color:#f4efe2!important;margin-top:4px}.spec-t i{font-style:normal;color:var(--vgold,#f2c14e)}.nc-free{margin-top:10px;font-size:11px!important;opacity:.7;width:100%}
 @media (max-width:420px){.spec-pick{grid-template-columns:1fr}}
 </style>
 <script id="nc-menu-js">
