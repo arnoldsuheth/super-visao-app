@@ -636,6 +636,7 @@ body.nocur, body.nocur *{cursor:none !important}
       <div class="eyebrow">Herói</div>
       <div class="cgrid" id="classGrid"></div>
       <div id="specBox"></div>
+      <div id="ncPetBox"></div>
       <div id="ncCloudBox"></div>
       <div class="cinfo" id="classInfo"></div>
       <div class="look">
@@ -5855,7 +5856,7 @@ const EVENTS = [
   {id:'lua',      n:'Lua de Sangue',    css:'#ff4a4a', d:'Fragmentos de armadura em dobro e elites soltam mais pedras.',       fx:{frag:2, stoneElite:1.5}},
   {id:'pedras',   n:'Chuva de Pedras',  css:'#4aa8ff', d:'Pedras de atributo caem com o dobro de chance.',                       fx:{stone:2}},
   {id:'forja',    n:'Forja Ardente',    css:'#ff9a3a', d:'+10% de chance ao evoluir peças e fabricar custa 25% menos.',          fx:{up:.1, craft:.75}},
-  {id:'festival', n:'Festival Solar',   css:'#ffd23a', d:'Moedas Solares e materiais de fabricação em dobro.',                   fx:{coins:2, mat:2}},
+  {id:'festival', n:'Festival Solar',   css:'#ffd23a', d:'Moedas Reais e materiais de fabricação em dobro.',                   fx:{coins:2, mat:2}},
 ];
 function curEvent(){ const f = CFG.event.force; if(f === 'off') return null; if(f) return EVENTS.find(e => e.id === f) || null; return EVENTS[Math.floor(Date.now()/6048e5) % EVENTS.length]; }
 const evFx = () => (curEvent() || {fx:{}}).fx;
@@ -5875,7 +5876,7 @@ function giveGem(k, r, pos){
   giveGemNow(k, r, pos); }
 function giveGemNow(k, r, pos){ addGem(k, r); const key = k + ':' + r; runGems[key] = (runGems[key] || 0) + 1; feed(stoneName(k, r), RAR[r - 1].css); if(pos) floatText(pos, stoneName(k, r), 'gold'); if(r >= 5 && typeof banner === 'function') banner(RAR[r - 1].n + '!', stoneName(k, r)); }
 function giveFrag(t, n){ n = Math.round(n*(evFx().frag || 1)); save.frags[t] = (save.frags[t] || 0) + n; runFrags[t] = (runFrags[t] || 0) + n; feed('+' + n + ' fragmento' + (n > 1 ? 's' : '') + ' ' + TIERS[t].pre + ' (' + TIERS[t].sc + ')', TIERS[t].css); }
-function giveCoins(n){ n = Math.round(n*(evFx().coins || 1)); save.coins += n; runCoins += n; feed('+' + n + ' Moedas Solares', '#ffd23a'); }
+function giveCoins(n){ n = Math.round(n*(evFx().coins || 1)); save.coins += n; runCoins += n; feed('+' + n + ' Moedas Reais', '#ffd23a'); }
 const rndGem = id => (id !== undefined && Math.random() < .4) ? GEM_KEYS[id % GEM_KEYS.length] : GEM_KEYS[Math.floor(Math.random()*GEM_KEYS.length)];
 function stoneRoll(src){ const w = CFG.stoneRar.map((v, i) => i >= 2 ? v*LUCK() : v), max = CFG.stoneMax[src] || 3; let tot = 0; for(let i=0;i<max;i++) tot += w[i]; let r = Math.random()*tot, i = 0; while(i < max - 1 && r >= w[i]){ r -= w[i]; i++; } return i + 1; }
 const gemTierFor = (id, bias) => stoneRoll(bias >= 1 ? 'boss' : bias > 0 ? 'elite' : 'minion');
@@ -5929,6 +5930,10 @@ const NC_AREA_REI = {1:1,3:3,6:5,8:4,10:7,11:6,12:0,14:2,17:8};   // area -> cor
 const ncReino = i => NC_REINOS[NC_AREA_REINO[i]], ncCoroa = i => (i in NC_AREA_REI) ? NC_COROAS[NC_AREA_REI[i]] : null;
 const ncCoroasGanhas = () => Object.keys(NC_AREA_REI).filter(i => (save.beaten || {})[i]).length;
 window.NC = {coroas:() => ncCoroasGanhas()};   // usado pelo menu novo, que fica fora deste bloco
+// NINE CROWNS: nomes dos monstros e chefes de acordo com os modelos novos (os 9 reis tem nome proprio)
+[['Orc Batedor','Grukk, Chefe dos Orcs'],['Gosma do Brejo','Rei Sapo Morgath'],['Golemzinho','Golem Ancião'],['Cactoro','Rei Cactoro Zahir'],['Fantasma do Castelo','Orc Caveira'],['Dragonete','Dragão de Brasa'],
+ ['Filhote de Yeti','Rei Yeti Hrim'],['Cogumelim','Grão-Cogumelo'],['Peixe-Lança','Rei Lula Thalor'],['Ninja do Cânion','Monkruz, o Bruto'],['Espectro Caveira','Rei Feiticeiro Nox'],['Pombo do Trovão','Rei Trovão Azur'],
+ ['Alpaquim','Rei Alpaking Aurel'],['Glub','Glub Ancião'],['Abelha de Ferro','Rei Dino Ferrak'],['Visitante','Visitante Mestre'],['Hywirl','Demônio Azul'],['Diabrete','Rei Demônio Kaoz']].forEach((n, i) => { if(ST_DEF[i]){ ST_DEF[i].mn = n[0]; ST_DEF[i].boss = n[1]; } });
 const STAGES = ST_DEF.map((d, i) => Object.assign({}, d, {
   id:i, region:Math.floor(i/6), itier:BOSS_BASE(i), slot:PIECE_ORDER[i%6], lvl:Math.min(NC_MAX_LV, 1 + Math.round(i*2.5/NC_LV_K)),
   minion:{name:d.mn, color:d.mc, ranged:!!d.mr, hp:Math.round(30*Math.pow(1.27,i)), dmg:Math.round(7*Math.pow(1.2,i)), spd:3.2 + i*.05, scale:.8},
@@ -6028,6 +6033,8 @@ const ncCloud = {
   boot(){ if(save.ncOff || !save.ncCode) return;   // outro aparelho salvou depois? pega o mais novo, a nao ser que este tenha progresso ainda nao enviado
     this.call('nc_load', {p_code:save.ncCode}).then(r => { if(r && r.data && r.updated_at && (!save.ncAt || new Date(r.updated_at) > new Date(save.ncAt)) && !save.ncDirty){ r.data.ncAt = r.updated_at; this.adopt(save.ncCode, r.data); } else if(save.ncDirty) this.push(); }).catch(() => {}); },
   draw(){ const b = document.getElementById('ncCloudBox'); if(!b) return;
+    const pb = document.getElementById('ncPetBox'); if(pb) pb.innerHTML = '<div class="eyebrow">Mascote</div><div class="filters">' + NC_PETS.map(x => '<button class="chipb" data-ncpet="' + x[0] + '" aria-pressed="' + ((save.pet || '') === x[0]) + '">' + x[1] + '</button>').join('') + '</div><small class="nc-note">O mascote acompanha o herói nas áreas. Por enquanto é só companhia: não ataca nem dá bônus.</small>'
+      + '<details class="nc-cred"><summary>Créditos</summary><p><b>Nine Crowns</b> · criação e direção: Arnold Suheth (Studio Evolution Tech).<br>Feito a partir do jogo Armadura do Sol, de Tiago.<br>Heróis: KayKit Adventurers, de Kay Lousberg (CC0).<br>Monstros: Ultimate Monsters, de Quaternius (CC0).<br>Letra: Marcellus SC, de Astigmatic (licença OFL).<br>Motor 3D: three.js (licença MIT).</p></details>';
     b.innerHTML = '<div class="eyebrow">Salvamento na nuvem</div><div class="spec-card"><small>Seu código</small><b class="nc-code">' + this.code() + '</b><small>Anote este código. Em outro aparelho, digite ele aqui embaixo para continuar de onde parou.</small>'
       + '<small class="nc-cmsg">' + (this.msg || (save.ncAt ? 'Já está salvo na nuvem.' : 'Ainda não enviado.')) + '</small><button class="btn sm primary" data-nccloud="push">Salvar na nuvem agora</button>'
       + '<div class="nc-cin"><input id="ncCodeIn" maxlength="6" placeholder="CÓDIGO" autocomplete="off" autocapitalize="characters" spellcheck="false"><button class="btn sm" data-nccloud="enter">' + (this.ask ? 'Confirmar? Troca o progresso deste aparelho' : 'Entrar com código') + '</button></div></div>'; },
@@ -7644,7 +7651,7 @@ function fuseInputs(slot){
     if(l.length >= 3) return {t, items:l.slice(0, 3)}; }
   return null;
 }
-function matsHTML(keys){ return (keys || MAT_KEYS).map(k => `<span style="--c:${MATS[k].css}">${MATS[k].n} <b>${save.mats[k] || 0}</b></span>`).join('') + `<span style="--c:#f2c14e">Adena <b>${adenaHTML(save.gold)}</b></span><span style="--c:#ffd23a">Moedas Solares <b>${save.coins}</b></span>`; }
+function matsHTML(keys){ return (keys || MAT_KEYS).map(k => `<span style="--c:${MATS[k].css}">${MATS[k].n} <b>${save.mats[k] || 0}</b></span>`).join('') + `<span style="--c:#f2c14e">Adena <b>${adenaHTML(save.gold)}</b></span><span style="--c:#ffd23a">Moedas Reais <b>${save.coins}</b></span>`; }
 function tierImg(t, cls){ return `<img class="${cls || 'timg'}" src="${TIERS[t].img}" alt="" loading="lazy">`; }
 /* Só a peça que caiu, desenhada a partir do modelo 3D do jogo: um herói invisível (da classe atual; para armas, da classe da arma)
    recebe o material daquela estrela e só a peça pedida aparece. A cena é "fotografada" num alvo de 256 px, reduzida para 128 px
@@ -7850,7 +7857,7 @@ function renderShop(){
   h += E ? `<div class="evbox" style="--tc:${E.css}"><div class="big">Evento: ${E.n}</div><div class="istat">${E.d} Termina em ${evEnds()} dia${evEnds() > 1 ? 's' : ''}.</div>
     <div class="row"><span class="istat">Peça exclusiva do evento (+10% nos atributos, só enquanto o evento durar, 1 por semana):</span>
     <button class="btn sm primary" data-evbuy="1" ${save.coins >= shopPrice(60) && !save.evBought[evKey()] ? '' : 'disabled'}>${save.evBought[evKey()] ? 'Já comprada nesta semana' : SLOT_INFO[shopSlot].n + ' ' + E.n + ' · ' + shopPrice(60) + ' moedas'}</button></div></div>` : '';
-  h += `<h2>Equipamentos <small>Moedas Solares · até ${TIERS[CFG.shopMaxTier].sc}. Armaduras Míticas e Divinas não são vendidas.</small></h2>
+  h += `<h2>Equipamentos <small>Moedas Reais · até ${TIERS[CFG.shopMaxTier].sc}. Armaduras Míticas e Divinas não são vendidas.</small></h2>
     <div class="fsel">${[...ARMOR, 'weapon', 'shield', 'amulet'].filter(sl => sl !== 'shield' || save.cls === 'paladin').map(sl => `<button class="chipb" data-sslot="${sl}" aria-pressed="${shopSlot === sl}">${SLOT_INFO[sl].n}</button>`).join('')}</div><div class="shopgrid">`;
   for(let t = 0; t <= Math.min(CFG.shopMaxTier, 7); t++){ const p = piecePrice(t);
     h += `<button class="scard" style="--tc:${TIERS[t].css}" data-sbuy="${t}" ${save.coins >= p ? '' : 'disabled'}>${tierImg(t)}<b>${TIERS[t].model}</b><small>${TIERS[t].sc} · ${TIERS[t].n}</small><span>${p} moedas</span></button>`; }
@@ -7877,7 +7884,7 @@ const cntOf = key => key === 'boss' ? 0 : (save.cnt[key] || 0);
 function bossTarget(L){ const open = STAGES.filter(s => save.beaten[s.id] > 0).map(s => s.id); return open.length ? open[(L*7) % open.length] : 0; }
 function mState(m){ let q = save.mq[m.id]; if(!q){ q = save.mq[m.id] = {lvl:0}; } if(q.base === undefined){ if(m.key === 'boss'){ q.tgt = bossTarget(q.lvl); q.base = save.beaten[q.tgt] || 0; } else q.base = cntOf(m.key); } return q; }
 function mProg(m){ const q = mState(m), goal = Math.round(m.g*(1 + q.lvl*.5)); const cur = m.key === 'boss' ? (save.beaten[q.tgt] || 0) - q.base : cntOf(m.key) - q.base; return {q, goal, cur:Math.min(goal, Math.max(0, cur))}; }
-function rwText(o){ const a = []; if(o.coins) a.push(o.coins + ' Moedas Solares'); if(o.frag) a.push(o.frag[1] + ' fragmentos ' + TIERS[o.frag[0]].pre); if(o.stone) a.push('1 pedra ' + RAR[o.stone - 1].n);
+function rwText(o){ const a = []; if(o.coins) a.push(o.coins + ' Moedas Reais'); if(o.frag) a.push(o.frag[1] + ' fragmentos ' + TIERS[o.frag[0]].pre); if(o.stone) a.push('1 pedra ' + RAR[o.stone - 1].n);
   for(const k in (o.mats || {})) if(o.mats[k]) a.push(o.mats[k] + ' ' + MATS[k].n); if(o.piece !== undefined) a.push('1 peça de armadura ' + TIERS[o.piece].pre + ' (' + TIERS[o.piece].sc + ')'); return a.join(', '); }
 function grantRw(o){ if(o.coins) giveCoins(o.coins); if(o.frag) giveFrag(o.frag[0], o.frag[1]); if(o.stone) giveGem(rndGem(), o.stone); for(const k in (o.mats || {})) if(o.mats[k]) giveMat(k, o.mats[k]);
   if(o.piece !== undefined){ const it = newItem(ARMOR[Math.floor(Math.random()*ARMOR.length)], o.piece, {boss:true}); addItem(it); banner('Recompensa: ' + itemName(it), TIERS[o.piece].sc); discover(it); } }
@@ -7887,7 +7894,7 @@ function renderMissions(){
   const E = curEvent();
   let h = E ? `<div class="evbox" style="--tc:${E.css}"><div class="big">Evento da semana: ${E.n}</div><div class="istat">${E.d} Termina em ${evEnds()} dia${evEnds() > 1 ? 's' : ''}. A peça exclusiva do evento está na Loja.</div></div>` : '';
   const sq = seqState(), srw = seqReward(sq.q.lvl, sq.q.step);
-  h += `<h2>Campanha do Sol <small>sequência de missões · rodada ${sq.q.lvl + 1}</small></h2><div class="fpanel" style="--tc:#ffd23a">
+  h += `<h2>Campanha das Coroas <small>sequência de missões · rodada ${sq.q.lvl + 1}</small></h2><div class="fpanel" style="--tc:#ffd23a">
     <div class="row">${SEQ.map((s, i) => `<span class="pill ${i < sq.q.step ? 'ok' : i === sq.q.step ? 'warn' : ''}">${i + 1}. ${s.d.replace(/\d+/, n => Math.round(+n*(1 + sq.q.lvl*.5)))}</span>`).join('')}</div>
     <div class="pbar"><i style="width:${sq.cur/sq.goal*100}%"></i><span>${sq.cur} / ${sq.goal}</span></div>
     <div class="istat">Recompensa desta etapa: ${rwText(srw)}</div>
@@ -7901,7 +7908,7 @@ function renderMissions(){
 /* ===== BOLSA ===== */
 function bagHTML(){
   const st = Object.keys(save.gems).filter(k => save.gems[k] > 0 && GEMS[k.split(':')[0]]).sort((a, b) => +b.split(':')[1] - +a.split(':')[1]);
-  return `<div class="bag"><div class="eyebrow">Moedas</div><div class="mats"><span style="--c:#f2c14e">Adena <b>${adenaHTML(save.gold)}</b></span><span style="--c:#ffd23a">Moedas Solares <b>${save.coins}</b></span></div>
+  return `<div class="bag"><div class="eyebrow">Moedas</div><div class="mats"><span style="--c:#f2c14e">Adena <b>${adenaHTML(save.gold)}</b></span><span style="--c:#ffd23a">Moedas Reais <b>${save.coins}</b></span></div>
     <div class="eyebrow">Materiais</div><div class="mats">${MAT_KEYS.filter(k => save.mats[k]).map(k => `<span style="--c:${MATS[k].css}">${MATS[k].n} <b>${save.mats[k]}</b></span>`).join('') || '<span>nenhum</span>'}</div>
     <div class="eyebrow">Fragmentos de armadura</div><div class="mats">${TIERS.map((T, t) => save.frags[t] ? `<span style="--c:${T.css}">${T.model} ${T.sc} <b>${save.frags[t]}${CFG.frag[t] ? '/' + CFG.frag[t] : ''}</b></span>` : '').join('') || '<span>nenhum</span>'}</div>
     <div class="eyebrow">Pedras</div><div class="stones">${st.map(k => { const [g, r] = k.split(':'); return `<span title="${stoneName(g, +r)}: ${stoneDesc(g, +r)}" style="--tc:${RAR[r - 1].css}">${stoneImg(g, 30)}<b>${save.gems[k]}</b></span>`; }).join('') || '<span class="istat">nenhuma</span>'}</div></div>`;
@@ -9620,7 +9627,22 @@ function monUpdate(e, dt){
   if(m.fly) m.model.position.y = m.y0 + Math.sin(clock*2.4 + m.ph)*.08;
   m.mixer.update(e.frozenT > 0 ? 0 : dt);
 }
-if(location.hash === '#nctest') window.__nc = {en:() => enemies, p:() => P, boss:id => startStage(id, true), go:id => startStage(id), skill:i => useSkill(i), sv:() => save, cls:() => save.cls, set:(c, id) => { save.cls = c; save.level = 40; save.spec = save.spec || {}; save.spec[c] = id; P.S = stats(); }};   // so para os testes automaticos
+if(location.hash === '#nctest') window.__nc = {en:() => enemies, p:() => P, boss:id => startStage(id, true), go:id => startStage(id), skill:i => useSkill(i), sv:() => save, scene:(a,b,c) => ncScene(a,b,c), fall:(id) => ncKingFall(id, true), fim:() => ncFinal(), pet:() => ncPet, cls:() => save.cls, set:(c, id) => { save.cls = c; save.level = 40; save.spec = save.spec || {}; save.spec[c] = id; P.S = stats(); }};   // so para os testes automaticos
+const NC_PETS = [['', 'Nenhum'], ['f_Dragon', 'Dragonete'], ['s_Cat', 'Gato'], ['s_Dog', 'Cachorro'], ['f_Pigeon', 'Pombo'], ['f_Glub', 'Glub'], ['s_Chicken', 'Galinha']];
+let ncPet = null;
+function ncPetSpawn(){ try{ if(ncPet){ removeObj(ncPet.root); ncPet = null; } const key = save.pet; if(!key || !monOn()) return;
+  monLoad(key, g => { if(!g || save.pet !== key || !P) return; const model = monClone(g.scene), root = new T.Group(), fly = key[0] === 'f';
+    model.traverse(n => { if(n.isMesh){ n.material = new T.MeshLambertMaterial({map:monTex(), skinning:!!n.isSkinnedMesh}); n.castShadow = !COARSE; } });
+    const sz = g.box.getSize(new T.Vector3()), k = .95/Math.max(.01, sz.y); model.scale.setScalar(k); model.position.y = -g.box.min.y*k + (fly ? .9 : 0); root.add(model);
+    root.position.set(P.pos.x - 1.4, P.pos.y, P.pos.z - 1.4); scene.add(root);
+    const mixer = new T.AnimationMixer(model), f = re => { const c = g.animations.find(c => re.test(c.name)); return c ? mixer.clipAction(c) : null; };
+    ncPet = {root, mixer, idle:f(/^(Idle|Flying_Idle)$/), move:f(/^(Walk|Run|Fast_Flying)$/), cur:null}; }); }catch(e){} }
+function ncPetUpdate(dt){ const p = ncPet; if(!p || !P) return; if(!p.root.parent){ ncPet = null; return; }
+  const tx = P.pos.x - Math.sin(P.face)*1.5 + Math.cos(P.face)*1.1, tz = P.pos.z - Math.cos(P.face)*1.5 - Math.sin(P.face)*1.1, dx = tx - p.root.position.x, dz = tz - p.root.position.z, d = Math.hypot(dx, dz);
+  if(d > 14){ p.root.position.x = tx; p.root.position.z = tz; } else if(d > .25){ const v = Math.min(d, (4 + d*2.2)*dt); p.root.position.x += dx/d*v; p.root.position.z += dz/d*v; p.root.rotation.y = Math.atan2(dx, dz); }
+  try{ p.root.position.y = heightAt(p.root.position.x, p.root.position.z); }catch(e){ p.root.position.y = P.pos.y; }
+  const want = d > .4 && p.move ? p.move : p.idle; if(want && want !== p.cur){ want.reset().play(); if(p.cur) p.cur.crossFadeTo(want, .15, false); p.cur = want; }
+  p.mixer.update(dt); }
 function spawnMinion(st, x, z, awake, elite, type){
   if(elite) type = null; const ET = type ? ETYPE[type] : null;
   let col = st.minion.color; if(ET && ET.tint !== 1) col = new T.Color(col).multiplyScalar(ET.tint).getHex(); if(type === 'bomber') col = new T.Color(col).lerp(new T.Color(0xd04020), .55).getHex(); if(type === 'shaman') col = new T.Color(col).lerp(new T.Color(0x6a3aa0), .5).getHex();
@@ -10133,11 +10155,12 @@ function spawnAlly(x, z){
   const p = new T.Vector3(x, 0, z); clampPos(p, bossActive);
   const cr = makeCreature(0xd8d2c0, .78, null); cr.mats.forEach(m => { m.emissive.copy(C(0x103a20)); m.userData.baseE = m.emissive.clone(); });
   cr.root.position.set(p.x, heightAt(p.x, p.z), p.z); scene.add(cr.root); burst(cr.root.position, 0x6aff9a, 12, 3, 5, .3);
+  monAttach(cr, 'f_Ghost_Skull', {boss:true});
   allies.push({cr, pos:cr.root.position, life:12, atkT:.5, walk:0});
 }
 function updateAllies(dt){
   for(let i = allies.length-1; i >= 0; i--){
-    const a = allies[i], cr = a.cr; a.life -= dt; a.atkT -= dt;
+    const a = allies[i], cr = a.cr; a.life -= dt; a.atkT -= dt; monUpdate(a, dt);
     if(a.life <= 0 || P.dead){ burst(a.pos, 0x6aff9a, 10, 3, 4, .5); removeObj(cr.root); allies.splice(i, 1); continue; }
     let tg = null, bd = 14;
     for(const e of enemies){ if(e.dead || e.dying || (e.kind === 'boss' && !e.awake)) continue; const d = Math.hypot(e.pos.x - a.pos.x, e.pos.z - a.pos.z) - e.r; if(d < bd){ bd = d; tg = e; } }
@@ -10276,7 +10299,27 @@ function usePotion(){
 function playerDie(){ playMusic(null); if(P.mounted) toggleMount(false); P.goldLost = Math.floor(save.gold*DF().goldLoss); save.gold -= P.goldLost; P.dead = true; P.skill = null; SFX.die(); deadT = 1.4; attackHeld = false; persist(); }
 
 /* ================= BOSS ================= */
+const NC_FALA = ['A luz era minha para guardar. Agora ela me queima por dentro.','As raízes me prenderam ao trono. Corte-as, soldado.','Ferro não sente. Foi isso que a coroa me prometeu.','O sol não se põe no meu reino. E eu não durmo há cem anos.',
+  'O mar levou o meu povo. A coroa me deixou ficar para assistir.','O frio é a única coisa que ainda me obedece.','Ouça o trovão. É a coroa rindo de nós dois.','A noite me devolveu os mortos. Não do jeito que eu pedi.','Oito coroas você trouxe até mim. Faltava só a minha.'];
+const NC_LIVRE = ['A luz voltou às planícies. As aldeias de Alvorada acendem as lanternas de novo.','As raízes soltaram o trono. A floresta respira.','As forjas das Colinas voltaram a bater por vontade própria.','A noite caiu sobre as Areias pela primeira vez em cem anos. O povo dormiu.',
+  'A maré baixou e as Ilhas apareceram outra vez.','O gelo rachou. Há água correndo no Reino do Gelo.','O céu das Tempestades se abriu. Dá para ver as estrelas.','Os mortos do Reino Lunar deitaram em paz.','O trono das Cinzas está vazio. As nove coroas estão com você.'];
+function ncScene(eyebrow, title, text, btns){
+  let el = document.getElementById('ncScene'); if(!el){ el = document.createElement('div'); el.id = 'ncScene'; document.body.appendChild(el); }
+  el.innerHTML = '<div class="ncsc-box"><div class="ncsc-e">' + eyebrow + '</div><div class="ncsc-t">' + title + '</div><p>' + text + '</p><div class="ncsc-b">' + (btns || [['Continuar', null]]).map((b, i) => '<button class="btn primary" data-i="' + i + '">' + b[0] + '</button>').join('') + '</div></div>';
+  el.hidden = false; el.onclick = e => { const b = e.target.closest('button'); if(!b) return; el.hidden = true; const f = (btns || [])[+b.dataset.i]; if(f && f[1]) f[1](); };
+}
+function ncFinal(){
+  const fim = (k, t) => () => { save.ncFinal = k; persist(); ncScene('Fim da jornada', t[0], t[1]); };
+  ncScene('As nove coroas', 'O que você faz com elas?', 'As nove coroas estão nas suas mãos. Juntas, elas voltam a ser a Coroa Ancestral. A escolha é sua.', [
+    ['Restaurar a Coroa', fim('restaurar', ['A Coroa Ancestral', 'Você une as nove e devolve a Coroa ao lugar dela. Os reinos voltam a ter um só céu. Ninguém a usa. Você guarda a porta.'])],
+    ['Destruir as nove', fim('destruir', ['Nove estilhaços', 'Você quebra as coroas uma a uma. O poder se espalha pela terra, um pouco para cada um. Nunca mais haverá um rei monstro.'])],
+    ['Usar a Coroa', fim('usar', ['O décimo rei', 'Você coloca a Coroa na própria cabeça. Os reinos se curvam. Por dentro, algo começa a queimar, do jeito que queimou neles.'])]]);
+}
+function ncKingIntro(b){ try{ const k = NC_AREA_REI[curStage.id]; if(k === undefined) return; setTimeout(() => { if(b.hp > 0) banner('“' + NC_FALA[k] + '”', curStage.boss + ' · ' + NC_REINOS[k], 'danger'); }, 1400); }catch(e){} }
+function ncKingFall(id, first){ try{ const k = NC_AREA_REI[id]; if(k === undefined || !first) return;
+  setTimeout(() => ncScene(NC_REINOS[k] + ' libertado', NC_COROAS[k], NC_LIVRE[k] + '<br><br><b>' + ncCoroasGanhas() + ' de 9 coroas.</b>', id === 17 ? [['Continuar', ncFinal]] : null), 3200); }catch(e){} }
 function wakeBoss(b){
+  ncKingIntro(b);
   b.awake = true; bossActive = true; b.t = 1.2; playMusic(themeNow());
   if(P.mounted) toggleMount(false);
   barrier.visible = true; barrier.material.color.copy(C(0xff5a3a)); barrier.material.opacity = 0;
@@ -10531,7 +10574,8 @@ function bossDefeated(b){
   waves.forEach(w => removeObj(w.m)); waves = [];
   for(const e of enemies) if(e.kind === 'minion' && !e.dead && Math.hypot(e.pos.x, e.pos.z - ARENA_Z) < ARENA_R + 6){ burst(e.pos, curStage.minion.color, 8, 5, 5); e.dead = true; removeObj(e.cr.root); removeObj(e.bar.g); }
   const st = curStage, id = st.id;
-  save.beaten[id] = (save.beaten[id]||0) + 1;
+  const ncFirst = !(save.beaten[id] > 0);
+  save.beaten[id] = (save.beaten[id]||0) + 1; ncKingFall(id, ncFirst);
   const hadSet = ownsSet(st.region*2 + 2);
   let main;
   const M = BMODS[b.mod || 'normal'], world = b.mod === 'mundial', chance = world ? 1 : Math.min(1, chanceFor(id) + M.ch);
@@ -10720,6 +10764,7 @@ function updatePlayer(dt){
 
 const ICE = C(0x2a8ab0);
 function updateEnemies(dt){
+  ncPetUpdate(dt);
   for(const e of enemies){
     if(e.dead) continue;
     monUpdate(e, dt);
@@ -11195,7 +11240,7 @@ document.addEventListener('click', e => { const b = e.target.closest('[data-trav
   if(mode === 'stage'){ togglePause(false); travelTo(id, 'F'); } else startStage(id); });
 function startStage(id, onlyBoss, world, o){
   const st = STAGES[id]; if(!st || !unlocked(st)) return; o = o || {};
-  monPreload(st);
+  monPreload(st); setTimeout(ncPetSpawn, 1500);
   if(realWanted() && realStage(st) && REAL.state !== 'fail' && REAL.setFail !== st.id && (REAL.state !== 'ready' || !realSetReady(st))){
     realLoad(st); banner('Carregando gráficos realistas…', 'Só na primeira vez de cada lugar');
     REAL.after = () => { clearTimeout(REAL.waitT); startStage(id, onlyBoss, world, o); };
@@ -11259,7 +11304,7 @@ function matsRun(){
   const m = Object.keys(runMats).filter(k => runMats[k]).map(k => `<span style="--tc:${MATS[k].css}">${runMats[k]}× ${MATS[k].n}</span>`);
   const g = Object.keys(runGems).map(k => { const [gk, r] = k.split(':'); return `<span style="--tc:${RAR[r - 1].css}">${runGems[k]}× ${stoneName(gk, +r)}</span>`; });
   const f = Object.keys(runFrags).filter(t => runFrags[t]).map(t => `<span style="--tc:${TIERS[t].css}">${runFrags[t]} fragmentos ${TIERS[t].pre}</span>`);
-  const c = runCoins ? [`<span style="--tc:#ffd23a">${runCoins} Moedas Solares</span>`] : [];
+  const c = runCoins ? [`<span style="--tc:#ffd23a">${runCoins} Moedas Reais</span>`] : [];
   return m.length || g.length || f.length || c.length ? `<div><div class="eyebrow" style="margin-bottom:6px">Materiais, pedras e fragmentos da fase</div><div class="loot">${c.concat(f, m, g).join('')}</div></div>` : '';
 }
 function showDead(){
@@ -11345,7 +11390,7 @@ $('#rightPanel').addEventListener('click', e => {
   if(d.evbuy){ const E = curEvent(), p = shopPrice(60); if(E && save.coins >= p && !save.evBought[evKey()]){ save.coins -= p; save.evBought[evKey()] = 1; const t = clamp(Math.round(gearPower()) - 1, 1, CFG.shopMaxTier); buyPiece(t, 'ev:' + E.id); } renderHub(); return; }
   if(d.fragx !== undefined){ const t = +d.fragx, need = CFG.frag[t]; if(need && (save.frags[t] || 0) >= need){ save.frags[t] -= need; buyPiece(t); applyGear(hero); } renderHub(); return; }
   if(d.mclaim){ const m = MISSIONS.find(x => x.id === d.mclaim), p = mProg(m); if(p.cur >= p.goal){ grantRw(m.rw(p.q.lvl)); p.q.lvl++; delete p.q.base; delete p.q.tgt; persist(); SFX.level(); banner('Missão concluída: ' + m.n, rwText(m.rw(p.q.lvl - 1))); } renderHub(); return; }
-  if(d.seq){ const q = seqState(); if(q.cur >= q.goal){ const rw = seqReward(q.q.lvl, q.q.step); grantRw(rw); q.q.step++; if(q.q.step >= SEQ.length){ q.q.step = 0; q.q.lvl++; } delete q.q.base; persist(); SFX.level(); banner('Campanha do Sol', rwText(rw)); } renderHub(); return; }
+  if(d.seq){ const q = seqState(); if(q.cur >= q.goal){ const rw = seqReward(q.q.lvl, q.q.step); grantRw(rw); q.q.step++; if(q.q.step >= SEQ.length){ q.q.step = 0; q.q.lvl++; } delete q.q.base; persist(); SFX.level(); banner('Campanha das Coroas', rwText(rw)); } renderHub(); return; }
   if(d.world !== undefined){ startStage(+d.world*6 + 5, true, true); return; }
   if(d.fpull !== undefined && fit){ removeGem(fit, +d.fpull); SFX.coin(); renderHub(); return; }
   if(d.fins && fit){ if(insertGem(fit, d.fins)){ SFX.item(); const [k, r] = d.fins.split(':'); banner('Pedra encaixada', stoneName(k, +r) + ' em ' + itemName(fit)); if(isEquipped(fit)) applyGear(hero); } renderHub(); return; }
@@ -11405,7 +11450,7 @@ const ADM = [
     ['stoneFuse','Chance de combinar a partir de cada raridade (0, Comum…Lendária)','list']]],
   ['Anti-azar', [['pity.inc','Aumento da chance por derrota sem drop','num'], ['pity.hard','Garantido depois de N derrotas sem drop','num'], ['pity.exCh','Chance base da relíquia exclusiva','num'], ['pity.exInc','Aumento da relíquia por tentativa','num'], ['pity.exHard','Relíquia garantida depois de N tentativas','num']]],
   ['Fragmentos', [['frag','Fragmentos para trocar (1★ … 10★; 0 = não troca)','list'], ['fragCh.elite','Chance de fragmento em elite','num']]],
-  ['Loja e moedas', [['shopMult','Multiplicador de preços da loja','num'], ['shopMaxTier','Estrela máxima vendida','star'], ['coins.boss','Moedas Solares por chefe','num'], ['coins.world','Moedas Solares por Chefe Mundial','num']]],
+  ['Loja e moedas', [['shopMult','Multiplicador de preços da loja','num'], ['shopMaxTier','Estrela máxima vendida','star'], ['coins.boss','Moedas Reais por chefe','num'], ['coins.world','Moedas Reais por Chefe Mundial','num']]],
   ['Eventos', [['event.force','Evento ativo','sel', [['', 'Rodízio semanal automático'], ['off', 'Nenhum evento'], ...EVENTS.map(e => [e.id, e.n])]]]],
   ['Receitas de fabricação (JSON)', [['recipes','Receitas que substituem as padrão. Exemplo: {"3": {"mats": {"minerio": 6, "cristal": 2}, "gold": 400}}','json']]],
 ];
@@ -11517,7 +11562,7 @@ function renderDev(){
     <div class="abar"><button class="btn" data-dev="admin">Regras do jogo</button><button class="btn" data-dev="lock">Bloquear</button><button class="btn" data-dev="close">Fechar</button></div>
     <details open><summary>Recursos</summary><div class="devg">
       <button class="btn sm" data-devg="gold">+10.000 ouro</button><button class="btn sm" data-devg="pot">+10 poções</button>
-      <button class="btn sm" data-devg="coins">+100 Moedas Solares</button><button class="btn sm" data-devg="mats">+50 de cada material</button>
+      <button class="btn sm" data-devg="coins">+100 Moedas Reais</button><button class="btn sm" data-devg="mats">+50 de cada material</button>
       <button class="btn sm" data-devg="lvl1">+1 nível</button><button class="btn sm" data-devg="lvl10">+10 níveis</button></div></details>
     <details open><summary>Trapaças de teste</summary><div class="devg">${tog('god', 'Invencível', 'não leva dano')}${tog('dmg', 'Dano ×10', 'ataque muito mais forte')}${tog('fast', 'Velocidade ×1,5', 'anda mais rápido')}</div></details>
     <details><summary>Dia, noite e clima</summary><div class="devg">
@@ -11609,7 +11654,7 @@ $('#dev').addEventListener('click', async e => {
     if(g === 'offAll'){ DEV.god = DEV.dmg = DEV.fast = false; DEV.dnLock = null; DEV.wxLock = null; devSave(); devApply(); renderDev(); return devMsg('Trapaças e travas desligadas.'); }
     if(g === 'gold'){ save.gold += 10000; devApply(); return devMsg('+10.000 ouro'); }
     if(g === 'pot'){ save.potions += 10; devApply(); return devMsg('+10 poções'); }
-    if(g === 'coins'){ save.coins += 100; devApply(); return devMsg('+100 Moedas Solares'); }
+    if(g === 'coins'){ save.coins += 100; devApply(); return devMsg('+100 Moedas Reais'); }
     if(g === 'mats'){ MAT_KEYS.forEach(k => save.mats[k] = (save.mats[k] || 0) + 50); devApply(); return devMsg('+50 de cada material'); }
     if(g === 'lvl1' || g === 'lvl10'){ save.level += g === 'lvl1' ? 1 : 10; save.xp = 0; devApply(); renderDev(); return devMsg('Agora no nível ' + save.level); }
     if(g === 'stages'){ STAGES.forEach(s => { if(!(save.beaten[s.id] > 0)) save.beaten[s.id] = 1; }); devApply(); return devMsg('Todas as fases foram liberadas.'); }
@@ -11643,6 +11688,7 @@ $('#hub').addEventListener('click', e => {
     if(ncSpecAsk !== id){ ncSpecAsk = id; renderSpec(); return; }
     ncSpecAsk = null; save.spec = save.spec || {}; save.spec[save.cls] = id; persist(); renderHub();
     const x = ncSpec(); if(x) banner('Especialização: ' + x.n, x.d); try{ SFX.drop(); }catch(e){} return; }
+  if(b.dataset.ncpet !== undefined){ save.pet = b.dataset.ncpet; persist(); ncCloud.draw(); return; }
   if(b.dataset.nccloud){ if(b.dataset.nccloud === 'push'){ save.ncDirty = 1; ncCloud.msg = 'Enviando…'; ncCloud.draw(); ncCloud.push(); }
     else { const v = (document.getElementById('ncCodeIn') || {}).value || ''; if(!ncCloud.ask){ ncCloud.ask = true; ncCloud.draw(); const i = document.getElementById('ncCodeIn'); if(i) i.value = v; } else { ncCloud.ask = false; ncCloud.enter(v); } } return; }
   if(b.dataset.ncfree !== undefined){ save.ncFree = !save.ncFree; ncSubAsk = null; persist(); renderHub(); return; }
@@ -12146,7 +12192,13 @@ body.nc-l #hub>aside.panel::before,body.nc-r #hub>#rightPanel::before{transform:
 .spec-card b{font-family:var(--f-display);font-size:15px;color:var(--gold-hi)}.spec-card em{font-style:normal;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
 .spec-card small{color:var(--mute);font-size:12px;line-height:1.35}.spec-card .btn{margin-top:6px}
 .spec-card.on{border-color:var(--gold);background:rgba(242,193,78,.08)}
-#specBox{margin:12px 0 4px}#ncCloudBox{margin:14px 0 4px}.nc-code{font-size:30px!important;letter-spacing:.3em;font-family:ui-monospace,Menlo,Consolas,monospace!important}.nc-cmsg{color:#f4efe2!important}.nc-cin{display:flex;gap:8px;margin-top:8px;align-items:center}.nc-cin input{flex:1;min-width:0;height:38px;padding:0 12px;background:#0d0a22;border:1.5px solid #8a6aff;color:#fff;font:600 16px ui-monospace,Menlo,Consolas,monospace;letter-spacing:.2em;text-transform:uppercase}.spec-t{color:#f4efe2!important;margin-top:4px}.spec-t i{font-style:normal;color:var(--vgold,#f2c14e)}.nc-free{margin-top:10px;font-size:11px!important;opacity:.7;width:100%}
+#specBox{margin:12px 0 4px}#ncPetBox{margin:14px 0 4px}.nc-note{display:block;color:var(--mute);font-size:12px;margin-top:6px}.nc-cred{margin-top:12px;font-size:13px;color:var(--mute)}.nc-cred summary{cursor:pointer;color:var(--vink,#cdb8ff);font-family:var(--f-display)}.nc-cred p{line-height:1.5;margin:8px 0 0}
+#ncScene{position:fixed;inset:0;z-index:9000;display:grid;place-items:center;padding:20px;background:radial-gradient(ellipse at 50% 40%,rgba(44,33,96,.82),rgba(5,5,12,.94));animation:ncScIn .6s ease}#ncScene[hidden]{display:none}
+.ncsc-box{max-width:520px;width:100%;text-align:center;padding:30px 24px;clip-path:var(--cut);background:linear-gradient(135deg,#1c1640 0 33%,#16203f 33% 66%,#231a40 66%);box-shadow:inset 0 0 0 3px #05050c,inset 0 0 0 4px #8a6aff;font-family:var(--f-display);color:#f4efe2}
+.ncsc-e{font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:#cdb8ff}.ncsc-t{font-size:clamp(26px,7vw,40px);margin:10px 0 12px;background:linear-gradient(180deg,#fff0b8,#f2c14e 45%,#b9801f);-webkit-background-clip:text;background-clip:text;color:transparent}
+.ncsc-box p{font-family:var(--f-body,system-ui);font-size:15.5px;line-height:1.5;color:#dcd6f2;margin:0 0 18px}.ncsc-b{display:flex;flex-direction:column;gap:10px;align-items:center}
+.ncsc-b .btn{border:0;border-radius:0;clip-path:var(--hexs);background:var(--vj);color:#120a1e;padding:11px 30px;font-family:var(--f-display);font-size:15px;min-width:220px}
+@keyframes ncScIn{from{opacity:0}to{opacity:1}}#ncCloudBox{margin:14px 0 4px}.nc-code{font-size:30px!important;letter-spacing:.3em;font-family:ui-monospace,Menlo,Consolas,monospace!important}.nc-cmsg{color:#f4efe2!important}.nc-cin{display:flex;gap:8px;margin-top:8px;align-items:center}.nc-cin input{flex:1;min-width:0;height:38px;padding:0 12px;background:#0d0a22;border:1.5px solid #8a6aff;color:#fff;font:600 16px ui-monospace,Menlo,Consolas,monospace;letter-spacing:.2em;text-transform:uppercase}.spec-t{color:#f4efe2!important;margin-top:4px}.spec-t i{font-style:normal;color:var(--vgold,#f2c14e)}.nc-free{margin-top:10px;font-size:11px!important;opacity:.7;width:100%}
 @media (max-width:420px){.spec-pick{grid-template-columns:1fr}}
 </style>
 <script id="nc-menu-js">
