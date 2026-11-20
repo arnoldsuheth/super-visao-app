@@ -657,7 +657,7 @@ body.nocur, body.nocur *{cursor:none !important}
       <div class="shop">
         <div><div class="eyebrow">Adena</div><div class="gold" id="uGold">0</div></div>
         <div><div class="eyebrow">Poções</div><div class="gold" id="uPot" style="color:var(--ink)">0</div></div>
-        <button class="btn" id="buyPot">Comprar poção · 25</button>
+        <button class="btn" id="buyPot">Comprar poção · 1 de prata e 25</button>
       </div>
       <div class="eyebrow">Dificuldade</div>
       <div class="dgrid" id="diffGrid"></div>
@@ -5701,6 +5701,8 @@ function statText(b){
   if(b.elem) out.push(ELEM_TXT[b.elem]);
   return out.join(' · ');
 }
+/* Economia (pedido do Arnold em 20/11): tudo que se compra custa 5x mais; o que se ganha continua igual */
+const NC_ECON = 5;
 const sellValue = it => Math.round(5*Math.pow(1.75, it.tier));
 
 /* ================= SOQUETES, GEMAS E APRIMORAMENTO (GDD de armaduras) ================= */
@@ -5776,10 +5778,10 @@ const MAT_KEYS = Object.keys(MATS);
 const CRAFT_MATS = ['metal','minerio','cristal','essencia','nucleo','escama','divina'];
 const FORGE_MATS = ['refino','superior','ancestral','selo','bencao','broca'];
 function recipe(t){
-  const o = CFG.recipes[t] || CFG.recipes[String(t)]; if(o) return {mats:o.mats || {}, gold:+o.gold || 0};
+  const o = CFG.recipes[t] || CFG.recipes[String(t)]; if(o) return {mats:o.mats || {}, gold:(+o.gold || 0)*NC_ECON};
   const R = [{metal:4}, {metal:6, minerio:2}, {metal:8, minerio:4, cristal:1}, {minerio:6, cristal:3, essencia:2}, {minerio:8, cristal:5, essencia:4, nucleo:1},
     {cristal:8, essencia:6, nucleo:3, escama:1}, {essencia:8, nucleo:5, escama:3}, {nucleo:8, escama:6, divina:1}, {nucleo:10, escama:10, divina:3}, {nucleo:15, escama:15, divina:10}];
-  return {mats:R[t], gold:Math.round(80*Math.pow(1.9, t))};
+  return {mats:R[t], gold:Math.round(NC_ECON*80*Math.pow(1.9, t))};
 }
 
 /* ===== SOQUETES (0 a 5 por peça) ===== */
@@ -5802,7 +5804,7 @@ function skDots(it){ ensureSk(it); if(!it.sk.length) return '';
 const UPG = [null, {p:1,m:'refino'},{p:1,m:'refino'},{p:1,m:'refino'},{p:1,m:'refino'},{p:1,m:'refino'},{p:.8,m:'refino'},{p:.7,m:'refino'},
   {p:.6,m:'superior',lose:1},{p:.5,m:'superior',lose:1},{p:.4,m:'superior',lose:1},{p:.3,m:'ancestral',lose:2},{p:.22,m:'ancestral',lose:2},
   {p:.15,m:'ancestral',brk:.1},{p:.1,m:'ancestral',brk:.2},{p:.06,m:'ancestral',brk:.3}];
-const upCost = it => Math.round(40*((it.up || 0) + 1)*Math.pow(1.35, it.tier));
+const upCost = it => Math.round(NC_ECON*40*((it.up || 0) + 1)*Math.pow(1.35, it.tier));
 const upChance = it => Math.min(1, UPG[(it.up || 0) + 1].p + (it.fp || 0) + (evFx().up || 0));
 function upRisk(U){ return U.brk ? `Se falhar: ${Math.round(U.brk*100)}% de chance de rachar e voltar para +10 (a peça nunca é destruída)` : U.lose ? `Se falhar: perde ${U.lose} nível${U.lose > 1 ? 'is' : ''}` : U.p < 1 ? 'Se falhar: nada se perde' : 'Sucesso garantido'; }
 function tryUpgrade(it){
@@ -5827,9 +5829,9 @@ function tryUpgrade(it){
   }
   persist(); return msg;
 }
-const gemCost = r => Math.round(40*Math.pow(2.2, r));
+const gemCost = r => Math.round(NC_ECON*40*Math.pow(2.2, r));
 const gemMatCost = r => r;  // cristais de energia por combinação
-const pullCost = key => 20*Math.pow(+key.split(':')[1], 2);
+const pullCost = key => NC_ECON*20*Math.pow(+key.split(':')[1], 2);
 function fuseGem(k, r){
   const key = k + ':' + r; if((save.gems[key] || 0) < 3 || r >= 6) return null; const c = gemCost(r), mc = gemMatCost(r);
   if(save.gold < c || (save.mats.cristal || 0) < mc) return null;
@@ -7581,7 +7583,7 @@ function renderHub(){
     `<div><span>Crítico</span><b>${Math.round(S.crit*100)}%</b></div><div><span>Bloqueio</span><b>${Math.round(S.block*100)}%</b></div>`;
   $('#uGold').innerHTML = adenaHTML(save.gold);
   $('#uPot').textContent = save.potions + ' / 9';
-  $('#buyPot').disabled = save.gold < 25 || save.potions >= 9;
+  $('#buyPot').disabled = save.gold < 25*NC_ECON || save.potions >= 9;
   $('#swTunic').innerHTML = TUNICS.map((t, i) => `<button class="sw" style="--c:#${t.c.toString(16).padStart(6,'0')}" data-tunic="${i}" aria-pressed="${save.look.tunic === i}" aria-label="Roupa ${t.n}" title="${t.n}"></button>`).join('');
   $('#swHair').innerHTML = HAIRS.map((t, i) => `<button class="sw" style="--c:#${t.c.toString(16).padStart(6,'0')}" data-hair="${i}" aria-pressed="${save.look.hair === i}" aria-label="Cabelo ${t.n}" title="${t.n}"></button>`).join('');
   $('#swSkin').innerHTML = SKINS.map((t, i) => `<button class="sw" style="--c:#${t.c.toString(16).padStart(6,'0')}" data-skin="${i}" aria-pressed="${(save.look.skin || 0) === i}" aria-label="Pele ${t.n}" title="${t.n}"></button>`).join('');
@@ -7660,7 +7662,7 @@ function renderGear(){
   const irons = save.inv.filter(i => i.tier === 0 && !isEquipped(i)).length;
   $('#sellIron').disabled = !irons; $('#sellIron').textContent = irons ? `Vender os ${irons} itens de Ferro da mochila` : 'Nenhum item de Ferro na mochila';
 }
-const fuseCost = t => Math.round(300*Math.pow(1.8, t));
+const fuseCost = t => Math.round(NC_ECON*300*Math.pow(1.8, t));
 function fuseInputs(slot){
   const w = CLS().wtype;
   for(let t = 7; t >= 2; t--){ const l = save.inv.filter(i => i.slot === slot && i.tier === t && itemOk(i)).sort((a, b) => isEquipped(a) - isEquipped(b));
@@ -7769,7 +7771,7 @@ const ncBagMax = () => { let pet = false; try{ pet = !!ncPetOn(); }catch(e){} re
 const ncWeightMax = () => 300 + save.level*6;
 const ncWeight = () => Math.round(save.inv.reduce((a, it) => a + ncItemW(it), 0) + Object.keys(save.mats || {}).reduce((a, k) => a + (save.mats[k] || 0)*.05, 0));
 const ncHeavy = () => ncWeight() >= ncWeightMax()*.8;
-const ncBagCost = () => 2000*Math.pow(2, (ncBagBase() - 40)/10);   // em bronze: 20 de prata, depois dobra
+const ncBagCost = () => NC_ECON*2000*Math.pow(2, (ncBagBase() - 40)/10);   // em bronze: 20 de prata, depois dobra
 let bagSel = null, ncFullT = 0;
 function ncBagFull(){ if(clock - ncFullT > 8){ ncFullT = clock; try{ banner('Bag cheia ou pesada demais', 'O item fica no chão. Abra a Mochila, libere espaço e passe por cima dele.', 'danger'); }catch(e){} } }
 const ncFits = it => save.inv.length < ncBagMax() && ncWeight() + ncItemW(it) <= ncWeightMax();
@@ -7938,7 +7940,7 @@ const SHOP = [
   {n:'5 Pedras de Refino', p:6, g:() => giveMat('refino', 5)}, {n:'1 Pedra Superior', p:10, g:() => giveMat('superior')}, {n:'1 Pedra Ancestral', p:30, g:() => giveMat('ancestral')},
   {n:'1 Selo de Ferreiro', p:20, g:() => giveMat('selo')}, {n:'1 Bênção da Bigorna', p:45, g:() => giveMat('bencao')}, {n:'1 Broca Solar', p:8, g:() => giveMat('broca')},
 ];
-const shopPrice = p => Math.max(1, Math.round(p*CFG.shopMult));
+const shopPrice = p => Math.max(1, Math.round(p*CFG.shopMult*NC_ECON));
 const piecePrice = t => shopPrice(5*Math.pow(1.85, t));
 const evKey = () => { const e = curEvent(); return e ? e.id + Math.floor(Date.now()/6048e5) : ''; };
 function renderShop(){
@@ -9768,7 +9770,9 @@ function monUpdate(e, dt){
   if(m.fly) m.model.position.y = m.y0 + Math.sin(clock*2.4 + m.ph)*.08;
   m.mixer.update(e.frozenT > 0 ? 0 : dt);
 }
-if(location.hash === '#nctest') window.__nc = {drop:t => dropLoot(P.pos, t), loot:() => loot.length, unp:() => togglePause(false), en:() => enemies, p:() => P, boss:id => startStage(id, true), go:id => startStage(id), skill:i => useSkill(i), sv:() => save, gfx:g => { save.gfx = g; save.gfxAuto = false; setupFX(); resize(); },
+if(location.hash === '#nctest') window.__nc = {mount:() => toggleMount(true), show:(keys, gap) => { const c = hero.root.position, n = keys.length; window.__ncShow = (window.__ncShow || []); window.__ncShow.forEach(o => scene.remove(o)); window.__ncShow = [];
+  keys.forEach((k, i) => monLoad(k, g => { const m = monClone(g.scene), sz = g.box.getSize(new T.Vector3()), kk = 1.3/Math.max(.01, sz.y); m.traverse(o => { if(o.isMesh) o.material = new T.MeshLambertMaterial({map:monTex(), skinning:!!o.isSkinnedMesh}); }); m.scale.setScalar(kk); m.position.set(c.x + (i - (n - 1)/2)*(gap || 1.7), c.y - g.box.min.y*kk, c.z - .3); scene.add(m); window.__ncShow.push(m);
+    try{ const mx = new T.AnimationMixer(m), cl = g.animations.find(a => /^(Idle|Flying_Idle)$/.test(a.name)); if(cl){ mx.clipAction(cl).play(); mx.update(.3); } }catch(e){} })); hero.root.visible = false; }, drop:t => dropLoot(P.pos, t), loot:() => loot.length, unp:() => togglePause(false), en:() => enemies, p:() => P, boss:id => startStage(id, true), go:id => startStage(id), skill:i => useSkill(i), sv:() => save, gfx:g => { save.gfx = g; save.gfxAuto = false; setupFX(); resize(); },
   info:() => { const r = renderer.info.render, o = {calls:r.calls, tris:r.triangles, geo:renderer.info.memory.geometries, tex:renderer.info.memory.textures, pr:curPR, vis:0, skinned:0, skinnedVis:0, inst:0, caster:0, mats:new Set(), big:{}};
     scene.traverse(n => { if(!n.isMesh && !n.isPoints && !n.isSprite) return; let v = true; for(let q = n; q; q = q.parent) if(!q.visible){ v = false; break; } if(n.isSkinnedMesh){ o.skinned++; if(v) o.skinnedVis++; } if(!v) return; o.vis++; if(n.isInstancedMesh) o.inst++; if(n.castShadow) o.caster++; if(n.material) o.mats.add(n.material.uuid);
       const tr = n.geometry && n.geometry.index ? n.geometry.index.count/3 : n.geometry && n.geometry.attributes.position ? n.geometry.attributes.position.count/3 : 0, t2 = tr*(n.isInstancedMesh ? n.count : 1); let top = n; while(top.parent && top.parent !== scene) top = top.parent; const k = (top.name || top.type) + (n.isInstancedMesh ? '[inst]' : ''); o.big[k] = (o.big[k] || 0) + t2; });
@@ -9778,12 +9782,12 @@ let ncPet = null;
 /* Mascotes: comprados com Adena. Cada um dá um bônus fixo enquanto acompanha, ajuda a bater, dá +10 espaços na bag e pode evoluir (nível 1 a 10) para bater mais forte.
    Preços e bônus são um primeiro chute para o Arnold ajustar. */
 const NC_PET_DEF = {
-  s_Chicken:{p:5000,   b:'+5% velocidade de ataque', fx:s => { s.aspd += .05; }},
-  s_Cat:    {p:20000,  b:'+6% chance de crítico',    fx:s => { s.crit += .06; }},
-  s_Dog:    {p:20000,  b:'+10% vida',                fx:s => { s.hp *= 1.10; }},
-  f_Pigeon: {p:20000,  b:'+8% velocidade de andar',  fx:s => { s.spd *= 1.08; }},
-  f_Glub:   {p:40000,  b:'+10% defesa',              fx:s => { s.def *= 1.10; }},
-  f_Dragon: {p:100000, b:'+8% ataque',               fx:s => { s.atk *= 1.08; }}};
+  s_Chicken:{p:25000,   b:'+5% velocidade de ataque', fx:s => { s.aspd += .05; }},
+  s_Cat:    {p:100000,  b:'+6% chance de crítico',    fx:s => { s.crit += .06; }},
+  s_Dog:    {p:100000,  b:'+10% vida',                fx:s => { s.hp *= 1.10; }},
+  f_Pigeon: {p:100000,  b:'+8% velocidade de andar',  fx:s => { s.spd *= 1.08; }},
+  f_Glub:   {p:200000,  b:'+10% defesa',              fx:s => { s.def *= 1.10; }},
+  f_Dragon: {p:500000, b:'+8% ataque',               fx:s => { s.atk *= 1.08; }}};
 const NC_PET_MAX = 10;
 const ncPetLv = k => (save.pets && save.pets[k]) || 0;
 const ncPetOn = () => (save.pet && ncPetLv(save.pet) > 0 && NC_PET_DEF[save.pet]) || null;
@@ -10141,8 +10145,8 @@ function doAttack(){
   if(c.attack === 'bolt' || c.attack === 'arrow' || c.attack === 'dark'){
     const a = aimAngle(c.attack === 'arrow' ? 17 : 15); if(a !== null) P.face = P.targetFace = a;
     P.castT = .18;
-    if(c.attack === 'dark'){ firePlayer({kind:'bolt', col:S.elem ? ELEM_COL[S.elem] : 0xa06aff, ang:P.face, spd:18, mult:1, life:.9, r:.5}); playAttackSfx(); }
-    else if(c.attack === 'bolt'){ firePlayer({kind:'bolt', ang:P.face, spd:20, mult:1, life:.85, r:.45}); playAttackSfx(); }
+    if(c.attack === 'dark'){ firePlayer({kind:'dark', col:0x8a2cff, ang:P.face, spd:18, mult:1, life:.9, r:.5}); playAttackSfx(); }
+    else if(c.attack === 'bolt'){ P.ncFI = !P.ncFI; firePlayer({kind:'bolt', col:S.elem ? undefined : (P.ncFI ? 0xff6a1a : 0x7fd8ff), ang:P.face, spd:20, mult:1, life:.85, r:.45}); playAttackSfx(); }
     else { firePlayer({kind:'arrow', ang:P.face, spd:30, mult:1, life:.62, r:.4}); if(S.multi) firePlayer({kind:'arrow', ang:P.face + .14, spd:30, mult:.8, life:.62, r:.4}); playAttackSfx(); }
     return;
   }
@@ -10245,8 +10249,8 @@ function projVis(kind, col){
   if(kind === 'arrow' || kind === 'pierce'){ const k = kind === 'pierce' ? 1.6 : 1; add(PV.shaft, PV.wood); add(PV.head, PV.steel); for(let i=0;i<3;i++){ const f = add(PV.fl, PV.feath); f.rotation.z = i*Math.PI*2/3; }
     g.scale.setScalar(k*1.15); if(kind === 'pierce'){ const gl = add(PV.orb, new T.MeshBasicMaterial({color:col, transparent:true, opacity:.35, blending:T.AdditiveBlending, depthWrite:false}), 1); gl.scale.set(.05, .05, .5); } }
   else if(kind === 'dagger'){ add(PV.blade, PV.steel); add(PV.grip, PV.wood); }
-  else if(kind === 'bolt' || kind === 'fireball' || kind === 'shard'){ const r = kind === 'fireball' ? .34 : .17;
-    const core = add(PV.orb, new T.MeshBasicMaterial({color:new T.Color(col).lerp(new T.Color(0xffffff), .55)}), 1); core.scale.setScalar(r*.55);
+  else if(kind === 'bolt' || kind === 'fireball' || kind === 'shard' || kind === 'dark'){ const r = kind === 'fireball' ? .34 : kind === 'dark' ? .2 : .17;
+    const core = add(PV.orb, new T.MeshBasicMaterial({color:kind === 'dark' ? 0x07000f : new T.Color(col).lerp(new T.Color(0xffffff), .55)}), 1); core.scale.setScalar(r*(kind === 'dark' ? .75 : .55));
     const shell = add(PV.orb, new T.MeshBasicMaterial({color:col, transparent:true, opacity:.45, blending:T.AdditiveBlending, depthWrite:false}), 1); shell.scale.setScalar(r);
     const sp = new T.Sprite(new T.SpriteMaterial({map:DOT, color:col, transparent:true, opacity:.8, blending:T.AdditiveBlending, depthWrite:false})); sp.scale.setScalar(r*4.2); g.add(sp); mats.push(sp.material);
     if(kind === 'shard'){ const c = add(new T.OctahedronGeometry(.12), new T.MeshStandardMaterial({color:col, emissive:col, emissiveIntensity:.6, roughness:.1, metalness:.2}), 1); c.scale.set(1, 1, 1.8); } }
@@ -10264,7 +10268,7 @@ function mxMuzzle(ang){
 }
 function firePlayer(o){
   const S = P.S;
-  const col = o.col || {bolt: S.elem ? ELEM_COL[S.elem] : 0x9ad0ff, fireball:0xff8a2a, arrow:0xf0e2c0, pierce:0xbff4ff, dagger:0xd8dce8, shard:0xc080ff}[o.kind];
+  const col = o.col || {dark:0x8a2cff, bolt: S.elem ? ELEM_COL[S.elem] : 0x9ad0ff, fireball:0xff8a2a, arrow:0xf0e2c0, pierce:0xbff4ff, dagger:0xd8dce8, shard:0xc080ff}[o.kind];
   const m = projVis(o.kind, col);
   // com o boneco novo, o tiro sai da arma/mão de verdade (antes saía de um ponto fixo na frente do herói)
   const mz = !o.from ? mxMuzzle(o.ang) : null;
@@ -10316,11 +10320,11 @@ function useSkill(i){
     case 'cyclone': P.skill = {id:'cyclone', t:0, dur:.9, ticks:0}; SFX.heavy(); break;
     case 'drain': { const tg = nearestEnemy(13); P.castT = .3;
       if(tg){ P.face = P.targetFace = Math.atan2(tg.pos.x - P.pos.x, tg.pos.z - P.pos.z); const hp0 = tg.hp;
-        bolt(P.pos.x, P.pos.y + 1.4, P.pos.z, tg.pos.x, tg.pos.y + 1.2, tg.pos.z, 0xb06aff); bolt(P.pos.x, P.pos.y + 1.2, P.pos.z, tg.pos.x, tg.pos.y + 1, tg.pos.z, 0x6aff9a);
+        bolt(P.pos.x, P.pos.y + 1.4, P.pos.z, tg.pos.x, tg.pos.y + 1.2, tg.pos.z, 0x8a2cff); bolt(P.pos.x, P.pos.y + 1.2, P.pos.z, tg.pos.x, tg.pos.y + 1, tg.pos.z, 0x2a0050);
         hitEnemy(tg, 1.9, {kb:2}); const got = Math.max(0, hp0 - Math.max(0, tg.hp)); const h = Math.round(got*.5); if(h){ P.hp = Math.min(P.S.hp, P.hp + h); floatText(P.pos, '+' + h, 'heal'); }
-        burst(tg.pos, 0xb06aff, 10, 3, 4, 1); }
+        burst(tg.pos, 0x8a2cff, 8, 3, 4, 1); burst(tg.pos, 0x14002a, 6, 2, 3, 1); }
       SFX.zap(); break; }
-    case 'army': for(let k=0;k<3;k++) spawnAlly(P.pos.x + Math.sin(P.face + k*2.1)*2, P.pos.z + Math.cos(P.face + k*2.1)*2); SFX.boss(); floatText(P.pos, 'Levantem-se!', 'heal'); break;
+    case 'army': burst(P.pos, 0x8a2cff, 18, 4, 5, .2); burst(P.pos, 0x14002a, 12, 3, 4, .2); for(let k=0;k<3;k++) spawnAlly(P.pos.x + Math.sin(P.face + k*2.1)*2, P.pos.z + Math.cos(P.face + k*2.1)*2); SFX.boss(); floatText(P.pos, 'Levantem-se!', 'heal'); break;
     case 'fan': { const a = aimAngle(14); if(a !== null) P.face = P.targetFace = a; P.castT = .2;
       for(let k=0;k<9;k++) firePlayer({kind:'dagger', ang:P.face - .6 + k*.15, spd:24, mult:.9, life:.45, r:.45}); SFX.stab(); SFX.bow(); break; }
   }
@@ -11042,7 +11046,7 @@ function updateWorld(dt){
   for(let i = pprojs.length-1; i >= 0; i--){
     const p = pprojs[i]; p.life -= dt; p.m.position.x += p.vx*dt; p.m.position.z += p.vz*dt;
     if(p.kind === 'fireball'){ p.m.rotation.x += dt*8; if(Math.random() < .7) burst(p.m.position, 0xff9a3a, 1, 1, 2, 0); }
-    if(p.kind === 'bolt' && Math.random() < .4) burst(p.m.position, P.S.elem ? ELEM_COL[P.S.elem] : 0x9ad0ff, 1, .5, 1, 0);
+    if((p.kind === 'bolt' || p.kind === 'dark') && Math.random() < .4) burst(p.m.position, p.kind === 'dark' ? (Math.random() < .5 ? 0x8a2cff : 0x1a0030) : (p.col || (P.S.elem ? ELEM_COL[P.S.elem] : 0x9ad0ff)), 1, .5, 1, 0);
     if(p.kind === 'shard') p.m.rotation.z += dt*12;
     let gone = p.life <= 0 || p.m.position.y < heightAt(p.m.position.x, p.m.position.z) + .15;   // bateu no morro
     for(const e of enemies){
@@ -12079,7 +12083,7 @@ function renderDevInfo(){
     grp('⭐', 'Nível do aparelho', `<div class="dvlv">${[1, 2, 3, 4, 5].map(i => `<i class="${i <= CHIP.lv ? 'on' : ''}"></i>`).join('')}<b>${CHIP.lv} de 5</b></div>` + row('Qualidade sugerida', GFX_LABEL[CHIP.preset]));
   document.querySelectorAll('.devbox').forEach(el => el.innerHTML = html);
 }
-$('#buyPot').onclick = () => { if(save.gold >= 25 && save.potions < 9){ save.gold -= 25; save.potions++; SFX.coin(); persist(); renderHub(); } };
+$('#buyPot').onclick = () => { if(save.gold >= 25*NC_ECON && save.potions < 9){ save.gold -= 25*NC_ECON; save.potions++; SFX.coin(); persist(); renderHub(); } };
 let resetArm = 0;
 $('#resetBtn').onclick = () => {
   const b = $('#resetBtn');
