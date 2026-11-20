@@ -5593,7 +5593,11 @@ const CLASSES = {
             {id:'kingblade', name:'Lâmina', full:'Lâmina do Rei', cd:30, desc:'SUPREMA: corte gigante de luz em linha, muito dano'}]},
   barbarian:{name:'Bárbaro', tag:'Machado gigante', wtype:'axe', desc:'Muita vida e golpes lentos que acertam vários inimigos de uma vez.', hp:1.35, atk:1.45, def:.95, spd:.96, block:0, crit:0, cd:.62, attack:'cleave', dash:'Esquiva',
     skills:[{id:'leap', name:'Salto', full:'Salto Esmagador', cd:7, desc:'salta e esmaga o chão, atordoando quem estiver perto'},
-            {id:'rage', name:'Fúria', full:'Fúria', cd:16, desc:'por 6 s, golpes 60% mais rápidos e cada acerto recupera vida'}]},
+            {id:'rage', name:'Fúria', full:'Fúria', cd:16, desc:'por 6 s, golpes 60% mais rápidos e cada acerto recupera vida'},
+            {id:'axeboom', name:'Bumerangue', full:'Machado Bumerangue', cd:8, desc:'arremessa o machado em linha: acerta na ida e na volta'},
+            {id:'thunder', name:'Trovão', full:'Pisão Trovejante', cd:10, desc:'pisa no chão e raios caem em volta, atordoando'},
+            {id:'chain', name:'Corrente', full:'Corrente', cd:12, desc:'puxa os monstros à frente para perto de você e prende por 1 s'},
+            {id:'cataclysm', name:'Cataclismo', full:'Cataclismo', cd:30, desc:'SUPREMA: três ondas de lava saem de você, cada uma maior'}]},
   mage:{name:'Mago', tag:'Magia à distância', wtype:'staff', desc:'Frágil, mas ataca de longe e destrói grupos inteiros.', hp:.8, atk:.95, def:.8, spd:1, block:0, crit:0, cd:.46, attack:'bolt', dash:'Teleporte',
     skills:[{id:'fireball', name:'Fogo', full:'Bola de Fogo', cd:4.5, desc:'explode em área ao acertar'},
             {id:'frost', name:'Gelo', full:'Nova de Gelo', cd:10, desc:'congela inimigos próximos e deixa chefes lentos'}]},
@@ -10479,6 +10483,23 @@ function useSkill(j){
         if(along > -1 && along < 14 + e.r && side < 1.8 + e.r) hitEnemy(e, 5.5, {crit:true, stun:1.5, kb:14, nx:fx, nz:fz}); }
       for(let k = 0; k <= 14; k++){ const pt = {x:P.pos.x + fx*k, z:P.pos.z + fz*k, y:P.pos.y}; burst(pt, 0xfff2b0, 4, 2, 6, .3); if(k % 3 === 0) fxRing(pt.x, pt.z, 1.4, 0xffd24a, .45); }
       floatText(P.pos, 'LÂMINA DO REI!', 'hurt'); SFX.slam(); SFX.boss(); addShake(.6); P.inv = Math.max(P.inv, .5); break; }
+    case 'axeboom': { const a = aimAngle(11); if(a !== null) P.face = P.targetFace = a; const fx = Math.sin(P.face), fz = Math.cos(P.face), ox = P.pos.x, oz = P.pos.z, oy = P.pos.y, skm = ncSkMul(i);
+      const line = back => { for(const e of enemies.slice()){ if(e.dead || e.dying) continue; const dx = e.pos.x - ox, dz = e.pos.z - oz, al = dx*fx + dz*fz, sd = Math.abs(dx*fz - dz*fx);
+          if(al > -.5 && al < 10 + e.r && sd < 1.3 + e.r) hitEnemy(e, 1.6, {skm, kb:back ? -6 : 8, nx:back ? -fx : fx, nz:back ? -fz : fz, y:oy}); }
+        for(let k = 0; k <= 10; k += 1.25){ const kk = back ? 10 - k : k; setTimeout(() => burst({x:ox + fx*kk, z:oz + fz*kk, y:oy + 1}, 0xd8dee8, 3, 2, 5, .3), k*28); } };
+      line(false); SFX.bow(); setTimeout(() => { if(mode === 'stage'){ line(true); SFX.heavy(); } }, 600); break; }
+    case 'thunder': { const skm = ncSkMul(i); aoe(P.pos.x, P.pos.z, 5, 2, {stun:1.5, kb:8, skm});
+      for(let k = 0; k < 6; k++){ const a2 = k/6*Math.PI*2 + Math.random()*.4, rr = 2 + Math.random()*3, x = P.pos.x + Math.sin(a2)*rr, z = P.pos.z + Math.cos(a2)*rr; setTimeout(() => { bolt(x, P.pos.y + 7, z, x, P.pos.y, z, 0x9ad8ff); burst({x, z, y:P.pos.y}, 0x9ad8ff, 6, 3, 5, .3); }, k*60); }
+      fxRing(P.pos.x, P.pos.z, 5, 0x7ac8ff, .45); SFX.zap(); SFX.slam(); addShake(.4); break; }
+    case 'chain': { const skm = ncSkMul(i); const a = aimAngle(9); if(a !== null) P.face = P.targetFace = a;
+      for(const e of enemies.slice()){ if(e.dead || e.dying) continue; const dx = e.pos.x - P.pos.x, dz = e.pos.z - P.pos.z, d = Math.hypot(dx, dz);
+        if(d < 9 + e.r && angDiff(Math.atan2(dx, dz), P.face) < .7){ bolt(P.pos.x, P.pos.y + 1, P.pos.z, e.pos.x, e.pos.y + 1, e.pos.z, 0xb0b8c8);
+          if(e.kind !== 'boss' && d > 1.8){ const k = d - 1.6; e.pos.x -= dx/d*k; e.pos.z -= dz/d*k; } hitEnemy(e, 1.2, {stun:1, kb:0, skm}); } }
+      SFX.dash(); addShake(.2); break; }
+    case 'cataclysm': { const skm = ncSkMul(i), ox = P.pos.x, oz = P.pos.z, oy = P.pos.y; floatText(P.pos, 'CATACLISMO!', 'hurt'); SFX.boss();
+      [4, 7, 10].forEach((R, k) => setTimeout(() => { if(mode !== 'stage') return; aoe(ox, oz, R, 3, {kb:10, skm, y:oy, burn:1}); fxRing(ox, oz, R, 0xff6a1a, .5);
+        for(let q = 0; q < 14; q++){ const a2 = q/14*Math.PI*2; burst({x:ox + Math.sin(a2)*R, z:oz + Math.cos(a2)*R, y:oy}, q % 2 ? 0xff4a0a : 0xffc04a, 4, 3, 6, .4); } SFX.slam(); addShake(.35 + k*.15); }, k*300));
+      P.inv = Math.max(P.inv, .6); break; }
     case 'leap': { const tg = nearestEnemy(11); let a = P.face, dist = 7;
       if(tg){ a = Math.atan2(tg.pos.x - P.pos.x, tg.pos.z - P.pos.z); dist = clamp(Math.hypot(tg.pos.x - P.pos.x, tg.pos.z - P.pos.z) - tg.r - .4, 1.5, 10); }
       P.face = P.targetFace = a; const to = P.pos.clone().add(dirOf(a).multiplyScalar(dist)); clampPos(to, bossActive);
@@ -12825,7 +12846,7 @@ window.ncCoop = ncCoop;
     army:'M12 3a7 7 0 0 0-7 7c0 2.500 1 4 2.500 5v3h9v-3c1.500-1 2.500-2.500 2.500-5a7 7 0 0 0-7-7z M9 11v.01 M15 11v.01 M10 18v-2 M14 18v-2',dash:'M5 6l6 6-6 6 M12 6l6 6-6 6',
     horse:'M7 21v-9a5 5 0 0 1 10 0v9 M5 21h4 M15 21h4 M8.500 14h.01 M15.500 14h.01',potion:'M10 3h4 M10.500 3v5L6 16a3.500 3.500 0 0 0 3 5h6a3.500 3.500 0 0 0 3-5l-4.500-8V3 M7.500 14h9'};
   /* ícones pintados das habilidades (Painterly Spell Icons, eleazzaar, CC-BY 3.0): escolha do Arnold em 20/11 */
-  var PIC={wcry:1,cleave:1,wall:1,kingblade:1,bash:1,whirl:1,leap:1,rage:1,fireball:1,frost:1,volley:1,pierce:1,holy:1,aegis:1,shadow:1,fan:1,quake:1,cyclone:1,drain:1,army:1};
+  var PIC={axeboom:1,thunder:1,chain:1,cataclysm:1,wcry:1,cleave:1,wall:1,kingblade:1,bash:1,whirl:1,leap:1,rage:1,fireball:1,frost:1,volley:1,pierce:1,holy:1,aegis:1,shadow:1,fan:1,quake:1,cyclone:1,drain:1,army:1};
   function url(k,c){if(PIC[k]&&!c)return 'url("assets/skills/'+k+'.jpg")';var d=P[k]||P.atk;return "url(\"data:image/svg+xml,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="'+(c||'#fff')+'" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="'+d+'"/></svg>')+"\")"}
   var G={atk:'radial-gradient(circle at 35% 26%,#ff8a7c,#c0303a 60%,#6e141c)',skl:'radial-gradient(circle at 35% 26%,#a88bff,#5a36c0 60%,#281259)',dash:'radial-gradient(circle at 35% 26%,#6fe0d0,#1f8f8a 60%,#0d3f47)',horse:'radial-gradient(circle at 35% 26%,#ffd27a,#b9801f 60%,#5a380a)'};
   window.ncIconUrl=url;
