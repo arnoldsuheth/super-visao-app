@@ -5480,7 +5480,7 @@ const TIERS = [
 ];
 /* NINE CROWNS: grades no lugar das estrelas. As 10 faixas do jogo viram 6 grades; o "+" marca a faixa mais forte dentro do mesmo grade.
    Cada grade pede um nivel minimo para equipar: sem grade 0, D 15, C 30, B 50, A 65, S 80. */
-const GR_OF = [0,0,1,1,2,2,3,4,4,5], GR_N = ['No Grade','Grade D','Grade C','Grade B','Grade A','Grade S'], GR_LV = [0,15,30,50,65,80], NC_MAX_LV = 80, NC_LV_K = 43/79;
+const GR_OF = [0,0,1,1,2,2,3,4,4,5], GR_N = ['No\u00a0Grade','Grade\u00a0D','Grade\u00a0C','Grade\u00a0B','Grade\u00a0A','Grade\u00a0S'], GR_LV = [0,15,30,50,65,80], NC_MAX_LV = 80, NC_LV_K = 43/79;
 const GR = t => { t = Math.max(0, Math.min(9, Math.round(t))); return GR_N[GR_OF[t]]; };
 const grLv = t => GR_LV[GR_OF[Math.max(0, Math.min(9, Math.round(t)))]];
 TIERS.forEach((t, i) => { t.name = t.model; t.star = i + 1; t.s = GR(i); t.sc = GR(i); t.m = 1; t.img = IMG['a' + i]; });
@@ -5638,7 +5638,9 @@ const ncKnown = () => save.known || (save.known = [save.cls]);
 const ncLvOf = k => k === save.cls ? save.level : ((save.lv && save.lv[k]) || {level:1}).level;
 const ncTopLv = () => Math.max.apply(null, ncKnown().map(ncLvOf));
 const ncFresh = () => ncKnown().length === 1 && save.level === 1 && !save.xp && !Object.keys(save.beaten || {}).length;   // ainda nao jogou: pode escolher a classe a vontade
-function ncSwap(k){ save.lv = save.lv || {}; save.lv[save.cls] = {level:save.level, xp:save.xp || 0}; const v = save.lv[k] || {level:1, xp:0}; save.cls = k; save.level = v.level; save.xp = v.xp; }
+function ncSwap(k){ save.lv = save.lv || {}; if(ncKnown().includes(save.cls)) save.lv[save.cls] = {level:save.level, xp:save.xp || 0};
+  const v = save.lv[k] || (ncKnown().includes(k) && !ncKnown().includes(save.cls) ? {level:save.level, xp:save.xp || 0} : {level:1, xp:0});   // nunca zera o nivel de uma classe que voce ja tem
+  save.cls = k; save.level = v.level; save.xp = v.xp; }
 function ncSetClass(k){
   if(k === save.cls) return true;
   if(save.ncFree){ save.cls = k; return true; }                       // modo teste: troca livre, mesmo nivel
@@ -6026,7 +6028,7 @@ const ncCloud = {
   push(keep){ if(save.ncOff || this.busy || !save.ncDirty) return Promise.resolve(false); this.busy = true; const code = this.code(), copy = JSON.parse(JSON.stringify(save)); delete copy.ncDirty;
     return this.call('nc_save', {p_code:code, p_data:copy}, keep).then(at => { this.busy = false; save.ncAt = at; save.ncDirty = 0; try{ localStorage.setItem(SAVE_KEY, JSON.stringify(save)); }catch(e){} this.msg = 'Salvo na nuvem às ' + new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'}); this.draw(); return true; })
       .catch(e => { this.busy = false; this.msg = 'Sem conexão com a nuvem. O jogo continua salvo neste aparelho.'; this.draw(); return false; }); },
-  adopt(code, data){ data.ncCode = code; data.ncDirty = 0; localStorage.setItem(SAVE_KEY, JSON.stringify(data)); location.reload(); },
+  adopt(code, data){ try{ localStorage.setItem('nc-bak-antes-da-nuvem', localStorage.getItem(SAVE_KEY) || ''); }catch(e){} data.ncCode = code; data.ncDirty = 0; localStorage.setItem(SAVE_KEY, JSON.stringify(data)); location.reload(); },
   enter(code){ code = (code || '').toUpperCase().replace(/[^A-Z2-9]/g, ''); if(code.length !== 6){ this.msg = 'O código tem 6 letras ou números.'; this.draw(); return; }
     this.msg = 'Procurando…'; this.draw();
     this.call('nc_load', {p_code:code}).then(r => { if(!r || !r.data){ this.msg = 'Não achei esse código. Confira as letras.'; this.draw(); return; } r.data.ncAt = r.updated_at; this.adopt(code, r.data); })
@@ -6036,11 +6038,25 @@ const ncCloud = {
   draw(){ const b = document.getElementById('ncCloudBox'); if(!b) return;
     const pb = document.getElementById('ncPetBox'); if(pb) pb.innerHTML = '<div class="eyebrow">Mascote</div><div class="filters">' + NC_PETS.map(x => '<button class="chipb" data-ncpet="' + x[0] + '" aria-pressed="' + ((save.pet || '') === x[0]) + '">' + x[1] + '</button>').join('') + '</div><small class="nc-note">O mascote acompanha o herói nas áreas. Por enquanto é só companhia: não ataca nem dá bônus.</small>'
       + '<details class="nc-cred"><summary>Créditos</summary><p><b>Nine Crowns</b> · criação e direção: Arnold Suheth (Studio Evolution Tech).<br>Feito a partir do jogo Armadura do Sol, de Tiago.<br>Heróis: KayKit Adventurers, de Kay Lousberg (CC0).<br>Monstros: Ultimate Monsters, de Quaternius (CC0).<br>Letra: Marcellus SC, de Astigmatic (licença OFL).<br>Motor 3D: three.js (licença MIT).</p></details>';
+    if(pb) pb.innerHTML += '<div class="eyebrow" style="margin-top:14px">Controles no celular</div><button class="btn sm" style="width:100%" data-ncswapctl>' + (save.swapCtl !== false ? 'Andar na DIREITA, golpes na ESQUERDA (toque para inverter)' : 'Andar na ESQUERDA, golpes na DIREITA (toque para inverter)') + '</button>';
     b.innerHTML = '<div class="eyebrow">Salvamento na nuvem</div><div class="spec-card"><small>Seu código</small><b class="nc-code">' + this.code() + '</b><small>Anote este código. Em outro aparelho, digite ele aqui embaixo para continuar de onde parou.</small>'
       + '<small class="nc-cmsg">' + (this.msg || (save.ncAt ? 'Já está salvo na nuvem.' : 'Ainda não enviado.')) + '</small><button class="btn sm primary" data-nccloud="push">Salvar na nuvem agora</button>'
+      + '<details class="nc-cred"><summary>Cópias de segurança deste aparelho</summary><p>O jogo guarda uma cópia por dia. Toque duas vezes para voltar a uma delas.</p>' + (ncBak.keys().map(k => { const t = ncBak.info(k); return t ? '<button class="btn sm" style="display:block;width:100%;margin-top:6px" data-ncbak="' + k + '">' + (ncBak.ask === k ? 'Confirmar? Troca o progresso atual' : t) + '</button>' : ''; }).join('') || '<p>Ainda não há cópias.</p>') + '</details>'
       + '<div class="nc-cin"><input id="ncCodeIn" maxlength="6" placeholder="CÓDIGO" autocomplete="off" autocapitalize="characters" spellcheck="false"><button class="btn sm" data-nccloud="enter">' + (this.ask ? 'Confirmar? Troca o progresso deste aparelho' : 'Entrar com código') + '</button></div></div>'; },
 };
 addEventListener('visibilitychange', () => { if(document.visibilityState === 'hidden') try{ ncCloud.push(true); }catch(e){} });
+// Copia de seguranca: uma por dia (guarda as 5 ultimas) neste aparelho. Serve para voltar atras se alguma atualizacao estragar o progresso.
+function ncCtl(){ document.body.classList.toggle('nc-swap', save.swapCtl !== false); }   // analogico na direita e botoes na esquerda (padrao pedido pelo Arnold; da para voltar no menu Heroi)
+try{ ncCtl(); }catch(e){}
+const ncBak = {
+  keys(){ const k = []; for(let i = 0; i < localStorage.length; i++){ const n = localStorage.key(i); if(n && n.indexOf('nc-bak-') === 0) k.push(n); } return k.sort().reverse(); },
+  make(){ try{ const raw = localStorage.getItem(SAVE_KEY); if(!raw) return; const d = new Date(), key = 'nc-bak-' + d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    if(!localStorage.getItem(key)) localStorage.setItem(key, raw); this.keys().filter(k => /^nc-bak-\d/.test(k)).slice(5).forEach(k => localStorage.removeItem(k)); }catch(e){} },
+  info(k){ try{ const d = JSON.parse(localStorage.getItem(k)); return (k === 'nc-bak-antes-da-nuvem' ? 'Antes de entrar com código' : k.slice(7).split('-').reverse().join('/')) + ' · ' + ((CLASSES[d.cls] || {}).name || '?') + ' nível ' + d.level; }catch(e){ return null; } },
+  restore(k){ try{ const raw = localStorage.getItem(k); if(!raw) return; localStorage.setItem('nc-bak-antes-de-restaurar', localStorage.getItem(SAVE_KEY) || ''); const d = JSON.parse(raw); d.ncDirty = 1; localStorage.setItem(SAVE_KEY, JSON.stringify(d)); location.reload(); }catch(e){} },
+  ask:null,
+};
+try{ ncBak.make(); }catch(e){}
 setTimeout(() => { try{ ncCloud.boot(); }catch(e){} }, 2500);
 
 const xpNeed = l => Math.round(40 * Math.pow(1 + (l - 1)*NC_LV_K, 1.45) * NC_LV_K);   // NINE CROWNS: 80 niveis no mesmo caminho que antes dava 44
@@ -7652,7 +7668,7 @@ function fuseInputs(slot){
     if(l.length >= 3) return {t, items:l.slice(0, 3)}; }
   return null;
 }
-function matsHTML(keys){ return (keys || MAT_KEYS).map(k => `<span style="--c:${MATS[k].css}">${MATS[k].n} <b>${save.mats[k] || 0}</b></span>`).join('') + `<span style="--c:#f2c14e">Adena <b>${adenaHTML(save.gold)}</b></span><span style="--c:#ffd23a">Moedas Reais <b>${save.coins}</b></span>`; }
+function matsHTML(keys){ return (keys || MAT_KEYS).map(k => `<span style="--c:${MATS[k].css}">${MAT_ICO(k)}${MATS[k].n} <b>${save.mats[k] || 0}</b></span>`).join('') + `<span style="--c:#f2c14e">Adena <b>${adenaHTML(save.gold)}</b></span><span style="--c:#ffd23a">Moedas Reais <b>${save.coins}</b></span>`; }
 function tierImg(t, cls){ return `<img class="${cls || 'timg'}" src="${TIERS[t].img}" alt="" loading="lazy">`; }
 /* Só a peça que caiu, desenhada a partir do modelo 3D do jogo: um herói invisível (da classe atual; para armas, da classe da arma)
    recebe o material daquela estrela e só a peça pedida aparece. A cena é "fotografada" num alvo de 256 px, reduzida para 128 px
@@ -7787,16 +7803,22 @@ function renderForge(){
   $('#forgeMats').innerHTML = matsHTML(forgeTab === 'craft' ? CRAFT_MATS : forgeTab === 'up' ? FORGE_MATS : forgeTab === 'gems' ? ['cristal','broca'] : []);
   $('#forgeBody').innerHTML = forgeTab === 'up' ? upHTML() : forgeTab === 'gems' ? gemsHTML() : forgeTab === 'craft' ? craftHTML() : fuseHTML();
 }
-let craftSlot = 'helmet';
+let craftSlot = 'helmet', craftGr = -1;
+const MAT_ICO = k => '<svg class="mico" viewBox="0 0 16 16" aria-hidden="true" style="color:' + ((MATS[k] || {}).css || '#ccc') + '"><path d="' + ({metal:'M3 12 6 3l5 2 2 7-5 2z', minerio:'M2 11 5 5l4-2 5 4-1 6-7 1z', cristal:'M8 1l4 5-4 9-4-9z', essencia:'M8 1c3 4 5 6 5 9a5 5 0 0 1-10 0c0-3 2-5 5-9z', nucleo:'M8 2a6 6 0 1 0 0 12A6 6 0 0 0 8 2zm0 3a3 3 0 1 1 0 6 3 3 0 0 1 0-6z', escama:'M8 1c4 2 6 5 6 9l-6 5-6-5c0-4 2-7 6-9z', divina:'M8 1l2 5 5 .5-4 3.5 1.300 5L8 12l-4.300 3 1.300-5-4-3.500L6 6z'}[k] || 'M8 2l5 4-2 8H5L3 6z') + '"/></svg>';
 function canCraft(t){ const R = recipe(t), k = evFx().craft || 1; return save.gold >= Math.round(R.gold*k) && Object.keys(R.mats).every(m => (save.mats[m] || 0) >= Math.ceil(R.mats[m]*k)); }
 function craftHTML(){
   const k = evFx().craft || 1;
   let h = `<p class="lede">Fabrique peças com os materiais que os monstros deixam cair. Cada espécie solta um material próprio, e as armaduras mais raras pedem materiais de chefes e de <b>Chefes Mundiais</b> (Poeira Divina).${k < 1 ? ' <b style="color:#ff9a3a">Evento Forja Ardente: tudo custa 25% menos.</b>' : ''}</p>`;
   h += `<div class="fsel">${[...ARMOR, 'weapon', 'shield', 'amulet'].filter(sl => sl !== 'shield' || save.cls === 'paladin').map(sl => `<button class="chipb" data-cslot="${sl}" aria-pressed="${craftSlot === sl}">${sl === 'weapon' ? 'Arma (' + CLS().name + ')' : SLOT_INFO[sl].n}</button>`).join('')}</div><div class="blist">`;
-  h += TIERS.map((T, t) => { const R = recipe(t), ok = canCraft(t);
-    const need = Object.keys(R.mats).map(m => { const q = Math.ceil(R.mats[m]*k), have = save.mats[m] || 0; return `<span class="${have >= q ? 'ok' : 'no'}" style="--tc:${MATS[m].css}">${q} ${MATS[m].n} (${have})</span>`; }).join('');
+  if(craftGr < 0){ craftGr = 0; for(let g2 = 0; g2 < GR_LV.length; g2++) if(save.level >= GR_LV[g2]) craftGr = g2; }   // abre no melhor grade que o heroi ja pode usar
+  h = h.replace('<div class="blist">', '<div class="eyebrow" style="margin-top:10px">Grade</div><div class="fsel">' + GR_N.map((n, g2) => '<button class="chipb" data-cgr="' + g2 + '" aria-pressed="' + (craftGr === g2) + '">' + n + (save.level < GR_LV[g2] ? ' · nv ' + GR_LV[g2] : '') + '</button>').join('') + '</div><div class="blist">');
+  h += TIERS.map((T, t) => { if(GR_OF[t] !== craftGr) return ''; const R = recipe(t), ok = canCraft(t);
+    let st = ''; try{ const pv = {id:-1, slot:craftSlot, tier:t, q:0, up:0, cls:save.cls}; if(craftSlot === 'weapon'){ pv.wtype = CLS().wtype; pv.v = 0; } st = statText(itemStats(pv)); }catch(e){}
+    const lvOk = save.level >= grLv(t);
+    const need = Object.keys(R.mats).map(m => { const q = Math.ceil(R.mats[m]*k), have = save.mats[m] || 0; return `<span class="${have >= q ? 'ok' : 'no'}" style="--tc:${MATS[m].css}">${MAT_ICO(m)}${q} ${MATS[m].n} (você tem ${have})</span>`; }).join('');
     return `<div class="frow" style="--tc:${T.css}">${pieceImg(t, craftSlot, 'ps-row')}<div><div class="fn" style="color:${T.css}">${craftSlot === 'weapon' ? 'Arma' : SLOT_INFO[craftSlot].n} ${T.pre} · ${T.sc} <small style="color:var(--mute)">${T.n}</small></div>
-      <div class="need">${need}<span class="${save.gold >= Math.round(R.gold*k) ? 'ok' : 'no'}" style="--tc:#f2c14e">${adenaTxt(Math.round(R.gold*k))}</span></div></div>
+      <div class="istat" style="color:#f4efe2">${st || ''}</div><div class="istat" style="color:${lvOk ? 'var(--mute)' : '#ff7a6a'}">${lvOk ? 'Você já pode usar' : 'Para usar: nível ' + grLv(t)}</div>
+      <div class="eyebrow" style="margin-top:6px">Custo</div><div class="need">${need}<span class="${save.gold >= Math.round(R.gold*k) ? 'ok' : 'no'}" style="--tc:#f2c14e">${adenaTxt(Math.round(R.gold*k))}</span></div></div>
       <button class="btn sm ${ok ? 'primary' : ''}" data-craft="${t}" ${ok ? '' : 'disabled'}>Fabricar</button></div>`; }).join('') + '</div>';
   return h;
 }
@@ -7865,13 +7887,15 @@ function renderShop(){
   h += E ? `<div class="evbox" style="--tc:${E.css}"><div class="big">Evento: ${E.n}</div><div class="istat">${E.d} Termina em ${evEnds()} dia${evEnds() > 1 ? 's' : ''}.</div>
     <div class="row"><span class="istat">Peça exclusiva do evento (+10% nos atributos, só enquanto o evento durar, 1 por semana):</span>
     <button class="btn sm primary" data-evbuy="1" ${save.coins >= shopPrice(60) && !save.evBought[evKey()] ? '' : 'disabled'}>${save.evBought[evKey()] ? 'Já comprada nesta semana' : SLOT_INFO[shopSlot].n + ' ' + E.n + ' · ' + shopPrice(60) + ' moedas'}</button></div></div>` : '';
-  h += `<h2>Equipamentos <small>Moedas Reais · até ${TIERS[CFG.shopMaxTier].sc}. Armaduras Míticas e Divinas não são vendidas.</small></h2>
+  h += `<h2>Equipamentos <small>Toque numa peça para comprar com Moedas Reais (você ganha Moedas Reais em missões e chefes). A loja vende até ${TIERS[CFG.shopMaxTier].sc}; Grade A e S só caindo de chefe ou na Forja.</small></h2>
     <div class="fsel">${[...ARMOR, 'weapon', 'shield', 'amulet'].filter(sl => sl !== 'shield' || save.cls === 'paladin').map(sl => `<button class="chipb" data-sslot="${sl}" aria-pressed="${shopSlot === sl}">${SLOT_INFO[sl].n}</button>`).join('')}</div><div class="shopgrid">`;
   for(let t = 0; t <= Math.min(CFG.shopMaxTier, 7); t++){ const p = piecePrice(t);
-    h += `<button class="scard" style="--tc:${TIERS[t].css}" data-sbuy="${t}" ${save.coins >= p ? '' : 'disabled'}>${tierImg(t)}<b>${TIERS[t].model}</b><small>${TIERS[t].sc} · ${TIERS[t].n}</small><span>${p} moedas</span></button>`; }
+    let st = ''; try{ const pv = {id:-1, slot:shopSlot, tier:t, q:0, up:0, cls:save.cls}; if(shopSlot === 'weapon'){ pv.wtype = CLS().wtype; pv.v = 0; } st = statText(itemStats(pv)); }catch(e){}
+    const lvOk = save.level >= grLv(t);
+    h += `<button class="scard" style="--tc:${TIERS[t].css}" data-sbuy="${t}" ${save.coins >= p ? '' : 'disabled'}>${pieceImg(t, shopSlot, 'ps-card', shopSlot === 'weapon' ? CLS().wtype : null)}<b>${shopSlot === 'weapon' ? 'Arma' : SLOT_INFO[shopSlot].n} ${TIERS[t].pre}</b><small>${TIERS[t].sc} · ${TIERS[t].n}</small><small style="color:#f4efe2">${st}</small><small style="color:${lvOk ? 'var(--mute)' : '#ff7a6a'}">${lvOk ? 'Você já pode usar' : 'Para usar: nível ' + grLv(t)}</small><span>${p} Moedas Reais${save.coins >= p ? '' : ' (você tem ' + save.coins + ')'}</span></button>`; }
   h += `</div><h2>Trocar fragmentos <small>junte fragmentos de uma armadura para trocar por uma peça dela</small></h2><div class="blist">`;
   h += TIERS.map((T, t) => { const need = CFG.frag[t], have = save.frags[t] || 0;
-    return `<div class="frow" style="--tc:${T.css}">${tierImg(t)}<div><div class="fn" style="color:${T.css}">Fragmentos ${T.pre} · ${T.sc}</div>
+    return `<div class="frow" style="--tc:${T.css}">${pieceImg(t, 'chest', 'ps-row')}<div><div class="fn" style="color:${T.css}">Fragmentos ${T.pre} · ${T.sc}</div>
       ${need ? `<div class="pbar"><i style="width:${Math.min(100, have/need*100)}%"></i><span>${have} / ${need}</span></div>` : `<div class="istat">Você tem ${have}. A ${T.model} não pode ser trocada: só cai de Chefes Mundiais ou é fabricada com Poeira Divina.</div>`}</div>
       <button class="btn sm ${need && have >= need ? 'primary' : ''}" data-fragx="${t}" ${need && have >= need ? '' : 'disabled'}>Trocar</button></div>`; }).join('') + '</div>';
   h += `<h2>Materiais e pedras</h2><div class="blist">${SHOP.map((o, i) => `<div class="frow"><span></span><div class="fn">${o.n}</div><button class="btn sm" data-mbuy="${i}" ${save.coins >= shopPrice(o.p) ? '' : 'disabled'}>${shopPrice(o.p)} moedas</button></div>`).join('')}</div>`;
@@ -7940,7 +7964,7 @@ function fuseHTML(){
   return `<p class="lede">Funda <b>3 peças iguais</b> (mesmo tipo e mesma estrela) para criar uma peça com <b>uma faixa acima</b>. A fusão vai até Grade A (Ródio). A Armadura de <b class="prism">Rutênio (Grade S)</b> não sai da fusão: ela vem de Chefes Mundiais ou é fabricada com Poeira Divina. As pedras das peças fundidas voltam para a bolsa, e se uma delas estava em +10 ou mais, a peça nova já nasce em +5.</p><div class="blist">` + SLOTS.map(slot => {
     const f = fuseInputs(slot), w = CLS().wtype;
     if(!f){ let bt = -1, bc = 0; for(let t = 7; t >= 2; t--){ const c = save.inv.filter(i => i.slot === slot && i.tier === t && (slot !== 'weapon' || i.wtype === w)).length; if(c > bc){ bc = c; bt = t; } }
-      return `<div class="frow">${slotIcon(slot)}<div><div class="fn">${SLOT_INFO[slot].n}</div><div class="istat">${bt >= 0 ? `Você tem ${bc} de ${GR(bt)}. Faltam ${3 - bc} para fundir.` : 'Junte 3 peças iguais de Grade D a Grade A.'}</div></div><button class="btn sm" disabled>Fundir</button></div>`; }
+      return `<div class="frow">${pieceImg(Math.max(0, bt), slot, 'ps-row', slot === 'weapon' ? CLS().wtype : null)}<div><div class="fn">${SLOT_INFO[slot].n}</div><div class="istat">${bt >= 0 ? `Você tem ${bc} de ${GR(bt)}. Faltam ${3 - bc} para fundir.` : 'Junte 3 peças iguais de Grade D a Grade A.'}</div></div><button class="btn sm" disabled>Fundir</button></div>`; }
     const T1 = TIERS[f.t + 1], cost = fuseCost(f.t), afford = save.gold >= cost;
     return `<div class="frow">${slotIcon(slot)}<div><div class="fn ${f.t + 1 === 9 ? '' : ''}" style="color:${T1.css}">${slot === 'weapon' ? 'Arma' : SLOT_INFO[slot].n} ${T1.pre} · ${T1.sc}</div>
       <div class="need"><span class="ok" style="--tc:${TIERS[f.t].css}">3× ${TIERS[f.t].sc} ${TIERS[f.t].model}</span></div></div>
@@ -8040,7 +8064,7 @@ const MX_DEF = {
   barbarian:{model:'kk_barbarian', anims:'kk:barbarian', h:2.15, kk2:{hide:['Offhand','Barbarian_Round_Shield','^1H_Axe$','Mug'], clips:KK_2H}, sk:{leap:'smash', cyclone:'spin', whirl:'spin'}},
   archer:{model:'kk_rogue_hooded', anims:'kk:archer', h:1.95, kk2:{hide:['Offhand','1H_Crossbow','^Knife$','Throwable'], clips:{idle:'2H_Ranged_Aiming', atk1:'2H_Ranged_Shoot', atk2:'2H_Ranged_Shoot', atk3:'2H_Ranged_Shoot'}}, atk:{at:.1, speed:1.6}},
   mage:{model:'kk_mage', anims:'kk:mage', h:1.95, kk2:{hide:['^Spellbook$','Spellbook_open','1H_Wand'], clips:{atk1:'Spellcast_Shoot', atk2:'Spellcast_Shoot', atk3:'Spellcast_Raise', smash:'Spellcast_Long', spin:'Spellcast_Raise'}}, atk:{at:.2, speed:1.9}},
-  necro:{model:'kk_mage', anims:'kk:necro', h:1.95, kk2:{read:1, hide:['^Spellbook$','2H_Staff'], clips:{atk1:'Spellcast_Shoot', atk2:'Spellcast_Shoot', atk3:'Spellcast_Raise', smash:'Spellcast_Long', spin:'Spellcast_Raise'}, cloth:0x2b2f36, cape:0x3fae5a, trim:0x3fae5a, hair:0xe4e2ea, skin:0xcfd6cf}, atk:{at:.2, speed:1.9}},
+  necro:{model:'kk_mage', anims:'kk:necro', h:1.95, kk2:{read:1, scythe:1, hide:['^Spellbook$','2H_Staff','1H_Wand'], clips:{atk1:'Spellcast_Shoot', atk2:'Spellcast_Shoot', atk3:'Spellcast_Raise', smash:'Spellcast_Long', spin:'Spellcast_Raise'}, cloth:0x2b2f36, cape:0x3fae5a, trim:0x3fae5a, hair:0xe4e2ea, skin:0xcfd6cf}, atk:{at:.2, speed:1.9}},
   assassin:{model:'kk_rogue', anims:'kk:assassin', h:1.95, kk2:{hide:['1H_Crossbow','2H_Crossbow','Throwable'], clips:{atk1:'Dualwield_Melee_Attack_Slice', atk2:'Dualwield_Melee_Attack_Chop', atk3:'Dualwield_Melee_Attack_Stab'}}, sk:{shadow:'dash'}, atk:{at:.22, speed:2.4}},
   monk:{model:'kk_barbarian', anims:'kk:monk', h:2.1, kk2:{hide:['Axe','Barbarian_Round_Shield','Mug','Barbarian_Hat','Barbarian_Cape'], clips:{idle:'Unarmed_Idle', atk1:'Unarmed_Melee_Attack_Punch_A', atk2:'Unarmed_Melee_Attack_Punch_B', atk3:'Unarmed_Melee_Attack_Kick', smash:'Unarmed_Melee_Attack_Kick'}, cloth:0xd9772b}, atk:{at:.15, speed:2.0}, sk:{quake:'smash'}},
 };
@@ -8083,15 +8107,28 @@ function kkPaint(h){
   const ct = tOf('chest'); if(ct >= 0) col.metal = mix(0x9aa7ac, TIERS[ct].hex, .6); else if(k.metal) col.metal = k.metal;
   const wt = tOf('weapon'); if(wt >= 0) col.wpn = mix(0x9aa7ac, TIERS[wt].hex, .55);
   const tex = kkTex(d.model, col); if(!tex) return;
-  x.m.traverse(o => { if(o.isMesh && o.material){ if(!o.userData.kkM){ o.material = o.material.clone(); o.userData.kkM = 1; } if(o.material.map !== tex){ o.material.map = tex; o.material.needsUpdate = true; } } });
+  x.m.traverse(o => { if(o.isMesh && o.material && o.name.indexOf('Scythe_') !== 0){ if(!o.userData.kkM){ o.material = o.material.clone(); o.userData.kkM = 1; } if(o.material.map !== tex){ o.material.map = tex; o.material.needsUpdate = true; } } });
+  if(k.scythe) kkScythe(x, wt);
   ncWeaponFx(x.m);
+}
+// Foice do Necromante (o pacote de bonecos nao traz foice; esta e feita aqui): cabo de madeira e lamina curva na cor do grade
+function kkScythe(x, tier){
+  if(!x.scy){ let slot = null; x.m.traverse(o => { if(!slot && (o.name === 'handslotr' || o.name === 'handslot.r')) slot = o; }); if(!slot) return;
+    const g = new T.Group(); g.name = 'Scythe_NC'; g.quaternion.set(0, -1, 0, 0);
+    const hm = new T.MeshStandardMaterial({color:0x3a2a22, roughness:.8}), bm = new T.MeshStandardMaterial({color:0xb8c0cc, roughness:.35, metalness:.55});
+    const handle = new T.Mesh(new T.CylinderGeometry(.035, .042, 2.25, 8), hm); handle.position.y = .22; handle.name = 'Scythe_Handle';
+    const sh = new T.Shape(); sh.moveTo(0, 1.34); sh.quadraticCurveTo(.62, 1.42, 1.02, .78); sh.quadraticCurveTo(.60, 1.14, 0, 1.08); sh.lineTo(0, 1.34);
+    const blade = new T.Mesh(new T.ExtrudeGeometry(sh, {depth:.045, bevelEnabled:false}), bm); blade.position.z = -.022; blade.name = 'Scythe_Blade';
+    const ring = new T.Mesh(new T.CylinderGeometry(.06, .06, .12, 8), bm); ring.position.y = 1.2; ring.name = 'Scythe_Ring';
+    [handle, blade, ring].forEach(o => { o.castShadow = true; g.add(o); }); slot.add(g); x.scy = {g, bm}; }
+  x.scy.bm.color.set(tier >= 0 ? new T.Color(0xb8c0cc).lerp(new T.Color(TIERS[tier].hex), .55) : 0xb8c0cc);
 }
 // arma equipada: do +3 em diante ela brilha; do +7 em diante ganha chamas (mais chamas a cada nivel)
 let ncFlameTex = null;
 function ncWeaponFx(root){
   const w = equipped('weapon'), U = w ? ncUp(w.up || 0) : null;
   if(!ncFlameTex){ const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'), r = g.createRadialGradient(32, 38, 2, 32, 34, 30); r.addColorStop(0, 'rgba(255,255,255,1)'); r.addColorStop(.35, 'rgba(255,255,255,.55)'); r.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = r; g.fillRect(0, 0, 64, 64); ncFlameTex = new T.CanvasTexture(c); }
-  root.traverse(o => { if(!o.isMesh || !/Sword|Axe|Wand|Staff|Crossbow|Knife/.test(o.name) || !o.material || !o.material.emissive) return;
+  root.traverse(o => { if(!o.isMesh || !/Sword|Axe|Wand|Staff|Crossbow|Knife|Scythe_Blade/.test(o.name) || !o.material || !o.material.emissive) return;
     (o.userData.ncFl || []).forEach(sp => { o.remove(sp); sp.material.dispose(); }); o.userData.ncFl = [];
     if(!U || !o.visible){ o.material.emissive.setHex(0); o.material.emissiveIntensity = 1; o.material.userData.baseE = new T.Color(0); return; }
     const col3 = U.w || U.c; o.material.emissive.set(col3); o.material.emissiveIntensity = .1 + U.e*.42; o.material.userData.baseE = o.material.emissive.clone();
@@ -11426,6 +11463,7 @@ $('#rightPanel').addEventListener('click', e => {
     if(U && (U.lose || U.brk) && !prot && forgeConfirm !== fit.id){ forgeConfirm = fit.id; renderHub(); return; }
     forgeConfirm = 0; const m = tryUpgrade(fit); if(m){ banner(m[0], m[1], m[2]); if(isEquipped(fit)) applyGear(hero); } renderHub(); return; }
   if(d.cslot){ craftSlot = d.cslot; renderHub(); return; }
+  if(d.cgr !== undefined){ craftGr = +d.cgr; renderHub(); return; }
   if(d.craft !== undefined){ craftItem(+d.craft); applyGear(hero); renderHub(); return; }
   if(d.sfilter){ stoneFilter = d.sfilter; renderHub(); return; }
   if(d.sslot){ shopSlot = d.sslot; renderHub(); return; }
@@ -11733,9 +11771,13 @@ $('#hub').addEventListener('click', e => {
     ncSpecAsk = null; save.spec = save.spec || {}; save.spec[save.cls] = id; persist(); renderHub();
     const x = ncSpec(); if(x) banner('Especialização: ' + x.n, x.d); try{ SFX.drop(); }catch(e){} return; }
   if(b.dataset.ncpet !== undefined){ save.pet = b.dataset.ncpet; persist(); ncCloud.draw(); return; }
+  if(b.dataset.ncbak){ if(ncBak.ask !== b.dataset.ncbak){ ncBak.ask = b.dataset.ncbak; ncCloud.draw(); const dd = document.querySelector('#ncCloudBox details'); if(dd) dd.open = true; } else ncBak.restore(b.dataset.ncbak); return; }
+  if(b.dataset.ncswapctl !== undefined){ save.swapCtl = save.swapCtl === false; persist(); ncCtl(); ncCloud.draw(); return; }
   if(b.dataset.nccloud){ if(b.dataset.nccloud === 'push'){ save.ncDirty = 1; ncCloud.msg = 'Enviando…'; ncCloud.draw(); ncCloud.push(); }
     else { const v = (document.getElementById('ncCodeIn') || {}).value || ''; if(!ncCloud.ask){ ncCloud.ask = true; ncCloud.draw(); const i = document.getElementById('ncCodeIn'); if(i) i.value = v; } else { ncCloud.ask = false; ncCloud.enter(v); } } return; }
-  if(b.dataset.ncfree !== undefined){ save.ncFree = !save.ncFree; ncSubAsk = null; persist(); renderHub(); return; }
+  if(b.dataset.ncfree !== undefined){ save.ncFree = !save.ncFree; ncSubAsk = null;
+    if(!save.ncFree && !ncKnown().includes(save.cls)){ save.cls = save.main || ncKnown()[0]; fixWeaponForClass(); persist(); rebuildHubHero(); renderHub(); return; }   // saiu do modo teste numa classe que nao e sua: volta para a principal, com o mesmo nivel
+    persist(); renderHub(); return; }
   if(b.dataset.cls){ ncSpecAsk = null; if(!ncSetClass(b.dataset.cls)){ renderHub(); return; } ncSubAsk = null; fixWeaponForClass(); sel = `[data-cls="${b.dataset.cls}"]`; }
   else if(b.dataset.tunic !== undefined){ save.look.tunic = +b.dataset.tunic; sel = `[data-tunic="${b.dataset.tunic}"]`; }
   else if(b.dataset.hair !== undefined){ save.look.hair = +b.dataset.hair; sel = `[data-hair="${b.dataset.hair}"]`; }
@@ -12385,6 +12427,13 @@ body.nc-l #hub>aside.panel::before,body.nc-r #hub>#rightPanel::before{transform:
 .pimg.nci.ps-card[data-up]::after{font-size:14px}
 @keyframes ncFlame{0%{transform:scaleY(.78) skewX(-5deg);opacity:.7}50%{transform:scaleY(1.06) skewX(3deg);opacity:1}100%{transform:scaleY(.9) skewX(6deg);opacity:.85}}
 #hud #mm.big{opacity:1!important;width:min(92vw,70vh)!important;z-index:40;clip-path:var(--cut);box-shadow:none;border:0}
+.mico{width:15px;height:15px;vertical-align:-3px;margin-right:4px;fill:currentColor;stroke:#05050c;stroke-width:1;stroke-linejoin:round}
+/* controles invertidos: analogico na direita, botoes de golpe na esquerda */
+body.nc-swap #joy{left:auto!important;right:max(22px,env(safe-area-inset-right,0px))}
+body.nc-swap .tbtns{right:auto!important;left:max(16px,env(safe-area-inset-left,0px));transform:scaleX(-1)!important;transform-origin:center bottom!important}
+body.nc-swap .tbtns button{transform:scaleX(-1)}
+#hub .scard{align-content:start;padding:10px 6px}#hub .scard small{line-height:1.25;text-align:center}#hub .scard:disabled{opacity:.55}
+#hub .shopgrid{grid-template-columns:repeat(2,1fr)!important}
 /* --- partida --- */
 #hud .hud-lv{border-radius:0;clip-path:var(--gem);width:50px;height:56px;top:-8px;background:linear-gradient(180deg,#ffe36a,#ffb347);box-shadow:none}
 #hud .hud-lv b{color:#120a1e;text-shadow:none;font-weight:400}
