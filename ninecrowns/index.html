@@ -12723,9 +12723,10 @@ const ncCoop = {
       .on('presence', {event:'sync'}, () => this.onSync())
       .on('presence', {event:'leave'}, m => { (m.leftPresences || []).forEach(p => this.drop(p.id)); this.onSync(); });
     ch.subscribe(async st => {
-      if(st === 'SUBSCRIBED'){ this.ok = true; await ch.track({id:this.id, cls:save.cls, at:this.at}); this.msg = this.host ? 'Sala criada. Passe o código para quem vai jogar com você.' : 'Você entrou na sala.'; if(!this.host) this.send('hi', {}); this.draw(); }
+      if(st === 'SUBSCRIBED'){ this.ok = true; this.msg = this.host ? 'Sala criada. Passe o código para quem vai jogar com você.' : 'Você entrou na sala.'; this.draw(); setTimeout(() => { this.track(); if(!this.host) this.send('hi', {}); }, 300); }
       else if(st === 'CHANNEL_ERROR' || st === 'TIMED_OUT'){ this.msg = 'Não consegui conectar na sala. Tente de novo.'; this.ok = false; this.draw(); } });
   },
+  track(){ const ch = this.ch; if(!ch || !this.ok) return; Promise.race([ch.track({id:this.id, cls:save.cls, at:this.at}), new Promise(ok => setTimeout(() => ok('timeout'), 4000))]).then(r => { if(r !== 'ok' && this.ch === ch) setTimeout(() => this.track(), 1500); }).catch(() => setTimeout(() => this.track(), 1500)); },
   onSync(){ if(!this.ch) return; const s = this.ch.presenceState(), all = [];
     Object.keys(s).forEach(k => { const p = s[k][0]; if(p) all.push(p); }); all.sort((a, b) => a.at - b.at); this.list = all;
     const me = all.findIndex(p => p.id === this.id);
@@ -12779,7 +12780,7 @@ const ncCoop = {
 };
 document.addEventListener('click', e => { const b = e.target.closest('[data-nccoop]'); if(!b) return; const a = b.dataset.nccoop;
   if(a === 'new') ncCoop.join(ncCoop.newCode(), true); else if(a === 'join'){ const i = document.getElementById('ncCoopIn'); ncCoop.join(i && i.value, false); } else if(a === 'leave') ncCoop.leave(); });
-setInterval(() => { try{ if(ncCoop.ch && mode !== 'stage') ncCoop.send('st', {id:ncCoop.id, cls:save.cls, st:-1}); }catch(_){} }, 2000);
+setInterval(() => { try{ if(ncCoop.ch && mode !== 'stage') ncCoop.send('st', {id:ncCoop.id, cls:save.cls, st:-1}); if(ncCoop.ch && ncCoop.ok && !ncCoop.ch.presenceState()[ncCoop.id]) ncCoop.track(); }catch(_){} }, 3000);
 setTimeout(() => ncCoop.draw(), 500);
 </script>
 <script id="nc-nozoom">/* sem zoom de pinça nem toque duplo: a tela não sai mais do lugar no celular */
