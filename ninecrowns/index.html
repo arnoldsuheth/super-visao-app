@@ -304,6 +304,7 @@ kbd{font-family:var(--f-display);font-size:12px;background:var(--panel-2);border
 
 #fx{position:fixed;inset:0;z-index:3;pointer-events:none;overflow:hidden}
 body.nocur, body.nocur *{cursor:none !important}
+canvas.ncgrabok{cursor:grab}canvas.ncgrab,canvas.ncgrabok.ncgrab{cursor:grabbing}
 .ltag{position:absolute;left:0;top:0;display:flex;align-items:center;gap:5px;max-width:220px;padding:3px 6px 3px 3px;background:rgba(8,10,20,.42);border:1px solid color-mix(in srgb,var(--tc) 70%,transparent);border-radius:4px;font-family:var(--f-body);font-size:11px;line-height:1.15;color:#eef0f7;pointer-events:none;white-space:nowrap;opacity:.88;text-shadow:0 1px 2px #000,0 0 3px #000}
 .ltag .pimg{--s:28px}
 .ltag .lt-mini{display:none}
@@ -9770,7 +9771,7 @@ function monUpdate(e, dt){
   if(m.fly) m.model.position.y = m.y0 + Math.sin(clock*2.4 + m.ph)*.08;
   m.mixer.update(e.frozenT > 0 ? 0 : dt);
 }
-if(location.hash === '#nctest') window.__nc = {mount:() => toggleMount(true), show:(keys, gap) => { const c = hero.root.position, n = keys.length; window.__ncShow = (window.__ncShow || []); window.__ncShow.forEach(o => scene.remove(o)); window.__ncShow = [];
+if(location.hash === '#nctest') window.__nc = {T:() => T, sc:() => scene, hero:() => hero, mount:() => toggleMount(true), show:(keys, gap) => { const c = hero.root.position, n = keys.length; window.__ncShow = (window.__ncShow || []); window.__ncShow.forEach(o => scene.remove(o)); window.__ncShow = [];
   keys.forEach((k, i) => monLoad(k, g => { const m = monClone(g.scene), sz = g.box.getSize(new T.Vector3()), kk = 1.3/Math.max(.01, sz.y); m.traverse(o => { if(o.isMesh) o.material = new T.MeshLambertMaterial({map:monTex(), skinning:!!o.isSkinnedMesh}); }); m.scale.setScalar(kk); m.position.set(c.x + (i - (n - 1)/2)*(gap || 1.7), c.y - g.box.min.y*kk, c.z - .3); scene.add(m); window.__ncShow.push(m);
     try{ const mx = new T.AnimationMixer(m), cl = g.animations.find(a => /^(Idle|Flying_Idle)$/.test(a.name)); if(cl){ mx.clipAction(cl).play(); mx.update(.3); } }catch(e){} })); hero.root.visible = false; }, drop:t => dropLoot(P.pos, t), loot:() => loot.length, unp:() => togglePause(false), en:() => enemies, p:() => P, boss:id => startStage(id, true), go:id => startStage(id), skill:i => useSkill(i), sv:() => save, gfx:g => { save.gfx = g; save.gfxAuto = false; setupFX(); resize(); },
   info:() => { const r = renderer.info.render, o = {calls:r.calls, tris:r.triangles, geo:renderer.info.memory.geometries, tex:renderer.info.memory.textures, pr:curPR, vis:0, skinned:0, skinnedVis:0, inst:0, caster:0, mats:new Set(), big:{}};
@@ -10059,7 +10060,7 @@ const gdrag = {id:null, x:0};
 /* Mouse olha em volta na câmera Close: mover o mouse gira a câmera; clicar prende o mouse (giro sem limite), Esc solta e pausa. */
 const MLOOK_S = .0042, mlook = {x:null, own:false, lostT:0, alt:false, noLock:false};
 const mLocked = () => document.pointerLockElement === cv;
-function lockMouse(){ if(mLocked() || mlook.alt || !cv.requestPointerLock) return; setTimeout(() => { if(!mLocked() && !mlook.alt && lookOn()) mlook.noLock = true; }, 600); try{ const r = cv.requestPointerLock(); if(r && r.catch) r.catch(() => { mlook.noLock = true; }); }catch(_){ mlook.noLock = true; } }
+function lockMouse(){ return; if(mLocked() || mlook.alt || !cv.requestPointerLock) return; setTimeout(() => { if(!mLocked() && !mlook.alt && lookOn()) mlook.noLock = true; }, 600); try{ const r = cv.requestPointerLock(); if(r && r.catch) r.catch(() => { mlook.noLock = true; }); }catch(_){ mlook.noLock = true; } }
 document.addEventListener('pointerlockerror', () => { mlook.noLock = true; });
 // Alt segurado: solta o mouse e mostra o cursor (para clicar nos botões). Soltou o Alt: na próxima tecla ou clique o mouse volta a ficar preso.
 addEventListener('keydown', e => { if(e.key !== 'Alt') return; e.preventDefault(); if(!mlook.alt){ mlook.alt = true; unlockMouse(); } }, true);
@@ -10075,19 +10076,20 @@ document.addEventListener('pointerlockchange', () => {
 });
 cv.addEventListener('pointerdown', e => {
   const mouse = e.pointerType === 'mouse';
-  if(lookOn() && mouse && !inputLocked && !mLocked()) lockMouse();
-  if(lookOn() && (!mouse || (e.button === 2 && !mLocked()))){ gdrag.id = e.pointerId; gdrag.x = e.clientX; gdrag.y = e.clientY; cv.setPointerCapture(e.pointerId); if(mouse) return; }
+  // pedido do Arnold (20/11): o mouse não fica mais preso; girar a câmera é clicar e arrastar (cursor de mão)
+  if(lookOn() && (!mouse || e.button === 0 || e.button === 2)){ gdrag.id = e.pointerId; gdrag.x = gdrag.x0 = e.clientX; gdrag.y = gdrag.y0 = e.clientY; gdrag.moved = false; try{ cv.setPointerCapture(e.pointerId); }catch(_){} if(mouse && e.button === 2) return; }
   if(mode !== 'stage' || e.pointerType !== 'mouse' || !running || inputLocked) return;
   if(e.button === 0){ attackHeld = true; attackPressed = true; } else if(e.button === 2) useSkill(0);
 });
-addEventListener('pointerup', e => { if(e.pointerType === 'mouse') attackHeld = false; if(e.pointerId === gdrag.id) gdrag.id = null; });
+addEventListener('pointerup', e => { if(e.pointerType === 'mouse') attackHeld = false; if(e.pointerId === gdrag.id){ gdrag.id = null; gdrag.moved = false; cv.classList.remove('ncgrab'); } });
 cv.addEventListener('pointermove', e => {
   if(!lookOn()){ mlook.x = null; return; }
   if(e.pointerType === 'mouse'){
-    if(mLocked()){ closeYaw -= clamp(e.movementX || 0, -200, 200)*MLOOK_S; fpLook(clamp(e.movementY || 0, -200, 200)*MLOOK_S); return; }
-    if(e.pointerId === gdrag.id){ closeYaw -= (e.clientX - gdrag.x)*.012; gdrag.x = e.clientX; mlook.x = e.clientX; return; }
-    if(mlook.x !== null && mlook.noLock && !mlook.alt){ closeYaw -= clamp(e.clientX - mlook.x, -200, 200)*MLOOK_S; fpLook(clamp(e.clientY - mlook.y, -200, 200)*MLOOK_S); }
-    mlook.x = e.clientX; mlook.y = e.clientY; return;
+    if(e.pointerId === gdrag.id && (e.buttons & 3)){
+      if(!gdrag.moved && Math.hypot(e.clientX - gdrag.x0, e.clientY - gdrag.y0) > 6){ gdrag.moved = true; attackHeld = false; cv.classList.add('ncgrab'); }
+      if(gdrag.moved){ closeYaw -= (e.clientX - gdrag.x)*.008; fpLook((e.clientY - gdrag.y)*.006); }
+      gdrag.x = e.clientX; gdrag.y = e.clientY; }
+    return;
   }
   if(e.pointerId !== gdrag.id) return; closeYaw -= (e.clientX - gdrag.x)*.012; fpLook((e.clientY - (gdrag.y ?? e.clientY))*.008); gdrag.x = e.clientX; gdrag.y = e.clientY;
 });
@@ -10278,6 +10280,7 @@ function firePlayer(o){
   pprojs.push(Object.assign({m, vx:Math.sin(o.ang)*o.spd, vz:Math.cos(o.ang)*o.spd, hit:new Set(), y0:oy - 1.3}, o));
 }
 function useSkill(i){
+  if(P && P.skill && P.cd[i] <= 0){ P.qSk = {i, t:clock}; return; }   // apertou durante outra habilidade: guarda e solta assim que ela acabar
   if(mode !== 'stage' || !running || inputLocked || !P || P.dead || P.cd[i] > 0 || P.skill) return;
   if(P.mounted) toggleMount(false);
   const sk = CLS().skills[i]; P.cd[i] = sk.cd;
@@ -10808,6 +10811,7 @@ function updatePlayer(dt){
   const S = P.S, c = CLS();
   P.atkCd -= dt; P.dashCd -= dt; P.inv -= dt; P.blockT -= dt; P.castT -= dt;
   P.cd[0] = Math.max(0, P.cd[0] - dt); P.cd[1] = Math.max(0, P.cd[1] - dt);
+  if(P.qSk && !P.skill){ const q = P.qSk; P.qSk = null; if(clock - q.t < 1.2) useSkill(q.i); }
   if(P.rageT > 0){ P.rageT -= dt; if(Math.random() < .3) burst(P.pos, 0xff4a2a, 1, 1, 3, 1); }
   if(P.aegisT > 0){ P.aegisT -= dt; P.hp = Math.min(S.hp, P.hp + S.hp*.04*dt); }
   hero.dome.visible = P.aegisT > 0; if(P.aegisT > 0) hero.dome.material.opacity = .16 + Math.sin(clock*10)*.06;
@@ -10880,6 +10884,8 @@ function updatePlayer(dt){
       P.skill = null;
     }
   }
+  if(P.skill && !['bash','leap','whirl','cyclone'].includes(P.skill.id)){   // pedido do Arnold: dá para andar usando qualquer habilidade
+    const sp = S.spd*.7*wxSlow(); P.pos.x += mx*sp*dt; P.pos.z += mz*sp*dt; clampPos(P.pos, bossActive, .45); }
   if(!P.skill){
     if(dashPressed && P.dashCd <= 0 && !inputLocked && !P.mounted){
       if(len > .15) P.dashDir.set(mx/len, 0, mz/len); else P.dashDir.set(Math.sin(P.face), 0, Math.cos(P.face));
@@ -11215,6 +11221,9 @@ function setInput(d){
 }
 addEventListener('keydown', () => setInput('kb'), true);
 addEventListener('pointerdown', e => { if(e.pointerType === 'mouse') setInput('kb'); else if(e.pointerType === 'touch') setInput('touch'); }, true);
+/* clicar nos botões da barra com o mouse também usa a habilidade (antes só a tecla funcionava) */
+document.getElementById('skillbar').addEventListener('pointerdown', e => { const k = e.target.closest('.sk'); if(!k || mode !== 'stage' || !running || inputLocked) return; e.preventDefault(); e.stopPropagation();
+  const i = +k.id.slice(2); if(i === 0) attackPressed = true; else if(i === 1) useSkill(0); else if(i === 2) useSkill(1); else if(i === 3) dashPressed = true; else if(i === 4) toggleMount(); else if(i === 5) usePotion(); });
 function renderSkillbar(){
   const c = CLS(), pad = inputDev === 'pad';
   const items = [['Ataque', pad ? g1('a') : '<kbd>J</kbd>'], [c.skills[0].full, pad ? g1('x') : '<kbd>E</kbd>'], [c.skills[1].full, pad ? g1('y') : '<kbd>R</kbd>'], [c.dash, pad ? g1('b') : '<kbd>Shift</kbd>'], ['Cavalo', pad ? g1('view') : '<kbd>H</kbd>'], ['Poção', pad ? g1('lb') : '<kbd>Q</kbd>']];
@@ -11239,10 +11248,13 @@ function updateHUD(){
     gateOpen ? 'Portal aberto: siga para a <b>arena no norte</b>' :
     `Postos libertados <b>${nR}/${runes.length}</b>` + (near ? (nd < 22 ? `<br>Guardas neste posto: <b>${near.guards}</b>` : '<br>Siga os feixes roxos e derrote os guardas marcados') : '');
   const fr = [Math.max(0, P.atkCd)/atkCooldown(), P.cd[0]/c.skills[0].cd, P.cd[1]/c.skills[1].cd, Math.max(0, P.dashCd)/(c.attack === 'bolt' || c.attack === 'dark' ? .9 : .7), 0];
-  for(let i=0;i<5;i++){ const el = document.getElementById('sk' + i); if(el){ el.firstChild.style.height = (fr[i]*100) + '%'; el.classList.toggle('ready', fr[i] <= 0 && i > 0 && i < 4); } }
+  for(let i=0;i<5;i++){ const el = document.getElementById('sk' + i); if(el){ el.firstChild.style.setProperty('--p', fr[i]); if(i > 0 && i < 3 && el._f > 0 && fr[i] <= 0){ el.classList.remove('nc-ready'); void el.offsetWidth; el.classList.add('nc-ready'); } el._f = fr[i]; el.classList.toggle('ready', fr[i] <= 0 && i > 0 && i < 4); } }
   const s2 = document.getElementById('sk2'); if(s2) s2.classList.toggle('on', P.rageT > 0 || P.aegisT > 0);
   const s4 = document.getElementById('sk4'); if(s4) s4.classList.toggle('on', P.mounted);
   $('#tSk1').style.setProperty('--cd', fr[1]); $('#tSk2').style.setProperty('--cd', fr[2]); $('#tDash').style.setProperty('--cd', fr[3]);
+  { const left = [0, P.cd[0], P.cd[1], 0]; const txt = v => v > 0 ? (v < 1 ? v.toFixed(1) : String(Math.ceil(v))) : '';
+    for(let i = 1; i < 3; i++){ const t = txt(left[i]), el = document.getElementById('sk' + i); if(el){ let n = el.querySelector('.cdn'); if(!n){ n = document.createElement('em'); n.className = 'cdn'; el.appendChild(n); } if(n.textContent !== t) n.textContent = t; el.classList.toggle('cding', !!t); }
+      const tb = document.getElementById(i === 1 ? 'tSk1' : 'tSk2'); if(tb){ if(t) tb.setAttribute('data-cd', t); else if(tb.hasAttribute('data-cd')){ tb.removeAttribute('data-cd'); tb.classList.remove('nc-ready'); void tb.offsetWidth; tb.classList.add('nc-ready'); } } } }
   $('#tMount').textContent = P.mounted ? 'Descer' : 'Cavalo';
 }
 let mmTick = 0, revealT = 0;
@@ -12224,7 +12236,7 @@ let last = performance.now();
 function loop(now){
   requestAnimationFrame(loop);
   if(mLocked() && !lookOn()) unlockMouse();
-  document.body.classList.toggle('nocur', lookOn() && inputDev !== 'touch' && !mlook.alt);
+  document.body.classList.remove('nocur'); cv.classList.toggle('ncgrabok', lookOn() && inputDev !== 'touch');
   const cap = Q().cap; if(cap && now - last < 1000/cap - 3) return;
   const dt = Math.min(.05, (now - last)/1000); last = now; clock += dt; const cpu0 = performance.now(); renderer.info.reset();
   pollPad(dt);
@@ -12578,7 +12590,8 @@ body.nc-swap .tbtns button{transform:scaleX(-1)}
 .bag-top{display:flex;justify-content:space-between;font-size:13px;color:var(--mute);margin:2px 0 4px}.bag-top b{color:#f4efe2}.bag-top .hv b{color:#ff6a5a}
 .bag-w{height:6px;background:#05050c;margin-bottom:8px}.bag-w i{display:block;height:100%}
 .bag-hv{font-size:12.5px;color:#ff8a7a;margin:-2px 0 8px}
-.bgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.bgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(54px,1fr));gap:6px}
+@media (min-width:700px){.bgrid{grid-template-columns:repeat(auto-fill,64px);justify-content:start}}
 .bcell{position:relative;aspect-ratio:1;padding:0;border:0;background:#120e2c;clip-path:var(--cuts);box-shadow:inset 0 0 0 1.5px #3c2f7a;display:grid;place-items:center;color:inherit;min-width:0}
 .bcell .pimg.nci{--s:100%;width:100%;height:100%}
 .bcell.on{box-shadow:inset 0 0 0 3px #ffe36a}.bcell.on .pimg.nci{box-shadow:inset 0 0 0 3px #ffe36a}
@@ -12595,7 +12608,7 @@ details.nc-more{margin-top:12px;border:1px solid rgba(138,106,255,.3);padding:8p
 #ncPop{position:fixed;inset:0;z-index:80}#ncPop[hidden]{display:none}.pop-bg{position:absolute;inset:0;background:rgba(4,5,10,.55)}
 .pop-box{position:absolute;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);width:min(440px,calc(100vw - 20px));max-height:72vh;overflow-y:auto;box-sizing:border-box;padding:16px 12px 12px;background:linear-gradient(180deg,#221a46,#15122b);border:1px solid #8a6aff;box-shadow:0 10px 40px rgba(0,0,0,.6)}
 .pop-x{position:absolute;top:4px;right:6px;background:none;border:0;color:#f4efe2;font-size:18px;padding:6px 10px;cursor:pointer}.pop-eq{margin-top:10px;opacity:.85}.pop-eq .irow{border-style:dashed}.bag-act{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}.bag-act .btn{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;line-height:1.15}.bag-act .btn small{font-size:10px;opacity:.75;font-family:var(--f-body);text-transform:none;letter-spacing:0;white-space:normal}.bag-act .btn.danger{border-color:#ff5a5a;color:#ff8a8a}
-html{position:fixed;inset:0;width:100%;overscroll-behavior:none;touch-action:pan-x pan-y;-webkit-text-size-adjust:100%}
+@media (pointer:coarse){html{position:fixed;inset:0;width:100%;overscroll-behavior:none;touch-action:pan-x pan-y;-webkit-text-size-adjust:100%}}
 .bag-brk{font-size:12px;color:var(--mute);margin-top:6px;text-align:center}.bag-brk b{color:#f4efe2;font-weight:600}
 .bag-det{margin-top:10px}.bag-det.hint{font-size:13px;color:var(--mute);text-align:center;padding:8px}
 /* --- partida --- */
@@ -12642,7 +12655,18 @@ document.addEventListener('touchmove', e => { if(e.touches.length > 1) e.prevent
 })();
 </script>
 <style id="nc-borda-css">/* Escolha do Arnold em 20/11: botões com borda prata (opção 2) e moldura dourada D (Fantasy UI Borders, Kenney, CC0) */
-#touch .tbtns,.skillbar{filter:drop-shadow(2px 0 0 #dfe6f2) drop-shadow(-2px 0 0 #dfe6f2) drop-shadow(0 2px 0 #8d97ab) drop-shadow(0 -2px 0 #ffffff) drop-shadow(0 4px 6px rgba(0,0,0,.6))}
+#touch .tbtns,.skillbar{filter:drop-shadow(1.5px 0 0 #d8dfec) drop-shadow(-1.5px 0 0 #d8dfec) drop-shadow(0 1.5px 0 #d8dfec) drop-shadow(0 -1.5px 0 #d8dfec) drop-shadow(0 4px 6px rgba(0,0,0,.6))}
+.skillbar{bottom:calc(18px + env(safe-area-inset-bottom,0px))!important}
+.skillbar{pointer-events:auto}
+/* recarga: escurece em sentido horário e mostra os segundos; quando volta, dá um brilho */
+.sk .ov{top:0;height:100%!important;background:conic-gradient(rgba(6,4,14,.72) calc(var(--p,0)*360deg),transparent 0)!important;border-radius:0!important}
+.sk .cdn{position:absolute;inset:0;display:grid;place-items:center;font-style:normal;font:700 22px/1 var(--f-display);color:#fff;text-shadow:0 0 4px #000,0 2px 3px #000;pointer-events:none}
+.sk.cding .ic{filter:grayscale(.7) brightness(.7)}
+#touch .tbtns button::after{border-radius:0!important;background:conic-gradient(rgba(6,4,14,.72) calc(var(--cd,0)*360deg),transparent 0)!important}
+#touch .tbtns button[data-cd]{filter:grayscale(.6)}
+#touch .tbtns button[data-cd]::before{content:attr(data-cd);position:absolute;inset:0;display:grid;place-items:center;z-index:3;font:700 20px/1 var(--f-display);color:#fff;text-shadow:0 0 4px #000,0 2px 3px #000}
+@keyframes ncReady{0%{filter:brightness(2.2) drop-shadow(0 0 0 #fff)}100%{filter:none}}
+#touch .tbtns button.nc-ready,.sk.nc-ready{animation:ncReady .45s ease-out}.skillbar .sk{cursor:pointer}.skillbar .sk:active{transform:scale(.93)}
 #touch .tbtns button.pic{background-size:84%!important;background-color:#0e1018!important}
 #hud .chip{border:6px solid transparent!important;border-image:url(assets/ui/frame-d.png) 32 stretch!important;background-clip:padding-box!important;clip-path:none!important;border-radius:0!important;padding:2px 10px!important;background-color:rgba(26,15,48,.88)!important}
 #hud .bar.hp{border:6px solid transparent!important;border-image:url(assets/ui/frame-d.png) 32 stretch!important;background-clip:padding-box!important;clip-path:none!important;border-radius:0!important}
