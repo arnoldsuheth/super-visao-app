@@ -12588,8 +12588,6 @@ var ncCoop = {
       const nm = (d.nm || (CLASSES[d.cls] || CLASSES.warrior).name) + ' · nv ' + (d.lv || 1); const tb = q.tag.firstChild; if(tb.textContent !== nm) tb.textContent = nm;
       q.tag.children[1].firstChild.style.width = (d.hp == null ? 100 : d.hp) + '%'; q.tag.children[2].firstChild.style.width = (d.rs == null ? 100 : d.rs) + '%'; q.tag.children[2].classList.toggle('sp', d.rt === 'sp');
       placeTag(q.tag, r.x, r.y + 2.6, r.z, true); }
-    if(inStage && this.host) this.shared = this.list.length > 1;
-    if(inStage && this.host && this.list.length > 1){ this.enT -= dt; if(this.enT <= 0){ this.enT = .2; this.enSend(); } }
     if(!inStage){ this.shared = false; this.rems = {}; }
     this.partyDraw();
   },
@@ -12714,6 +12712,7 @@ setInterval(() => { try{ if(ncCoop.ch && mode !== 'stage') ncCoop.send('st', {id
 setTimeout(() => ncCoop.draw(), 500);
 setInterval(() => { try{ ncCoop.hud(); ncCoop.chatDraw(); ncCoop.lobbyTrack(); }catch(_){} }, 1000);
 setTimeout(() => { try{ ncCoop.lobbyOn(); }catch(_){} }, 2500);
+setInterval(() => { try{ const c = ncCoop, inS = mode === 'stage' && P && curStage; if(c.ch && inS && c.host){ c.shared = c.list.length > 1; if(c.shared) c.enSend(); } }catch(_){} }, 200);   // anfitrião: manda os monstros 5x por segundo
 window.__ncT = {drop:(x, z, t) => dropLoot({x, z}, t), loot:() => loot, en:() => enemies};
 window.__ncHub = c => { save.cls = c; fixWeaponForClass(); buildHub(); hubCamera(); renderHub(); };
 setTimeout(() => { try{ if(save.room && !ncCoop.ch) ncCoop.join(save.room, save.room === save.myRoom); }catch(_){} }, 1500);   // volta sozinho para a última sala
