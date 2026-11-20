@@ -729,6 +729,7 @@ canvas.ncgrabok{cursor:grab}canvas.ncgrab,canvas.ncgrabok.ncgrab{cursor:grabbing
   <div class="hud-l">
     <div class="hud-lv">Nível <b id="hLvl">1</b></div>
     <div class="bar hp"><i id="hHp"></i><span id="hHpT">100/100</span></div>
+    <div class="bar mp" id="hMpB"><i id="hMp"></i><span id="hMpT"></span></div>
     <div class="bar xp"><i id="hXp"></i></div>
     <div class="obj" id="hObj"></div>
   </div>
@@ -10183,6 +10184,7 @@ function aimAngle(range){ const t = ncTgtOk(); if(t && !t.e) return Math.atan2(t
 function atkCooldown(){ return CLS().cd/(1 + P.S.aspd + (P.rageT > 0 ? .6 : 0)); }
 function doAttack(){
   const S = P.S, c = CLS();
+  if(!ncSpend(ncAtkCost())){ P.atkCd = .25; return; }
   if(P.mounted) toggleMount(false);
   { const t = ncTgtOk(); if(t){ const tx = t.e ? t.e.pos.x : t.x, tz = t.e ? t.e.pos.z : t.z; if(Math.hypot(tx - P.pos.x, tz - P.pos.z) < 18) P.face = P.targetFace = Math.atan2(tx - P.pos.x, tz - P.pos.z); } }
   P.atkCd = atkCooldown();
@@ -10325,7 +10327,7 @@ function useSkill(i){
   if(P && P.skill && P.cd[i] <= 0){ P.qSk = {i, t:clock}; return; }   // apertou durante outra habilidade: guarda e solta assim que ela acabar
   if(mode !== 'stage' || !running || inputLocked || !P || P.dead || P.cd[i] > 0 || P.skill) return;
   if(P.mounted) toggleMount(false);
-  const sk = CLS().skills[i]; P.cd[i] = sk.cd;
+  const sk = CLS().skills[i]; if(!ncSpend(ncSkCost(sk))) return; P.cd[i] = sk.cd;
   const dirOf = a => new T.Vector3(Math.sin(a), 0, Math.cos(a));
   switch(sk.id){
     case 'bash': { const a = aimAngle(9); if(a !== null) P.face = P.targetFace = a;
@@ -10509,12 +10511,24 @@ function hurtPlayer(raw, elemental){
   floatText(P.pos, '-' + dmg, 'hurt'); rumble(.55, .35, 160); P.flashT = .12; SFX.hurt(); addShake(.3);
   if(P.hp <= 0){ P.hp = 0; playerDie(); }
 }
+/* Mana e stamina (pedido do Arnold, 20/11): Mago e Necromante gastam mana; as classes de luta gastam stamina.
+   Gasto pequeno no ataque básico e maior nas habilidades. Volta sozinho com o tempo; a poção também recupera. */
+const NC_MANA = {mage:1, necro:1};
+const ncRes = () => NC_MANA[save.cls] ? 'mp' : 'sp';
+const ncResMax = () => Math.round((ncRes() === 'mp' ? 100 : 100) + save.level*2);
+const ncResRegen = () => ncRes() === 'mp' ? 7 + save.level*.08 : 14 + save.level*.1;
+const ncAtkCost = () => ncRes() === 'mp' ? 2 : 3;
+const ncSkCost = sk => sk.cd >= 15 ? 35 : 22;
+function ncResInit(){ if(P && P.res == null) P.res = ncResMax(); }
+function ncSpend(n, quiet){ ncResInit(); if(P.res < n){ if(!quiet && clock - (P.resMsgT || 0) > 1.2){ P.resMsgT = clock; floatText(P.pos, ncRes() === 'mp' ? 'Sem mana' : 'Sem energia', 'hurt'); } return false; } P.res -= n; P.resT = clock; return true; }
+function ncResTick(dt){ if(!P) return; ncResInit(); const m = ncResMax(); if(P.res < m && clock - (P.resT || 0) > .6) P.res = Math.min(m, P.res + ncResRegen()*dt); }
 function usePotion(){
   if(mode !== 'stage' || !running || inputLocked || P.dead) return;
   if(save.potions <= 0){ floatText(P.pos, 'Sem poções', 'hurt'); return; }
   if(P.potT > 0){ floatText(P.pos, 'Poção em ' + Math.ceil(P.potT) + ' s', 'hurt'); return; }
-  if(P.hp >= P.S.hp){ floatText(P.pos, 'Vida cheia', 'heal'); return; }
+  if(P.hp >= P.S.hp && (P.res == null || P.res >= ncResMax())){ floatText(P.pos, 'Vida cheia', 'heal'); return; }
   save.potions--; P.potT = DF().potCd; const h = Math.round(P.S.hp*DF().potion); P.hp = Math.min(P.S.hp, P.hp + h);
+  P.res = Math.min(ncResMax(), (P.res || 0) + ncResMax()*.4);
   floatText(P.pos, '+' + h, 'heal'); SFX.potion(); burst(P.pos, 0x86d873, 10, 2, 5, 1);
 }
 function playerDie(){ try{ if(P.skill && P.skill.beam) scene.remove(P.skill.beam); }catch(e){} playMusic(null); if(P.mounted) toggleMount(false); P.goldLost = Math.floor(save.gold*DF().goldLoss); save.gold -= P.goldLost; P.dead = true; P.skill = null; SFX.die(); deadT = 1.4; attackHeld = false; persist(); }
@@ -10852,7 +10866,7 @@ function bossDefeated(b){
 function updatePlayer(dt){
   const S = P.S, c = CLS();
   P.atkCd -= dt; P.dashCd -= dt; P.inv -= dt; P.blockT -= dt; P.castT -= dt;
-  P.cd[0] = Math.max(0, P.cd[0] - dt); P.cd[1] = Math.max(0, P.cd[1] - dt); ncTgtUpdate();
+  P.cd[0] = Math.max(0, P.cd[0] - dt); P.cd[1] = Math.max(0, P.cd[1] - dt); ncTgtUpdate(); ncResTick(dt);
   if(P.qSk && !P.skill){ const q = P.qSk; P.qSk = null; if(clock - q.t < 1.2) useSkill(q.i); }
   if(P.rageT > 0){ P.rageT -= dt; if(Math.random() < .3) burst(P.pos, 0xff4a2a, 1, 1, 3, 1); }
   if(P.aegisT > 0){ P.aegisT -= dt; P.hp = Math.min(S.hp, P.hp + S.hp*.04*dt); }
@@ -11283,6 +11297,7 @@ function updateHUD(){
   $('#hLvl').textContent = save.level;
   $('#hHp').style.width = (P.hp/S.hp*100) + '%';
   $('#hHpT').textContent = Math.ceil(P.hp) + '/' + S.hp;
+  { ncResInit(); const m = ncResMax(), b = $('#hMpB'); b.classList.toggle('sp', ncRes() === 'sp'); $('#hMp').style.width = (P.res/m*100) + '%'; const t = Math.floor(P.res) + '/' + m; if($('#hMpT').textContent !== t) $('#hMpT').textContent = t; }
   $('#hXp').style.width = Math.min(100, save.xp/xpNeed(save.level)*100) + '%';
   $('#hGold').innerHTML = adenaHTML(save.gold);
   $('#hPot').textContent = save.potions;
@@ -12704,6 +12719,10 @@ document.addEventListener('touchmove', e => { if(e.touches.length > 1) e.prevent
 #touch .tbtns,.skillbar{filter:drop-shadow(1.5px 0 0 #d8dfec) drop-shadow(-1.5px 0 0 #d8dfec) drop-shadow(0 1.5px 0 #d8dfec) drop-shadow(0 -1.5px 0 #d8dfec) drop-shadow(0 4px 6px rgba(0,0,0,.6))}
 .skillbar{bottom:calc(18px + env(safe-area-inset-bottom,0px))!important}
 .skillbar{pointer-events:auto}
+#hud .bar.mp{height:13px;margin-top:3px;border:5px solid transparent!important;border-image:url(assets/ui/frame-d.png) 32 stretch!important;background-clip:padding-box!important;border-radius:0!important}
+#hud .bar.mp i{background:linear-gradient(90deg,#2d6bff,#6fd0ff)}#hud .bar.mp.sp i{background:linear-gradient(90deg,#d6a400,#ffe46a)}
+#hud .bar.mp span{font-size:10px}
+@media (max-width:600px){#hud .bar.mp{width:74%}}
 .kbind{font:700 12px/1 var(--f-body);min-width:34px;padding:6px 9px;background:#1a1438;color:#f4efe2;border:1px solid #c9a24a;border-radius:4px;cursor:pointer}.kbind.on{background:#c9a24a;color:#14101f;animation:ncReady .8s infinite alternate}
 #ncSkPop{position:fixed;inset:0;z-index:85;background:rgba(4,5,10,.55);display:grid;place-items:center}#ncSkPop[hidden]{display:none}
 .skp-box{position:relative;width:min(460px,calc(100vw - 24px));max-height:80vh;overflow:auto;box-sizing:border-box;padding:16px;background:linear-gradient(180deg,#221a46,#15122b);border:16px solid transparent;border-image:url(assets/ui/frame-d.png) 32 stretch;background-clip:padding-box}
