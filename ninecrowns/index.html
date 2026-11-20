@@ -5979,7 +5979,7 @@ const freshSave = () => ({level:1, xp:0, gold:0, potions:3, inv:[], eq:{}, nextI
   mats:{refino:3, superior:0, ancestral:0, selo:0, bencao:0, broca:1, metal:5}, gems:{}, gemPity:{}, frags:[0,0,0,0,0,0,0,0,0,0], coins:5, cnt:{}, mq:{}, seq:{step:0, lvl:0}, pityEx:{}, evBought:{}, worldWins:{}});
 let save = loadSave();
 /* Configurações ficam guardadas por aparelho (chave nc-prefs): entrar com código, a nuvem ou restaurar cópia não desconfiguram mais gráfico, som, câmera e controles */
-const NC_PREF_KEYS = ['gfx','gfxAuto','gfxV4','gfxo','ncAuto','zoom','muted','vol','rt','real','perf','swapCtl'];
+const NC_PREF_KEYS = ['keys','gfx','gfxAuto','gfxV4','gfxo','ncAuto','zoom','muted','vol','rt','real','perf','swapCtl'];
 try{ const pf = JSON.parse(localStorage.getItem('nc-prefs')); if(pf) NC_PREF_KEYS.forEach(k => { if(k in pf) save[k] = pf[k]; }); }catch(e){}
 function ncPrefSave(){ try{ const pf = {}; NC_PREF_KEYS.forEach(k => { if(save[k] !== undefined) pf[k] = save[k]; }); localStorage.setItem('nc-prefs', JSON.stringify(pf)); return true; }catch(e){ return false; } }
 if(!save.nc80){ save.level = Math.min(80, Math.max(1, Math.round(1 + ((save.level || 1) - 1)*79/43))); save.nc80 = 1; }
@@ -10030,6 +10030,31 @@ function removeObj(o){
 
 /* ================= INPUT ================= */
 const keys = {};
+/* Atalhos do teclado que o jogador pode trocar (pedido do Arnold, 20/11). Andar (WASD/setas), Esc e Espaço ficam fixos. */
+const NC_BIND = [['atk','Atacar','KeyJ'],['s1','Habilidade 1','KeyE'],['s2','Habilidade 2','KeyR'],['dash','Esquiva','ShiftLeft'],['pot','Poção','KeyQ'],['mount','Montaria','KeyG'],
+  ['bag','Inventário (mochila)','Tab'],['hero','Personagem','KeyC'],['skills','Habilidades','KeyH'],['map','Mapa grande','KeyM'],['cam','Distância da câmera','KeyZ']];
+const NC_LOCKED = ['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Escape','Space'];
+const bindOf = a => (save.keys && save.keys[a]) || (NC_BIND.find(b => b[0] === a) || [])[2];
+const keyLabel = c => !c ? '—' : c === 'Tab' ? 'Tab' : /^Shift/.test(c) ? 'Shift' : /^Control/.test(c) ? 'Ctrl' : /^Alt/.test(c) ? 'Alt' : c === 'Space' ? 'Espaço' : c === 'Enter' ? 'Enter' : c === 'Backquote' ? "'" :
+  c.replace(/^Key/, '').replace(/^Digit/, '').replace(/^Numpad/, 'Num ');
+const isKey = (e, a) => { const b = bindOf(a); return e.code === b || (b && b.startsWith('Shift') && e.code.startsWith('Shift')); };
+let ncRebind = null;
+addEventListener('keydown', e => { if(!ncRebind) return; e.preventDefault(); e.stopImmediatePropagation();
+  const a = ncRebind; ncRebind = null;
+  if(e.code !== 'Escape' && !NC_LOCKED.includes(e.code)){ save.keys = Object.assign({}, save.keys || {}); const old = bindOf(a);
+    const other = NC_BIND.find(b => b[0] !== a && bindOf(b[0]) === e.code); if(other) save.keys[other[0]] = old;   // troca com quem já usava a tecla
+    save.keys[a] = e.code; persist(); }
+  try{ renderControls(); renderSkillbar(); }catch(_){} }, true);
+document.addEventListener('click', e => { const b = e.target.closest('[data-rebind],[data-rebindreset]'); if(!b) return;
+  if(b.dataset.rebindreset !== undefined){ save.keys = {}; persist(); ncRebind = null; } else ncRebind = b.dataset.rebind;
+  try{ renderControls(); renderSkillbar(); }catch(_){} });
+function ncSkillsPop(open){ let el = document.getElementById('ncSkPop'); if(!el){ el = document.createElement('div'); el.id = 'ncSkPop'; el.hidden = true; document.body.appendChild(el);
+    el.addEventListener('click', e => { if(e.target === el || e.target.closest('[data-skclose]')) ncSkillsPop(false); }); }
+  if(open === undefined) open = el.hidden !== false; el.hidden = !open; if(!open) return;
+  const c = CLS(), u = window.ncIconUrl || (() => 'none');
+  el.innerHTML = '<div class="skp-box"><button class="pop-x" data-skclose>✕</button><div class="eyebrow">Habilidades · ' + c.name + '</div>' + c.skills.map((k, i) =>
+    '<div class="skp-row"><i style=\'background-image:' + u(k.id) + '\'></i><div><b>' + k.full + '</b> <kbd>' + keyLabel(bindOf(i ? 's2' : 's1')) + '</kbd><small>Recarga ' + k.cd + ' s</small><span>' + k.desc + '</span></div></div>').join('')
+    + '<div class="istat" style="margin-top:8px">Em breve: árvore de habilidades para liberar e melhorar cada uma.</div></div>'; }
 let attackHeld = false, attackPressed = false, dashPressed = false, joyX = 0, joyZ = 0;
 addEventListener('keydown', e => {
   if(e.repeat && !['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) { if(e.code === 'Space' && mode === 'stage') e.preventDefault(); return; }
@@ -10038,17 +10063,20 @@ addEventListener('keydown', e => {
   if(running && !inputLocked && !mlook.alt && e.code !== 'Escape' && e.key !== 'Alt' && !mLocked()) lockMouse();
   if(e.code === 'Escape' && performance.now() - mlook.lostT < 400) return;
   if(e.code === 'Escape' || e.code === 'KeyP'){ if($('#mm').classList.contains('big')) $('#mm').classList.remove('big'); else togglePause(); return; }
-  if(e.code === 'KeyM'){ $('#mm').classList.toggle('big'); return; }
-  if(e.code === 'KeyZ'){ setZoom(((save.zoom ?? 4) + 1) % ZOOMS.length, true); return; }
+  if(isKey(e, 'map')){ $('#mm').classList.toggle('big'); return; }
+  if(e.code === 'Tab') e.preventDefault();
+  if(isKey(e, 'bag') || isKey(e, 'hero')){ if(running && !inputLocked){ const bag = isKey(e, 'bag'); try{ document.getElementById('ncBag').click(); setTimeout(() => { const t = document.querySelector(bag ? '#pauseGear .bgrid' : '#pauseGear .eqgrid'); if(t) t.scrollIntoView({block:bag ? 'center' : 'start'}); }, 60); }catch(_){} } else if(!$('#pause').hidden) togglePause(false); return; }
+  if(isKey(e, 'skills')){ ncSkillsPop(); return; }
+  if(isKey(e, 'cam')){ setZoom(((save.zoom ?? 4) + 1) % ZOOMS.length, true); return; }
   if(e.code === 'Minus' || e.code === 'NumpadSubtract'){ setZoom((save.zoom ?? 4) + 1, true); return; }
   if(e.code === 'Equal' || e.code === 'NumpadAdd'){ setZoom((save.zoom ?? 4) - 1, true); return; }
   if(!running || inputLocked) return;
-  if(e.code === 'Space' || e.code === 'KeyJ'){ attackPressed = true; e.preventDefault(); }
-  if(e.code === 'ShiftLeft' || e.code === 'ShiftRight' || e.code === 'KeyK') dashPressed = true;
-  if(e.code === 'KeyQ' || e.code === 'KeyL') usePotion();
-  if(e.code === 'KeyH' || e.code === 'KeyF') toggleMount();
-  if(e.code === 'KeyE' || e.code === 'KeyU' || e.code === 'Digit1') useSkill(0);
-  if(e.code === 'KeyR' || e.code === 'KeyI' || e.code === 'Digit2') useSkill(1);
+  if(e.code === 'Space' || isKey(e, 'atk')){ attackPressed = true; e.preventDefault(); }
+  if(isKey(e, 'dash')) dashPressed = true;
+  if(isKey(e, 'pot')) usePotion();
+  if(isKey(e, 'mount')) toggleMount();
+  if(isKey(e, 's1') || e.code === 'Digit1') useSkill(0);
+  if(isKey(e, 's2') || e.code === 'Digit2') useSkill(1);
   if(e.code.startsWith('Arrow')) e.preventDefault();
 });
 addEventListener('keyup', e => { keys[e.code] = false; });
@@ -10903,7 +10931,7 @@ function updatePlayer(dt){
     clampPos(P.pos, bossActive, P.mounted ? .8 : .45);
     hero.root.position.y = heightAt(P.pos.x, P.pos.z);
     if(len > .15 && P.swingT <= 0 && P.dashT <= 0 && P.castT <= 0) P.targetFace = Math.atan2(mx, mz);
-    if((attackPressed || attackHeld || padAtk || keys.Space || keys.KeyJ) && P.atkCd <= 0 && P.dashT <= 0 && !inputLocked) doAttack();
+    if((attackPressed || attackHeld || padAtk || keys.Space || keys[bindOf('atk')]) && P.atkCd <= 0 && P.dashT <= 0 && !inputLocked) doAttack();
   }
   dashPressed = false; attackPressed = false;
   P.face = lerpAngle(P.face, P.targetFace, 1 - Math.pow(P.mounted ? .002 : .00002, dt));
@@ -11194,19 +11222,21 @@ const PADG = {
 };
 const KB = {atk:['J','Espaço','Clique'], s1:['E','1'], s2:['R','2'], dash:['Shift','K'], mount:['H','F'], pot:['Q','L'], move:['W A S D','Setas'], map:['M'], cam:['Z','Roda do mouse'], pause:['Esc','P']};
 const g1 = k => { const g = PADG[padKind][k]; return `<span class="gbtn ${g[1]}">${g[0]}</span>`; };
-const k1 = k => KB[k].map(x => `<kbd>${x}</kbd>`).join(' ');
+const KBMAP = {bag:'bag', hero:'hero', skills:'skills', atk:'atk', s1:'s1', s2:'s2', dash:'dash', mount:'mount', pot:'pot', map:'map', cam:'cam'};
+const k1 = k => KBMAP[k] ? `<button class="kbind${ncRebind === KBMAP[k] ? ' on' : ''}" data-rebind="${KBMAP[k]}">${ncRebind === KBMAP[k] ? 'aperte…' : keyLabel(bindOf(KBMAP[k]))}</button>` + (k === 'atk' ? ' <kbd>Espaço</kbd> <kbd>Clique</kbd>' : k === 'cam' ? ' <kbd>Roda do mouse</kbd>' : '') : KB[k].map(x => `<kbd>${x}</kbd>`).join(' ');
 function actionList(){ const c = CLS(); return [
   ['move', 'Andar', 'stick', 'Joystick na esquerda'], ['atk', 'Atacar (segure para golpes seguidos)', 'a', 'Botão vermelho Atacar'],
   ['s1', c.skills[0].full + ': ' + c.skills[0].desc, 'x', 'Botão roxo de baixo'], ['s2', c.skills[1].full + ': ' + c.skills[1].desc, 'y', 'Botão roxo de cima'],
   ['dash', c.dash + ': esquiva rápida, fica invencível por um instante', 'b', 'Botão Esquiva'], ['mount', 'Montar ou descer do cavalo', 'view', 'Botão Cavalo'],
   ['pot', 'Beber poção', 'lb', 'Botão Poção no topo'], ['map', 'Mapa grande', 'rs', 'Toque no minimapa'], ['cam', 'Trocar a distância da câmera', 'ls', 'Pinça com dois dedos ou botão da câmera'],
-  ['pause', 'Pausar, trocar armadura e configurações', 'menu', 'Botão II no topo']]; }
+  ['pause', 'Pausar, trocar armadura e configurações', 'menu', 'Botão II no topo']].concat(inputDev === 'pad' || inputDev === 'touch' ? [] : [['bag', 'Abrir o inventário (mochila)', 'menu', ''], ['hero', 'Abrir o personagem (equipamento e atributos)', 'menu', ''], ['skills', 'Ver as habilidades', 'menu', '']]); }
 function ctrlHTML(dev){
   const d = dev || inputDev, L = actionList();
   const head = d === 'pad' ? `Controle ${padKind === 'ps' ? 'PlayStation' : 'Xbox'} detectado` : d === 'touch' ? 'Tela de toque detectada' : 'Teclado e mouse detectados';
   let rows = L.map(([k, txt, pk, tt]) => `<div class="crow"><span class="cbtns">${d === 'pad' ? (k === 'dash' ? g1('b') + g1('rb') : k === 'pot' ? g1('lb') + g1('lt') : g1(pk)) : d === 'touch' ? `<span class="tchip">${tt}</span>` : k1(k)}</span><span>${txt}</span></div>`).join('');
   if(d === 'pad') rows += `<div class="crow"><span class="cbtns">${g1('rstick')}</span><span>Girar e inclinar a câmera para cima e para baixo (em todas as distâncias, no mapa e na pausa)</span></div><div class="crow"><span class="cbtns">${g1('dpad')} ${g1('a')}</span><span>Navegar nos menus · ${g1('lb')} ${g1('rb')} trocam de aba no mapa · ${g1('b')} volta</span></div>`;
-  if(d === 'kb') rows += `<div class="crow"><span class="cbtns"><kbd>Clique direito</kbd></span><span>Habilidade 1</span></div><div class="crow"><span class="cbtns"><kbd>Mover o mouse</kbd></span><span>Gira e inclina a câmera para cima e para baixo (em todas as distâncias) · o cursor some enquanto joga · segure <kbd>Alt</kbd> para ver o cursor · Esc pausa</span></div><div class="crow"><span class="cbtns"><kbd>+</kbd> <kbd>−</kbd></span><span>Aproximar e afastar a câmera</span></div>`;
+  if(d === 'kb') rows += `<div class="crow"><span class="cbtns"><button class="kbind" data-rebindreset>Voltar ao padrão</button></span><span>Toque numa tecla da lista para trocar: o jogo pede a nova tecla. Andar (WASD e setas), Esc e Espaço não mudam. As teclas ficam guardadas neste computador.</span></div>`;
+  if(d === 'kb') rows += `<div class="crow"><span class="cbtns"><kbd>Clique e arraste</kbd></span><span>Gira e inclina a câmera (o cursor vira uma manopla fechada enquanto arrasta)</span></div><div class="crow"><span class="cbtns"><kbd>+</kbd> <kbd>−</kbd></span><span>Aproximar e afastar a câmera</span></div>`;
   return `<div class="ctabs">${[['kb','Teclado'],['pad','Controle'],['touch','Toque']].map(([k, n]) => `<button class="chipb" data-ctab="${k}" aria-pressed="${k === d}">${n}${k === inputDev ? ' •' : ''}</button>`).join('')}</div><div class="istat chead">${head}${(dev && dev !== inputDev) ? ' (mostrando outro aparelho)' : ''}</div><div class="clist">${rows}</div>`;
 }
 let ctrlView = null;
@@ -11226,7 +11256,8 @@ document.getElementById('skillbar').addEventListener('pointerdown', e => { const
   const i = +k.id.slice(2); if(i === 0) attackPressed = true; else if(i === 1) useSkill(0); else if(i === 2) useSkill(1); else if(i === 3) dashPressed = true; else if(i === 4) toggleMount(); else if(i === 5) usePotion(); });
 function renderSkillbar(){
   const c = CLS(), pad = inputDev === 'pad';
-  const items = [['Ataque', pad ? g1('a') : '<kbd>J</kbd>'], [c.skills[0].full, pad ? g1('x') : '<kbd>E</kbd>'], [c.skills[1].full, pad ? g1('y') : '<kbd>R</kbd>'], [c.dash, pad ? g1('b') : '<kbd>Shift</kbd>'], ['Cavalo', pad ? g1('view') : '<kbd>H</kbd>'], ['Poção', pad ? g1('lb') : '<kbd>Q</kbd>']];
+  const kk = a => '<kbd>' + keyLabel(bindOf(a)) + '</kbd>';
+  const items = [['Ataque', pad ? g1('a') : kk('atk')], [c.skills[0].full, pad ? g1('x') : kk('s1')], [c.skills[1].full, pad ? g1('y') : kk('s2')], [c.dash, pad ? g1('b') : kk('dash')], ['Montaria', pad ? g1('view') : kk('mount')], ['Poção', pad ? g1('lb') : kk('pot')]];
   $('#skillbar').innerHTML = items.map((it, i) => `<div class="sk ${i === 0 ? 'atk' : i < 3 ? 'skl' : ''}" id="sk${i}" title="${it[0]}"><div class="ov"></div><i class="ic${i === 1 || i === 2 ? ' pic' : ''}" style='background-image:${window.ncIconUrl ? window.ncIconUrl(['atk', c.skills[0].id, c.skills[1].id, 'dash', 'horse', 'potion'][i]) : 'none'}'></i><b>${it[0]}</b>${it[1]}</div>`).join('');
   $('#tSk1').textContent = c.skills[0].name; $('#tSk2').textContent = c.skills[1].name; $('#tDash').textContent = c.dash;
   if(window.ncHud) window.ncHud(c.skills[0].id, c.skills[1].id);
@@ -12658,6 +12689,14 @@ document.addEventListener('touchmove', e => { if(e.touches.length > 1) e.prevent
 #touch .tbtns,.skillbar{filter:drop-shadow(1.5px 0 0 #d8dfec) drop-shadow(-1.5px 0 0 #d8dfec) drop-shadow(0 1.5px 0 #d8dfec) drop-shadow(0 -1.5px 0 #d8dfec) drop-shadow(0 4px 6px rgba(0,0,0,.6))}
 .skillbar{bottom:calc(18px + env(safe-area-inset-bottom,0px))!important}
 .skillbar{pointer-events:auto}
+.kbind{font:700 12px/1 var(--f-body);min-width:34px;padding:6px 9px;background:#1a1438;color:#f4efe2;border:1px solid #c9a24a;border-radius:4px;cursor:pointer}.kbind.on{background:#c9a24a;color:#14101f;animation:ncReady .8s infinite alternate}
+#ncSkPop{position:fixed;inset:0;z-index:85;background:rgba(4,5,10,.55);display:grid;place-items:center}#ncSkPop[hidden]{display:none}
+.skp-box{position:relative;width:min(460px,calc(100vw - 24px));max-height:80vh;overflow:auto;box-sizing:border-box;padding:16px;background:linear-gradient(180deg,#221a46,#15122b);border:16px solid transparent;border-image:url(assets/ui/frame-d.png) 32 stretch;background-clip:padding-box}
+.skp-row{display:flex;gap:12px;align-items:flex-start;margin-top:12px}.skp-row i{flex:0 0 56px;height:56px;background:center/cover;border:2px solid #d8dfec}.skp-row b{color:#f4efe2}.skp-row small{display:block;color:var(--mute);font-size:12px}.skp-row span{display:block;font-size:13px;color:#cfc9e6;margin-top:3px}
+/* cursor escolhido pelo Arnold (opção 1, manopla; Kenney Cursor Pack, CC0) */
+@media (pointer:fine){html,body,button,a,summary,label,[data-nc],.chip,.bcell,.sk{cursor:url(assets/cursor/gauntlet_point.png) 2 2,auto!important}
+canvas.ncgrabok{cursor:url(assets/cursor/gauntlet_open.png) 14 12,grab!important}canvas.ncgrab,canvas.ncgrabok.ncgrab{cursor:url(assets/cursor/gauntlet_default.png) 14 12,grabbing!important}
+input,textarea{cursor:text!important}}
 /* recarga: escurece em sentido horário e mostra os segundos; quando volta, dá um brilho */
 .sk .ov{top:0;height:100%!important;background:conic-gradient(rgba(6,4,14,.72) calc(var(--p,0)*360deg),transparent 0)!important;border-radius:0!important}
 .sk .cdn{position:absolute;inset:0;display:grid;place-items:center;font-style:normal;font:700 22px/1 var(--f-display);color:#fff;text-shadow:0 0 4px #000,0 2px 3px #000;pointer-events:none}
