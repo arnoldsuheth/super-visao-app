@@ -739,6 +739,7 @@ body.nocur, body.nocur *{cursor:none !important}
       <span class="chip tchip" id="hTime"></span>
       <span class="chip g" id="hGold">0</span>
       <button class="chip" id="potBtn">Poção ×<span id="hPot">3</span></button>
+      <button class="chip" id="ncBag" aria-label="Mochila e herói"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8h12l1.5 11a2 2 0 0 1-2 2h-11a2 2 0 0 1-2-2Z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/><path d="M9 13h6"/></svg><span class="ncbag-t">Mochila</span></button>
       <button class="chip" id="fsBtn" aria-label="Tela cheia"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M3 3h7v2H5v5H3zM14 3h7v7h-2V5h-5zM3 14h2v5h5v2H3zM19 14h2v7h-7v-2h5z"/></svg></button>
       <button class="chip" id="pauseBtn" aria-label="Pausar">II</button>
     </div>
@@ -6276,7 +6277,7 @@ function detectChip(g){
   else if(/SwiftShader|llvmpipe|Software/i.test(g)){ lv = 1; soc = 'sem aceleração de vídeo'; }
   else lv = cores >= 8 && mem >= 6 ? 3 : cores >= 4 ? 2 : 1;
   if(mem && mem <= 2) lv = Math.min(lv, 1); else if(mem && mem <= 4) lv = Math.min(lv, 3);
-  if(COARSE) lv = Math.min(lv, 3); // NINE CROWNS: celular no automático vai até "Médio" (mais leve); Alto e Ultra continuam nos Ajustes. Antes: até "Alto" (o Ultra esquenta muito); dá para escolher Ultra manualmente
+  if(COARSE) lv = Math.min(lv, 2); // NINE CROWNS: celular no automático vai até "Médio" (mais leve); Alto e Ultra continuam nos Ajustes. Antes: até "Alto" (o Ultra esquenta muito); dá para escolher Ultra manualmente
   return {name, soc, lv, cores, mem, preset:GFX_NAMES[clamp(lv, 1, 5) - 1]};
 }
 const CHIP = detectChip();
@@ -7589,7 +7590,7 @@ function itemRow(it, actions){
 function renderGear(){
   $('#eqGrid').innerHTML = ncSlots().map(slot => {
     const it = equipped(slot);
-    return `<button class="eq ${it ? 'has' : ''}" data-uneq="${slot}" style="--tc:${it ? TIERS[it.tier].css : '#3a405c'}" ${it ? '' : 'disabled'} title="${it ? 'Tirar ' + itemName(it) : 'Vazio'}">${slotIcon(slot, it && it.wtype)}<span class="en">${it ? itemName(it) : SLOT_INFO[slot].n}</span><span class="es" ${it ? `style="color:${TIERS[it.tier].css}"` : ''}>${it ? TIERS[it.tier].sc + ' · ' + TIERS[it.tier].n : 'vazio'}</span></button>`;
+    return `<button class="eq ${it ? 'has' : ''}" data-uneq="${slot}" style="--tc:${it ? TIERS[it.tier].css : '#3a405c'}" ${it ? '' : 'disabled'} title="${it ? 'Tirar ' + itemName(it) : 'Vazio'}">${it ? pieceImg(it.tier, slot, 'ps-eq', it.wtype) : slotIcon(slot)}<span class="en">${it ? itemName(it) : SLOT_INFO[slot].n}</span><span class="es" ${it ? `style="color:${TIERS[it.tier].css}"` : ''}>${it ? TIERS[it.tier].sc + ' · ' + TIERS[it.tier].n : 'vazio'}</span></button>`;
   }).join('');
   const B = bonuses(), c = B.counts;
   let bl = `<div class="bon"><b>Peças vestidas:</b> ${TIERS.map((t, i) => c[i] ? `<span style="color:${t.css}">${c[i]} ${t.name}</span>` : '').filter(Boolean).join(' · ') || 'nenhuma'}<small>As combinações misturam peças de grades diferentes: Grade C, Grade B ou A e Ródio (A) ou Rutênio (S).</small></div>`;
@@ -7702,7 +7703,28 @@ function pieceSrc(t, slot, wtype, lazy){
   }
   pieceMake(key, t, slot, wtype); return ICONS[key];
 }
-function pieceImg(t, slot, cls, wtype){
+// ===== Imagens dos itens (desenhos proprios do Nine Crowns; a cor de destaque e a do grade) =====
+const NC_ART = {
+  helmet:'<path class="m" d="M13 36a19 19 0 0 1 38 0v14H39V40H25v10H13Z"/><path class="a" d="M29 6h6v14h-6z"/><path class="k" d="M24 31h16v4H24z"/><path class="s" d="M19 30a13 13 0 0 1 9-11"/>',
+  chest:'<path class="m" d="M15 12l11 5h12l11-5 7 13-9 5v25H17V30l-9-5Z"/><path class="a" d="M29 22h6v28h-6z"/><path class="a" d="M20 36h24v5H20z"/><path class="s" d="M21 20l4 10"/>',
+  shoulders:'<path class="m" d="M6 44a26 24 0 0 1 52 0H45a13 12 0 0 0-26 0Z"/><path class="a" d="M12 34a21 18 0 0 1 40 0h-6a15 12 0 0 0-28 0Z"/><path class="a" d="M29 10l3-5 3 5v8h-6z"/>',
+  bracers:'<path class="m" d="M21 8h22l2 24 7 5v11l-7 8H19l-7-8V37l7-5Z"/><path class="a" d="M20 14h24v6H20z"/><path class="k" d="M24 42v10M32 42v10M40 42v10"/><path class="s" d="M25 24l-1 8"/>',
+  greaves:'<path class="m" d="M15 8h34l-3 48H35l-3-28-3 28H18Z"/><path class="a" d="M15 8h34v7H15z"/><path class="a" d="M19 34h8v6h-8zM37 34h8v6h-8z"/>',
+  boots:'<path class="m" d="M20 8h18v26l16 9v13H20Z"/><path class="a" d="M20 13h18v6H20z"/><path class="k" d="M20 50h34"/><path class="s" d="M25 24v8"/>',
+  shield:'<path class="m" d="M32 6l21 7v19c0 13-9 21-21 26C20 53 11 45 11 32V13Z"/><path class="a" d="M29 13h6v38h-6zM17 26h30v6H17z"/><path class="s" d="M18 18l8-3"/>',
+  amulet:'<path class="l" d="M15 6c4 20 12 25 17 27 5-2 13-7 17-27"/><path class="a" d="M32 28l11 12-11 18-11-18Z"/><path class="s" d="M28 40l4-5"/>',
+  sword:'<path class="m" d="M43 5h14v14L30 46l-12-12Z"/><path class="a" d="M12 30l22 22-5 5-22-22Z"/><path class="h" d="M6 50l8-8 8 8-8 8Z"/><path class="s" d="M46 12L28 30"/>',
+  axe:'<path class="h" d="M10 54L42 16l6 5-32 38Z"/><path class="m" d="M36 6c11-3 21 3 23 15-8 0-15 3-19 8L28 18c4-3 6-7 8-12Z"/><path class="a" d="M33 20l7 6-4 4-7-6Z"/>',
+  staff:'<path class="h" d="M8 56L40 20l6 5-32 36Z"/><path class="m" d="M36 16l6-8 12 2 2 12-8 6Z"/><circle class="a" cx="46" cy="18" r="6"/>',
+  bow:'<path class="hl" d="M14 6c30 6 40 30 34 52"/><path class="k" d="M14 6L48 58"/><path class="m" d="M8 56L46 18l-2 10 10-2-10 10Z"/><path class="a" d="M8 56l4-10 6 6Z"/>',
+  hammer:'<path class="h" d="M8 56L34 26l6 5-26 30Z"/><path class="m" d="M30 10l16-6 14 16-8 14-12 2-12-14Z"/><path class="a" d="M38 14l12 14-5 4-12-14Z"/>',
+  daggers:'<path class="m" d="M10 8l10 2 22 26-8 8L12 18Z"/><path class="m" d="M54 8l-10 2-22 26 8 8 22-26Z"/><path class="a" d="M36 38l10 10-5 5-10-10ZM28 38L18 48l5 5 10-10Z"/><path class="h" d="M46 50l8 8M18 50l-8 8"/>',
+  fists:'<path class="m" d="M14 22h30a8 8 0 0 1 8 8v14a12 12 0 0 1-12 12H24a10 10 0 0 1-10-10Z"/><path class="a" d="M14 22h30v8H14z"/><path class="k" d="M22 30v8M30 30v8M38 30v8"/><path class="h" d="M22 56h18v4H22z"/>',
+  scythe:'<path class="h" d="M12 58L40 14l6 4-28 44Z"/><path class="m" d="M30 10c14-8 26-2 30 14-8-8-18-10-28-4Z"/><path class="a" d="M36 14l8 6-4 5-8-6Z"/>',
+};
+const ncArt = (slot, wtype) => '<svg viewBox="0 0 64 64" aria-hidden="true">' + (NC_ART[slot === 'weapon' ? (wtype || CLS().wtype) : slot] || NC_ART.sword) + '</svg>';
+function pieceImg(t, slot, cls, wtype){ return `<span class="pimg nci ${cls || ''}" style="--tc:${TIERS[t].css}" role="img" aria-label="${SLOT_INFO[slot].n}">${ncArt(slot, wtype)}</span>`; }
+function pieceImgOld(t, slot, cls, wtype){
   const src = pieceSrc(t, slot, wtype, true);
   const ic = slotIcon(slot, wtype);
   if(src === undefined) return `<span class="pimg pico ${cls || ''}" data-pk="${pieceKey(t, slot, wtype)}" data-pc="${cls || ''}" style="--tc:${TIERS[t].css}">${ic}</span>`;
@@ -9532,9 +9554,12 @@ function monAttach(cr, key, o){
   if(!monOn() || !key) return; o = o || {};
   monLoad(key, g => { if(!g || cr.mon) return;
     const model = monClone(g.scene), base = cr.mats[0] && cr.mats[0].userData.baseE, mats = [];
-    model.traverse(n => { if(n.isMesh){ const m = new T.MeshStandardMaterial({map:monTex(), skinning:!!n.isSkinnedMesh, roughness:.78, metalness:0});
-      m.userData.baseE = base ? base.clone() : new T.Color(o.elite ? 0x3a2a04 : 0x000000); m.emissive.copy(m.userData.baseE); n.material = m; mats.push(m); n.castShadow = true; } });
-    cr.body.traverse(n => { if(n.isMesh) n.visible = false; });
+    const lite = COARSE && !o.boss;   // celular: monstros comuns dividem um material so e nao fazem sombra
+    model.traverse(n => { if(n.isMesh){ let m;
+      if(lite){ const mk = n.isSkinnedMesh ? 'ms' : 'mm'; m = MON[mk] || (MON[mk] = new T.MeshLambertMaterial({map:monTex(), skinning:!!n.isSkinnedMesh})); n.material = m; n.castShadow = false; }
+      else { m = new T.MeshStandardMaterial({map:monTex(), skinning:!!n.isSkinnedMesh, roughness:.78, metalness:0});
+        m.userData.baseE = base ? base.clone() : new T.Color(o.elite ? 0x3a2a04 : 0x000000); m.emissive.copy(m.userData.baseE); n.material = m; mats.push(m); n.castShadow = true; } } });
+    { const dead = []; cr.body.traverse(n => { if(n.isMesh) dead.push(n); }); dead.forEach(n => { n.visible = false; n.castShadow = false; n.matrixAutoUpdate = false; }); }
     const sz = g.box.getSize(new T.Vector3()), fly = key[0] === 'f', th = key[0] === 'b' ? 2.15 : fly ? 1.7 : 1.75;
     let k = th/Math.max(.01, sz.y); const wide = Math.max(sz.x, sz.z)*k; if(wide > 2.6) k *= 2.6/wide;
     model.scale.setScalar(k); model.position.y = -g.box.min.y*k + (fly ? .55 : 0); cr.body.add(model);
@@ -9557,7 +9582,7 @@ function monUpdate(e, dt){
   const lg = cr.legL.rotation.x, ar = Math.min(cr.armR.rotation.x, cr.armL.rotation.x);
   if(Math.abs(lg - m.lg) > 1e-4) m.mvT = .14; else m.mvT -= dt; m.lg = lg;
   const hitNow = e.flashT > m.fl + .01 || (e.hitT > 0 && !(m.ht > 0)); m.fl = e.flashT || 0; m.ht = e.hitT || 0;
-  if(e.kind !== 'boss' && P && Math.abs(e.pos.x - P.pos.x) + Math.abs(e.pos.z - P.pos.z) > 46) return;   // longe da tela: nao gasta o celular animando
+  if(e.kind !== 'boss' && P && (!cr.root.visible || Math.abs(e.pos.x - P.pos.x) + Math.abs(e.pos.z - P.pos.z) > (COARSE ? 30 : 46))) return;   // longe da tela: nao gasta o celular animando
   if(m.lock > 0) m.lock -= dt;
   if(e.dying > 0 || e.dead) monPlay(m, 'death');
   else if(ar < -1.2){ if(!m.armUp){ m.armUp = true; m.cur = m.cur === 'atk' ? null : m.cur; monPlay(m, 'atk'); } }
@@ -9661,7 +9686,7 @@ function spawnBoss(st){
   boss.parts = bossParts(boss);
   cr.root.scale.setScalar(M.sc);
   if(M.e) cr.mats.forEach(m => { m.userData.baseE = C(M.e); m.emissive.copy(m.userData.baseE); });
-  monAttach(cr, monPick(st, 'boss'), {});
+  monAttach(cr, monPick(st, 'boss'), {boss:true});
   enemies.push(boss);
 }
 
@@ -10675,7 +10700,7 @@ function updateEnemies(dt){
     if(e.kind === 'boss'){ updateBoss(e, dt); unflash(e, e.cr.mats, dt); continue; }
     const dx = P.pos.x - e.pos.x, dz = P.pos.z - e.pos.z, dist = Math.hypot(dx, dz) || .001;
     const cr = e.cr;
-    cr.root.visible = dist < 80;
+    cr.root.visible = dist < (COARSE ? 34 : 80);   // celular: so desenha quem esta perto
     if(!e.awake){ if(dist < DF().aggro) e.awake = true; else { e.bar.g.visible = false; continue; } }
     e.pos.addScaledVector(e.kb, dt); e.kb.multiplyScalar(Math.pow(.001, dt));
     let frozen = false;
@@ -11240,7 +11265,7 @@ const inspect = {yaw:0, dist:4.6};
 function renderPauseGear(){
   const B = bonuses(), S = stats();
   const eq = ncSlots().map(slot => { const it = equipped(slot);
-    return `<button class="eq ${it ? 'has' : ''}" data-puneq="${slot}" style="--tc:${it ? TIERS[it.tier].css : '#3a405c'}" ${it ? '' : 'disabled'} title="${it ? 'Tirar ' + itemName(it) : 'Vazio'}">${slotIcon(slot, it && it.wtype)}<span class="en">${it ? itemName(it) : SLOT_INFO[slot].n}</span><span class="es" ${it ? `style="color:${TIERS[it.tier].css}"` : ''}>${it ? TIERS[it.tier].sc + ' · ' + TIERS[it.tier].n : 'vazio'}</span></button>`; }).join('');
+    return `<button class="eq ${it ? 'has' : ''}" data-puneq="${slot}" style="--tc:${it ? TIERS[it.tier].css : '#3a405c'}" ${it ? '' : 'disabled'} title="${it ? 'Tirar ' + itemName(it) : 'Vazio'}">${it ? pieceImg(it.tier, slot, 'ps-eq', it.wtype) : slotIcon(slot)}<span class="en">${it ? itemName(it) : SLOT_INFO[slot].n}</span><span class="es" ${it ? `style="color:${TIERS[it.tier].css}"` : ''}>${it ? TIERS[it.tier].sc + ' · ' + TIERS[it.tier].n : 'vazio'}</span></button>`; }).join('');
   const act = [...B.sets.map(t => `<b style="color:${TIERS[t].css}">${SET_NAMES[t]}</b>`), ...COMBOS.filter(k => B.combos.includes(k.id)).map(k => `<b style="color:${k.css}">${k.name}</b>`)];
   const fl = [['all','Todos'], ...ncSlots().map(s => [s, SLOT_INFO[s].n])];
   const list = save.inv.filter(i => !isEquipped(i) && (pFilter === 'all' || i.slot === pFilter))
@@ -11616,6 +11641,7 @@ $('#dead').addEventListener('click', e => {
 $('#resumeBtn').onclick = () => togglePause(false);
 $('#quitBtn').onclick = () => goHub();
 $('#pauseBtn').onclick = () => togglePause(true);
+$('#ncBag').onclick = () => { togglePause(true); try{ const b = document.querySelector('#pause .stabs button[data-sec="gear"]'); if(b) b.click(); const g = document.getElementById('pauseGear'); if(g) g.scrollIntoView({block:'start'}); }catch(e){} };
 $('#potBtn').onclick = () => usePotion();
 function syncVolUI(){ const v = save.vol || (save.vol = {master:.7, music:.5, sfx:.8}); document.querySelectorAll('[data-vol]').forEach(el => { el.value = Math.round(v[el.dataset.vol]*100); }); }
 document.addEventListener('input', e => { const el = e.target; if(!el.dataset || !el.dataset.vol) return; save.vol = save.vol || {master:.7, music:.5, sfx:.8};
@@ -12209,6 +12235,20 @@ body.nc-l #hub>aside.panel::before,body.nc-r #hub>#rightPanel::before{transform:
 .mbox .chipb,.mbox .eq{border:0;border-radius:0;clip-path:var(--cuts);background:#241a44;color:var(--vink)}
 .mbox .chipb[aria-pressed="true"]{background:linear-gradient(180deg,#ffe36a,#ffb347);color:#120a1e}
 #hub .card{border:0;border-radius:0;clip-path:var(--cuts);background:#1a1438;box-shadow:inset 0 0 0 1.5px #3c2f7a}
+/* --- imagens dos itens --- */
+.pimg.nci{--s:44px;border-radius:0;clip-path:var(--cuts);background:radial-gradient(circle at 50% 40%,color-mix(in srgb,var(--tc) 38%,#1a1438),#0d0a22 78%);box-shadow:inset 0 0 0 2px var(--tc),inset 0 0 0 3.5px #05050c;display:inline-grid;place-items:center;padding:0}
+.pimg.nci svg{width:78%;height:78%;fill:none;filter:drop-shadow(0 2px 2px rgba(0,0,0,.55))}
+.pimg.nci.ps-eq{--s:50px}.pimg.nci.ps-card{--s:72px}
+.nci .m{fill:url(#ncMetal);stroke:#05050c;stroke-width:2.4;stroke-linejoin:round}
+.nci .a{fill:var(--tc);stroke:#05050c;stroke-width:2.2;stroke-linejoin:round}
+.nci .h{fill:#9a6a34;stroke:#05050c;stroke-width:2.4;stroke-linejoin:round;stroke-linecap:round}
+.nci .hl{fill:none;stroke:#9a6a34;stroke-width:5;stroke-linecap:round}
+.nci .l{fill:none;stroke:#cfd6e6;stroke-width:3;stroke-linecap:round}
+.nci .k{fill:none;stroke:#05050c;stroke-width:2.4;stroke-linecap:round}
+.nci .s{fill:none;stroke:#fff;stroke-width:2.6;stroke-linecap:round;opacity:.75}
+#hub .eq svg,.mbox .eq svg{fill:#4a3f8a}#hub .eq .nci svg,.mbox .eq .nci svg{fill:none;width:78%;height:78%}
+#ncBag{display:inline-flex;align-items:center;gap:6px}.ncbag-t{font-size:12px}
+@media (max-width:600px){.ncbag-t{display:none}}
 /* --- partida --- */
 #hud .hud-lv{border-radius:0;clip-path:var(--gem);width:50px;height:56px;top:-8px;background:linear-gradient(180deg,#ffe36a,#ffb347);box-shadow:none}
 #hud .hud-lv b{color:#120a1e;text-shadow:none;font-weight:400}
@@ -12224,6 +12264,7 @@ body.nc-l #hub>aside.panel::before,body.nc-r #hub>#rightPanel::before{transform:
 @media (max-width:600px){.skillbar{gap:5px}.sk{width:54px;height:62px}}
 @media (max-width:600px) and (orientation:portrait){.nc-b{height:56px}.nc-go{padding:12px 36px;font-size:16px}.ncs-logo{font-size:clamp(30px,8.6vw,84px)}}
 </style>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><linearGradient id="ncMetal" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".45" stop-color="#c9d0e2"/><stop offset="1" stop-color="#6f7892"/></linearGradient></defs></svg>
 <script id="nc-vitral-js">
 (function(){
   var SW='<svg class="nc-sword" viewBox="0 0 90 260" aria-hidden="true"><defs><linearGradient id="ncSwG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff0b8"/><stop offset=".45" stop-color="#f2c14e"/><stop offset="1" stop-color="#b9801f"/></linearGradient><linearGradient id="ncSwS" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#aab0cc"/></linearGradient></defs><path fill="url(#ncSwG)" d="M22 40 L16 14 L32 24 L45 4 L58 24 L74 14 L68 40 Z"/><rect fill="url(#ncSwG)" x="10" y="52" width="70" height="10" rx="4"/><rect x="39" y="44" width="12" height="46" fill="#8a5a2a"/><path fill="url(#ncSwS)" d="M34 64 H56 V215 L45 250 L34 215 Z"/><path d="M45 66 V240" stroke="#7d84a6" stroke-width="2"/></svg>';
