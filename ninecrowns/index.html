@@ -12512,6 +12512,7 @@ var ncCoop = {
       .on('broadcast', {event:'en'}, m => this.onEn(m.payload))
       .on('broadcast', {event:'lt'}, m => { const p = m.payload; if(p && this.shared && mode === 'stage' && !loot.some(l => l.lid === p.lid)){ const it = p.it; it.id = save.nextId++; dropLoot({x:p.x, z:p.z}, it.tier, {item:it, x:p.x, z:p.z, lid:p.lid}); } })
       .on('broadcast', {event:'pk'}, m => { const p = m.payload; const i = p ? loot.findIndex(l => l.lid === p.lid) : -1; if(i >= 0){ const l = loot[i]; removeObj(l.g); if(l.tag) l.tag.remove(); loot.splice(i, 1); } })
+      .on('broadcast', {event:'tr'}, m => this.onTr(m.payload))
       .on('broadcast', {event:'dmg'}, m => this.onDmg(m.payload))
       .on('broadcast', {event:'kill'}, m => this.onKill(m.payload))
       .on('broadcast', {event:'chat'}, m => { const p = m.payload; if(p && p.tx) this.chatAdd(p.nm || 'Amigo', p.tx); })
@@ -12553,6 +12554,7 @@ var ncCoop = {
   menu(id){ const q = this.peers[id]; if(!q || !q.d) return; const d = q.d; let el = document.getElementById('ncPeerPop'); if(!el){ el = document.createElement('div'); el.id = 'ncPeerPop'; document.body.appendChild(el); }
     const inv = save.inv.filter(it => !isEquipped(it));
     el.hidden = false; el.innerHTML = '<div class="pop-bg" data-peerclose></div><div class="pop-box"><button class="pop-x" data-peerclose>✕</button><div class="eyebrow">' + (d.nm || 'Herói') + ' · ' + ((CLASSES[d.cls] || {}).name || '') + ' nv ' + (d.lv || 1) + '</div>'
+      + '<button class="btn primary" data-trade="' + id + '" style="width:100%;margin-top:8px">⇄ Propor troca</button>'
       + '<div class="peer-sec"><b>Enviar Adena</b><small>Você tem ' + adenaTxt(save.gold) + '</small><div class="peer-row">' + [100, 1000, 10000, 100000].map(v => '<button class="btn sm" data-peergold="' + id + ':' + v + '" ' + (save.gold >= v ? '' : 'disabled') + '>' + adenaTxt(v) + '</button>').join('') + '</div></div>'
       + '<div class="peer-sec"><b>Enviar item da mochila</b>' + (inv.length ? '<div class="bgrid">' + inv.map(it => '<button class="bcell" data-peeritem="' + id + ':' + it.id + '" title="' + itemName(it) + '">' + pieceImg(it.tier, it.slot, itemCls(it), it.wtype, it.up) + '</button>').join('') + '</div>' : '<small>Nenhum item livre na mochila.</small>') + '</div>'
       + '<small class="istat">O que você enviar sai da sua mochila na hora e vai para a de ' + (d.nm || 'seu amigo') + '.</small></div>'; },
@@ -12630,6 +12632,41 @@ var ncCoop = {
   sendKill(e){ if(this.ch && this.host && e.nid && mode === 'stage') this.send('kill', {n:e.nid, st:curStage && curStage.id}); },
   onKill(p){ if(!p || this.host) return; const e = this.rems[p.n]; if(!e || e.dead || e.dying) return; delete this.rems[p.n]; e.hp = 0; const n = e.rem; e.rem = 0;
     this.noDrop = e.kind !== 'boss'; try{ e.kind === 'boss' ? bossDefeated(e) : killMinion(e); }catch(err){ e.dead = true; } finally{ this.noDrop = false; } },
+  /* ===== TROCA DOS DOIS LADOS =====
+     Cada um escolhe itens e Adena. Os dois veem as duas ofertas. Mudou algo, o "aceito" dos dois cai.
+     Quando os dois aceitam a MESMA combinação (conferida por uma assinatura), cada aparelho entrega o seu e recebe o do outro. */
+  tr:null,
+  trSig(){ const t = this.tr; return JSON.stringify([t.mine.map(i => i.id + ':' + i.tier + i.slot), t.mineG, t.his.map(i => i.id + ':' + i.tier + i.slot), t.hisG]); },
+  trSend(op, extra){ const t = this.tr; if(!t) return; this.send('tr', Object.assign({to:t.with, from:this.id, op, items:t.mine, gold:t.mineG}, extra || {})); },
+  trOpen(id, asked){ const q = this.peers[id]; this.tr = {with:id, nm:(q && q.d && q.d.nm) || 'Amigo', mine:[], mineG:0, his:[], hisG:0, okMe:false, okHim:false, hisSig:''}; if(!asked) this.trSend('open'); const pp = document.getElementById('ncPeerPop'); if(pp) pp.hidden = true; this.trDraw(); },
+  onTr(p){ if(!p || p.to !== this.id) return; const t = this.tr;
+    if(p.op === 'open'){ if(t && t.with !== p.from) return this.send('tr', {to:p.from, from:this.id, op:'busy'}); const q = this.peers[p.from]; try{ banner('Proposta de troca', ((q && q.d && q.d.nm) || 'Seu amigo') + ' quer trocar com você'); }catch(_){} this.trOpen(p.from, true); return; }
+    if(!t || t.with !== p.from) return;
+    if(p.op === 'busy'){ try{ banner('Troca', t.nm + ' está em outra troca agora'); }catch(_){} this.tr = null; return this.trDraw(); }
+    if(p.op === 'cancel'){ try{ banner('Troca cancelada', t.nm + ' fechou a troca'); }catch(_){} this.tr = null; return this.trDraw(); }
+    if(p.op === 'offer'){ t.his = p.items || []; t.hisG = p.gold || 0; t.okMe = t.okHim = false; return this.trDraw(); }
+    if(p.op === 'ok'){ t.okHim = true; t.hisSig = p.sig; this.trTry(); return this.trDraw(); } },
+  trTry(){ const t = this.tr; if(!t || !t.okMe || !t.okHim) return;
+    // a assinatura do outro é a dele vista do lado dele: mine/his trocados
+    const mineSig = JSON.stringify([t.his.map(i => i.id + ':' + i.tier + i.slot), t.hisG, t.mine.map(i => i.id + ':' + i.tier + i.slot), t.mineG]);
+    if(t.hisSig !== mineSig){ t.okMe = t.okHim = false; return; }
+    // entrega o meu (se ainda tenho tudo) e recebe o dele
+    if(save.gold < t.mineG || t.mine.some(i => !byId(i.id) || isEquipped(byId(i.id)))){ this.trSend('cancel'); this.tr = null; try{ banner('Troca cancelada', 'Algum item ou Adena mudou'); }catch(_){} return this.trDraw(); }
+    save.gold -= t.mineG; const ids = t.mine.map(i => i.id); save.inv = save.inv.filter(x => !ids.includes(x.id));
+    save.gold += t.hisG; t.his.forEach(i => { const it = Object.assign({}, i); it.id = save.nextId++; save.inv.push(it); });
+    persist(); try{ SFX.item(); banner('Troca feita', 'Você recebeu ' + t.his.length + ' item(ns)' + (t.hisG ? ' e ' + adenaTxt(t.hisG) : '')); }catch(_){}
+    this.tr = null; this.trDraw(); try{ if(mode === 'hub') renderHub(); }catch(_){} },
+  trDraw(){ let el = document.getElementById('ncTrade'); const t = this.tr; if(!t){ if(el) el.hidden = true; return; }
+    if(!el){ el = document.createElement('div'); el.id = 'ncTrade'; document.body.appendChild(el); }
+    const cell = (it, sel, act) => '<button class="bcell' + (sel ? ' sel' : '') + '"' + (act ? ' data-trit="' + it.id + '"' : '') + ' title="' + itemName(it) + '">' + pieceImg(it.tier, it.slot, itemCls(it), it.wtype, it.up) + '</button>';
+    const inv = save.inv.filter(it => !isEquipped(it)), selIds = t.mine.map(i => i.id);
+    el.hidden = false; el.innerHTML = '<div class="pop-bg"></div><div class="pop-box tr-box"><button class="pop-x" data-trx>✕</button><div class="eyebrow">Troca com ' + t.nm + '</div>'
+      + '<div class="tr-cols"><div class="tr-side' + (t.okMe ? ' ok' : '') + '"><b>Você dá</b><div class="bgrid">' + (t.mine.map(i => cell(i, true, false)).join('') || '<small>nada</small>') + '</div><small>' + adenaTxt(t.mineG) + ' de Adena</small>' + (t.okMe ? '<em>✓ aceitou</em>' : '') + '</div>'
+      + '<div class="tr-side' + (t.okHim ? ' ok' : '') + '"><b>' + t.nm + ' dá</b><div class="bgrid">' + (t.his.map(i => cell(i, false, false)).join('') || '<small>nada</small>') + '</div><small>' + adenaTxt(t.hisG) + ' de Adena</small>' + (t.okHim ? '<em>✓ aceitou</em>' : '') + '</div></div>'
+      + '<div class="peer-sec"><b>Sua mochila (toque para pôr ou tirar)</b>' + (inv.length ? '<div class="bgrid">' + inv.map(it => cell(it, selIds.includes(it.id), true)).join('') + '</div>' : '<small>Nenhum item livre.</small>') + '</div>'
+      + '<div class="peer-sec"><b>Adena</b><small>Você tem ' + adenaTxt(save.gold) + '</small><div class="peer-row">' + [0, 100, 1000, 10000, 100000].map(v => '<button class="btn sm' + (t.mineG === v ? ' primary' : '') + '" data-trg="' + v + '" ' + (save.gold >= v ? '' : 'disabled') + '>' + (v ? adenaTxt(v) : 'Nada') + '</button>').join('') + '</div></div>'
+      + '<button class="btn primary" data-trok style="width:100%;margin-top:10px" ' + (t.okMe ? 'disabled' : '') + '>' + (t.okMe ? 'Esperando ' + t.nm + '…' : 'Aceitar troca') + '</button>'
+      + '<small class="istat">A troca só acontece quando os dois aceitam. Se alguém mudar a oferta, os dois precisam aceitar de novo.</small></div>'; },
   /* Plaquinha da sala (em cima do herói no menu, embaixo durante a luta): código, quem está online e quem já jogou nela. */
   hud(){ let el = document.getElementById('ncRoomHud'), w = document.getElementById('ncWorlds');
     if(!el){ el = document.createElement('div'); el.id = 'ncRoomHud'; document.body.appendChild(el); }
@@ -12698,6 +12735,15 @@ document.addEventListener('click', e => {
     else if(d.peergold){ const [id, v] = d.peergold.split(':'); const g = +v; if(save.gold >= g){ save.gold -= g; persist(); ncCoop.send('gift', {to:id, from:ncCoop.id, gold:g}); try{ banner('Enviado', adenaTxt(g) + ' de Adena'); SFX.coin(); }catch(_){} ncCoop.menu(id); } }
     else if(d.peeritem){ const [id, iid] = d.peeritem.split(':'); const it = byId(+iid); if(it && !isEquipped(it)){ save.inv = save.inv.filter(x => x !== it); persist(); ncCoop.send('gift', {to:id, from:ncCoop.id, item:Object.assign({}, it)}); try{ banner('Enviado', itemName(it)); SFX.item(); }catch(_){} ncCoop.menu(id); } }
     return; }
+  const tb = e.target.closest('[data-trade],[data-trx],[data-trit],[data-trg],[data-trok]');
+  if(tb){ const d = tb.dataset, t = ncCoop.tr;
+    if(d.trade){ ncCoop.trOpen(d.trade, false); return; }
+    if(!t) return;
+    if(d.trx !== undefined){ ncCoop.trSend('cancel'); ncCoop.tr = null; ncCoop.trDraw(); return; }
+    if(d.trok !== undefined){ t.okMe = true; ncCoop.trSend('ok', {sig:ncCoop.trSig()}); ncCoop.trTry(); ncCoop.trDraw(); return; }
+    if(d.trit){ const id = +d.trit, k = t.mine.findIndex(i => i.id === id); if(k >= 0) t.mine.splice(k, 1); else { const it = byId(id); if(it) t.mine.push(Object.assign({}, it)); } }
+    if(d.trg !== undefined) t.mineG = Math.min(+d.trg, save.gold);
+    t.okMe = t.okHim = false; ncCoop.trSend('offer'); ncCoop.trDraw(); return; }
   const fb = e.target.closest('[data-ncfr],[data-frclose],[data-fradd],[data-frdel],[data-ncworld]');
   if(fb){ const d = fb.dataset, el = document.getElementById('ncFriends');
     if(d.ncfr) ncCoop.friends();
@@ -13198,6 +13244,14 @@ body #hub>#rightPanel.panel::before,body #hub>#rightPanel.panel::after{display:n
 #hud .bar span{text-shadow:0 1px 2px #000!important}
 #hud .chip{clip-path:none!important;border:1px solid rgba(255,255,255,.25)!important;border-image:none!important;border-radius:12px!important;background:rgba(15,12,30,.55)!important;backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);box-shadow:0 2px 8px rgba(0,0,0,.3)!important;padding-left:10px!important;padding-right:10px!important}
 #hub .nc-sub,#hub .nc-top,#hub .nc-top *{text-shadow:0 2px 6px rgba(0,0,0,.65),0 0 2px rgba(0,0,0,.8)}
+
+#ncTrade{position:fixed;inset:0;z-index:83}#ncTrade[hidden]{display:none}
+.tr-box{max-height:88vh;overflow:auto}
+.tr-cols{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.tr-side{background:#1a1438;border:1px solid #3c2f7a;border-radius:8px;padding:6px;min-height:90px}
+.tr-side.ok{border-color:#3ce05a;box-shadow:0 0 0 1px #3ce05a inset}
+.tr-side>b{display:block;font-size:12px;color:#f4efe2;margin-bottom:4px}.tr-side small{font-size:11px;color:var(--mute)}.tr-side em{display:block;color:#3ce05a;font-style:normal;font-size:12px;font-weight:700}
+#ncTrade .bcell.sel{outline:2px solid #ffd36a;outline-offset:-2px}
 </style>
 </body>
 </html>
