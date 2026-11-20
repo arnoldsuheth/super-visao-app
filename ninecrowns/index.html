@@ -7,7 +7,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="theme-color" content="#150f30">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png">
@@ -8093,8 +8093,8 @@ function ncWeaponFx(root){
   if(!ncFlameTex){ const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'), r = g.createRadialGradient(32, 38, 2, 32, 34, 30); r.addColorStop(0, 'rgba(255,255,255,1)'); r.addColorStop(.35, 'rgba(255,255,255,.55)'); r.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = r; g.fillRect(0, 0, 64, 64); ncFlameTex = new T.CanvasTexture(c); }
   root.traverse(o => { if(!o.isMesh || !/Sword|Axe|Wand|Staff|Crossbow|Knife/.test(o.name) || !o.material || !o.material.emissive) return;
     (o.userData.ncFl || []).forEach(sp => { o.remove(sp); sp.material.dispose(); }); o.userData.ncFl = [];
-    if(!U || !o.visible){ o.material.emissive.setHex(0); o.material.emissiveIntensity = 1; return; }
-    const col3 = U.w || U.c; o.material.emissive.set(col3); o.material.emissiveIntensity = .1 + U.e*.42;
+    if(!U || !o.visible){ o.material.emissive.setHex(0); o.material.emissiveIntensity = 1; o.material.userData.baseE = new T.Color(0); return; }
+    const col3 = U.w || U.c; o.material.emissive.set(col3); o.material.emissiveIntensity = .1 + U.e*.42; o.material.userData.baseE = o.material.emissive.clone();
     if(!o.geometry.boundingBox) o.geometry.computeBoundingBox(); const b = o.geometry.boundingBox, sz = b.getSize(new T.Vector3()), ax = sz.y >= sz.x && sz.y >= sz.z ? 'y' : sz.x >= sz.z ? 'x' : 'z', L = sz[ax], c0 = b.getCenter(new T.Vector3());
     if(U.e >= .18) for(let i = 0; i < 4; i++){ const sp = new T.Sprite(new T.SpriteMaterial({map:ncFlameTex, color:new T.Color(col3), blending:T.AdditiveBlending, depthWrite:false, transparent:true, opacity:U.w ? .16 : .10 + U.e*.3}));   // halo parado em volta da arma
       sp.position.copy(c0); sp.position[ax] = b.min[ax] + L*(.3 + i*.22); sp.scale.setScalar(L*(.34 + U.e*.12)); sp.renderOrder = 4; o.add(sp); o.userData.ncFl.push(sp); }
@@ -9655,7 +9655,7 @@ function monUpdate(e, dt){
   if(m.fly) m.model.position.y = m.y0 + Math.sin(clock*2.4 + m.ph)*.08;
   m.mixer.update(e.frozenT > 0 ? 0 : dt);
 }
-if(location.hash === '#nctest') window.__nc = {en:() => enemies, p:() => P, boss:id => startStage(id, true), go:id => startStage(id), skill:i => useSkill(i), sv:() => save, img:(t, sl, c, w, u) => pieceImg(t, sl, c, w, u), hub:() => { rebuildHubHero(); renderHub(); }, scene:(a,b,c) => ncScene(a,b,c), fall:(id) => ncKingFall(id, true), fim:() => ncFinal(), pet:() => ncPet, cls:() => save.cls, set:(c, id) => { save.cls = c; save.level = 40; save.spec = save.spec || {}; save.spec[c] = id; P.S = stats(); }};   // so para os testes automaticos
+if(location.hash === '#nctest') window.__nc = {en:() => enemies, p:() => P, boss:id => startStage(id, true), go:id => startStage(id), skill:i => useSkill(i), sv:() => save, hurt:n => hurtPlayer(n), mats:() => hero.mats.map(m => m.emissive ? m.emissive.getHexString() : '-').join(','), img:(t, sl, c, w, u) => pieceImg(t, sl, c, w, u), hub:() => { rebuildHubHero(); renderHub(); }, scene:(a,b,c) => ncScene(a,b,c), fall:(id) => ncKingFall(id, true), fim:() => ncFinal(), pet:() => ncPet, cls:() => save.cls, set:(c, id) => { save.cls = c; save.level = 40; save.spec = save.spec || {}; save.spec[c] = id; P.S = stats(); }};   // so para os testes automaticos
 const NC_PETS = [['', 'Nenhum'], ['f_Dragon', 'Dragonete'], ['s_Cat', 'Gato'], ['s_Dog', 'Cachorro'], ['f_Pigeon', 'Pombo'], ['f_Glub', 'Glub'], ['s_Chicken', 'Galinha']];
 let ncPet = null;
 function ncPetSpawn(){ try{ if(ncPet){ removeObj(ncPet.root); ncPet = null; } const key = save.pet; if(!key || !monOn()) return;
@@ -9779,8 +9779,8 @@ function clampPos(p, arenaOnly, r){
     if(d < md){ p.x = dx/d*md; p.z = ARENA_Z + dz/d*md; } }
 }
 const _fc = new T.Color();
-function flash(obj, mats, color, t){ _fc.copy(C(color)); mats.forEach(m => m.emissive.copy(_fc)); obj.flashT = t; }
-function unflash(obj, mats, dt){ if(obj.flashT > 0){ obj.flashT -= dt; if(obj.flashT <= 0) mats.forEach(m => m.emissive.copy(m.userData.baseE)); } }
+function flash(obj, mats, color, t){ _fc.copy(C(color)); mats.forEach(m => { if(!m.emissive) return; if(!m.userData.baseE) m.userData.baseE = m.emissive.clone(); m.emissive.copy(_fc); }); obj.flashT = t; }   // guarda a cor normal antes de piscar (sem isso o heroi novo ficava vermelho para sempre)
+function unflash(obj, mats, dt){ if(obj.flashT > 0){ obj.flashT -= dt; if(obj.flashT <= 0) mats.forEach(m => { if(m.emissive) m.emissive.copy(m.userData.baseE || _fc.setHex(0)); }); } }
 function burst(pos, color, n, spd=5, up=5, y=.9){
   const m = partMats[color] || (partMats[color] = bmat(color));
   for(let i=0;i<n;i++){
