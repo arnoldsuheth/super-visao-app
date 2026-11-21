@@ -7608,9 +7608,11 @@ function buildHub(){
   for(let i=0;i<sp.count;i++){ const k = Math.pow(Math.max(0, sp.getY(i)/120), .5); const c = hor.clone().lerp(top, k); sc.push(c.r, c.g, c.b); }
   sg.setAttribute('color', new T.Float32BufferAttribute(sc, 3));
   scene.add(new T.Mesh(sg, new T.MeshBasicMaterial({vertexColors:true, side:T.BackSide, fog:false, depthWrite:false})));
-  addLights(t.sky, t.gnd, .7, 2.2);
+  /* luz quase branca no herói: a cor do cenário fica no céu e no chão, sem pintar a pele e a roupa (antes o Necro ficava verde) */
+  const mixW = (c, k) => '#' + new T.Color(c).lerp(new T.Color(0xffffff), k).getHexString();
+  addLights(mixW(t.sky, .8), mixW(t.gnd, .5), .7, 2.2);
   dirLight.position.set(3,8,5); dirLight.target.position.set(0,1,0);
-  const rim = new T.DirectionalLight(C(t.rim), 1.4); rim.position.set(-4,4,-6); scene.add(rim);
+  const rim = new T.DirectionalLight(C(mixW(t.rim, .6)), 1.1); rim.position.set(-4,4,-6); scene.add(rim);
   const floor = new T.Mesh(new T.CircleGeometry(40, 48), mat(t.floor, {roughness:.95})); floor.rotation.x = -Math.PI/2; floor.receiveShadow = true; scene.add(floor);
   const ped = new T.Mesh(new T.CylinderGeometry(1.5,1.7,.4,8), mat(t.ped)); ped.position.y = .2; ped.receiveShadow = true; ped.castShadow = true; scene.add(ped);
   const trim = new T.Mesh(new T.TorusGeometry(1.55,.06,6,32), mat(t.ring, {emissive:t.ring, emissiveIntensity:.6})); trim.rotation.x = Math.PI/2; trim.position.y = .4; scene.add(trim);
@@ -8232,8 +8234,8 @@ const MX_DEF = {
 /* Cada personagem novo e pintado por uma "cartela" de 8x8 cores. Aqui diz quais quadrinhos da cartela sao pele, cabelo, roupa, metal e arma,
    para o jogo poder trocar a cor (escolha do jogador, classe e estrela do equipamento) sem mexer no modelo. */
 const KK_PAL = {
-  kk_knight:{skin:['00','01'], hair:['10','11'], cloth:['02','03'], metal:['30','31','70','22','73','40','41','72'], wpn:['32','33']},
-  kk_barbarian:{skin:['00','01'], hair:['10','11'], cloth:['12','13','02'], metal:[], wpn:['32','33','04','05']},
+  kk_knight:{skin:['00','01'], hair:['10','11'], cloth:['02','03','24','25'], metal:['30','31','70','22','73','40','41','72'], wpn:['32','33']},
+  kk_barbarian:{skin:['00','01'], hair:['10','11'], cloth:['12','13','02','24','25'], leather:['52','53','60','61'], metal:[], wpn:['32','33','04','05']},
   kk_mage:{skin:['00','01','75'], hair:['10','11'], cloth:['02','03','12','13','73'], cape:['22','23'], trim:['50','51'], metal:[], wpn:['64','65']},
   kk_rogue:{skin:['00','01'], hair:['10','11'], cloth:['02','03','12','13'], metal:[], wpn:['23','32','33']},
 };
@@ -8280,8 +8282,11 @@ function kkPaint(h){
     ['Badge_Shield','Rectangle_Shield','Round_Shield','Spike_Shield'].forEach(n => { const i = hide.indexOf(n); if(i >= 0) hide.splice(i, 1); if(n !== want) hide.push('^' + n + '$'); }); }
   x.m.traverse(o => { if(o.isMesh){ o.visible = !hide.some(r => new RegExp(r).test(o.name)); if(/_Helmet$|_Hat$/.test(o.name) && !o.userData.kkS){ o.scale.multiplyScalar(1.05); o.userData.kkS = 1; } } });   // elmo um pouco maior: o cabelo nao atravessa mais
   const lk = save.look || {}, col = {};
-  if(lk.tunic > 0 && TUNICS[lk.tunic]) col.cloth = TUNICS[lk.tunic].c; else if(k.cloth) col.cloth = k.cloth;
-  if(k.cape) col.cape = k.cape; if(k.trim) col.trim = k.trim;
+  const tun = lk.tunic != null && TUNICS[lk.tunic] ? TUNICS[lk.tunic].c : null;   // a 1ª cor (Azul) também vale; antes só valia da 2ª em diante
+  if(tun != null) col.cloth = tun; else if(k.cloth) col.cloth = k.cloth;
+  if(k.cape) col.cape = tun != null ? mix(tun, 0x000000, .25) : k.cape;   // capa e manto acompanham a cor da roupa escolhida
+  if(k.trim) col.trim = tun != null ? mix(tun, 0xffffff, .35) : k.trim;
+  if(tun != null) col.leather = mix(tun, 0x5a3a26, .4);   // Bárbaro e Monge: o couro (ombreira, calça) também pega a cor escolhida
   if(lk.hair != null && HAIRS[lk.hair]) col.hair = HAIRS[lk.hair].c; else if(k.hair) col.hair = k.hair;   // a cor escolhida vale sempre (antes a 1ª cor da cartela era trocada pela cor da classe)
   if(lk.skin != null && SKINS[lk.skin]) col.skin = SKINS[lk.skin].c; else if(k.skin) col.skin = k.skin;
   const ct = tOf('chest'); if(ct >= 0) col.metal = mix(0x9aa7ac, TIERS[ct].hex, .6); else if(k.metal) col.metal = k.metal;
