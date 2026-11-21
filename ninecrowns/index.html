@@ -8279,8 +8279,8 @@ function kkPaint(h){
   const lk = save.look || {}, col = {};
   if(lk.tunic > 0 && TUNICS[lk.tunic]) col.cloth = TUNICS[lk.tunic].c; else if(k.cloth) col.cloth = k.cloth;
   if(k.cape) col.cape = k.cape; if(k.trim) col.trim = k.trim;
-  if(lk.hair > 0 && HAIRS[lk.hair]) col.hair = HAIRS[lk.hair].c; else if(k.hair) col.hair = k.hair;
-  if(lk.skin > 0 && SKINS[lk.skin]) col.skin = SKINS[lk.skin].c; else if(k.skin) col.skin = k.skin;
+  if(lk.hair != null && HAIRS[lk.hair]) col.hair = HAIRS[lk.hair].c; else if(k.hair) col.hair = k.hair;   // a cor escolhida vale sempre (antes a 1ª cor da cartela era trocada pela cor da classe)
+  if(lk.skin != null && SKINS[lk.skin]) col.skin = SKINS[lk.skin].c; else if(k.skin) col.skin = k.skin;
   const ct = tOf('chest'); if(ct >= 0) col.metal = mix(0x9aa7ac, TIERS[ct].hex, .6); else if(k.metal) col.metal = k.metal;
   const wt = tOf('weapon'); if(wt >= 0) col.wpn = mix(0x9aa7ac, TIERS[wt].hex, .55);
   const tex = kkTex(d.model, col); if(!tex) return;
@@ -11254,10 +11254,42 @@ function updatePlayer(dt){
 }
 
 const ICE = C(0x2a8ab0);
+function ncNearAny(x, z, R){ if(Math.hypot(x - P.pos.x, z - P.pos.z) < R) return true;   // perto de mim ou de algum amigo da sala?
+  try{ if(ncCoop.ch && curStage){ const now = performance.now(); for(const k in ncCoop.peers){ const q = ncCoop.peers[k], d = q.d; if(d && d.st === curStage.id && now - q.t < 4000 && Math.hypot(x - d.x, z - d.z) < R) return true; } } }catch(_){}
+  return false; }
+/* JOGO LEVE (celular): as fogueiras e tochas continuam acesas, mas só 4 luzes de verdade existem;
+   a cada meio segundo elas vão para as 4 fogueiras mais perto de você. Número de luzes fixo = o celular não recompila nada. */
+let ncLP = null, ncLPT = 0;
+function ncLightPool(dt){ if(!COARSE || mode !== 'stage' || !scene) return;
+  if(!ncLP || ncLP.scene !== scene){ const src = []; scene.traverse(o => { if(o.isPointLight && !o.userData.lp){ let p = o, mine = false; while(p){ if(p === hero.root){ mine = true; break; } p = p.parent; } if(!mine) src.push(o); } });
+    if(src.length <= 4){ ncLP = {scene, src:[], pool:[]}; return; }
+    src.forEach(l => { l.updateMatrixWorld(true); l.userData.wp = new T.Vector3().setFromMatrixPosition(l.matrixWorld); l.parent && l.parent.remove(l); });
+    const pool = []; for(let i = 0; i < 4; i++){ const l = new T.PointLight(0xffa050, 0, 10); l.userData.lp = 1; scene.add(l); pool.push(l); }
+    ncLP = {scene, src, pool}; ncLPT = 0; }
+  if(!ncLP.pool.length) return; ncLPT -= dt; if(ncLPT > 0) return; ncLPT = .5;
+  const near = ncLP.src.map(l => [l, Math.hypot(l.userData.wp.x - P.pos.x, l.userData.wp.z - P.pos.z)]).sort((a, b) => a[1] - b[1]).slice(0, 4);
+  ncLP.pool.forEach((l, i) => { const s2 = near[i] && near[i][0]; if(!s2){ l.intensity = 0; return; } l.position.copy(s2.userData.wp); l.color.copy(s2.color); l.intensity = s2.intensity; l.distance = s2.distance; l.decay = s2.decay; }); }
+/* JOGO LEVE: árvores, pedras e plantas repetidas (InstancedMesh) só desenham as cópias que estão antes do fim da névoa.
+   O que está depois da névoa já era invisível; agora também não pesa. */
+let ncIC = null, ncICT = 0;
+function ncInstCull(dt){ if(mode !== 'stage' || !scene || !scene.fog) return;
+  if(!ncIC || ncIC.scene !== scene){ const L = []; scene.traverse(o => { if(!o.isInstancedMesh || o.userData.noCull) return; const ex = Object.keys(o.geometry.attributes).some(k => o.geometry.attributes[k].isInstancedBufferAttribute); if(ex) return;
+      L.push({m:o, mat:o.instanceMatrix.array.slice(0, o.count*16), col:o.instanceColor ? o.instanceColor.array.slice(0, o.count*3) : null, n:o.count}); });
+    ncIC = {scene, L}; ncICT = 0; }
+  ncICT -= dt; if(ncICT > 0) return; ncICT = .4; const R = scene.fog.far + 6;
+  for(const it of ncIC.L){ const m = it.m, A = m.instanceMatrix.array, C2 = m.instanceColor && m.instanceColor.array; let k = 0;
+    m.updateMatrixWorld(); const ox = m.matrixWorld.elements[12], oz = m.matrixWorld.elements[14];
+    for(let i = 0; i < it.n; i++){ const x = it.mat[i*16 + 12] + ox, z = it.mat[i*16 + 14] + oz; if(!ncNearAny(x, z, R)) continue;
+      if(k !== i){ for(let j = 0; j < 16; j++) A[k*16 + j] = it.mat[i*16 + j]; if(C2 && it.col){ C2[k*3] = it.col[i*3]; C2[k*3 + 1] = it.col[i*3 + 1]; C2[k*3 + 2] = it.col[i*3 + 2]; } } k++; }
+    if(k !== m.count || k !== it.lastK){ m.count = k; it.lastK = k; m.instanceMatrix.needsUpdate = true; if(m.instanceColor) m.instanceColor.needsUpdate = true; } else if(k < it.n){ m.instanceMatrix.needsUpdate = true; } } }
 function updateEnemies(dt){
-  ncPetUpdate(dt);
+  ncPetUpdate(dt); ncLightPool(dt); ncInstCull(dt);
   for(const e of enemies){
     ncAiPeer = false; if(e.dead) continue;
+    /* JOGO LEVE: monstro a mais de 40 m de todos os jogadores não é desenhado nem animado (volta igual quando alguém chega perto) */
+    if(e.kind !== 'boss' && !e.post && !e.rem){ const far = !ncNearAny(e.pos.x, e.pos.z, e.awake ? 48 : 40);
+      if(far){ if(!e.culled){ e.culled = true; e.cr.root.visible = false; if(e.bar) e.bar.g.visible = false; } continue; }
+      if(e.culled){ e.culled = false; e.cr.root.visible = true; } }
     monUpdate(e, dt);
     if(e.burnT > 0){ e.burnT -= dt; e.burnAcc += e.burnDps*dt; if(e.burnAcc >= Math.max(1, e.burnDps*.5)){ const d = Math.round(e.burnAcc); e.burnAcc = 0; if(Math.random() < .6) burst(e.pos, e.burnCol || 0xff7a2a, 2, 1, 3, 1); damageEnemy(e, d, false, 0, 0, 0, 'dot'); if(e.dead || e.dying) continue; } }
     if(e.rem){ ncCoop.remUpd(e, dt); unflash(e, e.cr.mats, dt); continue; }   // monstro do anfitrião: só copia o que ele manda
