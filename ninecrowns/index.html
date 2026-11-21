@@ -9801,11 +9801,17 @@ function drawMinimap(){
   for(const l of loot){ g.fillStyle = TIERS[l.item.tier].css; g.fillRect(mmX(l.x) - 1, mmY(l.z) - 1, 2, 2); }
   for(const r of runes) if(!r.taken){ const x = mmX(r.x), y = mmY(r.z), s = 3.5 + Math.sin(clock*5); g.fillStyle = '#c8a8ff';
     g.beginPath(); g.moveTo(x, y - s); g.lineTo(x + s*.7, y); g.lineTo(x, y + s); g.lineTo(x - s*.7, y); g.closePath(); g.fill(); }
-  if(big){ g.fillStyle = 'rgba(255,120,90,.55)'; for(const e of enemies) if(e.kind === 'minion' && !e.awake && !e.dead && !e.post) g.fillRect(mmX(e.pos.x) - .7, mmY(e.pos.z) - .7, 1.4, 1.4); }   // mapa grande: mostra todos os monstros
+     // mapa grande: mostra todos os monstros
   if(boss && !boss.dead){ const bx = mmX(boss.pos.x), by = mmY(boss.pos.z); g.fillStyle = '#ff4a3a'; g.beginPath(); g.arc(bx, by, 2.5, 0, Math.PI*2); g.fill();
     g.fillStyle = '#ffe36a'; g.beginPath(); g.moveTo(bx - 3, by - 3.2); g.lineTo(bx - 3.6, by - 6.4); g.lineTo(bx - 1.4, by - 4.8); g.lineTo(bx, by - 7); g.lineTo(bx + 1.4, by - 4.8); g.lineTo(bx + 3.6, by - 6.4); g.lineTo(bx + 3, by - 3.2); g.closePath(); g.fill(); }
   g.fillStyle = '#c8a8ff'; for(const e of enemies) if(e.post && !e.post.taken && !e.dead) g.fillRect(mmX(e.pos.x) - 1.5, mmY(e.pos.z) - 1.5, 3, 3);
-  g.fillStyle = 'rgba(255,90,70,.9)'; for(const e of enemies) if(e.kind === 'minion' && e.awake && !e.dead && !e.post) g.fillRect(mmX(e.pos.x) - 1, mmY(e.pos.z) - 1, 2, 2);
+  // todos os monstros vivos: comum = ponto vermelho, elite = ponto dourado maior, acordado = mais forte
+  for(const e of enemies){ if(e.kind !== 'minion' || e.dead || e.post) continue; const s2 = e.elite ? 2.6 : 1.6; g.fillStyle = e.elite ? '#ffc83a' : (e.awake ? 'rgba(255,90,70,.95)' : 'rgba(255,110,90,.55)'); g.fillRect(mmX(e.pos.x) - s2/2, mmY(e.pos.z) - s2/2, s2, s2); }
+  // missão: "!" amarelo piscando no próximo objetivo (posto mais perto ou o chefe quando o portão abre)
+  { let tg = null, bd = 1e9; for(const e of enemies) if(e.post && !e.post.taken && !e.dead){ const d = Math.hypot(e.pos.x - P.pos.x, e.pos.z - P.pos.z); if(d < bd){ bd = d; tg = e.pos; } }
+    if(!tg && gateOpen && boss && !boss.dead) tg = boss.pos;
+    if(tg){ const qx = mmX(tg.x), qy = mmY(tg.z) - 6, a = .65 + Math.sin(clock*6)*.35; g.globalAlpha = a; g.fillStyle = '#ffe14a'; g.strokeStyle = '#3a2600'; g.lineWidth = .8;
+      g.beginPath(); g.arc(qx, qy, 4.2, 0, Math.PI*2); g.fill(); g.stroke(); g.fillStyle = '#3a2600'; g.font = '800 6px system-ui,sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('!', qx, qy + .2); g.textAlign = 'left'; g.textBaseline = 'alphabetic'; g.globalAlpha = 1; } }
   const x = mmX(P.pos.x), y = mmY(P.pos.z);
   g.save(); g.translate(x, y); g.rotate(Math.PI - P.face);
   try{ for(const k in ncCoop.peers){ const q = ncCoop.peers[k], d = q.d; if(!d || !curStage || d.st !== curStage.id || d.x == null) continue; const fx = mmX(d.x), fy = mmY(d.z);
@@ -9813,9 +9819,9 @@ function drawMinimap(){
     if(big){ g.font = '600 3.2px system-ui,sans-serif'; g.textAlign = 'center'; g.fillStyle = '#bfefff'; g.fillText((d.nm || 'Amigo').slice(0, 12), fx, fy - 3.6); g.textAlign = 'left'; } } }catch(_){}
   g.fillStyle = P.mounted ? '#ffe08a' : '#fff'; g.strokeStyle = '#000'; g.lineWidth = 1;
   g.beginPath(); g.moveTo(0, -4.5); g.lineTo(3, 3.5); g.lineTo(-3, 3.5); g.closePath(); g.fill(); g.stroke(); g.restore();
-  if(big){ g.fillStyle = 'rgba(13,10,34,.88)'; g.fillRect(0, 138, 120, 12); g.font = '600 3.1px system-ui,sans-serif'; g.textBaseline = 'middle';
-    const L = [['#ffffff', 'Você'], ['#ff5a46', 'Monstros'], ['#c8a8ff', 'Postos'], ['#ffe36a', 'Chefe'], ['#c89a4a', 'Baús'], ['#d6c4a0', 'Casas']]; let x0 = 3;
-    for(const [col, t] of L){ g.fillStyle = col; g.fillRect(x0, 142.5, 3, 3); g.fillStyle = '#f4efe2'; g.fillText(t, x0 + 4.2, 144.2); x0 += 4.2 + g.measureText(t).width + 2; } }
+  if(big){ g.fillStyle = 'rgba(13,10,34,.88)'; g.fillRect(0, 138, 120, 12); g.font = '600 2.45px system-ui,sans-serif'; g.textBaseline = 'middle';
+    const L = [['#ffffff', 'Você'], ['#4fd8ff', 'Amigos'], ['#ff5a46', 'Monstros'], ['#ffc83a', 'Elite'], ['#ffe14a', 'Missão'], ['#c8a8ff', 'Postos'], ['#ffe36a', 'Chefe'], ['#c89a4a', 'Baús'], ['#d6c4a0', 'Casas']]; let x0 = 3;
+    for(const [col, t] of L){ g.fillStyle = col; g.fillRect(x0, 142.5, 3, 3); g.fillStyle = '#f4efe2'; g.fillText(t, x0 + 4.2, 144.2); x0 += 4.2 + g.measureText(t).width + 1.4; } }
 }
 
 function makeBar(w){
@@ -12833,7 +12839,7 @@ setTimeout(() => ncCoop.draw(), 500);
 setInterval(() => { try{ ncCoop.hud(); ncCoop.chatDraw(); ncCoop.lobbyTrack(); }catch(_){} }, 1000);
 setTimeout(() => { try{ ncCoop.lobbyOn(); }catch(_){} }, 2500);
 setInterval(() => { try{ const c = ncCoop, inS = mode === 'stage' && P && curStage; if(c.ch && inS && c.host){ c.shared = c.list.length > 1; if(c.shared) c.enSend(); } }catch(_){} }, 200);   // anfitrião: manda os monstros 5x por segundo
-window.__ncT = {drop:(x, z, t) => dropLoot({x, z}, t), loot:() => loot, en:() => enemies, hero:() => hero};
+window.__ncT = {drop:(x, z, t) => dropLoot({x, z}, t), loot:() => loot, en:() => enemies, hero:() => hero, r:() => renderer, s:() => scene};
 window.__ncHub = c => { save.cls = c; fixWeaponForClass(); buildHub(); hubCamera(); renderHub(); };
 setTimeout(() => { try{ if(save.room && !ncCoop.ch) ncCoop.join(save.room, save.room === save.myRoom); }catch(_){} }, 1500);   // volta sozinho para a última sala
 window.ncCoop = ncCoop;
