@@ -8049,8 +8049,8 @@ const evKey = () => { const e = curEvent(); return e ? e.id + Math.floor(Date.no
 function renderShop(){
   const E = curEvent();
   let h = `<div class="mats">${matsHTML(['metal','minerio','cristal'])}</div>`;
-  h += E ? `<div class="evbox" style="--tc:${E.css}"><div class="big">Evento: ${E.n}</div><div class="istat">${E.d} Termina em ${evEnds()} dia${evEnds() > 1 ? 's' : ''}.</div>
-    <div class="row"><span class="istat">Peça exclusiva do evento (+10% nos atributos, só enquanto o evento durar, 1 por semana):</span>
+  h += E ? `<div class="evbox" style="--tc:${E.css}"><div class="big">Evento: ${E.n}</div><div class="istat">Termina em ${evEnds()} dia${evEnds() > 1 ? 's' : ''}.</div><p class="lede">${E.d} Peça exclusiva do evento (+10% nos atributos, só enquanto o evento durar, 1 por semana).</p>
+    <div class="row">
     <button class="btn sm primary" data-evbuy="1" ${save.coins >= shopPrice(60) && !save.evBought[evKey()] ? '' : 'disabled'}>${save.evBought[evKey()] ? 'Já comprada nesta semana' : SLOT_INFO[shopSlot].n + ' ' + E.n + ' · ' + shopPrice(60) + ' moedas'}</button></div></div>` : '';
   h += `<h2>Equipamentos <small>Toque numa peça para comprar com Moedas Reais (você ganha Moedas Reais em missões e chefes). A loja vende até ${TIERS[CFG.shopMaxTier].sc}; Grade A e S só caindo de chefe ou na Forja.</small></h2>
     <div class="fsel">${[...ARMOR, 'weapon', 'shield', 'amulet'].filter(sl => sl !== 'shield' || save.cls === 'paladin').map(sl => `<button class="chipb" data-sslot="${sl}" aria-pressed="${shopSlot === sl}">${SLOT_INFO[sl].n}</button>`).join('')}</div><div class="shopgrid">`;
@@ -8127,7 +8127,7 @@ function fuseHTML(){
   return `<p class="lede">Funda <b>3 peças iguais</b> (mesmo tipo e mesma estrela) para criar uma peça com <b>uma faixa acima</b>. A fusão vai até Grade A (Ródio). A Armadura de <b class="prism">Rutênio (Grade S)</b> não sai da fusão: ela vem de Chefes Mundiais ou é fabricada com Poeira Divina. As pedras das peças fundidas voltam para a bolsa, e se uma delas estava em +10 ou mais, a peça nova já nasce em +5.</p><div class="blist">` + SLOTS.map(slot => {
     const f = fuseInputs(slot), w = CLS().wtype;
     if(!f){ let bt = -1, bc = 0; for(let t = 7; t >= 2; t--){ const c = save.inv.filter(i => i.slot === slot && i.tier === t && (slot !== 'weapon' || i.wtype === w)).length; if(c > bc){ bc = c; bt = t; } }
-      return `<div class="frow">${pieceImg(Math.max(0, bt), slot, 'ps-row', slot === 'weapon' ? CLS().wtype : null)}<div><div class="fn">${SLOT_INFO[slot].n}</div><div class="istat">${bt >= 0 ? `Você tem ${bc} de ${GR(bt)}. Faltam ${3 - bc} para fundir.` : 'Junte 3 peças iguais de Grade D a Grade A.'}</div></div><button class="btn sm" disabled>Fundir</button></div>`; }
+      return `<div class="frow">${pieceImg(Math.max(0, bt), slot, 'ps-row', slot === 'weapon' ? CLS().wtype : null)}<div><div class="fn">${SLOT_INFO[slot].n}</div><div class="istat">${bt >= 0 ? `Tem ${bc} · faltam ${3 - bc}` : 'Precisa de 3 iguais'}</div></div><button class="btn sm" disabled>Fundir</button></div>`; }
     const T1 = TIERS[f.t + 1], cost = fuseCost(f.t), afford = save.gold >= cost;
     return `<div class="frow">${slotIcon(slot)}<div><div class="fn ${f.t + 1 === 9 ? '' : ''}" style="color:${T1.css}">${slot === 'weapon' ? 'Arma' : SLOT_INFO[slot].n} ${T1.pre} · ${T1.sc}</div>
       <div class="need"><span class="ok" style="--tc:${TIERS[f.t].css}">3× ${TIERS[f.t].sc} ${TIERS[f.t].model}</span></div></div>
@@ -8218,7 +8218,7 @@ const MX = {base:'assets/chars/', models:{}, anims:{}, state:{}, waits:[], borro
 const MX_R = {rot:[0, 0, Math.PI/2], pos:[0, .08, .03]}, MX_L = {rot:[0, 0, -Math.PI/2], pos:[0, .08, .03]};
 /* NINE CROWNS: herois novos (pacote KayKit Adventurers, CC0). Cada classe usa um modelo pronto, com as armas e animacoes dele.
    hide = pecas do modelo que ficam escondidas para a classe; clips = qual animacao do modelo o jogo usa em cada situacao */
-const KK_BASE = {idle:'Idle', run:'Running_A', death:'Death_A', dash:'Dodge_Forward', block:'Blocking', hit:'Hit_A', cast:'Spellcast_Shoot', smash:'2H_Melee_Attack_Chop', spin:'2H_Melee_Attack_Spin', bash:'Block_Attack',
+const KK_BASE = {sit:'Sit_Chair_Idle', idle:'Idle', run:'Running_A', death:'Death_A', dash:'Dodge_Forward', block:'Blocking', hit:'Hit_A', cast:'Spellcast_Shoot', smash:'2H_Melee_Attack_Chop', spin:'2H_Melee_Attack_Spin', bash:'Block_Attack',
   atk1:'1H_Melee_Attack_Slice_Diagonal', atk2:'1H_Melee_Attack_Chop', atk3:'1H_Melee_Attack_Stab'};
 const KK_2H = {idle:'2H_Melee_Idle', atk1:'2H_Melee_Attack_Slice', atk2:'2H_Melee_Attack_Chop', atk3:'2H_Melee_Attack_Stab'};
 const MX_DEF = {
@@ -8557,13 +8557,13 @@ function kkRead(h){ const x = h.mx; if(!x || !x.d.kk2 || !x.d.kk2.read || (x.cur
   ap(x.rd.u, R.u); ap(x.rd.l, R.l); if(x.rd.b){ x.rd.b.quaternion.copy(x.rd.b0); ap(x.rd.b, R.b); } }
 function mxState(dt, moving, spd){
   const h = hero, x = h && h.mx; if(!x) return;
-  if(mode !== 'stage' || !P){ mxPlay(h, 'idle'); x.mixer.update(dt); kkRead(h); return; }
+  if(mode !== 'stage' || !P){ mxPlay(h, h._mtw ? 'sit' : 'idle'); x.mixer.update(dt); kkRead(h); if(h._mtw) ncMountTick(h, dt, false); return; }
   x.lockT = Math.max(0, x.lockT - dt); x.atkT = Math.max(0, (x.atkT || 0) - dt); if(x.up && x.atkT <= 0) mxUpper(h, null);
   const newSw = P.swingT > x.lastSw + .001 || P.castT > x.lastCast + .001; x.lastSw = P.swingT; x.lastCast = P.castT;
   const hurt = P.flashT > x.lastFl + .001; x.lastFl = P.flashT;
   const A = x.d.atk || {at:.2, speed:2.3};
   if(P.dead) mxPlay(h, 'death', {once:true, fade:.2});
-  else if(P.mounted) mxPlay(h, 'idle');
+  else if(P.mounted) mxPlay(h, h._mtw ? 'sit' : 'idle');
   else if(P.skill){ const id = P.skill.id, n = (x.d.sk && x.d.sk[id]) || (x.acts.cast && /fire|volley|drain|bolt|nova|beam|storm|ice|summon|curse|meteor|chain/.test(id) ? 'cast' : 'smash');
     if(x.curN !== n){ mxPlay(h, n, {once:true, fade:.08, at:n === 'spin' ? .12 : .15, speed:Math.min(3, mxDur(h, n)*.75/Math.max(.3, P.skill.dur + .25))}); x.lockT = P.skill.dur + .2; } }
   else if(P.dashT > 0){ if(x.curN !== 'dash') mxPlay(h, 'dash', {once:true, fade:.06, at:.1, speed:1.7}); x.lockT = .25; }
@@ -10218,6 +10218,7 @@ document.addEventListener('click', e => { const b = e.target.closest('[data-skup
   if(b.dataset.skreset !== undefined){ const c = ncSkResetCost(); if(save.gold < c){ try{ banner('Adena insuficiente', 'Refazer custa ' + adenaTxt(c)); }catch(_){} return; } save.gold -= c; save.skt[save.cls] = []; persist(); try{ SFX.drop(); }catch(_){} }
   else { const i = +b.dataset.skup, t = ncSkTree(); if(ncLvOf(save.cls) >= NC_SK_REQ[i] && ncSkPts() > 0 && (t[i] || 0) < NC_SK_MAX && CLS().skills[i]){ t[i] = (t[i] || 0) + 1; persist(); try{ SFX.item(); }catch(_){} } }
   ncTreeDraw(); try{ renderSkillbar(); }catch(_){} });
+window.ncSkillsPop = o => ncSkillsPop(o);
 function ncSkillsPop(open){ let el = document.getElementById('ncSkPop'); if(!el){ el = document.createElement('div'); el.id = 'ncSkPop'; el.hidden = true; document.body.appendChild(el);
     el.addEventListener('click', e => { if(e.target === el || e.target.closest('[data-skclose]')) ncSkillsPop(false); }); }
   if(open === undefined) open = el.hidden !== false; el.hidden = !open; if(!open) return;
@@ -10317,6 +10318,79 @@ $('#potBtn').addEventListener('pointerdown', e => { e.preventDefault(); e.stopPr
 let touchMode = matchMedia('(pointer: coarse)').matches;
 addEventListener('touchstart', () => { if(!touchMode){ touchMode = true; if(mode === 'stage'){ $('#touch').hidden = false; $('#skillbar').hidden = true; } } }, {passive:true});
 
+
+/* ================= MONTARIAS POR CLASSE (21/11) =================
+   Cada classe tem 3: simples no nível 15, boa no 40 e voadora no 60.
+   Modelos 3D gratuitos (Quaternius, CC0). A cor é trocada por material (Main, Hair...), e a evolução ganha brilho e efeitos. */
+const NC_MOUNT_DEF = {
+  warrior:  [{nm:'Corcel de Guerra', m:'Horse', col:{Main:0x6b3a1e, Main_Dark:0x3a1e0e, Main_Light:0x8a5a32, Hair:0x1a1008}},
+             {nm:'Corcel em Chamas', m:'Horse', col:{Main:0x2a1a14, Main_Dark:0x140c08, Main_Light:0x4a2a1a, Hair:0xff6a1a, Hooves:0xff8a2a}, glow:{Hair:0xff4a00, Hooves:0xff6a00}, fx:0xff7a2a},
+             {nm:'Dragão de Batalha', m:'Dragon_Evolved', fly:1, tint:0xc83a2a}],
+  barbarian:[{nm:'Lobo da Montanha', m:'Wolf'},
+             {nm:'Lobo Brasa', m:'Wolf', col:{Main:0x2a2420, Main_Dark:0x1a1410}, glow:{Eye:0xff5a1a}, tintAll:0x3a2a22, fx:0xff6a1a, sc:1.12},
+             {nm:'Dragão de Fogo', m:'Dragon_Evolved', fly:1, tint:0xe86a1a}],
+  mage:     [{nm:'Égua Branca', m:'Horse_White'},
+             {nm:'Corcel Arcano', m:'Horse_White', col:{Main:0x6a4ab8, Main_Dark:0x3a2a78, Main_Light:0x8a6ad8, Hair:0x7ae0ff}, glow:{Hair:0x40c8ff}, fx:0x8a7aff},
+             {nm:'Dragão Arcano', m:'Dragon_Evolved', fly:1, tint:0x8a5aff}],
+  archer:   [{nm:'Raposa Gigante', m:'Fox'},
+             {nm:'Raposa Esmeralda', m:'Fox', tintAll:0x3ab86a, glow:{Hair:0x7aff9a}, fx:0x7aff9a, sc:1.12},
+             {nm:'Dragão da Floresta', m:'Dragon', fly:1, tint:0x3ac86a, sc:.55}],
+  paladin:  [{nm:'Cavalo Branco', m:'Horse_White', col:{Hair:0xe8d8a0}},
+             {nm:'Corcel Sagrado', m:'Horse_White', col:{Hair:0xffd24a, Hooves:0xffd24a}, glow:{Hair:0xffc020, Hooves:0xffb000}, fx:0xffe28a},
+             {nm:'Dragão Sagrado', m:'Dragon_Evolved', fly:1, tint:0xf2e6c0}],
+  assassin: [{nm:'Lobo Noturno', m:'Husky', tintAll:0x2a2a34},
+             {nm:'Lobo das Sombras', m:'Wolf', tintAll:0x16121e, glow:{Eye:0xb04aff}, fx:0x9a4aff, sc:1.12},
+             {nm:'Dragão Sombrio', m:'Dragon_Evolved', fly:1, tint:0x3a1a5a}],
+  monk:     [{nm:'Cavalo da Estepe', m:'Horse', col:{Main:0xb8946a, Main_Dark:0x8a6a48, Main_Light:0xd8b88a, Hair:0x3a2a1a}},
+             {nm:'Corcel do Vento', m:'Horse', col:{Main:0xe8a040, Main_Dark:0xb8742a, Main_Light:0xffc870, Hair:0xffffff}, glow:{Hair:0xfff0c0}, fx:0xffe0a0},
+             {nm:'Dragão de Jade', m:'Dragon_Evolved', fly:1, tint:0x3ab8a0}],
+  necro:    [{nm:'Cavalo Espectral', m:'Horse', col:{Main:0x2a2e2a, Main_Dark:0x161a16, Main_Light:0x3a403a, Hair:0x4aff7a}, glow:{Hair:0x20ff60}},
+             {nm:'Pesadelo', m:'Horse', col:{Main:0x14141a, Main_Dark:0x0a0a0e, Main_Light:0x24242a, Hair:0x9a3aff, Hooves:0x4aff7a}, glow:{Hair:0x8a2aff, Hooves:0x20ff60, Eye:0x20ff60}, fx:0x6a2aff},
+             {nm:'Dragão Morto-Vivo', m:'Dragon_Evolved', fly:1, tint:0x4a6a4a, glowAll:0x0a3a14}]
+};
+const NC_MOUNT_LV = [15, 40, 60];
+const ncMountCache = {};
+function ncMountLoad(m){ if(ncMountCache[m]) return ncMountCache[m];
+  return ncMountCache[m] = new Promise((ok, no) => new T.GLTFLoader().load('assets/mounts/' + m + '.glb', g => { g.scene.traverse(o => { if(o.isMesh) o.geometry.__keep = true; }); ok(g); }, undefined, no)); }
+const lin = h => C(h);   // C() já converte a cor para o espaço linear
+/* recolore a textura (dragões) girando a cor: assim o desenho continua, só muda o tom */
+const ncHueCache = {};
+function ncHueTex(tex, tint){ const key = tex.uuid + tint; if(ncHueCache[key]) return ncHueCache[key]; const img = tex.image; if(!img || !img.width) return tex;
+  const cv2 = document.createElement('canvas'); cv2.width = img.width; cv2.height = img.height; const g = cv2.getContext('2d'); const hsl = {}; C(tint).getHSL(hsl);
+  const deg = Math.round(hsl.h*360 - 15), sat = Math.round(60 + hsl.s*80), lum = Math.round(70 + hsl.l*70); g.filter = 'hue-rotate(' + deg + 'deg) saturate(' + sat + '%) brightness(' + lum + '%)'; g.drawImage(img, 0, 0);
+  const t2 = new T.CanvasTexture(cv2); t2.encoding = tex.encoding; t2.flipY = tex.flipY; t2.wrapS = tex.wrapS; t2.wrapT = tex.wrapT; return ncHueCache[key] = t2; }
+/* põe a montaria embaixo do herói: ela vira filha do herói (gira junto) e o boneco sobe para a sela, sentado */
+function ncMountAttach(h, w, hh){ ncMountDetach(h); h.root.add(w); h._mtw = w; h._mtH = hh; if(h.mx){ h.mx.m.position.y = w.userData.seatY - hh*.36; mxPlay(h, 'sit', {fade:.1}); }
+  if(w.userData.fx){ const pl = new T.PointLight(C(w.userData.fx), 0, 4); pl.position.y = w.userData.seatY*.6; w.add(pl); w.userData.fxL = pl; } }
+function ncMountDetach(h){ if(!h || !h._mtw) return; h.root.remove(h._mtw); h._mtw = null; if(h.mx){ h.mx.m.position.y = 0; mxPlay(h, 'idle', {fade:.1}); } }
+/* anima a montaria: parada = Idle, andando = Walk, correndo = Gallop (voadora = Flying) e solta faíscas na evolução */
+function ncMountTick(h, dt, moving){ const w = h._mtw; if(!w) return; const u = w.userData, a = u.acts;
+  const want = u.def.fly ? (moving ? a.Fast_Flying : a.Flying_Idle) : (moving ? (a.Gallop || a.Walk) : a.Idle);
+  if(want && u.cur !== want){ want.reset().play(); if(u.cur) u.cur.crossFadeTo(want, .2, false); u.cur = want; }
+  u.mix.update(dt); if(u.def.fly){ w.position.y = .6 + Math.sin(clock*2.2)*.12; } else w.position.y = 0;
+  if(u.fx && Math.random() < dt*14){ const v = new T.Vector3(); w.getWorldPosition(v); v.x += (Math.random() - .5)*1.2; v.z += (Math.random() - .5)*1.2; v.y += Math.random()*u.seatY; burst(v, u.fx, 1, 1, 2, .35); } }
+function ncMountBuild(cls, i, heroH){ const d = (NC_MOUNT_DEF[cls] || NC_MOUNT_DEF.warrior)[i];
+  return ncMountLoad(d.m).then(g => { const root = mxClone(g.scene); const wrap = new T.Group(); wrap.add(root);
+    root.traverse(o => { if(!o.isMesh) return; o.castShadow = true; o.frustumCulled = false; const ms = Array.isArray(o.material) ? o.material : [o.material];
+      const nm = ms.map(m0 => { const m = m0.clone(), n = (m0.name || '').replace(/[._]\d+$/, ''); const key = Object.keys(d.col || {}).find(k => n === k);
+        if(key) m.color.copy(lin(d.col[key])); else if(d.tintAll && !/Eye/.test(n)) m.color.lerp(lin(d.tintAll), .7);
+        if(d.tint){ if(m.map) m.map = ncHueTex(m.map, d.tint); else if(!/Eye|Black|White/.test(n)) m.color.lerp(lin(d.tint), .6); }
+        const gk = Object.keys(d.glow || {}).find(k => n.indexOf(k) === 0); if(gk && m.emissive){ m.emissive.setHex(d.glow[gk]); m.emissiveIntensity = 1.6; }
+        if(d.glowAll && m.emissive){ m.emissive.setHex(d.glowAll); m.emissiveIntensity = 1; }
+        return m; });
+      o.material = Array.isArray(o.material) ? nm : nm[0]; });
+    const b = new T.Box3().setFromObject(root), h = b.max.y - b.min.y, L = Math.max(b.max.x - b.min.x, b.max.z - b.min.z);
+    const want = (heroH || 1.6)*(d.fly ? 1.35 : 1.15), k = want/Math.max(h, .001)*(d.sc || 1); root.scale.multiplyScalar(k); root.position.y = -b.min.y*k;
+    const b2 = new T.Box3().setFromObject(root);
+    const mix = new T.AnimationMixer(root), clip = n => g.animations.find(c => c.name === n), acts = {};
+    ['Idle', 'Walk', 'Gallop', 'Flying_Idle', 'Fast_Flying'].forEach(n => { const c = clip(n); if(c) acts[n] = mix.clipAction(c); });
+    const idle = acts.Idle || acts.Flying_Idle; if(idle) idle.play();
+    wrap.userData = {def:d, mix, acts, cur:idle, seatY:b2.max.y*(d.seat || (d.fly ? .5 : /Fox/.test(d.m) ? .74 : .6)), fx:d.fx};
+    return wrap; }); }
+/* prévia para aprovar: monta o herói do menu na montaria i da classe */
+window.__ncMountPrev = (cls, i) => { const S = save; S.cls = cls; return new Promise(res => { try{ buildHub(); hubCamera(); }catch(_){}
+  const go0 = () => { if(!hero.mx) return setTimeout(go0, 200); let hh = 1.9; try{ const sk = []; hero.root.traverse(o => { if(o.isSkinnedMesh) sk.push(o); }); const hb = new T.Box3(); sk.forEach(o => { o.geometry.computeBoundingBox(); const bb = o.geometry.boundingBox.clone().applyMatrix4(o.matrixWorld); hb.union(bb); }); if(!hb.isEmpty()) hh = Math.min(3, Math.max(1, hb.max.y - hb.min.y)); }catch(_){}
+  ncMountBuild(cls, i, hh).then(w => { ncMountAttach(hero, w, hh); hubDragT = 1e9; hero.root.rotation.y = -1.1; res(w.userData.def.nm); }, e => res('erro ' + e)); }; go0(); }); };
 /* ================= HORSE ================= */
 function toggleMount(force){
   if(mode !== 'stage' || !P || P.dead || inputLocked) return;
@@ -13088,6 +13162,26 @@ body.nc-l #hub>aside.panel::before,body.nc-r #hub>#rightPanel::before{transform:
     cur[s]=k;(s==='l'?tL:tR).textContent=NAMES[k];document.body.classList.add('nc-'+s);(s==='l'?L:R).scrollTop=0;
     if(innerWidth<1500)close(s==='l'?'r':'l');mark();cam()}
   document.getElementById('hubSpacer').addEventListener('click',function(){if(innerWidth<=900){close('l');close('r')}});
+  /* ===== MENU C (21/11, aprovado pelo Arnold): 8 cartões grandes embaixo, cada um abre UMA coisa só; NPCs Ferreiro e Mercador ===== */
+  var IC={skills:'<path d="M13 2 4 14h7l-1 8 9-12h-7Z"/>',bag:'<path d="M6 8h12l-1 13H7Z"/><path d="M9 8a3 3 0 0 1 6 0"/>',smith:'<path d="M4 20h16M7 20v-4h10v4M9 16v-3h6v3"/><path d="M14 4l6 6-2 2-6-6Z"/><path d="M12 8 4 16"/>',
+    merch:'<path d="M4 9h16l-1 11H5Z"/><path d="M4 9l2-5h12l2 5"/><path d="M10 13h4"/>',conn:'<circle cx="7" cy="8" r="3"/><circle cx="17" cy="8" r="3"/><path d="M2 20c0-3 2-5 5-5s5 2 5 5M12 20c0-3 2-5 5-5s5 2 5 5"/>'};
+  for(var k2 in IC) I[k2]=IC[k2];
+  var CARDS=[['hero','Herói',function(){toggle('l','hero')}],['skills','Habilidades',function(){try{window.ncSkillsPop(true)}catch(e){}}],['gear','Equipamento',function(){toggle('r','gear')}],
+    ['bag','Mochila',function(){toggle('r','gear');setTimeout(function(){var b=document.getElementById('invFilters');if(b)b.scrollIntoView({block:'start',behavior:'smooth'})},120)}],
+    ['smith','Ferreiro',function(){toggle('r','forge');npc('smith')}],['merch','Mercador',function(){toggle('r','shop');npc('merch')}],
+    ['conn','Conexão',function(){try{window.ncCoop.friends()}catch(e){}}],['missions','Missões',function(){toggle('r','missions')}]];
+  var grid=document.createElement('nav');grid.className='nc-grid';
+  CARDS.forEach(function(c){var b=document.createElement('button');b.type='button';b.className='nc-card';b.dataset.card=c[0];b.innerHTML='<svg viewBox="0 0 24 24">'+I[c[0]]+'</svg><span>'+c[1]+'</span>';b.onclick=c[2];grid.appendChild(b)});
+  hub.appendChild(grid);
+  var mini=document.createElement('nav');mini.className='nc-mini';
+  [['stages','Mundo','r'],['play','Progresso','l'],['set','Ajustes','l'],['music','Música','r']].forEach(function(c){var b=document.createElement('button');b.type='button';b.className='nc-minib';b.title=c[1];b.setAttribute('aria-label',c[1]);b.innerHTML='<svg viewBox="0 0 24 24">'+I[c[0]]+'</svg><span>'+c[1]+'</span>';b.onclick=function(){toggle(c[2],c[0])};mini.appendChild(b)});
+  hub.appendChild(mini);
+  /* NPC no topo do painel: retrato + fala curta (troca conforme o painel) */
+  var NPCS={smith:{n:'Brom, o Ferreiro',f:'Traga pedras e eu forjo, evoluo ou desmancho suas peças.',img:'assets/npc/ferreiro.png'},merch:{n:'Lira, a Mercadora',f:'Compro o que você não usa e vendo o que você precisa.',img:'assets/npc/mercadora.png'}};
+  function npc(k){var old=R.querySelector('.nc-npc');if(old)old.remove();var d=NPCS[k];if(!d)return;var el=document.createElement('div');el.className='nc-npc';
+    el.innerHTML='<img src="'+d.img+'" alt="" onerror="this.style.display=\'none\'"><div><b>'+d.n+'</b><p>'+d.f+'</p></div>';var h=R.querySelector('.nc-head');h.parentNode.insertBefore(el,h.nextSibling)}
+  R.addEventListener('click',function(e){var t=e.target.closest('.vtab');if(t){var o=R.querySelector('.nc-npc');if(o)o.remove()}},true);
+  window.ncMenu={toggle:toggle,npc:npc,close:close};
   addEventListener('keydown',function(e){if(e.key==='Escape'&&!hub.hidden&&(cur.l||cur.r)){close('l');close('r')}});
   /* topo: nome do jogo (o mesmo elemento do jogo original, só muda de lugar) */
   var top=document.createElement('div');top.className='nc-top';var logo=L.querySelector('.logo');if(logo)top.appendChild(logo);
@@ -13376,6 +13470,25 @@ body #hub>#rightPanel.panel::before,body #hub>#rightPanel.panel::after{display:n
 
 @media (pointer:fine){#ncRoomHud{top:calc(env(safe-area-inset-top) + 150px)!important}}
 @media (pointer:coarse) and (min-width:600px){#hud .bar{max-width:205px}}
+
+/* ===== MENU C ===== */
+.nc-rail{display:none!important}
+.nc-grid{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:4;display:grid;grid-template-columns:repeat(4,1fr);gap:8px;width:min(560px,calc(100vw - 20px))}
+.nc-card{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;height:68px;border-radius:14px;border:1px solid #8a78e0;background:linear-gradient(180deg,#3a2f6e,#231b48);color:#f4efe2;font:700 12px system-ui,sans-serif;cursor:pointer;
+  box-shadow:0 4px 0 #120d2a,0 6px 14px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.18);transition:transform .08s,box-shadow .08s,background .15s;-webkit-tap-highlight-color:transparent}
+.nc-card svg{width:24px;height:24px;fill:none;stroke:#ffd36a;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.nc-card:hover{background:linear-gradient(180deg,#46398a,#2a2058)}
+.nc-card:active,.nc-card.on{transform:translateY(3px);box-shadow:0 1px 0 #120d2a,0 2px 6px rgba(0,0,0,.45),inset 0 2px 6px rgba(0,0,0,.4)}
+.nc-mini{position:absolute;right:calc(10px + env(safe-area-inset-right,0px));top:calc(env(safe-area-inset-top,0px) + 78px);z-index:4;display:flex;flex-direction:column;gap:6px}
+.nc-minib{width:42px;height:42px;border-radius:12px;border:1px solid #ffffff44;background:rgba(15,12,30,.55);display:grid;place-items:center;cursor:pointer;box-shadow:0 3px 0 rgba(0,0,0,.4)}
+.nc-minib:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(0,0,0,.4)}
+.nc-minib svg{width:20px;height:20px;fill:none;stroke:#f4efe2;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.nc-minib span{display:none}
+.nc-play{bottom:calc(166px + env(safe-area-inset-bottom,0px))!important}
+body.nc-l .nc-grid,body.nc-r .nc-grid,body.nc-l .nc-mini,body.nc-r .nc-mini{opacity:0;pointer-events:none}
+.nc-npc{display:flex;gap:12px;align-items:center;background:linear-gradient(90deg,rgba(242,193,78,.14),transparent);border:1px solid #f2c14e55;border-radius:12px;padding:8px 10px;margin:0 0 12px}
+.nc-npc img{width:72px;height:72px;object-fit:cover;object-position:top;border-radius:10px;background:#1a1438;flex:none}
+.nc-npc b{color:#ffd36a;font:800 15px system-ui,sans-serif}.nc-npc p{margin:3px 0 0;color:#e8e2f6;font:500 13px/1.35 system-ui,sans-serif}
+@media (min-width:901px){.nc-grid{grid-template-columns:repeat(8,1fr);width:min(900px,calc(100vw - 40px))}.nc-play{bottom:calc(100px + env(safe-area-inset-bottom,0px))!important}}
 </style>
 
 <script id="nc-uiscale">
@@ -13395,6 +13508,33 @@ body #hub>#rightPanel.panel::before,body #hub>#rightPanel.panel::after{display:n
   function apply(){ var k = calc(); document.documentElement.style.setProperty('--ui', k); var tab = matchMedia('(pointer: coarse)').matches && Math.min(innerWidth, innerHeight) >= 700; st.textContent = k === 1 ? '' : (SEL + (tab ? ',#touch' : '')).split(',').map(function(s){ return s + '{zoom:' + k + '}'; }).join('\n'); }
   apply(); addEventListener('resize', apply); addEventListener('orientationchange', function(){ setTimeout(apply, 300); });
   window.ncUiScale = apply;
+})();
+</script>
+<style id="nc-uni-css">
+/* ===== Botões: só 2 estilos (pedido do Arnold). Escuro = comum. Dourado liso = principal e selecionado ===== */
+:root{--vj:#ffb347}
+#hub .btn.primary,#pause .btn.primary,.modal .btn.primary,.mbox .btn.primary,.ncsc-b .btn,.ncs-go,.nc-go,#hub .chipb[aria-pressed="true"],.mbox .chipb[aria-pressed="true"],.nc-b.on{background:#ffb347!important;color:#1a1030!important;animation:none!important;box-shadow:none!important}
+#hub .btn.primary:disabled,.modal .btn.primary:disabled,.mbox .btn.primary:disabled{opacity:.45}
+#hub .btn,#hub .chipb,.mbox .btn,.mbox .chipb,.modal .btn{font-family:var(--f-display)}
+.nc-i{display:inline-flex;align-items:center;gap:6px;margin:2px 0 6px;border:0;border-radius:0;clip-path:var(--cuts);background:#241a44;color:#ffb347;padding:5px 12px;font-size:13px;font-weight:600;cursor:pointer}
+.nc-i:hover{background:#34276a}
+.nc-fold{display:none!important}.nc-fold.open{display:block!important;margin:2px 0 10px;padding:8px 10px;background:#120d28;box-shadow:inset 0 0 0 1px #3c2f7a;line-height:1.5}
+</style>
+<script id="nc-uni-js">
+/* textos longos viram um botão ⓘ: o texto só aparece quando a pessoa toca */
+(function(){
+  var SEL='#hub .lede,#hub h2>small,#hub h3>small,#hub .evbox .istat',busy=0;
+  function run(){ if(busy) return; busy=1;
+    try{ document.querySelectorAll(SEL).forEach(function(el){
+      if(el.dataset.ni) return; var t=(el.textContent||'').trim(); if(t.length<75) return; el.dataset.ni=1;
+      var b=document.createElement('button'); b.type='button'; b.className='nc-i'; b.setAttribute('aria-label','Mais informações');
+      b.innerHTML='ⓘ'+(el.matches('.lede')?' <span>Como funciona</span>':'');
+      b.onclick=function(e){ e.stopPropagation(); el.classList.toggle('open'); };
+      el.classList.add('nc-fold'); el.parentNode.insertBefore(b,el); }); }catch(e){}
+    busy=0; }
+  var hub=document.getElementById('hub')||document.body, q=0;
+  new MutationObserver(function(){ if(q) return; q=1; requestAnimationFrame(function(){ q=0; run(); }); }).observe(hub,{childList:true,subtree:true});
+  run();
 })();
 </script>
 </body>
