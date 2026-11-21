@@ -6015,12 +6015,14 @@ const DIFFS = {
   facil:   {name:'Fácil',    css:'#86d873', desc:'Inimigos com menos vida e dano, mais lentos para atacar. Bom para explorar com calma.',
             hp:.7, dmg:.55, spd:.9, tele:1.2, bossCd:1.25, extra:0, elite:0, reward:.8, drop:0, qb:0, potion:.5, hearts:1.3, hyper:1, wind:1.2, atkCd:1.2, aggro:13, shots:1, defMult:1, blockMult:1, regenMult:1, potCd:0, goldLoss:0},
   normal:  {name:'Normal',   css:'#eef0f7', desc:'O equilíbrio original do jogo.',
-            hp:1, dmg:1, spd:1, tele:1, bossCd:1, extra:0, elite:0, reward:1, drop:0, qb:0, potion:.5, hearts:1, hyper:1, wind:1, atkCd:1, aggro:15, shots:1, defMult:1, blockMult:1, regenMult:1, potCd:0, goldLoss:0},
+            hp:1, dmg:1, spd:1, tele:1, bossCd:1, extra:0, elite:0, scale:.35, reward:1, drop:0, qb:0, potion:.5, hearts:1, hyper:1, wind:1, atkCd:1, aggro:15, shots:1, defMult:1, blockMult:1, regenMult:1, potCd:0, goldLoss:0},
   dificil: {name:'Difícil',  css:'#f08a3c', desc:'Para sofrer. Inimigos com 3× vida e 3,4× dano e que ficam mais fortes junto com o seu nível e equipamento, mais rápidos, atacam quase sem pausa e chegam em bandos maiores com elites. Arqueiros atiram 2 flechas. Sua defesa vale 25% menos e você bloqueia menos. Poções curam 35% e só podem ser usadas a cada 8 s. Morrer custa 10% do seu ouro. Recompensas 1,8×.',
             hp:3, dmg:3.4, spd:1.22, tele:.72, bossCd:.55, extra:2, elite:.2, scale:.8, reward:1.8, drop:.06, qb:.7, potion:.35, hearts:.3, hyper:2, wind:.75, atkCd:.7, aggro:20, shots:2, defMult:.75, blockMult:.6, regenMult:.5, potCd:8, goldLoss:.1},
   pesadelo:{name:'Pesadelo', css:'#ff4a4a', desc:'Sofrimento de verdade. Inimigos com 4× vida e 7× dano, que crescem junto com o seu nível e equipamento (ficar forte não deixa fácil), muito rápidos, quase sem aviso antes de bater, te perseguem pelo mapa inteiro e vêm em bandos com 40% de elites. Arqueiros atiram 3 flechas. Sua defesa vale metade, quase não bloqueia e não regenera vida. Poções curam 25% a cada 15 s e não caem corações. O chefe já começa furioso, avisa os golpes em cima da hora, dispara muito mais e chama elites. Morrer custa 25% do ouro. Recompensas 3× e chance 4× maior de peças raras.',
             hp:4, dmg:7, spd:1.42, tele:.52, bossCd:.38, extra:3, elite:.4, scale:1, reward:3, drop:.12, qb:1.5, potion:.25, hearts:0, hyper:4, wind:.55, atkCd:.5, aggro:28, noLeash:true, shots:3, defMult:.5, blockMult:.3, regenMult:0, potCd:15, goldLoss:.25, enraged:true, more:true, bossSummon:true},
 };
+/* EQUILÍBRIO (21/11, pedido do Arnold: chefes e elites estavam fáceis demais, ainda mais para as classes de perto) */
+const NC_BAL = {bossHp:2.2, bossDmg:1.35, eliteHp:8, eliteDmg:2};
 const DF = () => DIFFS[save.diff] || DIFFS.normal;
 let ESCALE = {hp:1, dmg:1};
 let GEARPEN = 0;
@@ -6175,6 +6177,7 @@ function unlocked(st){
   if(st.id === 0) return true;
   if(typeof ncCoop !== 'undefined' && ncCoop.goId === st.id) return true;   // jogando junto: entra na fase do anfitrião
   if(!(save.beaten[st.id-1] > 0)) return false;
+  if(save.level < st.lvl - 1) return false;   // EQUILÍBRIO: precisa ter o nível da área (no máximo 1 abaixo)
   if(st.slot === 'weapon') return ownsSet(st.region*2 + 2);
   return true;
 }
@@ -9966,8 +9969,8 @@ function spawnMinion(st, x, z, awake, elite, type){
   if(type === 'spear'){ const pole = box(.06, 2.3, .06, pmat(0x6a4a2a), 0, -.35, .3, cr.armR); pole.rotation.x = .25; mesh(new T.ConeGeometry(.09, .32, 6), pmat(0xc0c0c8, {metalness:.7, roughness:.3}), 0, 1.3, 0, pole); }
   cr.root.position.set(x, heightAt(x, z), z); cr.root.rotation.y = Math.random()*6; scene.add(cr.root);
   monAttach(cr, monPick(st, type), {elite:!!elite});
-  const D = DF(), hp = Math.round(c.hp*(elite ? 5 : 1)*(ET ? ET.hp : 1)*D.hp*ESCALE.hp);
-  const e = {kind:'minion', type, ET, cr, pos:cr.root.position, hp, maxHp:hp, dmg:c.dmg*(elite ? 1.6 : 1)*(ET ? ET.dmg : 1)*D.dmg*ESCALE.dmg, spd:c.spd*(.85 + Math.random()*.3)*(elite ? .9 : 1)*(ET ? ET.spd : 1)*D.spd, r:.42*sc + .15,
+  const D = DF(), hp = Math.round(c.hp*(elite ? NC_BAL.eliteHp : 1)*(ET ? ET.hp : 1)*D.hp*ESCALE.hp);
+  const e = {kind:'minion', type, ET, cr, pos:cr.root.position, hp, maxHp:hp, dmg:c.dmg*(elite ? NC_BAL.eliteDmg : 1)*(ET ? ET.dmg : 1)*D.dmg*ESCALE.dmg, spd:c.spd*(.85 + Math.random()*.3)*(elite ? .9 : 1)*(ET ? ET.spd : 1)*D.spd, r:.42*sc + .15,
              ranged:isRanged, elite:!!elite, fuse:0, healT:2 + Math.random()*2, awake, atkT:.4 + Math.random(), windT:0, kb:new T.Vector3(), flashT:0, walk:Math.random()*6,
              bar:makeBar(elite ? 1.4 : .9), barY:sc*1.9 + .35, stunT:0, frozenT:0, burnT:0, burnDps:0, burnAcc:0};
   e.nid = ++ncNid; enemies.push(e); try{ ncCoop.onSpawn(e); }catch(_){} return e;
@@ -10035,8 +10038,8 @@ function spawnBoss(st){
   const b = st.bossCfg, cr = makeCreature(b.color, b.scale, b.acc);
   cr.root.position.set(0, 0, ARENA_Z - 3); scene.add(cr.root);
   const D = DF(), mk = worldFight ? 'mundial' : rollBossMod(st), M = BMODS[mk];
-  const hp = Math.round(b.hp*D.hp*ESCALE.hp*M.hp*(CFG.bossHp[st.id] || 1));
-  boss = {kind:'boss', cr, pos:cr.root.position, hp, maxHp:hp, dmg:b.dmg*D.dmg*ESCALE.dmg*M.dmg*(CFG.bossDmg[st.id] || 1), spd:b.spd*D.spd*M.spd, r:(.42*b.scale + .25)*M.sc, awake:false,
+  const hp = Math.round(b.hp*D.hp*ESCALE.hp*M.hp*(CFG.bossHp[st.id] || 1)*NC_BAL.bossHp);
+  boss = {kind:'boss', cr, pos:cr.root.position, hp, maxHp:hp, dmg:b.dmg*D.dmg*ESCALE.dmg*M.dmg*(CFG.bossDmg[st.id] || 1)*NC_BAL.bossDmg, spd:b.spd*D.spd*M.spd, r:(.42*b.scale + .25)*M.sc, awake:false,
           state:'idle', t:1.4, st:0, last:null, enraged:false, base:M.sc, hitT:0, roarT:0, frenzy:false, flashT:0, walk:0, cfg:b, dying:0, fired:0, slowT:0, burnT:0, burnDps:0, burnAcc:0,
           mod:mk, stam:100, exhT:0, downT:0, broken:[]};
   boss.parts = bossParts(boss);
@@ -11780,7 +11783,8 @@ document.addEventListener('click', e => { const b = e.target.closest('[data-trav
 function startStage(id, onlyBoss, world, o){
   try{ ncSetTgt(null); }catch(_){}
   try{ if(ncCoop.ch && ncCoop.host) setTimeout(() => ncCoop.send('go', {st:id, at:ncCoop.at}), 400); }catch(_){}
-  const st = STAGES[id]; if(!st || !unlocked(st)) return; o = o || {};
+  const st = STAGES[id]; if(st && !unlocked(st) && save.level < st.lvl - 1){ try{ banner('Nível baixo', 'Esta área pede nível ' + (st.lvl - 1) + '. Você está no ' + save.level + '.'); }catch(_){} return; }
+  if(!st || !unlocked(st)) return; o = o || {};
   monPreload(st); setTimeout(ncPetSpawn, 1500);
   if(realWanted() && realStage(st) && REAL.state !== 'fail' && REAL.setFail !== st.id && (REAL.state !== 'ready' || !realSetReady(st))){
     realLoad(st); banner('Carregando gráficos realistas…', 'Só na primeira vez de cada lugar');
