@@ -5600,23 +5600,47 @@ const CLASSES = {
             {id:'cataclysm', name:'Cataclismo', full:'Cataclismo', cd:30, desc:'SUPREMA: três ondas de lava saem de você, cada uma maior'}]},
   mage:{name:'Mago', tag:'Magia à distância', wtype:'staff', desc:'Frágil, mas ataca de longe e destrói grupos inteiros.', hp:.8, atk:.95, def:.8, spd:1, block:0, crit:0, cd:.46, attack:'bolt', dash:'Teleporte',
     skills:[{id:'fireball', name:'Fogo', full:'Bola de Fogo', cd:4.5, desc:'explode em área ao acertar'},
-            {id:'frost', name:'Gelo', full:'Nova de Gelo', cd:10, desc:'congela inimigos próximos e deixa chefes lentos'}]},
+            {id:'frost', name:'Gelo', full:'Nova de Gelo', cd:10, desc:'congela inimigos próximos e deixa chefes lentos'},
+            {id:'icelance', name:'Lança', full:'Lança de Gelo', cd:6, desc:'lança de gelo em linha que atravessa e congela por 1 s'},
+            {id:'meteor', name:'Meteoro', full:'Meteoro', cd:11, desc:'um meteoro cai no alvo e explode em área grande'},
+            {id:'arcshield', name:'Escudo', full:'Escudo Arcano', cd:20, desc:'escudo de magia: leva metade do dano por 6 s e recupera 10% de vida'},
+            {id:'storm', name:'Tempestade', full:'Tempestade', cd:30, desc:'SUPREMA: raios caem sem parar em volta do alvo por 2 s'}]},
   archer:{name:'Arqueira', tag:'Arco e flecha', wtype:'bow', desc:'Muito rápida, atira sem parar e foge dos perigos.', hp:.85, atk:.72, def:.85, spd:1.12, block:0, crit:0, cd:.3, attack:'arrow', dash:'Rolamento',
     skills:[{id:'volley', name:'Chuva', full:'Chuva de Flechas', cd:7, desc:'três ondas de flechas caem sobre a área do alvo'},
-            {id:'pierce', name:'Perfurar', full:'Flecha Perfurante', cd:4.5, desc:'atravessa todos os inimigos em linha'}]},
+            {id:'pierce', name:'Perfurar', full:'Flecha Perfurante', cd:4.5, desc:'atravessa todos os inimigos em linha'},
+            {id:'trap', name:'Armadilha', full:'Armadilha', cd:9, desc:'deixa uma armadilha no chão que explode e prende por 2 s'},
+            {id:'backstep', name:'Recuo', full:'Salto para Trás', cd:7, desc:'pula para trás atirando: empurra quem está perto'},
+            {id:'explarrow', name:'Explosiva', full:'Flecha Explosiva', cd:8, desc:'flecha que explode no alvo em área'},
+            {id:'eagle', name:'Águia', full:'Olho de Águia', cd:30, desc:'SUPREMA: +20% de dano por 10 s e uma flecha gigante em linha'}]},
   paladin:{name:'Paladino', tag:'Martelo sagrado', wtype:'hammer', desc:'O mais resistente. Bate forte, se cura e protege a si mesmo com luz.', hp:1.25, atk:1.1, def:1.35, spd:.95, block:.08, crit:0, cd:.55, attack:'smash', dash:'Esquiva',
     skills:[{id:'holy', name:'Sagrado', full:'Martelo Sagrado', cd:7, desc:'esmaga o chão com luz, causa dano em área e cura 15% da vida'},
-            {id:'aegis', name:'Égide', full:'Escudo Divino', cd:18, desc:'fica imune a dano por 4 s e recupera vida'}]},
+            {id:'aegis', name:'Égide', full:'Escudo Divino', cd:18, desc:'fica imune a dano por 4 s e recupera vida'},
+            {id:'healight', name:'Cura', full:'Luz Curadora', cd:14, desc:'luz que cura 35% da vida'},
+            {id:'charge', name:'Investida', full:'Investida Sagrada', cd:9, desc:'corre para frente com o escudo, atropela e atordoa'},
+            {id:'judgment', name:'Julgamento', full:'Julgamento', cd:12, desc:'um raio de luz cai do céu no alvo e atordoa'},
+            {id:'kingaura', name:'Aura', full:'Aura do Rei', cd:30, desc:'SUPREMA: por 8 s leva metade do dano e bate 20% mais forte; explode luz em volta'}]},
   assassin:{name:'Assassina', tag:'Adagas duplas', wtype:'daggers', desc:'Golpes muito rápidos, críticos altos e teleporte pelas costas do inimigo.', hp:.9, atk:.8, def:.85, spd:1.15, block:0, crit:.15, cd:.22, attack:'stab', dash:'Sombra',
     skills:[{id:'shadow', name:'Sombra', full:'Passo Sombrio', cd:5, desc:'aparece atrás do inimigo mais próximo com um golpe crítico'},
-            {id:'fan', name:'Leque', full:'Leque de Lâminas', cd:6, desc:'lança 9 adagas em leque'}]},
+            {id:'fan', name:'Leque', full:'Leque de Lâminas', cd:6, desc:'lança 9 adagas em leque'},
+            {id:'poison', name:'Veneno', full:'Veneno', cd:7, desc:'nuvem de veneno no alvo que machuca por 3 s'},
+            {id:'smoke', name:'Fumaça', full:'Bomba de Fumaça', cd:14, desc:'some na fumaça: fica intocável 1,5 s e atordoa em volta'},
+            {id:'deathmark', name:'Marca', full:'Marca da Morte', cd:10, desc:'marca o alvo e, depois de 1 s, um golpe crítico enorme'},
+            {id:'bladedance', name:'Dança', full:'Dança das Lâminas', cd:30, desc:'SUPREMA: gira entre os inimigos cortando tudo em volta, intocável'}]},
 };
 CLASSES.monk = {name:'Monge', tag:'Punhos e chutes', wtype:'fists', desc:'Luta de mãos vazias com socos muito rápidos, rajadas de energia e chutes giratórios.', hp:1.05, atk:.82, def:1, spd:1.1, block:0, crit:.1, cd:.2, attack:'punch', dash:'Passo Leve',
   skills:[{id:'quake', name:'Palma', full:'Palma Sísmica', cd:5, desc:'uma onda de energia à frente que causa muito dano e atordoa'},
-          {id:'cyclone', name:'Tornado', full:'Tornado de Chutes', cd:9, desc:'gira chutando tudo ao redor quatro vezes, andando mais rápido e curando a cada acerto'}]};
+          {id:'cyclone', name:'Tornado', full:'Tornado de Chutes', cd:9, desc:'gira chutando tudo ao redor quatro vezes, andando mais rápido e curando a cada acerto'},
+            {id:'hundred', name:'Cem Socos', full:'Cem Socos', cd:6, desc:'rajada de socos à frente, muito rápida'},
+            {id:'meditate', name:'Meditação', full:'Meditação', cd:22, desc:'recupera 30% da vida, enche a energia e bate 20% mais forte por 6 s'},
+            {id:'flykick', name:'Chute', full:'Chute Voador', cd:8, desc:'voa para frente com um chute que atordoa ao cair'},
+            {id:'dragon', name:'Dragão', full:'Punho do Dragão', cd:30, desc:'SUPREMA: um dragão de fogo sai do punho em linha, dano enorme'}]};
 CLASSES.necro = {name:'Necromante', tag:'Foice e mortos-vivos', wtype:'scythe', desc:'Ataca de longe com magia sombria, rouba vida e levanta esqueletos que lutam por você.', hp:.85, atk:.9, def:.85, spd:1, block:0, crit:0, cd:.5, attack:'dark', dash:'Névoa',
   skills:[{id:'drain', name:'Drenar', full:'Drenar Vida', cd:5, desc:'prende um raio no inimigo mais próximo e suga a vida dele por 2 s; metade do dano volta em vida'},
-          {id:'army', name:'Exército', full:'Exército dos Mortos', cd:18, desc:'levanta 3 esqueletos que lutam ao seu lado por 12 s'}]};
+          {id:'army', name:'Exército', full:'Exército dos Mortos', cd:18, desc:'levanta 3 esqueletos que lutam ao seu lado por 12 s'},
+            {id:'curse', name:'Maldição', full:'Maldição', cd:8, desc:'amaldiçoa a área do alvo: dano por 3 s'},
+            {id:'corpse', name:'Cadáver', full:'Explosão de Cadáver', cd:10, desc:'explode a área do alvo com energia verde'},
+            {id:'scythe', name:'Foice', full:'Foice Sombria', cd:9, desc:'gira a foice em volta: dano e recupera 10% de vida'},
+            {id:'reaper', name:'Ceifador', full:'Ceifador', cd:30, desc:'SUPREMA: um corte de morte em linha gigante que devolve 20% de vida'}]};
 const CLASS_ORDER = ['warrior','barbarian','mage','archer','paladin','assassin','monk','necro'];
 const CLS = () => CLASSES[save.cls] || CLASSES.warrior;
 // Especializacao (nivel 30): cada classe escolhe 1 de 2 caminhos. A escolha fica guardada por classe.
@@ -8910,6 +8934,7 @@ function buildStage(st, onlyBoss){
   const S = stats();
   P = {pos:hero.root.position, hp:S.hp, S, face:Math.PI, targetFace:Math.PI, atkCd:0, swingT:0, swingDur:.24, dashT:0, dashCd:0, inv:1, dashDir:new T.Vector3(),
        walk:0, flashT:0, dead:false, blockT:0, potT:0, cd:[0,0,0,0,0,0], skill:null, rageT:0, castT:0, aegisT:0, mounted:false, turretT:0, strikeT:0, alt:0};
+  try{ if(ncCoop.ch && !ncCoop.host){ hero.root.position.x += 2.5; hero.root.position.z += 1.5; } }catch(_){}   // jogando junto: não nasce em cima do amigo
   gateOpen = !!onlyBoss;
   if(onlyBoss){ P.pos.set(0, 0, ARENA_Z + ARENA_R + 5);
     for(const p of LAY.pois){ if(p.type === 'house') buildHouse(p, st, false); else if(p.type === 'castle') buildCastle(p, st, false); else if(p.type === 'mesa') buildMesa(p, st, false); else if(p.type === 'puddle') buildPuddle(p, st); } }
@@ -10171,6 +10196,7 @@ function ncTreeHTML(){ const c = CLS(), u = window.ncIconUrl || (() => 'none'), 
   const used = ncSkTree().some(v => v);
   h += '</div>' + (used ? '<button class="btn sm" data-skreset style="margin-top:8px">Refazer pontos · ' + adenaTxt(ncSkResetCost()) + '</button>' : '');
   return h; }
+window.ncTreeDraw = () => ncTreeDraw();
 function ncTreeDraw(){ const ni = document.getElementById('ncNameIn'); if(ni && document.activeElement !== ni) ni.value = save.name || ''; const b = document.getElementById('ncTreeBox'); if(b) b.innerHTML = ncTreeHTML(); const pp = document.getElementById('ncSkPop'); if(pp && !pp.hidden) ncSkillsPop(true); }
 document.addEventListener('click', e => { if(e.target.closest('[data-ncname]')){ const v = (document.getElementById('ncNameIn').value || '').replace(/[<>]/g, '').trim().slice(0, 14); save.name = v; persist(); try{ banner('Nome salvo', v || 'Sem nome: aparece o nome da classe'); ncCoop.track(); }catch(_){} return; } });
 document.addEventListener('click', e => { const b = e.target.closest('[data-skup],[data-skreset],[data-skslot]'); if(!b) return;
@@ -10457,6 +10483,32 @@ function firePlayer(o){
   scene.add(m);
   pprojs.push(Object.assign({m, vx:Math.sin(o.ang)*o.spd, vz:Math.cos(o.ang)*o.spd, hit:new Set(), y0:oy - 1.3}, o));
 }
+const NC_SKFX = {icelance:{t:"line", L:12, W:1.2, m:2.2, c:0x8fe6ff, stun:1}, meteor:{t:"tgt", R:4, m:3.2, c:0xff7a1a, d:0.7, fall:1}, arcshield:{t:"buff", wall:6, heal:0.1, c:0xa0a8ff}, storm:{t:"tgt", R:6, m:1.2, c:0xb070ff, waves:6, gap:0.3, bolt:1}, trap:{t:"self", R:3.2, m:1.8, c:0xc8a060, stun:2, d:0.8}, backstep:{t:"dash", D:-6, R:3, m:1.2, c:0xa8ffb0}, explarrow:{t:"tgt", R:3.5, m:2.4, c:0xff9a3a, d:0.3}, eagle:{t:"line", L:18, W:1.6, m:4, c:0xffe070, cry:10, crit:1}, healight:{t:"buff", heal:0.35, c:0xfff2a0}, charge:{t:"dash", D:7, R:2.2, m:2, c:0xffe28a, stun:1, line:1}, judgment:{t:"tgt", R:3, m:3, c:0xfff0a0, d:0.4, bolt:1, stun:1.5}, kingaura:{t:"self", R:6, m:2.5, c:0xffd24a, wall:8, cry:8}, poison:{t:"tgt", R:2.8, m:0.6, c:0x7aff5a, waves:6, gap:0.5}, smoke:{t:"self", R:4, m:0.8, c:0x8a8a9a, stun:2, inv:1.5}, deathmark:{t:"tgt", R:1.6, m:4.5, c:0xff3a5a, d:1, crit:1}, bladedance:{t:"self", R:4.2, m:1.1, c:0xd8dee8, waves:7, gap:0.18, inv:1.4}, hundred:{t:"line", L:3.4, W:1.6, m:0.55, c:0xffe0a0, waves:8, gap:0.08}, meditate:{t:"buff", heal:0.3, res:1, cry:6, c:0x9affe0}, flykick:{t:"dash", D:6, R:2.6, m:2.2, c:0xffb070, stun:1.2}, dragon:{t:"line", L:16, W:2.2, m:5, c:0xff4a1a, crit:1}, curse:{t:"tgt", R:4, m:0.7, c:0x9a3ad8, waves:5, gap:0.6}, corpse:{t:"tgt", R:4, m:2.6, c:0x4aff7a, d:0.25}, scythe:{t:"self", R:4.5, m:2.2, c:0x7a2ad8, heal:0.1}, reaper:{t:"line", L:14, W:2.5, m:5.5, c:0x6a1ab8, heal:0.2, crit:1}};
+/* Executa as habilidades novas a partir da ficha acima (t = tipo):
+   line = golpe em linha · tgt = cai no alvo · self = em volta de você · dash = avança/recua · buff = cura e reforços */
+function ncSkFx(f, i){ const skm = ncSkMul(i), ox = P.pos.x, oz = P.pos.z, oy = P.pos.y, o = {skm, stun:f.stun || 0, kb:8, crit:!!f.crit};
+  const ring = (x, z, R) => { fxRing(x, z, R, f.c, .45); for(let q = 0; q < 10; q++){ const a2 = q/10*Math.PI*2; burst({x:x + Math.sin(a2)*R*.8, z:z + Math.cos(a2)*R*.8, y:oy}, f.c, 3, 2, 5, .35); } };
+  const area = (x, z, R) => { aoe(x, z, R, f.m, Object.assign({}, o, {y:oy})); ring(x, z, R); if(f.bolt) bolt(x, oy + 9, z, x, oy, z, f.c); };
+  const rep = fn => { const n = f.waves || 1; for(let k = 0; k < n; k++) setTimeout(() => { if(mode === 'stage') fn(k); }, ((f.d || 0) + k*(f.gap || 0))*1000); };
+  if(f.t === 'line'){ const a = aimAngle(f.L); if(a !== null) P.face = P.targetFace = a; const fx = Math.sin(P.face), fz = Math.cos(P.face);
+    rep(() => { for(const e of enemies.slice()){ if(e.dead || e.dying) continue; const dx = e.pos.x - P.pos.x, dz = e.pos.z - P.pos.z, al = dx*fx + dz*fz, sd = Math.abs(dx*fz - dz*fx);
+        if(al > -.6 && al < f.L + e.r && sd < f.W + e.r) hitEnemy(e, f.m, Object.assign({}, o, {nx:fx, nz:fz})); }
+      for(let k = 0; k <= f.L; k += 1.2) burst({x:P.pos.x + fx*k, z:P.pos.z + fz*k, y:P.pos.y + .8}, f.c, 2, 2, 5, .3); }); }
+  if(f.t === 'tgt'){ const tg = nearestEnemy(14); const x = tg ? tg.pos.x : ox + Math.sin(P.face)*6, z = tg ? tg.pos.z : oz + Math.cos(P.face)*6;
+    if(f.fall) for(let k = 0; k < 6; k++) setTimeout(() => burst({x, z, y:oy + 8 - k*1.3}, f.c, 4, 1, 3, .25), k*100);
+    fxRing(x, z, f.R, f.c, .3); rep(k => { const jx = f.waves > 1 ? (Math.random() - .5)*f.R : 0, jz = f.waves > 1 ? (Math.random() - .5)*f.R : 0; area(x + jx, z + jz, f.waves > 1 ? f.R*.6 : f.R); }); }
+  if(f.t === 'self') rep(() => area(P.pos.x, P.pos.z, f.R));
+  if(f.t === 'dash'){ const a = f.D > 0 ? (aimAngle(10) ?? P.face) : P.face; P.face = P.targetFace = a; const d = f.D, fx = Math.sin(a), fz = Math.cos(a);
+    if(f.line){ for(const e of enemies.slice()){ if(e.dead || e.dying) continue; const dx = e.pos.x - ox, dz = e.pos.z - oz, al = dx*fx + dz*fz, sd = Math.abs(dx*fz - dz*fx); if(al > 0 && al < d + 1 && sd < 1.6 + e.r) hitEnemy(e, f.m, Object.assign({}, o, {nx:fx, nz:fz})); } }
+    for(let k = 0; k < 8; k++) setTimeout(() => { if(mode !== 'stage') return; const nx = P.pos.x + fx*d/8, nz = P.pos.z + fz*d/8; try{ if(!blocked(nx, nz)){ P.pos.x = nx; P.pos.z = nz; } }catch(_){ P.pos.x = nx; P.pos.z = nz; } burst(P.pos, f.c, 2, 2, 4, .25); if(k === 7 && !f.line) area(P.pos.x, P.pos.z, f.R); }, k*25);
+    P.inv = Math.max(P.inv, .4); }
+  if(f.heal){ P.hp = Math.min(P.S.hp, P.hp + P.S.hp*f.heal); floatText(P.pos, '+' + Math.round(P.S.hp*f.heal), 'heal'); }
+  if(f.res) try{ P.res = ncResMax(); }catch(_){}
+  if(f.wall) P.wallT = Math.max(P.wallT || 0, f.wall);
+  if(f.cry) P.cryT = Math.max(P.cryT || 0, f.cry);
+  if(f.inv) P.inv = Math.max(P.inv, f.inv);
+  if(f.t === 'buff') ring(P.pos.x, P.pos.z, 2.2);
+  SFX.heavy(); addShake(f.m >= 3 ? .45 : .2); }
 function useSkill(j){
   const i = ncSlot(j);
   if(P && P.skill && P.cd[i] <= 0){ P.qSk = {i:j, t:clock}; return; }   // apertou durante outra habilidade: guarda e solta assim que ela acabar
@@ -10465,6 +10517,7 @@ function useSkill(j){
   if(!ncSkLv(i)){ if(clock - (P.lockMsgT || 0) > 1.2){ P.lockMsgT = clock; floatText(P.pos, ncLvOf(save.cls) < NC_SK_REQ[i] ? 'Libera no nível ' + NC_SK_REQ[i] : 'Aprenda na árvore (H)', 'hurt'); } return; }
   const sk = CLS().skills[i]; if(!ncSpend(Math.round(ncSkCost(sk)*ncSkFast(i)))) return; P.cd[i] = sk.cd*ncSkFast(i); P.skLvI = i; ncInSkill = 1; setTimeout(() => { ncInSkill = 0; }, 0);
   const dirOf = a => new T.Vector3(Math.sin(a), 0, Math.cos(a));
+  if(NC_SKFX[sk.id]){ ncSkFx(NC_SKFX[sk.id], i); return; }
   switch(sk.id){
     case 'bash': { const a = aimAngle(9); if(a !== null) P.face = P.targetFace = a;
       P.skill = {id:'bash', t:0, dur:.3, dir:dirOf(P.face), hit:new Set()}; P.inv = Math.max(P.inv, .4); P.blockT = .3; SFX.dash(); break; }
@@ -12780,7 +12833,7 @@ setTimeout(() => ncCoop.draw(), 500);
 setInterval(() => { try{ ncCoop.hud(); ncCoop.chatDraw(); ncCoop.lobbyTrack(); }catch(_){} }, 1000);
 setTimeout(() => { try{ ncCoop.lobbyOn(); }catch(_){} }, 2500);
 setInterval(() => { try{ const c = ncCoop, inS = mode === 'stage' && P && curStage; if(c.ch && inS && c.host){ c.shared = c.list.length > 1; if(c.shared) c.enSend(); } }catch(_){} }, 200);   // anfitrião: manda os monstros 5x por segundo
-window.__ncT = {drop:(x, z, t) => dropLoot({x, z}, t), loot:() => loot, en:() => enemies};
+window.__ncT = {drop:(x, z, t) => dropLoot({x, z}, t), loot:() => loot, en:() => enemies, hero:() => hero};
 window.__ncHub = c => { save.cls = c; fixWeaponForClass(); buildHub(); hubCamera(); renderHub(); };
 setTimeout(() => { try{ if(save.room && !ncCoop.ch) ncCoop.join(save.room, save.room === save.myRoom); }catch(_){} }, 1500);   // volta sozinho para a última sala
 window.ncCoop = ncCoop;
@@ -12846,10 +12899,10 @@ window.ncCoop = ncCoop;
     army:'M12 3a7 7 0 0 0-7 7c0 2.500 1 4 2.500 5v3h9v-3c1.500-1 2.500-2.500 2.500-5a7 7 0 0 0-7-7z M9 11v.01 M15 11v.01 M10 18v-2 M14 18v-2',dash:'M5 6l6 6-6 6 M12 6l6 6-6 6',
     horse:'M7 21v-9a5 5 0 0 1 10 0v9 M5 21h4 M15 21h4 M8.500 14h.01 M15.500 14h.01',potion:'M10 3h4 M10.500 3v5L6 16a3.500 3.500 0 0 0 3 5h6a3.500 3.500 0 0 0 3-5l-4.500-8V3 M7.500 14h9'};
   /* ícones pintados das habilidades (Painterly Spell Icons, eleazzaar, CC-BY 3.0): escolha do Arnold em 20/11 */
-  var PIC={axeboom:1,thunder:1,chain:1,cataclysm:1,wcry:1,cleave:1,wall:1,kingblade:1,bash:1,whirl:1,leap:1,rage:1,fireball:1,frost:1,volley:1,pierce:1,holy:1,aegis:1,shadow:1,fan:1,quake:1,cyclone:1,drain:1,army:1};
+  var PIC={icelance:1,meteor:1,arcshield:1,storm:1,trap:1,backstep:1,explarrow:1,eagle:1,healight:1,charge:1,judgment:1,kingaura:1,poison:1,smoke:1,deathmark:1,bladedance:1,hundred:1,meditate:1,flykick:1,dragon:1,curse:1,corpse:1,scythe:1,reaper:1,axeboom:1,thunder:1,chain:1,cataclysm:1,wcry:1,cleave:1,wall:1,kingblade:1,bash:1,whirl:1,leap:1,rage:1,fireball:1,frost:1,volley:1,pierce:1,holy:1,aegis:1,shadow:1,fan:1,quake:1,cyclone:1,drain:1,army:1};
   function url(k,c){if(PIC[k]&&!c)return 'url("assets/skills/'+k+'.jpg")';var d=P[k]||P.atk;return "url(\"data:image/svg+xml,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="'+(c||'#fff')+'" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="'+d+'"/></svg>')+"\")"}
   var G={atk:'radial-gradient(circle at 35% 26%,#ff8a7c,#c0303a 60%,#6e141c)',skl:'radial-gradient(circle at 35% 26%,#a88bff,#5a36c0 60%,#281259)',dash:'radial-gradient(circle at 35% 26%,#6fe0d0,#1f8f8a 60%,#0d3f47)',horse:'radial-gradient(circle at 35% 26%,#ffd27a,#b9801f 60%,#5a380a)'};
-  window.ncIconUrl=url;
+  window.ncIconUrl=url; setTimeout(function(){ try{ window.ncTreeDraw && window.ncTreeDraw(); }catch(_){} }, 0);   /* redesenha a árvore com as imagens */
   /* chamado pelo jogo sempre que a classe ou o controle muda: [habilidade 1, habilidade 2] */
   window.ncHud=function(s1,s2){ var set=function(id,k,g){var e=document.getElementById(id);if(e)e.style.backgroundImage=url(k)+','+G[g]};
     set('tAtk','atk','atk');set('tSk1',s1,'skl');set('tSk2',s2,'skl');
