@@ -113,7 +113,7 @@ a{color:var(--ice);font-weight:800}
 .toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,30px);opacity:0;background:linear-gradient(180deg,#bff4ff,#3ad8ff);color:#04121f;font-weight:800;padding:14px 22px;border-radius:14px;box-shadow:0 0 40px #3ad8ff99;z-index:9;transition:.35s;pointer-events:none;max-width:92vw;text-align:center}
 .toast.on{opacity:1;transform:translate(-50%,0)}
 .lpg{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:center}
-.lpc{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.lpc{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.lpc figcaption{flex-direction:column;gap:0;padding:8px 10px}
 .vit{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px}
 figure{margin:0;background:radial-gradient(closest-side,#123a5c,#0b1d2f);border:1px solid var(--line);border-radius:18px;overflow:hidden;transition:transform .3s,border-color .3s}
 figure:hover{transform:translateY(-4px);border-color:var(--ice)}
@@ -147,7 +147,7 @@ footer{color:var(--soft);font-size:14px;text-align:center}
     </div>
   </div>
   <div class="stage rv" style="--d:.2s" id="stage">
-    <span class="lbl">MOLDE OFICIAL · Coroa Ancestral</span>
+    <span class="lbl" id="stgLbl">MOLDE OFICIAL · Coroa Ancestral</span>
     <span class="hint">Arraste para girar · role para zoom</span>
   </div>
 </div></header>
@@ -160,13 +160,14 @@ footer{color:var(--soft);font-size:14px;text-align:center}
 <main>
 <section class="band" id="molde"><div class="wrap">
   <h2 class="rv">O molde da coroa</h2>
-  <p class="rv meta" style="font-size:17px;max-width:70ch">Todo estúdio de games tem um "molde": um modelo de referência que mostra exatamente como a peça deve ficar. A coroa ali em cima foi montada com <b>os mesmos passos</b> da Missão 5. Siga as medidas abaixo no Blender e a sua vai ficar igualzinha. Depois deixe ela com a sua cara!</p>
+  <p class="rv meta" style="font-size:17px;max-width:70ch">Todo estúdio de games tem um "molde": um modelo de referência que mostra exatamente como a peça deve ficar. Todo modelo de estúdio passa por duas etapas: o <b>blockout</b>, que é a forma básica (os passos da Missão 5, com as medidas abaixo), e a <b>versão final</b>, com quinas arredondadas, superfície lisa, aros, veludo e joias. Aperte "Ver versão final" e veja onde você vai chegar.</p>
   <div class="spec">
     <div class="panel rv">
       <h3>Controles do molde</h3>
       <div class="ctrls">
+        <button id="bStage" aria-pressed="false">Ver versão final</button>
         <button id="bWire" aria-pressed="false">Ver malha</button>
-        <button id="bMat" aria-pressed="false">Trocar: gelo / ouro</button>
+        <button id="bMat" aria-pressed="false">Blockout: gelo / ouro</button>
         <button id="bSpin" aria-pressed="true">Girar sozinha</button>
       </div>
       <p class="meta">Ligue <b>Ver malha</b> para enxergar os polígonos, as "peças" que formam o modelo. É assim que o Blender mostra no Modo de Edição.</p>
@@ -176,6 +177,7 @@ footer{color:var(--soft);font-size:14px;text-align:center}
         <li>As pontas saem de um ponto sim, um não.</li>
         <li>Espessura igual em toda a volta.</li>
         <li>8 joias nas pontas e 8 joias no anel.</li>
+        <li>Final: Bevel + Subdivision + Shade Auto Smooth, aros em cima e embaixo, veludo vermelho por dentro.</li>
       </ul>
     </div>
     <div class="panel rv" style="--d:.12s">
@@ -186,14 +188,18 @@ footer{color:var(--soft);font-size:14px;text-align:center}
 </div></section>
 
 <section class="band" id="lowpoly"><div class="wrap">
-  <h2 class="rv">O que é low-poly?</h2>
+  <h2 class="rv">O que é low-poly? E o truque do Nine Crowns</h2>
   <div class="lpg">
-    <div class="rv"><p style="font-size:18px;margin-top:0">Todo modelo 3D é feito de <b>polígonos</b>: pecinhas planas, quase sempre triângulos e quadrados, encaixadas como um mosaico. <b>Low-poly</b> quer dizer "poucos polígonos". Você usa poucas peças, deixa as faces bem visíveis e capricha nas cores.</p>
-    <p>Por que o Nine Crowns vai usar esse estilo? O jogo roda no navegador e no celular. Menos polígonos = jogo leve e rápido. E o melhor: low-poly é estiloso e perfeito para quem está começando.</p></div>
-    <div class="lpc rv" style="--d:.1s"><figure><img id="lpHi" alt="Esfera lisa com milhares de polígonos"><figcaption><b>High-poly</b><span>mais de 6.000 triângulos · lisinha</span></figcaption></figure><figure><img id="lpLo" alt="Esfera low-poly com 80 triângulos"><figcaption><b>Low-poly</b><span>80 triângulos · facetada</span></figcaption></figure></div>
+    <div class="rv"><p style="font-size:18px;margin-top:0">Todo modelo 3D é feito de <b>polígonos</b>: pecinhas planas, quase sempre triângulos, encaixadas como um mosaico. <b>Low-poly</b> quer dizer "poucos polígonos", para o jogo rodar leve no celular e no navegador.</p>
+    <p>Só que poucos polígonos com cara de bloco fica feio. O herói do Nine Crowns tem cerca de 7 mil triângulos e parece lisinho por causa de 3 truques de profissional:</p>
+    <ol style="padding-left:20px"><li><b>Shade Smooth</b>: o Blender "disfarça" as quinas e a superfície fica lisa.</li><li><b>Bevel</b>: arredonda as bordas. Nada de quina cortante.</li><li><b>Proporção chibi</b>: cabeça grande, formas cheias e cores fortes.</li></ol></div>
+    <div class="lpc rv" style="--d:.1s"><figure><img id="lpHi" alt="Esfera lisa com milhares de polígonos"><figcaption><b>Pesada</b><span>6 mil triângulos</span></figcaption></figure><figure><img id="lpLo" alt="Esfera com 80 triângulos facetada"><figcaption><b>Facetada</b><span>80 triângulos</span></figcaption></figure><figure><img id="lpSm" alt="Esfera com 320 triângulos e Shade Smooth, quase lisa"><figcaption><b>O truque ✓</b><span>320 + Shade Smooth</span></figcaption></figure></div>
   </div>
+  <div class="panel rv" style="margin-top:24px"><h3>Padrão Nine Crowns: o teste de qualidade</h3>
+  <p class="meta" style="margin-top:0">Um modelo só entra no jogo se passar nos 5 itens. É assim que estúdios de verdade aprovam a arte.</p>
+  <ol style="padding-left:20px;margin:0"><li><b>Leve:</b> itens comuns até 2 mil triângulos, peças de destaque (coroas, armaduras) até 5 mil, personagens e chefes até 10 mil. O herói atual do jogo tem uns 7 mil. Veja o número em Overlays > Statistics, no canto de cima da tela 3D.</li><li><b>Liso:</b> Shade Auto Smooth ligado e Bevel nas quinas.</li><li><b>Cores:</b> poucas cores, sempre da mesma paleta do reino.</li><li><b>Proporção:</b> personagens no estilo chibi, iguais ao herói atual.</li><li><b>Lado a lado:</b> coloque seu modelo do lado do que já existe no jogo. Só entra se ficar <b>igual ou melhor</b>.</li></ol></div>
   <h2 class="rv" style="margin-top:clamp(28px,4vw,48px)">Vitrine: como seus modelos vão ficar</h2>
-  <p class="rv meta" style="font-size:17px;max-width:70ch">Esta é a meta de cada missão, montada com as mesmas formas que você vai usar no Blender. Use como referência e depois dê o seu toque: cores, detalhes, ideias novas.</p>
+  <p class="rv meta" style="font-size:17px;max-width:70ch">Esta é a meta de cada missão no padrão do jogo, com o número de triângulos de cada uma. Todas foram montadas com formas que você vai aprender no Blender. Use como referência e depois dê o seu toque.</p>
   <div class="vit" id="vit"><p class="meta">Montando a vitrine...</p></div>
 </div></section>
 
@@ -236,6 +242,7 @@ footer{color:var(--soft);font-size:14px;text-align:center}
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script src="models.js"></script>
 <script>
 {
 const $=id=>document.getElementById(id);
@@ -250,7 +257,7 @@ const M=[
 {r:0,t:'Domine a câmera',xp:100,g:'Um modelador olha a peça de todos os lados, como um escultor andando em volta da estátua. Bora treinar seus olhos 3D!',s:['Segure a rodinha do mouse e arraste: a visão gira.','[Shift] + rodinha arrastando: a visão anda para os lados.','Gire a rodinha: zoom.','Clique nas bolinhas coloridas no canto de cima à direita (X vermelho, Y verde, Z azul) para ver de frente, de lado e de cima.','Aperte [Home] para ver a cena toda de novo.'],tip:'Notebook sem mouse? Edit > Preferences > Input e marque Emulate 3 Button Mouse. Aí [Alt] + clique faz o papel da rodinha.',q:[['Para girar a visão em volta do objeto, você...',['Segura a rodinha e arrasta','Aperta Delete','Clica duas vezes no cubo']],['O eixo Z (azul) aponta para...',['Cima','Frente','Esquerda']]]},
 {r:0,t:'Mover, girar e esticar',xp:120,g:'Três letras mágicas: G, R e S. Com elas você já consegue montar coisas. Desafio de hoje: um boneco de neve!',s:['Clique no cubo para selecionar (ele fica laranja).','[G] move. Mexa o mouse e clique para soltar.','[R] gira e [S] estica.','Depois da letra, aperte [X], [Y] ou [Z] para travar num eixo: [G] [Z] só sobe e desce.','[Shift] + [A] > Mesh adiciona formas. [X] apaga. [Ctrl] + [Z] desfaz.','Desafio: boneco de neve com 3 UV Spheres e um Cone de nariz.'],tip:'Errou o movimento? Botão direito do mouse cancela e o objeto volta para onde estava.',q:[['Qual tecla estica um objeto?',['S','G','R']],['Para subir um objeto só na altura, você aperta...',['G e depois Z','R e depois X','S e depois Y']]]},
 {r:1,t:'O Modo de Edição',xp:100,g:'Agora você deixa de mover objetos e começa a ESCULPIR eles. É aqui que a mágica acontece.',s:['Selecione o cubo e aperte [Tab]: agora você mexe nos pedaços dele.','[1], [2] e [3] escolhem vértice (ponto), aresta (linha) e face (lado).','Escolha uma face e aperte [E] para puxar ela para fora (extrude).','[I] cria uma face menor dentro da face (inset).','[Ctrl] + [R] faz um corte em anel no objeto (loop cut).','[Tab] de novo volta ao modo objeto.'],tip:'Modo objeto = você move a massinha inteira. Modo de edição = você aperta e puxa partes dela.',q:[['Que tecla puxa uma face para fora?',['E','Tab','Q']],['No modo de edição, a tecla 1 escolhe...',['Vértices (pontos)','Faces','Objetos inteiros']]]},
-{r:1,t:'Forje a Coroa Ancestral',xp:150,g:'Missão grande! Você vai fazer a coroa do molde oficial, lá no topo da página. Abra o molde, ligue "Ver malha" e compare com a sua.',s:['Apague o cubo ([X]). [Shift] + [A] > Mesh > Cylinder.','No painel que aparece embaixo à esquerda: Vertices = 16 e Cap Fill Type = Nothing (sem tampa).','[S] [Z] 0.3 e [Enter]: o cilindro vira um anel.','[Tab], tecla [1], e [Alt] + clique na beirada de cima para selecionar o anel de cima.','Menu Select > Checker Deselect: fica um ponto sim, um não.','[G] [Z] 0.5 e [Enter]: nasceram as 8 pontas!','[Tab]. Na chave inglesa (Modifiers): Add Modifier > Generate > Solidify. Thickness = 0.08.','[Shift] + [A] > Mesh > UV Sphere com Radius 0.07 para as joias.'],tip:'Digitar o número depois da tecla (como [S] [Z] 0.3) deixa a medida exata. É assim que profissionais seguem um molde.',q:[['O que o Solidify faz?',['Dá espessura a uma superfície fina','Apaga as faces','Pinta o objeto']],['Checker Deselect serve para...',['Tirar a seleção de um ponto sim, um não','Selecionar tudo','Desfazer']]]},
+{r:1,t:'Forje a Coroa Ancestral',xp:150,g:'Missão grande! Você vai fazer a coroa do molde oficial, lá no topo da página. Abra o molde, ligue "Ver malha" e compare com a sua.',s:['Apague o cubo ([X]). [Shift] + [A] > Mesh > Cylinder.','No painel que aparece embaixo à esquerda: Vertices = 16 e Cap Fill Type = Nothing (sem tampa).','[S] [Z] 0.3 e [Enter]: o cilindro vira um anel.','[Tab], tecla [1], e [Alt] + clique na beirada de cima para selecionar o anel de cima.','Menu Select > Checker Deselect: fica um ponto sim, um não.','[G] [Z] 0.5 e [Enter]: nasceram as 8 pontas!','[Tab]. Na chave inglesa (Modifiers): Add Modifier > Generate > Solidify. Thickness = 0.08.','[Shift] + [A] > Mesh > UV Sphere com Radius 0.07 para as joias.','Etapa final: Modifier Bevel (Amount 0.02) + Subdivision Surface (Levels 1). Botão direito > Shade Auto Smooth.','Aros: [Shift] + [A] > Mesh > Torus em cima e embaixo do anel. Veludo: UV Sphere vermelha achatada por dentro.','Compare com o botão "Ver versão final" do molde.'],tip:'Digitar o número depois da tecla (como [S] [Z] 0.3) deixa a medida exata. É assim que profissionais seguem um molde.',q:[['O que o Solidify faz?',['Dá espessura a uma superfície fina','Apaga as faces','Pinta o objeto']],['Checker Deselect serve para...',['Tirar a seleção de um ponto sim, um não','Selecionar tudo','Desfazer']]]},
 {r:1,t:'Cores e metal',xp:100,g:'Modelo sem material parece de massinha cinza. Hora de transformar a coroa em metal brilhante!',s:['Selecione a coroa e clique na bolinha vermelha (Material) > New.','Base Color: escolha a cor (ouro ou gelo, você decide).','Metallic = 1 e Roughness = 0.3: vira metal brilhante.','Selecione uma joia e crie outro material com Metallic = 0 e uma cor forte.','Aperte [Z] > Material Preview para ver as cores.'],tip:'Roughness baixo deixa espelhado; alto deixa fosco, como pedra. Teste os dois e veja a diferença.',q:[['Para parecer metal, o Metallic deve ficar em...',['1','0','50']]]},
 {r:1,t:'Entregue no formato do jogo',xp:150,g:'Um modelo só vale quando entra no jogo! Agora você aprende a entregar como um estúdio de verdade.',s:['Selecione as peças da coroa ([A] seleciona tudo).','[Ctrl] + [A] > All Transforms (acerta o tamanho).','File > Export > glTF 2.0.','Em Format escolha glTF Binary (.glb).','Em Include marque Selected Objects. Em Mesh deixe Apply Modifiers marcado.','Nome sem espaço nem acento: coroa_ancestral.glb','Teste: arraste o arquivo no site gltf-viewer.donmccurdy.com'],tip:'Sempre salve também o .blend ([Ctrl] + [S]). Ele é o "original"; o .glb é a cópia que vai para o jogo.',q:[['Qual formato usamos no jogo?',['.glb','.docx','.mp3']],['Qual é um bom nome de arquivo?',['coroa_ancestral.glb','Coroa NOVA!!.glb','final final 2.glb']]]},
 {r:2,t:'Poção mágica',xp:120,g:'Todo RPG precisa de poção! Hoje você faz uma garrafa de vidro com líquido brilhante.',s:['[Shift] + [A] > Mesh > Cylinder. [Tab].','[Ctrl] + [R] e role a rodinha para fazer 4 cortes. Clique duas vezes para confirmar.','[Alt] + clique em cada anel e use [S] para engordar a barriga e afinar o gargalo.','Face de cima: [I] e depois [E] para baixo, fazendo a boca da garrafa.','[Tab]. Botão direito > Shade Smooth. Modifier Subdivision Surface deixa liso.','Material do vidro: Transmission Weight = 1. Uma esfera dentro, com cor forte, vira o líquido.'],tip:'Faça várias cores: vida, mana, veneno... Um prop bem feito é reaproveitado no jogo inteiro.',q:[['[Ctrl] + [R] faz...',['Um corte em anel (loop cut)','Girar o objeto','Renomear']]]},
@@ -260,12 +267,12 @@ const M=[
 {r:4,t:'Escudo com espelho',xp:120,g:'Hoje você conhece dois truques de profissional: Mirror e Array. Eles fazem o trabalho repetido por você.',s:['Cylinder de 12 vértices. [R] [X] 90 para ficar em pé. Achate com [S].','[Tab], face da frente: [I] para a borda e [E] para dentro.','Modifier Mirror: modele só metade e o outro lado aparece igual. Marque Clipping.','Modifier Array: repete um objeto em fila. Ótimo para rebites.'],tip:'Artista bom não é o que trabalha mais: é o que usa as ferramentas certas.',q:[['O Mirror serve para...',['Copiar o lado espelhado','Deixar transparente','Exportar o modelo']]]},
 {r:5,t:'Elmo do soldado',xp:150,g:'O herói precisa de proteção! O elmo aparece na tela de armaduras do jogo.',s:['UV Sphere. [Tab] e olhe de lado.','Selecione a metade de baixo e [X] > Vertices.','Modifier Solidify para dar espessura.','Selecione faces na frente e [X] > Faces: abre a viseira.','Puxe faces do topo com [E] para fazer uma crista.','Bônus: um peitoral a partir de um cubo com Subdivision Surface.'],tip:'Pesquise fotos de elmos medievais. Artista de verdade sempre usa referência.',q:[['Para apagar só faces no modo de edição:',['X > Faces','Ctrl + S','Tab']]]},
 {r:6,t:'Pedras, árvores e ruínas',xp:150,g:'Agora você vira Environment Artist: quem constrói o MUNDO do jogo.',s:['Árvore: cilindro de 6 lados (tronco) + 3 cones empilhados (folhas).','Pedras: Ico Sphere + Randomize, em vários tamanhos.','Coluna em ruína: cilindro + Modifier Array para empilhar blocos. Apague alguns para parecer quebrada.','Escolha poucas cores para cada reino.'],tip:'O cenário se repete muito no jogo. Modelos leves deixam tudo rápido.',q:[['Por que usar poucos detalhes (low-poly) num jogo de navegador?',['O jogo fica leve e rápido','Porque detalhe é proibido','O Blender não deixa']]]},
-{r:7,t:'O Rei-Monstro',xp:200,g:'Chefão! Cada coroa transformou um rei em monstro. Desenhe o seu: quantos olhos? Garras? Asas?',s:['Comece com um cubo e adicione Mirror com Clipping: modele só metade.','[E] nas faces para puxar braços, pernas e cabeça.','[Ctrl] + [R] para dobras: cotovelo e joelho.','Chifres: [E] no topo da cabeça e [S] para afinar.','Coloque nele uma das coroas que você forjou!','Bônus: aba Sculpting no topo. Pincel Draw e Grab; segurando [Shift] alisa.'],tip:'Character Artist pensa na história: por que esse rei virou esse monstro? Isso muda o visual.',q:[['Por que usar Mirror no monstro?',['Faz os dois lados iguais com metade do trabalho','Deixa ele invisível','Faz ele andar']]]},
-{r:8,t:'O Herói',xp:200,g:'O soldado sobrevivente. É o personagem que todo jogador vai ver o tempo todo. Missão de Character Artist!',s:['Mesma técnica do monstro, mas em pose de T (braços abertos para os lados).','Cabeça, tronco, braços e pernas, com [Ctrl] + [R] nas juntas.','Materiais separados: pele, roupa e cabelo (o jogo deixa trocar essas cores).','Exporte em .fbx e, com seu pai, crie uma conta no Mixamo (site da Adobe). Lá o boneco ganha ossos e animações de andar e atacar.'],tip:'Pense nas partes que o jogo deixa personalizar: rosto, cabelo, barba, pele e roupa.',q:[['Por que modelar o herói em pose de T?',['Facilita colocar ossos e animar','Fica mais bonito','O Blender obriga']]]},
+{r:7,t:'O Rei-Monstro',xp:200,g:'Chefão! Cada coroa transformou um rei em monstro. Antes de modelar, desenhe o seu: chifres? Garras? Capa? Ele precisa ser tão bonito quanto os monstros que já estão no jogo.',s:['Referência: tire print de um monstro do jogo e coloque no Blender com Add > Image > Reference.','Corpo: UV Sphere achatada. Cabeça: outra UV Sphere, grande, no estilo chibi.','Chifres: Add > Curve > Bezier e dobre a curva. Em Geometry > Bevel > Depth dê espessura. No modo de edição, selecione a ponta e [Alt] + [S] até zero: a ponta fica fina.','Olhos brilhando: esferas com material Emission. Sobrancelhas bravas: cubos finos inclinados.','Braços e pernas: cilindros com Subdivision Surface, ou UV Spheres esticadas. Garras: cones pequenos.','Capa: Cylinder sem tampa, apague metade das faces e dê Solidify.','Coloque nele a sua Coroa Ancestral, menor e torta!','Shade Auto Smooth em tudo e confira: até 10 mil triângulos.'],tip:'Character Artist pensa na história: por que esse rei virou esse monstro? Isso muda o visual.',q:[['Para a ponta do chifre ficar fina, você seleciona a ponta e aperta...',['Alt + S até zero','Tab','Ctrl + Z']]]},
+{r:8,t:'O Herói chibi',xp:200,g:'O soldado sobrevivente: o personagem que todo jogador vê o tempo todo. Ele tem que ficar no nível do herói atual do jogo ou melhor. Missão de Character Artist!',s:['Referência: tire print do herói do jogo de frente e de lado. No Blender: Add > Image > Reference.','Cabeça: UV Sphere grande. No chibi, a cabeça tem quase o tamanho do corpo.','Corpo: cubo + Mirror + Subdivision Surface (Levels 2). Puxe braços e pernas com [E]: sai um boneco arredondado.','Rosto: olhos de esfera preta achatada com um pontinho branco de brilho. Sobrancelhas, nariz e orelhas pequenos.','Cabelo: uma meia esfera por cima + mechas de esferas esticadas. Junte com [Ctrl] + [J].','Armadura: no modo de edição, selecione faces do peito, [Shift] + [D] e [P] separa. Solidify: a armadura veste o corpo.','Capa vermelha, cinto e ombreiras. Shade Auto Smooth em tudo.','Monte em pose de T (braços abertos), confira até 10 mil triângulos e exporte .fbx para o Mixamo, com seu pai.'],tip:'Teste final: coloque seu herói do lado do herói do jogo. Se ficar igual ou melhor, aprovado!',q:[['No estilo chibi, a cabeça é...',['Grande, quase do tamanho do corpo','Bem pequena','Quadrada e sem rosto']]]},
 {r:8,t:'Entrega final',xp:300,g:'Você chegou ao fim da academia. Hora de entregar a arte do jogo como um Lead 3D Artist!',s:['Crie uma pasta Nine Crowns Modelos com todos os .glb.','Confira no visualizador se todos abrem.','Apresente para o seu pai como numa reunião de estúdio: mostre cada modelo e explique como fez.','Combinem juntos onde cada arquivo entra no jogo.'],tip:'Isso tem nome no mundo dos games: "entrega de assets". Você acabou de fazer uma.',q:[['Quantas coroas existem no Nine Crowns?',['9','3','12']]]}
 ];
 const LV=[[0,'Trainee 3D','Aprende as ferramentas, como um estagiário no estúdio.'],[320,'Prop Artist Júnior','Modela objetos do jogo: coroas, poções, moedas.'],[1040,'Prop Artist Pleno','Domina armas, escudos e armaduras.'],[1760,'Environment Artist','Constrói o mundo: pedras, árvores e ruínas.'],[1960,'Character Artist','Cria monstros e personagens.'],[2460,'Lead 3D Artist','Lidera e entrega a arte 3D do jogo inteiro.']];
-const SPEC=[['Anel','Cylinder · Vertices','16'],['Tampa','Cap Fill Type','Nothing'],['Altura','[S] [Z]','0.3'],['Pontas','Checker Deselect + [G] [Z]','0.5'],['Espessura','Solidify · Thickness','0.08'],['Joias','UV Sphere · Radius','0.07'],['Ouro','Base Color · Metallic · Roughness','#E8B33A · 1 · 0.3'],['Gelo','Base Color · Metallic · Roughness','#BFE9FF · 0.6 · 0.15']];
+const SPEC=[['Anel','Cylinder · Vertices','16'],['Tampa','Cap Fill Type','Nothing'],['Altura','[S] [Z]','0.3'],['Pontas','Checker Deselect + [G] [Z]','0.5'],['Espessura','Solidify · Thickness','0.08'],['Joias','UV Sphere · Radius','0.07'],['Quinas','Bevel · Amount','0.02'],['Lisura','Subdivision Surface · Levels','1'],['Aros','Torus · Minor Radius','0.035'],['Ouro','Base Color · Metallic · Roughness','#E8B33A · 1 · 0.3'],['Gelo','Base Color · Metallic · Roughness','#BFE9FF · 0.6 · 0.15']];
 const KEYS=[['Rodinha arrastando','Gira a visão','Tudo'],['Shift + rodinha','Anda para os lados','Tudo'],['G / R / S','Mover / girar / esticar','Tudo'],['X, Y, Z (depois de G R S)','Trava num eixo','Tudo'],['Shift + A','Adiciona forma','Modo objeto'],['Shift + D','Duplica','Tudo'],['X','Apaga','Tudo'],['Ctrl + Z','Desfaz','Tudo'],['Tab','Entra e sai do modo de edição','Tudo'],['1 / 2 / 3','Vértice / aresta / face','Modo de edição'],['E','Extrude (puxar)','Modo de edição'],['I','Inset (face dentro da face)','Modo de edição'],['Ctrl + R','Corte em anel','Modo de edição'],['Ctrl + B','Bevel (arredondar quina)','Modo de edição'],['M','Juntar pontos','Modo de edição'],['Alt + clique','Seleciona um anel inteiro','Modo de edição'],['A','Seleciona tudo','Tudo'],['Ctrl + A','Aplicar tamanho e giro','Modo objeto'],['Z','Muda a visualização (Material Preview)','Tudo'],['Home','Mostra a cena toda','Tudo'],['Ctrl + S','Salva o arquivo .blend','Tudo']];
 const TOOLS=[['Blender','blender.org','A principal. Modela, esculpe, pinta, anima e exporta .glb. Usada em estúdios de verdade.','Sem conta'],['Blockbench','blockbench.net','Modelos low-poly e de blocos, muito fácil. Também exporta .glb.','Sem conta'],['MagicaVoxel','ephtracy.github.io','Modelos de cubinhos, estilo Minecraft. Ótimo para itens rápidos.','Sem conta'],['Krita','krita.org','Pintura digital para texturas e para desenhar seus personagens antes de modelar.','Sem conta'],['Tinkercad','tinkercad.com','Formas simples no navegador. Bom aquecimento.','Conta criada pelo pai'],['Mixamo','mixamo.com','Coloca ossos e animações no personagem automaticamente.','Conta criada pelo pai']];
 const INV=['Coroa Ancestral','Poção','Moeda de prata','Fogueira','Espada','Escudo','Elmo','Árvore','Pedras','Coluna em ruína','Rei-Monstro','Herói'];
@@ -369,79 +376,49 @@ document.addEventListener('change',e=>{
 
 tables();sndBtn();render(false);watch();
 
-/* ---------- 3D: molde oficial + vitrine ---------- */
+/* ---------- 3D: molde oficial + vitrine (modelos em models.js) ---------- */
 const stage=$('stage');
-if(!window.THREE){stage.insertAdjacentHTML('beforeend','<div class="fail">A coroa 3D precisa de internet para carregar. Conecte e recarregue a página.</div>');$('vit').innerHTML='<p class="meta">A vitrine 3D precisa de internet para carregar.</p>'}else{
+if(!window.THREE||!window.CFM){stage.insertAdjacentHTML('beforeend','<div class="fail">A coroa 3D precisa de internet para carregar. Conecte e recarregue a página.</div>');$('vit').innerHTML='<p class="meta">A vitrine 3D precisa de internet para carregar.</p>'}else{
  const T=THREE;if(T.ColorManagement)T.ColorManagement.legacyMode=false;
  const envTex=(ren,neu)=>{const cvs=document.createElement('canvas');cvs.width=64;cvs.height=256;const g=cvs.getContext('2d'),gr=g.createLinearGradient(0,0,0,256);
   gr.addColorStop(0,'#ffffff');gr.addColorStop(.35,neu?'#d8dde3':'#7fdcff');gr.addColorStop(.55,neu?'#4a525c':'#0c2a48');gr.addColorStop(1,'#020a12');g.fillStyle=gr;g.fillRect(0,0,64,256);
   const es=new T.Scene();es.add(new T.Mesh(new T.SphereGeometry(10,32,16),new T.MeshBasicMaterial({map:new T.CanvasTexture(cvs),side:T.BackSide})));return new T.PMREMGenerator(ren).fromScene(es).texture};
- const lights=sc=>{sc.add(new T.HemisphereLight(0xcff6ff,0x06111d,.6));const k=new T.DirectionalLight(0xffffff,1.6);k.position.set(3,5,4);sc.add(k);const r=new T.PointLight(0x3ad8ff,3,12);r.position.set(-3,1.5,-2.5);sc.add(r)};
- const mt=(c,o)=>new T.MeshStandardMaterial(Object.assign({color:c,flatShading:true,roughness:.7,metalness:0},o||{}));
- const glow=c=>mt(c,{emissive:c,emissiveIntensity:.8,roughness:.4});
- const mesh=(g,m,p,r,s)=>{const x=new T.Mesh(g,m);if(p)x.position.set(...p);if(r)x.rotation.set(...r);if(s)x.scale.set(...s);return x};
- const grp=(...a)=>{const g=new T.Group();a.forEach(x=>g.add(x));return g};
- const rough=(g,k)=>{const p=g.attributes.position,m={};for(let i=0;i<p.count;i++){const key=[p.getX(i),p.getY(i),p.getZ(i)].map(v=>v.toFixed(3)).join();if(!m[key])m[key]=1-k+Math.random()*k*2;p.setXYZ(i,p.getX(i)*m[key],p.getY(i)*m[key],p.getZ(i)*m[key])}g.computeVertexNormals();return g};
+ const tris=o=>{let n=0;o.traverse(m=>{if(m.isMesh){const g=m.geometry;n+=(g.index?g.index.count:g.attributes.position.count)/3}});return Math.round(n)};
+ const fmt=n=>n<1000?n+' triângulos':(n/1000).toFixed(1).replace('.',',')+' mil triângulos';
  const MAT={ice:{color:0xbfe9ff,metalness:.6,roughness:.15},gold:{color:0xe8b33a,metalness:1,roughness:.3}};
- // Coroa: mesmos passos da Missão 5 (anel de 16 lados, pontas em um sim um não, espessura 0.08)
- function crownGeo(){const N=16,R=1,TH=.08,HB=.6,PK=.5,pos=[],O=(a,y,r)=>[Math.cos(a)*r,y,Math.sin(a)*r],quad=(a,b,c,d)=>pos.push(...a,...b,...c,...a,...c,...d),ht=i=>HB+((i%N)%2===0?PK:0);
-  for(let i=0;i<N;i++){const a0=i/N*Math.PI*2,a1=(i+1)/N*Math.PI*2,h0=ht(i),h1=ht(i+1),ri=R-TH;
-   quad(O(a0,0,R),O(a0,h0,R),O(a1,h1,R),O(a1,0,R));quad(O(a1,0,ri),O(a1,h1,ri),O(a0,h0,ri),O(a0,0,ri));
-   quad(O(a0,h0,R),O(a0,h0,ri),O(a1,h1,ri),O(a1,h1,R));quad(O(a1,0,R),O(a1,0,ri),O(a0,0,ri),O(a0,0,R))}
-  const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(pos,3));g.computeVertexNormals();return g}
- function makeCrown(m){const N=16,R=1,TH=.08,HB=.6,PK=.5,geo=crownGeo(),body=new T.Mesh(geo,m),g=grp(body),C=[0x3ad8ff,0xb48cff,0xff5a78,0x57e389,0xffffff,0xff8a4c,0x7fe8ff,0xffd76a],gg=new T.IcosahedronGeometry(.07,0);
-  for(let i=0;i<N;i++){const a=i/N*Math.PI*2,c=C[Math.floor(i/2)%8],r=i%2===0?R-TH/2:R+.03,y=i%2===0?HB+PK:HB*.45;g.add(mesh(gg,glow(c),[Math.cos(a)*r,y,Math.sin(a)*r]))}
-  g.userData={geo,body};return g}
- const B={
-  potion(){const prof=[[0,0],[.42,.02],[.52,.3],[.5,.62],[.3,.82],[.16,.9],[.16,1.15],[.2,1.2],[.0,1.2]].map(p=>new T.Vector2(p[0],p[1]));
-   const liq=[[0,.03],[.4,.05],[.48,.3],[.46,.58],[0,.58]].map(p=>new T.Vector2(p[0],p[1]));
-   return grp(mesh(new T.LatheGeometry(prof,8),mt(0xbff1ff,{transparent:true,opacity:.35,roughness:.05,metalness:.1})),mesh(new T.LatheGeometry(liq,8),glow(0xb048ff)),mesh(new T.CylinderGeometry(.15,.12,.2,6),mt(0x8a5a2b),[0,1.28,0]))},
-  coin(){return grp(mesh(new T.CylinderGeometry(.6,.6,.1,12),mt(0xd4dde6,{metalness:1,roughness:.3}),null,[Math.PI/2,0,0]),mesh(new T.CylinderGeometry(.46,.46,.11,12),mt(0xa9b6c3,{metalness:1,roughness:.4}),[0,0,.01],[Math.PI/2,0,0]),mesh(new T.OctahedronGeometry(.18,0),mt(0xeef4fa,{metalness:1,roughness:.2}),[0,0,.07],null,[1,1,.35]))},
-  campfire(){const g=grp();for(let i=0;i<5;i++){const a=i/5*Math.PI*2,l=mesh(new T.CylinderGeometry(.08,.09,1,7),mt(0x7a4a26));l.position.set(Math.cos(a)*.2,.28,Math.sin(a)*.2);l.rotation.set(0,-a,0);l.rotateZ(1.05);g.add(l)}
-   for(let i=0;i<10;i++){const a=i/10*Math.PI*2;g.add(mesh(rough(new T.IcosahedronGeometry(.16,0),.25),mt(0x6f7a86),[Math.cos(a)*.75,.08,Math.sin(a)*.75]))}
-   [[0,.55,0,.28,.8,0xff7a1a],[.12,.45,.08,.18,.55,0xffb02e],[-.12,.42,-.06,.17,.5,0xffd23f],[0,.4,.13,.13,.4,0xfff1a8]].forEach(f=>g.add(mesh(new T.ConeGeometry(f[3],f[4],6),glow(f[5]),[f[0],f[1],f[2]])));return g},
-  sword(){const st=mt(0xdfe8f0,{metalness:1,roughness:.25});return grp(mesh(new T.BoxGeometry(.16,1.5,.04),st,[0,.95,0]),mesh(new T.ConeGeometry(.115,.28,4),st,[0,1.84,0],[0,Math.PI/4,0],[1,1,.3]),mesh(new T.BoxGeometry(.62,.08,.12),mt(0xe8b33a,{metalness:1,roughness:.3}),[0,.18,0]),mesh(new T.CylinderGeometry(.05,.05,.36,6),mt(0x3a2a4a),[0,-.02,0]),mesh(new T.IcosahedronGeometry(.08,0),glow(0x3ad8ff),[0,-.24,0]))},
-  shield(){const g=grp(mesh(new T.CylinderGeometry(.8,.8,.1,12),mt(0x1f6fb2),null,[Math.PI/2,0,0]),mesh(new T.TorusGeometry(.8,.06,4,12),mt(0xc9d6e3,{metalness:1,roughness:.3})),mesh(new T.SphereGeometry(.2,8,4,0,Math.PI*2,0,Math.PI/2),mt(0xc9d6e3,{metalness:1,roughness:.3}),[0,0,.05],[Math.PI/2,0,0]));
-   for(let i=0;i<8;i++){const a=i/8*Math.PI*2;g.add(mesh(new T.IcosahedronGeometry(.045,0),mt(0xe8b33a,{metalness:1}),[Math.cos(a)*.62,Math.sin(a)*.62,.07]))}return g},
-  helmet(){const s=mt(0x9fb0c2,{metalness:.9,roughness:.35});return grp(mesh(new T.SphereGeometry(.6,10,7,0,Math.PI*2,0,Math.PI*.62),s,null,null,[1,1.1,1]),mesh(new T.BoxGeometry(.7,.07,.1),mt(0x0a1420),[0,.1,.56]),mesh(new T.BoxGeometry(.1,.22,.12),s,[0,-.1,.57]),mesh(new T.BoxGeometry(.08,.3,.8),mt(0xff4a5a),[0,.7,-.05]))},
-  tree(){return grp(mesh(new T.CylinderGeometry(.1,.14,.6,6),mt(0x6b4423),[0,.3,0]),mesh(new T.ConeGeometry(.62,.8,7),mt(0x2f9e5b),[0,.85,0]),mesh(new T.ConeGeometry(.48,.7,7),mt(0x3fbf6e),[0,1.25,0]),mesh(new T.ConeGeometry(.32,.55,7),mt(0x57e389),[0,1.6,0]))},
-  rocks(){return grp(mesh(rough(new T.IcosahedronGeometry(.5,0),.22),mt(0x7d8896),[0,.35,0],null,[1.2,.8,1]),mesh(rough(new T.IcosahedronGeometry(.32,0),.25),mt(0x6a7482),[.6,.2,.3]),mesh(rough(new T.IcosahedronGeometry(.22,0),.3),mt(0x8f9aa8),[-.5,.14,.35]))},
-  column(){const s=mt(0xc8c2b4),g=grp(mesh(new T.BoxGeometry(.8,.18,.8),s,[0,.09,0]));[[0,.38,0,0],[0,.78,0,0],[.02,1.16,0,.08]].forEach(c=>g.add(mesh(new T.CylinderGeometry(.27,.29,.38,8),s,[c[0],c[1],c[2]],[0,0,c[3]])));
-   g.add(mesh(new T.CylinderGeometry(.27,.27,.3,8),s,[.55,.15,.25],[Math.PI/2,0,.4]));g.add(mesh(rough(new T.IcosahedronGeometry(.12,0),.3),s,[-.45,.08,.3]));return g},
-  monster(){const sk=mt(0x6b2f7a),dk=mt(0x3d1a48),g=grp(mesh(new T.BoxGeometry(.9,.9,.6),sk,[0,.95,0]),mesh(new T.BoxGeometry(.55,.5,.5),sk,[0,1.65,.02]),
-   mesh(new T.BoxGeometry(.25,.7,.3),dk,[-.62,1,0],[0,0,.25]),mesh(new T.BoxGeometry(.25,.7,.3),dk,[.62,1,0],[0,0,-.25]),mesh(new T.BoxGeometry(.3,.55,.32),dk,[-.24,.28,0]),mesh(new T.BoxGeometry(.3,.55,.32),dk,[.24,.28,0]),
-   mesh(new T.ConeGeometry(.08,.35,5),mt(0xe8e0d0),[-.22,1.98,0],[0,0,.4]),mesh(new T.ConeGeometry(.08,.35,5),mt(0xe8e0d0),[.22,1.98,0],[0,0,-.4]),
-   mesh(new T.IcosahedronGeometry(.05,0),glow(0xff2244),[-.12,1.7,.28]),mesh(new T.IcosahedronGeometry(.05,0),glow(0xff2244),[.12,1.7,.28]));
-   const c=makeCrown(mt(0xe8b33a,{metalness:1,roughness:.3}));c.scale.setScalar(.24);c.position.set(0,1.9,0);g.add(c);return g},
-  hero(){const sk=mt(0xd9a37a),cl=mt(0x2a7fd6),dk=mt(0x2b2633),hr=mt(0x3a2414);return grp(mesh(new T.BoxGeometry(.18,.6,.2),dk,[-.12,.3,0]),mesh(new T.BoxGeometry(.18,.6,.2),dk,[.12,.3,0]),mesh(new T.BoxGeometry(.5,.62,.26),cl,[0,.91,0]),
-   mesh(new T.BoxGeometry(.52,.08,.28),mt(0x7a4a26),[0,.64,0]),mesh(new T.BoxGeometry(.6,.14,.16),cl,[-.55,1.12,0]),mesh(new T.BoxGeometry(.6,.14,.16),cl,[.55,1.12,0]),mesh(new T.BoxGeometry(.12,.14,.14),sk,[-.91,1.12,0]),mesh(new T.BoxGeometry(.12,.14,.14),sk,[.91,1.12,0]),
-   mesh(new T.IcosahedronGeometry(.2,0),sk,[0,1.42,0],null,[1,1.15,1]),mesh(new T.BoxGeometry(.38,.14,.36),hr,[0,1.6,-.02]))}
- };
- const SHOW=[['Coroa Ancestral','Missão 5',()=>makeCrown(new T.MeshStandardMaterial(Object.assign({flatShading:true,side:T.DoubleSide},MAT.gold)))],['Poção','Missão 8',B.potion],['Moeda de prata','Missão 9',B.coin],['Fogueira','Missão 10',B.campfire],['Espada','Missão 11',B.sword],['Escudo','Missão 12',B.shield],['Elmo','Missão 13',B.helmet],['Árvore','Missão 14',B.tree],['Pedras','Missão 14',B.rocks],['Coluna em ruína','Missão 14',B.column],['Rei-Monstro','Missão 15',B.monster],['Herói em pose T','Missão 16',B.hero]];
  // ---- palco principal: o molde ----
  const ren=new T.WebGLRenderer({antialias:true,alpha:true});ren.setPixelRatio(Math.min(2,devicePixelRatio||1));ren.outputEncoding=T.sRGBEncoding;ren.toneMapping=T.ACESFilmicToneMapping;
  stage.prepend(ren.domElement);
- const scene=new T.Scene(),cam=new T.PerspectiveCamera(38,1,.1,100);cam.position.set(2.6,1.9,3.2);scene.environment=envTex(ren);lights(scene);
+ const scene=new T.Scene(),cam=new T.PerspectiveCamera(38,1,.1,100);cam.position.set(2.6,1.9,3.2);scene.environment=envTex(ren);
+ scene.add(new T.HemisphereLight(0xcff6ff,0x06111d,.6));const key=new T.DirectionalLight(0xffffff,1.6);key.position.set(3,5,4);scene.add(key);const rim=new T.PointLight(0x3ad8ff,3,12);rim.position.set(-3,1.5,-2.5);scene.add(rim);
  const mat=new T.MeshStandardMaterial(Object.assign({side:T.DoubleSide,flatShading:true},MAT.ice));
- const crown=makeCrown(mat);crown.position.y=-.55;scene.add(crown);
- const edges=new T.LineSegments(new T.EdgesGeometry(crown.userData.geo,1),new T.LineBasicMaterial({color:0x3ad8ff}));edges.visible=false;crown.add(edges);
+ const block=CFM.crownBlock(mat);block.position.y=-.55;scene.add(block);
+ const fin=CFM.crown();fin.position.y=-.42;fin.scale.setScalar(1.05);fin.visible=false;scene.add(fin);
+ const edges=new T.LineSegments(new T.EdgesGeometry(block.userData.geo,1),new T.LineBasicMaterial({color:0x3ad8ff}));edges.visible=false;block.add(edges);
  const ring=new T.Mesh(new T.RingGeometry(1.25,1.32,64),new T.MeshBasicMaterial({color:0x3ad8ff,transparent:true,opacity:.35,side:T.DoubleSide}));ring.rotation.x=-Math.PI/2;ring.position.y=-.6;scene.add(ring);
  let ctl=null;if(T.OrbitControls){ctl=new T.OrbitControls(cam,ren.domElement);ctl.enableDamping=true;ctl.enablePan=false;ctl.minDistance=2.2;ctl.maxDistance=8;ctl.autoRotate=!RM;ctl.autoRotateSpeed=1.6;ctl.target.set(0,-.1,0)}
  const ro=new ResizeObserver(()=>{const w=stage.clientWidth,h=stage.clientHeight;ren.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix()});ro.observe(stage);
  let t=0;(function anim(){t+=.016;ring.material.opacity=.25+Math.sin(t*2)*.12;if(ctl)ctl.update();ren.render(scene,cam);requestAnimationFrame(anim)})();
- $('bWire').onclick=e=>{edges.visible=!edges.visible;mat.opacity=edges.visible?.35:1;mat.transparent=edges.visible;e.currentTarget.setAttribute('aria-pressed',edges.visible);play('tick')};
- let gold=false;$('bMat').onclick=e=>{gold=!gold;mat.setValues(gold?MAT.gold:MAT.ice);mat.needsUpdate=true;e.currentTarget.setAttribute('aria-pressed',gold);e.currentTarget.textContent=gold?'Trocar: ouro / gelo':'Trocar: gelo / ouro';play('coin')};
+ const stg=$('stgLbl'),setLbl=()=>stg.textContent=fin.visible?'MOLDE · Etapa 2: final (Bevel + Subdivision + Shade Smooth)':'MOLDE · Etapa 1: blockout (os passos da Missão 5)';setLbl();
+ $('bStage').onclick=e=>{fin.visible=!fin.visible;block.visible=!fin.visible;e.currentTarget.setAttribute('aria-pressed',fin.visible);e.currentTarget.textContent=fin.visible?'Ver blockout':'Ver versão final';setLbl();play('coin')};
+ $('bWire').onclick=e=>{if(fin.visible)$('bStage').click();edges.visible=!edges.visible;mat.opacity=edges.visible?.35:1;mat.transparent=edges.visible;e.currentTarget.setAttribute('aria-pressed',edges.visible);play('tick')};
+ let gold=false;$('bMat').onclick=e=>{gold=!gold;mat.setValues(gold?MAT.gold:MAT.ice);mat.needsUpdate=true;e.currentTarget.setAttribute('aria-pressed',gold);e.currentTarget.textContent=gold?'Blockout: ouro / gelo':'Blockout: gelo / ouro';play('coin')};
  $('bSpin').onclick=e=>{if(!ctl)return;ctl.autoRotate=!ctl.autoRotate;e.currentTarget.setAttribute('aria-pressed',ctl.autoRotate);play('tick')};
- // ---- vitrine: fotos 3D de cada modelo, geradas uma vez ----
- function shots(){const r2=new T.WebGLRenderer({antialias:true,alpha:true,preserveDrawingBuffer:true});r2.setSize(420,420);r2.outputEncoding=T.sRGBEncoding;r2.toneMapping=T.ACESFilmicToneMapping;
-  const sc=new T.Scene();sc.environment=envTex(r2,1);lights(sc);const c2=new T.PerspectiveCamera(34,1,.05,100);
-  const ground=mesh(new T.CylinderGeometry(1.6,1.7,.08,10),mt(0x10314f,{roughness:.9}));sc.add(ground);
-  const snap=obj=>{sc.add(obj);const bx=new T.Box3().setFromObject(obj),sz=bx.getSize(new T.Vector3()),ce=bx.getCenter(new T.Vector3());const s=1.9/Math.max(sz.x,sz.y,sz.z);obj.scale.multiplyScalar(s);
-   const b2=new T.Box3().setFromObject(obj);obj.position.y-=b2.min.y;ground.position.y=-.04;const c=new T.Box3().setFromObject(obj).getCenter(new T.Vector3());
-   c2.position.set(c.x+2.4,c.y+1.5,c.z+3.2);c2.lookAt(c.x,c.y,c.z);r2.render(sc,c2);const url=r2.domElement.toDataURL('image/png');sc.remove(obj);return url};
-  const smooth=new T.Mesh(new T.SphereGeometry(.9,64,48),mt(0x7fd8ff,{flatShading:false,roughness:.35})),low=new T.Mesh(new T.IcosahedronGeometry(.9,1),mt(0x7fd8ff,{roughness:.35}));
-  $('lpHi').src=snap(smooth);$('lpLo').src=snap(low);
-  $('vit').innerHTML=SHOW.map((s,i)=>`<figure class="vi rv" style="--d:${(i%4)*.06}s"><img alt="${s[0]} em estilo low-poly" src="${snap(s[2]())}"><figcaption><b>${s[0]}</b><span>${s[1]}</span></figcaption></figure>`).join('');
+ // ---- vitrine: fotos 3D de cada modelo final, geradas uma vez ----
+ const SHOW=[['Coroa Ancestral','Missão 5',CFM.crown],['Poção','Missão 8',CFM.potion],['Moedas de prata','Missão 9',CFM.coin],['Fogueira','Missão 10',CFM.campfire],['Espada','Missão 11',CFM.sword],['Escudo','Missão 12',CFM.shield],['Elmo','Missão 13',CFM.helmet],['Árvore','Missão 14',CFM.tree],['Pedras com musgo','Missão 14',CFM.rocks],['Coluna em ruína','Missão 14',CFM.column],['Rei-Monstro','Missão 15',CFM.monster],['Herói chibi','Missão 16',CFM.hero]];
+ function shots(){const r2=new T.WebGLRenderer({antialias:true,alpha:true,preserveDrawingBuffer:true});r2.setSize(480,480);r2.outputEncoding=T.sRGBEncoding;r2.toneMapping=T.ACESFilmicToneMapping;r2.shadowMap.enabled=true;r2.shadowMap.type=T.PCFSoftShadowMap;
+  const sc=new T.Scene();sc.environment=envTex(r2,1);sc.add(new T.HemisphereLight(0xeaf6ff,0x1a2a3a,.55));
+  const k=new T.DirectionalLight(0xfff4e6,2.1);k.position.set(2.5,5,3.5);k.castShadow=true;k.shadow.mapSize.set(1024,1024);Object.assign(k.shadow.camera,{left:-2,right:2,top:2,bottom:-2,near:.5,far:15});k.shadow.radius=4;k.shadow.bias=-.0005;sc.add(k);
+  const f=new T.DirectionalLight(0x9fdcff,.7);f.position.set(-3,2,-2);sc.add(f);
+  const c2=new T.PerspectiveCamera(32,1,.05,100),ground=new T.Mesh(new T.CylinderGeometry(1.7,1.8,.08,48),new T.MeshStandardMaterial({color:0x1c3d5c,roughness:.95}));ground.position.y=-.04;ground.receiveShadow=true;sc.add(ground);
+  const snap=obj=>{obj.traverse(m=>{if(m.isMesh){m.castShadow=true;m.receiveShadow=true}});sc.add(obj);const bx=new T.Box3().setFromObject(obj),sz=bx.getSize(new T.Vector3());obj.scale.multiplyScalar(1.9/Math.max(sz.x,sz.y,sz.z));
+   const b2=new T.Box3().setFromObject(obj);obj.position.y-=b2.min.y;const c=new T.Box3().setFromObject(obj).getCenter(new T.Vector3());
+   c2.position.set(c.x+2.3,c.y+1.3,c.z+3.4);c2.lookAt(c.x,c.y,c.z);r2.render(sc,c2);const url=r2.domElement.toDataURL('image/png');sc.remove(obj);return url};
+  const sm=new T.MeshStandardMaterial({color:0x7fd8ff,roughness:.35});
+  $('lpHi').src=snap(new T.Mesh(new T.SphereGeometry(.9,64,48),sm));
+  $('lpLo').src=snap(new T.Mesh(new T.IcosahedronGeometry(.9,1),new T.MeshStandardMaterial({color:0x7fd8ff,roughness:.35,flatShading:true})));
+  $('lpSm').src=snap(new T.Mesh(CFM.smooth(new T.IcosahedronGeometry(.9,2)),sm));
+  $('vit').innerHTML=SHOW.map((s,i)=>{const o=s[2](),n=tris(o);return `<figure class="vi rv" style="--d:${(i%4)*.06}s"><img alt="${s[0]} no padrão Nine Crowns" src="${snap(o)}"><figcaption><b>${s[0]}</b><span>${s[1]} · ${fmt(n)}</span></figcaption></figure>`}).join('');
   watch();r2.dispose()}
  const vo=new IntersectionObserver(es=>{if(es.some(e=>e.isIntersecting)){vo.disconnect();setTimeout(shots,30)}},{rootMargin:'400px'});vo.observe($('lowpoly'));
 }
