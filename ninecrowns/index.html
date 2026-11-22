@@ -10321,7 +10321,7 @@ function ncPetUpdate(dt){ ncHeavyFx(dt); const p = ncPet; if(!p || !P) return; i
    5 salas fechadas em sequência: limpa a sala, a porta abre; o chefe no fim. Entrada livre, sem limite.
    Monstros com +50% de vida e dano. A de dupla pode entrar sozinho, mas fica bem mais difícil.
    Prêmio: baú no fim com peça garantida do grade do reino (o grade do chefe da área) e pedras. */
-const NC_DG_ON = location.hash === '#nctest' || !!window.NC_DG;   // escondido até o Arnold aprovar as fotos
+const NC_DG_ON = true;   // 22/11: fotos aprovadas pelo Arnold
 let ncDG = null, ncDgG = null;
 const NC_DG_COL = [0x6a5a8a, 0x5a7a9a, 0x8a5a4a, 0x4a7a5a, 0x9a3a3a];   // cor das tochas de cada sala
 function ncDgParty(){ try{ return (ncCoop && ncCoop.ch && ncCoop.peers) ? Math.max(1, Object.keys(ncCoop.peers).length + 1) : 1; }catch(_){ return 1; } }
