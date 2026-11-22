@@ -8224,16 +8224,10 @@ function renderShop(){
       + row(rk, ncPotResName(), rk === 'mp' ? 'Recupera 60% da mana.' : 'Recupera 60% da stamina.', save.potRes || 0, 'res') + `</div>`; }
   /* 22/11 (Arnold): troca 10 de ouro em Adena = 1 Moeda Real */
   h += `<h2>Trocar Adena</h2><div class="blist"><div class="frow" style="--tc:#ffd24a"><span class="ncpot"><svg viewBox="0 0 24 24" width="34" height="34"><circle cx="12" cy="12" r="10" fill="#ffd24a" stroke="#8a5a10" stroke-width="1.5"/><path d="M7 15l1-6 2.5 3L12 8l1.5 4L16 9l1 6Z" fill="#8a5a10"/></svg></span><div><div class="fn">1 Moeda Real <small style="color:var(--mute)">você tem ${save.coins}</small></div><div class="istat">Use nos Itens Festivos e no Mercador.</div></div><div class="iact"><button class="btn sm primary" data-ncreal="1" ${save.gold >= 100000 ? '' : 'disabled'}>Trocar<small>10 de ouro</small></button><button class="btn sm" data-ncreal="10" ${save.gold >= 1000000 ? '' : 'disabled'}>×10<small>100 de ouro</small></button></div></div></div>`;
-  h += E ? `<h2>Evento</h2><div class="evbox" style="--tc:${E.css}"><div class="big">Evento: ${E.n}</div><div class="istat">Termina em ${evEnds()} dia${evEnds() > 1 ? 's' : ''}.</div><p class="lede">${E.d} Peça exclusiva do evento (+10% nos atributos, só enquanto o evento durar, 1 por semana).</p>
-    <div class="row">
-    <button class="btn sm primary" data-evbuy="1" ${save.coins >= shopPrice(60) && !save.evBought[evKey()] ? '' : 'disabled'}>${save.evBought[evKey()] ? 'Já comprada nesta semana' : SLOT_INFO[shopSlot].n + ' ' + E.n + ' · ' + shopPrice(60) + ' moedas'}</button></div></div>` : '';
-  h += `<h2>Equipamentos <small>Compre com Adena. A loja vende até ${TIERS[CFG.shopMaxTier].sc}; Grade A e S só caindo de chefe ou na Forja.</small></h2>
-    <div class="fsel">${[...ARMOR, 'weapon', 'shield', 'amulet'].filter(sl => sl !== 'shield' || save.cls === 'paladin').map(sl => `<button class="chipb" data-sslot="${sl}" aria-pressed="${shopSlot === sl}">${SLOT_INFO[sl].n}</button>`).join('')}</div><div class="shopgrid">`;
-  for(let t = 0; t <= Math.min(CFG.shopMaxTier, 7); t++){ const p = piecePrice(t);
-    let st = ''; try{ const pv = {id:-1, slot:shopSlot, tier:t, q:0, up:0, cls:save.cls}; if(shopSlot === 'weapon'){ pv.wtype = CLS().wtype; pv.v = 0; } st = statText(itemStats(pv)); }catch(e){}
-    const lvOk = save.level >= grLv(t);
-    h += `<button class="scard" style="--tc:${TIERS[t].css}" data-sbuy="${t}" ${save.gold >= p ? '' : 'disabled'}>${pieceImg(t, shopSlot, 'ps-card', shopSlot === 'weapon' ? CLS().wtype : null)}<b>${shopSlot === 'weapon' ? 'Arma' : SLOT_INFO[shopSlot].n} ${TIERS[t].pre}</b><small>${TIERS[t].sc} · ${TIERS[t].n}</small><small style="color:#f4efe2">${st}</small><small style="color:${lvOk ? 'var(--mute)' : '#ff7a6a'}">${lvOk ? 'Você já pode usar' : 'Para usar: nível ' + grLv(t)}</small><span>${adenaTxt(p)}${save.gold >= p ? '' : ' (você tem ' + adenaTxt(save.gold) + ')'}</span></button>`; }   // 22/11: o preço é em Adena (o texto dizia Moedas Reais por engano)
-  h += `</div><h2>Trocar fragmentos <small>junte fragmentos de uma armadura para trocar por uma peça dela</small></h2><div class="blist">`;
+  // 22/11: a peça semanal do evento saiu do Mercador (armadura só na Forja)
+
+  /* 22/11 (Arnold): o Mercador NÃO vende armas nem armaduras; isso é só na Forja (NPC ferreiro) */
+  h += `<h2>Trocar fragmentos <small>junte fragmentos de uma armadura para trocar por uma peça dela</small></h2><div class="blist">`;
   h += TIERS.map((T, t) => { const need = CFG.frag[t], have = save.frags[t] || 0;
     return `<div class="frow" style="--tc:${T.css}">${pieceImg(t, 'chest', 'ps-row')}<div><div class="fn" style="color:${T.css}">Fragmentos ${T.pre} · ${T.sc}</div>
       ${need ? `<div class="pbar"><i style="width:${Math.min(100, have/need*100)}%"></i><span>${have} / ${need}</span></div>` : `<div class="istat">Você tem ${have}. A ${T.model} não pode ser trocada: só cai de Chefes Mundiais ou é fabricada com Lesser Gold.</div>`}</div>
