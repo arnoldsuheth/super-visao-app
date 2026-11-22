@@ -8079,7 +8079,7 @@ function saHTML(){ const ws = save.inv.filter(i => i.slot === 'weapon' && GR_OF[
   let h = '<p class="lede">Use <b>Lesser Blue</b> para dar o <b>SA</b> na arma: só a arma brilha, e você <b>escolhe 1 atributo</b>. Só armas de Grade C para cima (C 50, B 75, A 150, S 200).</p>';
   if(!ws.length) return h + '<div class="empty">Você não tem arma de Grade C ou acima.</div>';
   return h + '<div class="blist">' + ws.map(it => { const c = saCost(it), have = save.mats.lblue || 0;
-    return '<div class="frow" style="--tc:' + TIERS[it.tier].css + '">' + itemImg(it, 'ps-row') + '<div><div class="fn">' + itemName(it) + (it.sa ? ' · <b style="color:#3ae0ff">Brilho</b>' : '') + '</div><div class="istat">Lesser Blue ' + have + '/' + c + '</div></div><div class="iact">'
+    return '<div class="frow" style="--tc:' + TIERS[it.tier].css + '">' + itemImg(it, 'ps-row') + '<div><div class="fn">' + itemName(it) + (it.sa ? ' · <b style="color:#3ae0ff">SA</b>' : '') + '</div><div class="istat">Lesser Blue ' + have + '/' + c + '</div></div><div class="iact">'
       + (it.sa ? '<button class="btn sm" disabled>' + ncSaTxt(ncSaOpt(it).k, it) + '</button>' : Object.keys(NC_SA).map(k => '<button class="btn sm primary" data-fsa="' + it.id + '" data-sak="' + k + '" ' + (have >= c ? '' : 'disabled') + '>' + ncSaTxt(k, it) + '</button>').join('')) + '</div></div>'; }).join('') + '</div>'; }
 let stoneFilter = 'all';
 function gemsHTML(){
