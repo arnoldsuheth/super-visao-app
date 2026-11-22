@@ -721,6 +721,7 @@ canvas.ncgrabok{cursor:grab}canvas.ncgrab,canvas.ncgrabok.ncgrab{cursor:grabbing
       <div class="nc-namebox"><div class="eyebrow">Nome do herói</div><div class="nc-cin"><input id="ncNameIn" maxlength="14" placeholder="Seu nome" autocomplete="off"><button class="btn sm" data-ncname>Salvar</button></div></div>
       <div id="ncTreeBox"></div>
       <div id="specBox"></div>
+      <div id="ncTitleBox"></div>
       <div id="ncPetBox"></div>
       <div id="ncCoopBox" hidden></div>
       <div id="ncCloudBox"></div>
@@ -6224,6 +6225,7 @@ const ncCloud = {
   boot(){ if(save.ncOff || !save.ncCode) return;   // outro aparelho salvou depois? pega o mais novo, a nao ser que este tenha progresso ainda nao enviado
     this.call('nc_load', {p_code:save.ncCode}).then(r => { if(r && r.data && r.updated_at && (!save.ncAt || new Date(r.updated_at) > new Date(save.ncAt)) && !save.ncDirty){ r.data.ncAt = r.updated_at; this.adopt(save.ncCode, r.data); } else if(save.ncDirty) this.push(); }).catch(() => {}); },
   draw(){ const b = document.getElementById('ncCloudBox'); if(!b) return;
+    try{ const tb = document.getElementById('ncTitleBox'); if(tb) tb.innerHTML = ncTitleHTML(); }catch(e){}
     const pb = document.getElementById('ncPetBox'); if(pb) pb.innerHTML = ncPetHTML()
       + '<details class="nc-cred"><summary>Créditos</summary><p><b>Nine Crowns</b> · criação e direção: Arnold Suheth (Studio Evolution Tech).<br>Feito a partir do jogo Armadura do Sol, de Tiago.<br>Heróis: KayKit Adventurers, de Kay Lousberg (CC0).<br>Molduras: Fantasy UI Borders, de Kenney (CC0).<br>Ícones das habilidades: Painterly Spell Icons, de J. W. Bjerk (eleazzaar), licença CC-BY 3.0, opengameart.org.<br>Monstros: Ultimate Monsters, de Quaternius (CC0).<br>Letra: Marcellus SC, de Astigmatic (licença OFL).<br>Motor 3D: three.js (licença MIT).</p></details>';
     if(pb) pb.innerHTML += '<div class="eyebrow" style="margin-top:14px">Controles no celular</div><button class="btn sm" style="width:100%" data-ncswapctl>' + (save.swapCtl === true ? 'Andar na DIREITA, golpes na ESQUERDA (toque para inverter)' : 'Andar na ESQUERDA, golpes na DIREITA (toque para inverter)') + '</button>';
@@ -10652,7 +10654,8 @@ window.ncStable = open => { let el = document.getElementById('ncStable'); if(!el
 const NC_FEST = {
   gorro: {n:'Gorro de Papai Noel', lug:'cabeca', p:30, ev:'Natal'},
   chifre:{n:'Chifre de rena',       lug:'cabeca', p:30, ev:'Natal'},
-  barba: {n:'Barba branca',         lug:'rosto',  p:20, ev:'Natal'}};
+  barba: {n:'Barba branca',         lug:'rosto',  p:20, ev:'Natal'},
+  cachecol:{n:'Cachecol de Gelo',   lug:'pescoco', p:0, ev:'Natal', drop:'Só derrotando o Boneco de Neve Gigante'}};
 const ncFestSave = () => { save.fest = save.fest || {own:{}, on:{}}; save.fest.own = save.fest.own || {}; save.fest.on = save.fest.on || {}; return save.fest; };
 const NC_FM = {};
 function ncFestMat(hex, rough){ return NC_FM[hex] || (NC_FM[hex] = new T.MeshLambertMaterial({color:new T.Color(hex).multiplyScalar(hex === 0x9e1424 ? .7 : 1)})); }
@@ -10672,6 +10675,11 @@ function ncFestMesh(k, R){ const g = new T.Group(), red = ncFestMat(0x9e1424), w
         t.position.set(sd*Math.sin(ang)*R*len*.4, L*h + Math.cos(ang)*R*len*.2, 0); t.rotation.z = -sd*ang; a.add(t); });
       const tip = new T.Mesh(new T.SphereGeometry(R*.08, 8, 6), br2); tip.position.y = L; a.add(tip); }
     add(new T.SphereGeometry(R*.17, 12, 10), ncFestMat(0xff2a2a), 0, -R*.18, R*1.0);                  // nariz vermelho de rena
+  } else if(k === 'cachecol'){
+    const ice = ncFestMat(0x7ad0ff), ice2 = ncFestMat(0xdff4ff);
+    add(new T.TorusGeometry(R*.62, R*.16, 8, 20), ice, 0, 0, 0, Math.PI/2);
+    const pa = add(new T.BoxGeometry(R*.3, R*.7, R*.1), ice, R*.25, -R*.4, R*.55, .15, 0, .12); add(new T.BoxGeometry(R*.32, R*.08, R*.12), ice2, R*.27, -R*.7, R*.6, .15);
+    [-.4, 0, .4].forEach(a => add(new T.OctahedronGeometry(R*.08), ice2, Math.sin(a)*R*.7, R*.05, Math.cos(a)*R*.7));
   } else if(k === 'barba'){
     const bz = R*1.12;
     [[0, -.55, 1, .42], [-.38, -.42, .9, .32], [.38, -.42, .9, .32], [-.6, -.15, .78, .26], [.6, -.15, .78, .26], [-.2, -.85, .9, .3], [.2, -.85, .9, .3], [0, -1.08, .82, .27]]
@@ -10682,15 +10690,15 @@ function ncFestMesh(k, R){ const g = new T.Group(), red = ncFestMat(0x9e1424), w
   g.traverse(o => { if(o.isMesh){ o.castShadow = false; o.userData.ncFest = 1; } }); return g; }
 /* Prende na cabeça do herói: acha o osso da cabeça e o tamanho da cabeça pela malha */
 function ncFestApply(h){ try{ if(!h || !h.root) return; (h.festObjs || []).forEach(o => { if(o.parent) o.parent.remove(o); }); h.festObjs = [];
-  const F = ncFestSave(), want = ['cabeca', 'rosto'].map(l => F.on[l]).filter(k => k && F.own[k] && NC_FEST[k]); if(!want.length) return;
+  const F = ncFestSave(), want = ['cabeca', 'rosto', 'pescoco'].map(l => F.on[l]).filter(k => k && F.own[k] && NC_FEST[k]); if(!want.length) return;
   const cab = F.on.cabeca && F.own[F.on.cabeca];
   if(cab){ (h.headwear || []).forEach(m => m.visible = false); ((h.armor && h.armor.helmet) || []).forEach(m => m.visible = false); }   // o gorro/chifre fica no lugar do chapéu e do elmo (só a aparência)
   h.root.updateMatrixWorld(true); const bone = h.mx && h.mx.bones && h.mx.bones.head; let hh = 1.6; try{ hh = ncHeroH(h); }catch(e){}
   const anchor = bone || h.root, hp = new T.Vector3(); (bone || h.root).getWorldPosition(hp);
   const R = hh*.21, cy = bone ? hp.y + R*1.0 : h.root.position.y + hh - R;                              // centro da cabeça (o osso fica no pescoço)
   const qW = new T.Quaternion(); h.root.getWorldQuaternion(qW);
-  want.forEach(k => { const m = ncFestMesh(k, R*(NC_FEST[k].lug === 'cabeca' ? 1.12 : .8)), holder = new T.Group(); holder.add(m);
-    const L = NC_FEST[k].lug, wp = new T.Vector3(hp.x, L === 'cabeca' ? cy + R*.6 : cy - R*.42, hp.z);
+  want.forEach(k => { const m = ncFestMesh(k, R*(NC_FEST[k].lug === 'cabeca' ? 1.12 : NC_FEST[k].lug === 'pescoco' ? 1 : .8)), holder = new T.Group(); holder.add(m);
+    const L = NC_FEST[k].lug, wp = new T.Vector3(hp.x, L === 'cabeca' ? cy + R*.6 : L === 'pescoco' ? cy - R*.98 : cy - R*.42, hp.z);
     anchor.add(holder); const inv = new T.Matrix4().copy(anchor.matrixWorld).invert(); holder.position.copy(wp.clone().applyMatrix4(inv));
     const qa = new T.Quaternion(); anchor.getWorldQuaternion(qa); holder.quaternion.copy(qa.invert().multiply(qW));
     const sa = new T.Vector3(); anchor.getWorldScale(sa); holder.scale.setScalar(1/(sa.x || 1)); h.festObjs.push(holder); });
@@ -10710,9 +10718,9 @@ let ncFestWasRunning = false;
 window.ncFestDraw = () => { const el = document.getElementById('ncFest'); if(!el || el.hidden) return; const F = ncFestSave();
   el.innerHTML = '<div class="nf-box"><div class="nf-hd"><h2>ITENS FESTIVOS</h2><button class="nf-x" data-nfx aria-label="Fechar">×</button></div>'
     + '<p class="nf-lede">Só aparência: ficam por cima do equipamento e não mudam os atributos. Comprou, é seu para sempre. Você tem <b>' + save.coins + ' Moedas Reais</b>.</p>'
-    + '<div class="nf-ev">🎄 Natal</div><div class="nf-list">' + Object.keys(NC_FEST).map(k => { const D = NC_FEST[k], own = !!F.own[k], on = F.on[D.lug] === k;
-      return '<div class="nf-it' + (on ? ' on' : '') + '"><img alt="" src="' + ncFestThumb(k) + '"><div class="nf-tx"><b>' + D.n + '</b><span>' + (D.lug === 'cabeca' ? 'Cabeça' : 'Rosto') + '</span></div>'
-        + (own ? '<button class="btn sm' + (on ? '' : ' primary') + '" data-nfon="' + k + '">' + (on ? 'Tirar' : 'Usar') + '</button>'
+    + '<div class="nf-ev">Natal</div>' + (ncXmasOn() ? '<p class="nf-lede" style="margin:0 0 8px">Presentes achados: <b>' + ncGiftHave() + '/' + NC_GIFTS + '</b> (1 escondido em cada área, procure o brilho no céu).</p>' : '') + '<div class="nf-list">' + Object.keys(NC_FEST).map(k => { const D = NC_FEST[k], own = !!F.own[k], on = F.on[D.lug] === k;
+      return '<div class="nf-it' + (on ? ' on' : '') + '"><img alt="" src="' + ncFestThumb(k) + '"><div class="nf-tx"><b>' + D.n + '</b><span>' + (D.lug === 'cabeca' ? 'Cabeça' : D.lug === 'pescoco' ? 'Pescoço' : 'Rosto') + '</span></div>'
+        + (own ? '<button class="btn sm' + (on ? '' : ' primary') + '" data-nfon="' + k + '">' + (on ? 'Tirar' : 'Usar') + '</button>' : D.drop ? '<span class="nt-lock" style="max-width:120px;text-align:right">' + D.drop + '</span>'
                : '<button class="btn sm primary" data-nfbuy="' + k + '" ' + (save.coins >= D.p ? '' : 'disabled') + '>Comprar<small>' + D.p + ' Moedas Reais</small></button>') + '</div>'; }).join('') + '</div></div>'; };
 window.ncFest = open => { let el = document.getElementById('ncFest'); if(!el){ el = document.createElement('div'); el.id = 'ncFest'; el.hidden = true; document.body.appendChild(el);
     el.addEventListener('click', e => { const b = e.target.closest('button'); if(!b){ if(e.target === el) window.ncFest(false); return; } const F = ncFestSave(), d = b.dataset;
@@ -10793,6 +10801,81 @@ function ncXmasStage(){ if(!ncXmasOn() || !scene) return; const g = new T.Group(
   put(xmGnome(1.2), FIRE_POS.x + 1.6, FIRE_POS.z - 3.4, -.4); scene.add(g); }
 buildHub = (f => function(){ const r = f.apply(this, arguments); try{ ncXmasHub(); }catch(e){ console.warn('natal', e); } return r; })(buildHub);
 buildWorldBits = (f => function(){ const r = f.apply(this, arguments); try{ ncXmasStage(); }catch(e){ console.warn('natal', e); } return r; })(buildWorldBits);
+/* ================= NOVIDADES 22/11 (Arnold aprovou na página de ideias) ================= */
+/* ---- 1) CAÇA AOS PRESENTES: 1 presente escondido em cada área, só no Natal ---- */
+const NC_GIFTS = 18;
+function ncGiftHave(){ save.xmGifts = save.xmGifts || {}; return Object.keys(save.xmGifts).length; }
+let ncGift = null;
+function ncGiftSpot(id){ let sd = 9137 + id*7919; const r = () => (sd = (sd*16807) % 2147483647)/2147483647;   // lugar fixo por área (todos acham no mesmo lugar)
+  for(let t = 0; t < 400; t++){ const x = MAP.x0 + 15 + r()*(MAP.x1 - MAP.x0 - 30), z = MAP.z0 + 30 + r()*(MAP.z1 - MAP.z0 - 60);
+    if(Math.hypot(x - START.x, z - START.z) < 40 || Math.hypot(x, z - ARENA_Z) < ARENA_R + 8 || solidAt(x, z) || solidAt(x + 1, z) || solidAt(x - 1, z) || solidAt(x, z + 1) || solidAt(x, z - 1)) continue; return {x, z}; }
+  return {x:FIRE_POS.x + 12, z:FIRE_POS.z - 20}; }
+function ncGiftSpawn(st){ ncGift = null; if(!ncXmasOn() || !st || save.xmGifts && save.xmGifts[st.id]) return; const p = ncGiftSpot(st.id), g = new T.Group(); g.name = 'ncGift';
+  xmGift(g, .7, 0, 0, 0, [0xd8263a, 0x3ac06a, 0x4ab0ff, 0xb05aff][st.id % 4]); g.position.set(p.x, heightAt(p.x, p.z), p.z);
+  const glow = new T.Mesh(new T.CylinderGeometry(.5, .5, 7, 10, 1, true), new T.MeshBasicMaterial({color:0xffe08a, transparent:true, opacity:.13, depthWrite:false, side:T.DoubleSide})); glow.position.y = 3.5; g.add(glow);   // brilho fraco no céu: dá para achar de longe
+  scene.add(g); ncGift = {g, st:st.id, x:p.x, z:p.z}; }
+function ncGiftTick(dt){ const G = ncGift; if(!G || !P || P.dead) return; if(!G.g.parent){ ncGift = null; return; } G.g.rotation.y += dt*.8; G.g.children[0].position.y = Math.abs(Math.sin(clock*2))*.15;
+  if(Math.hypot(P.pos.x - G.x, P.pos.z - G.z) > 1.6) return;
+  save.xmGifts = save.xmGifts || {}; save.xmGifts[G.st] = 1; removeObj(G.g); ncGift = null; const r = Math.random(); let txt;
+  if(r < .3){ save.coins = (save.coins || 0) + 3; txt = '+3 Moedas Reais'; } else if(r < .65){ ncAddMat('scoin', 10); txt = '+10 Silver Coin'; } else if(r < .9){ ncAddMat('gcoin', 6); txt = '+6 Green Coin'; } else { ncAddMat('ocoin', 4); txt = '+4 Gold Coin'; }
+  try{ SFX.drop(); burst({x:G.x, z:G.z, y:heightAt(G.x, G.z) + .6}, 0xffe08a, 22, 4, 5, .5); }catch(e){}
+  banner('Presente encontrado! ' + ncGiftHave() + '/' + NC_GIFTS, txt, 'gold'); ncTitleCheck(); persist(); }
+/* ---- 2) CHEFE DE NATAL: Boneco de Neve Gigante (só no Natal). Dá o Cachecol de Gelo, item festivo que não se compra ---- */
+function ncSnowBoss(st){ if(!ncXmasOn() || !st) return; let x = FIRE_POS.x - 14, z = (START.z + ARENA_Z)/2 + 30;
+  for(let t = 0; t < 30 && solidAt(x, z); t++){ x += 3; z -= 2; }
+  const e = spawnMinion(st, x, z, false, true, null); e.xmas = 1; e.cr.mon = 1; e.hp = e.maxHp = Math.round(e.maxHp*6); e.dmg *= 1.3; e.spd *= .7;
+  e.cr.root.traverse(o => { if(o.isMesh) o.visible = false; }); const sm = xmSnowman(1.9); sm.name = 'ncSnowBoss'; e.cr.root.add(sm); e.barY = 4.2; return e; }
+function ncSnowDie(e){ const F = ncFestSave(); save.cnt.snow = (save.cnt.snow || 0) + 1;
+  if(!F.own.cachecol){ F.own.cachecol = 1; banner('Boneco de Neve derrotado!', 'Você ganhou o Cachecol de Gelo (Itens Festivos)', 'gold'); }
+  else { save.coins = (save.coins || 0) + 5; banner('Boneco de Neve derrotado!', '+5 Moedas Reais', 'gold'); }
+  try{ burst(e.pos, 0xeaf6ff, 40, 8, 8, .6); }catch(_){} ncTitleCheck(); persist(); }
+/* ---- 3) PRÊMIO DIÁRIO: 28 dias seguidos; o prêmio cresce. Perdeu um dia, volta para o dia 1 ---- */
+const ncDayKey = d => d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+function ncDailyPrize(n){ if(n === 28) return {t:'5 Moedas Reais', f:() => save.coins = (save.coins || 0) + 5};
+  if(n % 7 === 0) return {t:'2 Moedas Reais', f:() => save.coins = (save.coins || 0) + 2};
+  if(n % 5 === 0) return {t:(n*2) + ' Silver Coin', f:() => ncAddMat('scoin', n*2)};
+  if(n % 3 === 0) return {t:'3 Lesser Blue', f:() => ncAddMat('lblue', 3)};
+  if(n % 4 === 0) return {t:'3 Poções de Vida', f:() => save.potions = Math.min(NC_POT_MAX, (save.potions || 0) + 3)};
+  return {t:adenaTxt(n*300), f:() => save.gold += n*300}; }
+function ncDailyState(){ const D = save.daily = save.daily || {last:'', day:0}, today = ncDayKey(new Date()), y = new Date(); y.setDate(y.getDate() - 1);
+  const can = D.last !== today, next = can ? (D.last === ncDayKey(y) ? (D.day % 28) + 1 : 1) : D.day; return {D, today, can, next}; }
+window.ncDaily = open => { let el = document.getElementById('ncDaily'); if(!el){ el = document.createElement('div'); el.id = 'ncDaily'; el.className = 'ncPop'; el.hidden = true; document.body.appendChild(el);
+    el.addEventListener('click', e => { const b = e.target.closest('button'); if(!b){ if(e.target === el) window.ncDaily(false); return; }
+      if(b.dataset.ndx !== undefined){ window.ncDaily(false); return; }
+      if(b.dataset.ndget !== undefined){ const S = ncDailyState(); if(!S.can) return; const pz = ncDailyPrize(S.next); pz.f(); S.D.last = S.today; S.D.day = S.next; persist();
+        try{ SFX.drop(); banner('Prêmio do dia ' + S.next, pz.t, 'gold'); }catch(_){} ncTitleCheck(); try{ renderHub(); }catch(_){} draw(); } }); }
+  const draw = () => { const S = ncDailyState(); let h = '<div class="nf-box"><div class="nf-hd"><h2>PRÊMIO DO DIA</h2><button class="nf-x" data-ndx aria-label="Fechar">×</button></div><p class="nf-lede">Entre todo dia seguido: o prêmio cresce. Se pular um dia, volta para o dia 1.</p><div class="nd-grid">';
+    for(let n = 1; n <= 28; n++){ const st = n < S.next || (!S.can && n === S.next) ? 'ok' : n === S.next ? 'hoje' : ''; h += '<div class="nd-c ' + st + '"><b>' + n + '</b><span>' + ncDailyPrize(n).t + '</span></div>'; }
+    h += '</div>' + (S.can ? '<button class="btn primary nd-get" data-ndget>Pegar o prêmio do dia ' + S.next + '</button>' : '<p class="nf-lede" style="text-align:center">Volte amanhã para o dia ' + ((S.next % 28) + 1) + '.</p>') + '</div>'; el.innerHTML = h; };
+  el.hidden = !open; if(open) draw(); };
+/* ---- 4) TÍTULOS: conquistas viram título em cima do nome ---- */
+const NC_TITLES = [
+  {id:'cacador', n:'Caçador', d:'Derrote 500 monstros', v:() => save.cnt.kills || 0, need:500},
+  {id:'elite', n:'Terror dos Elites', d:'Derrote 100 elites', v:() => save.cnt.elites || 0, need:100},
+  {id:'chefes', n:'Matador de Reis', d:'Derrote 9 chefes', v:() => save.cnt.bosses || 0, need:9},
+  {id:'forja', n:'Mestre da Forja', d:'Deixe uma peça no +9', v:() => Math.max(0, ...(save.inv || []).map(i => i.up || 0)), need:9},
+  {id:'presentes', n:'Caçador de Presentes', d:'Ache os 18 presentes de Natal', v:() => ncGiftHave(), need:NC_GIFTS},
+  {id:'neve', n:'Rei do Natal', d:'Derrote o Boneco de Neve Gigante', v:() => save.cnt.snow || 0, need:1},
+  {id:'fiel', n:'Fiel', d:'Pegue o prêmio do dia 7 dias seguidos', v:() => (save.daily && save.daily.day) || 0, need:7},
+  {id:'domador', n:'Domador', d:'Tenha 3 mascotes', v:() => Object.keys(save.pets || {}).filter(k => save.pets[k]).length, need:3}];
+function ncTitleCheck(){ save.titles = save.titles || {}; let novo = null; NC_TITLES.forEach(t => { if(!save.titles[t.id] && t.v() >= t.need){ save.titles[t.id] = 1; novo = t; } });
+  if(novo){ try{ banner('Título novo: ' + novo.n, 'Escolha mostrar em Herói > Títulos', 'gold'); }catch(_){} } return novo; }
+function ncTitleTxt(){ const t = NC_TITLES.find(t => t.id === save.titleOn && save.titles && save.titles[t.id]); return t ? t.n : ''; }
+function ncTitleHTML(){ ncTitleCheck(); const on = save.titleOn || ''; return '<div class="eyebrow">Títulos</div><p class="nc-note" style="margin:0 0 8px">Aparecem em cima do seu nome. Ganhe fazendo conquistas.</p><div class="nt-list">'
+  + NC_TITLES.map(t => { const ok = save.titles && save.titles[t.id], v = Math.min(t.need, t.v());
+    return '<div class="nt-it' + (ok ? ' ok' : '') + (on === t.id ? ' on' : '') + '"><div><b>' + t.n + '</b><span>' + t.d + (ok ? '' : ' · ' + v + '/' + t.need) + '</span></div>'
+      + (ok ? '<button class="btn sm' + (on === t.id ? '' : ' primary') + '" data-ntitle="' + (on === t.id ? '' : t.id) + '">' + (on === t.id ? 'Tirar' : 'Mostrar') + '</button>' : '<span class="nt-lock">Bloqueado</span>') + '</div>'; }).join('') + '</div>'; }
+document.addEventListener('click', e => { const b = e.target.closest('[data-ntitle]'); if(!b) return; save.titleOn = b.dataset.ntitle; persist(); const box = document.getElementById('ncTitleBox'); if(box) box.innerHTML = ncTitleHTML(); ncTitleTag(); });
+/* plaquinha com o título em cima da cabeça (no menu e na fase) */
+let ncTagSpr = null;
+function ncTitleTag(){ try{ if(ncTagSpr){ if(ncTagSpr.parent) ncTagSpr.parent.remove(ncTagSpr); ncTagSpr = null; } const t = ncTitleTxt(), who = mode === 'stage' && P ? P : hero; if(!t || !who) return;
+  const root = who.root || (who.hero && who.hero.root) || (hero && hero.root); if(!root) return;
+  const cv = document.createElement('canvas'); cv.width = 512; cv.height = 96; const g = cv.getContext('2d'); g.font = '600 44px Cinzel, Georgia, serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.lineWidth = 8; g.strokeStyle = 'rgba(20,10,40,.85)'; g.strokeText(t, 256, 50); g.fillStyle = '#ffd36a'; g.fillText(t, 256, 50);
+  const sp = new T.Sprite(new T.SpriteMaterial({map:new T.CanvasTexture(cv), transparent:true, depthWrite:false})); let hh = 1.9; try{ hh = ncHeroH(hero); }catch(e){}
+  sp.scale.set(1.9, .36, 1); sp.position.set(0, hh + .12, 0); sp.renderOrder = 10; ncTagSpr = sp; (hero && hero.root || root).add(sp); }catch(e){} }
+buildHub = (f => function(){ const r = f.apply(this, arguments); setTimeout(() => { ncTitleTag(); try{ const S = ncDailyState(); if(S.can && !document.body.classList.contains('nc-noauto')) setTimeout(() => { if(mode === 'hub' && ncDailyState().can) window.ncDaily(true); }, 1200); }catch(e){} }, 400); return r; })(buildHub);
+buildWorldBits = (f => function(st){ const r = f.apply(this, arguments); try{ window.ncDaily(false); window.ncFest(false); }catch(_){} try{ ncGiftSpawn(st); ncSnowBoss(st); }catch(e){ console.warn('natal', e); } setTimeout(ncTitleTag, 600); return r; })(buildWorldBits);
 /* ================= COMBAT ================= */
 /* Alvo escolhido com o botão direito no computador (pedido do Arnold, 20/11): monstro ou ponto no chão. Ataques e habilidades miram nele. */
 let ncTgt = null, ncTgtMk = null;
@@ -11097,6 +11180,7 @@ function updateAllies(dt){
   }
 }
 function killMinion(e){
+  if(e.xmas){ try{ ncSnowDie(e); }catch(_){} }
   try{ if(!e.rem) ncCoop.sendKill(e); }catch(_){}
   e.dead = true; removeObj(e.cr.root); removeObj(e.bar.g);
   if(e.post && !e.post.taken){ e.post.guards--; if(e.post.guards <= 0) postFreed(e.post); else floatText(e.pos, 'Guardas: ' + e.post.guards, 'gold'); }
@@ -11802,7 +11886,7 @@ function ncInstCull(dt){ if(mode !== 'stage' || !scene || !scene.fog) return;
       if(k !== i){ for(let j = 0; j < 16; j++) A[k*16 + j] = it.mat[i*16 + j]; if(C2 && it.col){ C2[k*3] = it.col[i*3]; C2[k*3 + 1] = it.col[i*3 + 1]; C2[k*3 + 2] = it.col[i*3 + 2]; } } k++; }
     if(k !== m.count || k !== it.lastK){ m.count = k; it.lastK = k; m.instanceMatrix.needsUpdate = true; if(m.instanceColor) m.instanceColor.needsUpdate = true; } else if(k < it.n){ m.instanceMatrix.needsUpdate = true; } } }
 function updateEnemies(dt){
-  ncPetUpdate(dt); ncLightPool(dt); ncInstCull(dt);
+  ncPetUpdate(dt); ncLightPool(dt); ncInstCull(dt); ncGiftTick(dt);
   for(const e of enemies){
     ncAiPeer = false; if(e.dead) continue;
     /* JOGO LEVE: monstro a mais de 40 m de todos os jogadores não é desenhado nem animado (volta igual quando alguém chega perto) */
@@ -13958,6 +14042,15 @@ body #hub>#rightPanel.panel::before,body #hub>#rightPanel.panel::after{display:n
 .nc-play{bottom:calc(166px + env(safe-area-inset-bottom,0px))!important}
 body.nc-l .nc-grid,body.nc-r .nc-grid,body.nc-l .nc-mini,body.nc-r .nc-mini{opacity:0;pointer-events:none}
 .nc-card{min-width:0;padding:0 2px;-webkit-text-size-adjust:100%}.nc-card span{font-size:clamp(9px,2.45vw,12px);letter-spacing:-.15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;display:block}
+.ncPop{position:fixed;inset:0;z-index:8650;display:grid;place-items:center;padding:12px;background:rgba(6,6,16,.6)}.ncPop[hidden]{display:none}
+.ncPop .nf-box{width:min(520px,100%);max-height:calc(100dvh - 24px);overflow:auto;background:linear-gradient(180deg,#2a2160,#17123a);border:1px solid #8a78e0;border-radius:16px;padding:16px;color:#f4efe2;box-shadow:0 10px 40px rgba(0,0,0,.6)}
+.ncPop .nf-hd{display:flex;justify-content:space-between;align-items:center}.ncPop h2{margin:0;font:400 22px var(--f-display,serif);color:#ffd36a;letter-spacing:.06em}
+.ncPop .nf-x{width:40px;height:40px;border-radius:12px;border:1px solid #8a78e0;background:#231b48;color:#fff;font-size:22px;cursor:pointer}.ncPop .nf-lede{font:500 14px/1.4 system-ui,sans-serif;color:#cfc6e6;margin:8px 0 12px}
+.nd-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}.nd-c{min-width:0;padding:5px 2px;border-radius:8px;background:rgba(10,12,22,.55);border:1px solid rgba(138,106,255,.3);text-align:center;font:600 10px/1.15 system-ui;color:#cfc6e6}
+.nd-c b{display:block;font-size:14px;color:#fff}.nd-c span{display:block;overflow-wrap:anywhere}.nd-c.ok{opacity:.45}.nd-c.hoje{border-color:#ffd24a;box-shadow:0 0 0 2px rgba(255,210,74,.45);background:rgba(80,60,10,.5)}
+.nd-get{display:block;width:100%;margin-top:12px}
+.nt-list{display:grid;gap:6px;margin-bottom:10px}.nt-it{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;background:rgba(10,12,22,.45);border:1px solid rgba(138,106,255,.25)}
+.nt-it>div{flex:1;display:grid}.nt-it b{font:700 14px system-ui;color:#ffd36a}.nt-it span{font:500 12px system-ui;color:#cfc6e6}.nt-it:not(.ok) b{color:#9a92b8}.nt-it.on{border-color:#ffd24a}.nt-lock{font:600 11px system-ui;color:#9a92b8}
 #ncFest{position:fixed;inset:0;z-index:8600;display:grid;place-items:center;padding:12px;background:rgba(6,6,16,.6)}#ncFest[hidden]{display:none}
 #ncFest .nf-box{width:min(460px,100%);max-height:calc(100dvh - 24px);overflow:auto;background:linear-gradient(180deg,#2a2160,#17123a);border:1px solid #8a78e0;border-radius:16px;padding:16px;color:#f4efe2;box-shadow:0 10px 40px rgba(0,0,0,.6)}
 #ncFest .nf-hd{display:flex;justify-content:space-between;align-items:center}#ncFest h2{margin:0;font:400 24px var(--f-display,serif);color:#ffd36a;letter-spacing:.06em}
