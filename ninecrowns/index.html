@@ -539,6 +539,7 @@ canvas.ncgrabok{cursor:grab}canvas.ncgrab,canvas.ncgrabok.ncgrab{cursor:grabbing
 #ncRoomHud .rh-n span.on{opacity:1}#ncRoomHud .rh-n span.on:before{content:'● ';color:#3ce05a}
 #ncChat{position:fixed;left:10px;bottom:calc(env(safe-area-inset-bottom) + 130px);z-index:31;width:min(300px,70vw);pointer-events:none;font:500 13px/1.35 system-ui,sans-serif;color:#fff;text-shadow:0 1px 3px #000,0 0 5px #000}
 #ncChat[hidden]{display:none}
+#ncChat:not(.st){bottom:calc(env(safe-area-inset-bottom) + 182px)}  /* 22/11: no menu, acima dos 9 botões (no iPhone cobria o Herói) */
 #ncChat.st{bottom:auto;top:calc(env(safe-area-inset-top) + 330px)}
 #ncChat .ch-log p{margin:2px 0}#ncChat .ch-log b{color:#ffd36a}
 #ncChat .ch-in{display:flex;gap:6px;margin-top:4px;pointer-events:auto}
@@ -5531,8 +5532,8 @@ const SET_SPECIAL = [
 ];
 const QUAL = TIERS;
 const SET_NAMES = TIERS.map(t => 'Armadura ' + t.pre);
-const ENEMY_MAX = id => Math.min(3, Math.floor(id/4));
-const ELITE_MAX = id => Math.min(5, 1 + Math.floor(id/3));
+const ENEMY_MAX = id => Math.min(6, Math.floor(id/2.6));
+const ELITE_MAX = id => Math.min(8, 1 + Math.floor(id/2.2));
 const BOSS_BASE = id => Math.min(8, 2 + Math.floor(id/2.4));
 const reqStar = st => Math.min(9, 1 + Math.round(st.id*.5));
 function rollTier(min, max, bias){ const k = .42 + (bias || 0)*.12; let t = min; while(t < max && Math.random() < k) t++; return t; }
@@ -5733,7 +5734,7 @@ function itemName(it){
   if(it.slot === 'weapon') return WVAR[it.wtype][it.v].n + ' ' + TIERS[it.tier].pre + u;
   return SLOT_INFO[it.slot].n + ' ' + TIERS[it.tier].pre + u;
 }
-function itemStats(it){ const b = Object.assign({}, itemStatsBase(it)); if(it.tier >= 6) b.atkPct = (b.atkPct || 0) + .04*(it.tier - 5); if(it.sa) b.atkPct = (b.atkPct || 0) + .08;
+function itemStats(it){ const b = Object.assign({}, itemStatsBase(it)); if(it.tier >= 6) b.atkPct = (b.atkPct || 0) + .04*(it.tier - 5); if(it.sa){ const o = ncSaOpt(it); b[o.f] = (b[o.f] || 0) + o.v; }
   const u = it.up || 0, xk = it.ex ? (it.ex.startsWith('boss:') ? 1.12 : 1.1) : 1; if(u || xk > 1){ const k = (1 + .04*u)*xk; ['hp','def','atk'].forEach(n => { if(b[n]) b[n] = Math.round(b[n]*k); }); } return b; }
 function itemStatsBase(it){
   const t = it.tier, m = TIERS[t].mult, r = Math.round, f = v => Math.round(v*100)/100;
@@ -5775,7 +5776,7 @@ const sellValue = it => Math.round(5*Math.pow(1.75, it.tier));
 /* ===== CONFIGURAÇÃO (editável no Painel Administrativo; salva em localStorage) ===== */
 const CFG_KEY = 'armadura-do-sol-cfg';
 const CFG_DEF = {
-  caps:{minion:1, elite:4, boss:7, world:9},                                   // estrela máxima (índice 0..9) por categoria: 2★, 5★, 8★, 10★
+  caps:{minion:6, elite:8, boss:9, world:9},   // 22/11: comum até B, elite até A, chefe até S                                   // estrela máxima (índice 0..9) por categoria: 2★, 5★, 8★, 10★
   rar:{minion:[50,25,14,7,3,1], elite:[50,25,14,7,3,1], boss:[50,25,14,7,3,1], world:[30,25,20,13,8,4], event:[40,25,17,10,6,2]},
   itemCh:{minion:.06, elite:.6, chest:.5},                                      // chance de cair equipamento (separada da raridade)
   matCh:{minion:.3, elite:.9, special:.05},
@@ -5841,18 +5842,28 @@ const MATS = {
   refino:{n:'Pedra de Refino', css:'#d0d0dc', r:0}, superior:{n:'Pedra Superior', css:'#6ac8ff', r:2}, ancestral:{n:'Pedra Ancestral', css:'#ff9a3a', r:3},
   selo:{n:'Selo de Ferreiro', css:'#86d873', r:2}, bencao:{n:'Bênção da Bigorna', css:'#ffd86a', r:4}, broca:{n:'Broca Solar', css:'#f2c14e', r:1},
   /* 22/11 (Arnold aprovou): as 4 pedras da forja substituem todos os materiais acima */
-  prata:{n:'Pedra de Prata', css:'#d8dde8', r:0}, lcoin:{n:'Lesser Coin', css:'#ff9a3a', r:2}, lblue:{n:'Lesser Blue', css:'#3ae0ff', r:3}, lgold:{n:'Lesser Gold', css:'#ffd23a', r:5}};
+  prata:{n:'(antiga) Pedra de Prata', css:'#d8dde8', r:0}, lcoin:{n:'(antiga) Lesser Coin', css:'#ff9a3a', r:2}, lblue:{n:'Lesser Blue', css:'#3ae0ff', r:3}, lgold:{n:'Lesser Gold', css:'#ffd23a', r:5},
+  /* 22/11 (tabela da forja do Arnold): prata/ouro/bronze = Adena; as coins abaixo são os materiais */
+  scoin:{n:'Silver Coin', css:'#dfe6f2', r:1}, gcoin:{n:'Green Coin', css:'#5ee08a', r:2}, ocoin:{n:'Gold Coin', css:'#ffc83a', r:4}};
 const NC_MATMAP = {metal:'prata', minerio:'prata', cristal:'prata', essencia:'prata', refino:'prata', broca:'lcoin', superior:'lcoin', nucleo:'lcoin', escama:'lcoin', selo:'lcoin', ancestral:'lblue', bencao:'lblue', divina:'lgold'};
-const NC_GEMS4 = ['prata','lcoin','lblue','lgold'];
+const NC_GEMS4 = ['scoin','gcoin','ocoin','lblue','lgold'];
 const MAT_KEYS = Object.keys(MATS);
-const CRAFT_MATS = ['prata','lcoin','lgold'];
-const FORGE_MATS = ['prata','lcoin','lblue','lgold'];
+const CRAFT_MATS = ['scoin','gcoin','ocoin'];
+const FORGE_MATS = ['lgold'];
+/* 22/11 TABELA DA FORJA (Arnold). [armadura, peitoral/calça, arma] por grade: Adena em prata + coins.
+   Peças "armadura" = elmo, luvas, botas, cinto, capa, amuleto, escudo. O 2º nível de um mesmo grade custa 1,5x. */
+const NC_FORGE = [
+  [{a:1}, {a:1.5}, {a:2.7}],                                                     // No Grade
+  [{a:5}, {a:7.5}, {a:10}],                                                      // D
+  [{a:10}, {a:12}, {a:20}],                                                      // C
+  [{a:15, scoin:30}, {a:17, scoin:35}, {a:25, gcoin:30}],                        // B
+  [{a:50, scoin:50}, {a:60, scoin:55}, {a:100, gcoin:50}],                       // A
+  [{a:100, scoin:100}, {a:120, ocoin:120}, {a:250, ocoin:200}]];                 // S
 function recipe(t, slot){
   const o = CFG.recipes[t] || CFG.recipes[String(t)]; if(o) return {mats:o.mats || {}, gold:(+o.gold || 0)*NC_ECON};
-  const g = GR_OF[t], plus = t > 0 && GR_OF[t - 1] === g ? 1.5 : 1, w = slot === 'weapon', big = slot === 'chest' || slot === 'greaves' ? 1.5 : 1;
-  const P = w ? [3, 10, 20, 20, 40, 60] : [1, 5, 10, 10, 20, 30], C = w ? [0, 0, 0, 45, 90, 0] : [0, 0, 0, 30, 60, 0];
-  const m = {prata:Math.ceil(P[g]*big*plus)}; if(C[g]) m.lcoin = Math.ceil(C[g]*big*plus); if(g >= 5) m.lgold = Math.ceil(3*big*plus);
-  return {mats:m, gold:Math.round(NC_ECON*20*Math.pow(1.6, t))};
+  const g = GR_OF[t], plus = t > 0 && GR_OF[t - 1] === g ? 1.5 : 1, col = slot === 'weapon' ? 2 : slot === 'chest' || slot === 'greaves' ? 1 : 0;
+  const L = NC_FORGE[g][col], m = {}; for(const k in L) if(k !== 'a') m[k] = Math.ceil(L[k]*plus);
+  return {mats:m, gold:Math.round(L.a*100*plus)};
 }
 
 /* ===== SOQUETES (0 a 5 por peça) ===== */
@@ -5872,16 +5883,17 @@ function gemFx(it, add){ ensureSk(it); it.gm.forEach(g => { if(!g) return; const
 function skDots(it){ ensureSk(it); if(!it.sk.length) return '';
   return `<span class="skd" aria-label="${it.sk.length} encaixes">${it.sk.map((c, i) => { const g = it.gm[i], k = g && g.split(':')[0];
     return `<i class="${g ? 'f' : ''}" style="--c:${g ? RAR[+g.split(':')[1] - 1].css : SKC.W.css};--g:${g ? GEMS[k].css : 'none'}"></i>`; }).join('')}</span>`; }
-const UPG = [null, {p:1,m:'prata'},{p:1,m:'prata'},{p:1,m:'prata'},{p:1,m:'prata'},{p:1,m:'prata'},{p:.8,m:'prata'},{p:.7,m:'prata'},
-  {p:.6,m:'lcoin',lose:1},{p:.5,m:'lcoin',lose:1},{p:.4,m:'lcoin',lose:1},{p:.3,m:'lgold',lose:2},{p:.22,m:'lgold',lose:2},
+/* 22/11 (Arnold): +1 a +3 só Adena e 100%; +4 a +6 Adena + Lesser Gold. Do +7 em diante: sugestão do Claude (página de aprovação). */
+const UPG = [null, {p:1},{p:1},{p:1},{p:.8,m:'lgold',q:1},{p:.7,m:'lgold',q:2},{p:.6,m:'lgold',q:3},{p:.5,m:'lgold',q:4,lose:1},
+  {p:.4,m:'lgold',q:5,lose:1},{p:.3,m:'lgold',q:6,lose:1},{p:.2,m:'lgold',q:8,lose:1},{p:.15,m:'lgold',q:10,lose:1},{p:.1,m:'lgold',q:12,lose:1},
   {p:.15,m:'ancestral',brk:.1},{p:.1,m:'ancestral',brk:.2},{p:.06,m:'ancestral',brk:.3}];
 const upCost = it => Math.round(NC_ECON*40*((it.up || 0) + 1)*Math.pow(1.35, it.tier));
 const upChance = it => Math.min(1, UPG[(it.up || 0) + 1].p + (it.fp || 0) + (evFx().up || 0));
 function upRisk(U){ return U.brk ? `Se falhar: ${Math.round(U.brk*100)}% de chance de rachar e voltar para +10 (a peça nunca é destruída)` : U.lose ? `Se falhar: perde ${U.lose} nível${U.lose > 1 ? 'is' : ''}` : U.p < 1 ? 'Se falhar: nada se perde' : 'Sucesso garantido'; }
 function tryUpgrade(it){
   ensureSk(it); const nx = it.up + 1; if(nx > NC_UP_MAX) return null; const U = UPG[nx], cost = upCost(it);
-  if(save.gold < cost || (save.mats[U.m] || 0) < 1) return null;
-  save.gold -= cost; save.mats[U.m]--;
+  if(save.gold < cost || (U.m && (save.mats[U.m] || 0) < (U.q || 1))) return null;
+  save.gold -= cost; if(U.m) save.mats[U.m] -= (U.q || 1);
   let msg;
   if(Math.random() < upChance(it)){
     it.up = nx; it.fp = 0; let extra = '+' + nx*4 + '% em vida, ataque e defesa da peça';
@@ -5901,12 +5913,12 @@ function tryUpgrade(it){
   persist(); return msg;
 }
 const gemCost = r => Math.round(NC_ECON*40*Math.pow(2.2, r));
-const gemMatCost = r => r;  // cristais de energia por combinação
+const gemMatCost = r => 0;  // 22/11: prata é Adena, não pedra
 const pullCost = key => NC_ECON*20*Math.pow(+key.split(':')[1], 2);
 function fuseGem(k, r){
   const key = k + ':' + r; if((save.gems[key] || 0) < 3 || r >= 6) return null; const c = gemCost(r), mc = gemMatCost(r);
-  if(save.gold < c || (save.mats.prata || 0) < mc) return null;
-  save.gold -= c; save.mats.prata -= mc; const p = Math.min(1, (CFG.stoneFuse[r] ?? .5) + (save.gemPity[r] || 0));
+  if(save.gold < c) return null;
+  save.gold -= c; const p = Math.min(1, (CFG.stoneFuse[r] ?? .5) + (save.gemPity[r] || 0));
   if(Math.random() < p){ save.gems[key] -= 3; addGem(k, r + 1); save.gemPity[r] = 0; persist(); SFX.drop(); return ['Combinação perfeita!', stoneName(k, r + 1), '']; }
   save.gems[key] -= 1; save.gemPity[r] = (save.gemPity[r] || 0) + .05; persist(); SFX.miss();
   return ['A combinação falhou', 'Perdeu 1 pedra. A próxima tentativa tem +5% de chance.', 'danger'];
@@ -5922,7 +5934,7 @@ function insertGem(it, key){
   save.gems[key]--; it.gm[i] = key; persist(); return true;
 }
 function removeGem(it, i){ const key = it.gm[i]; if(!key) return; const c = pullCost(key); if(save.gold < c) return; save.gold -= c; it.gm[i] = null; const [k, r] = key.split(':'); addGem(k, +r); persist(); }
-function rerollSockets(it){ if(!(save.mats.lcoin > 0)) return; save.mats.lcoin--; returnGems(it); rollSockets(it, true); persist(); }
+function rerollSockets(it){ if(!(save.mats.scoin > 0)) return; save.mats.scoin--; returnGems(it); rollSockets(it, true); persist(); }
 
 /* ===== EVENTOS (rodízio semanal; o painel admin pode forçar um) ===== */
 const EVENTS = [
@@ -5946,7 +5958,13 @@ const evEnds = () => { const ms = 6048e5 - (Date.now() % 6048e5); return Math.ce
 
 /* ===== RECOMPENSAS EM CAMPO ===== */
 let runMats = {}, runGems = {}, runFrags = {}, runCoins = 0;
-function giveMat(k, n, pos){ k = NC_MATMAP[k] || k; n = Math.max(1, Math.round((n || 1)*(evFx().mat || 1)*(evFx().stone || 1))); save.mats[k] = (save.mats[k] || 0) + n; runMats[k] = (runMats[k] || 0) + n; feed('+' + n + ' ' + MATS[k].n, MATS[k].css); if(pos) floatText(pos, MATS[k].n, 'gold'); }
+/* 22/11 (tabela da forja): o que cai agora. Restos baratos não caem mais (prata é Adena). Coins seguem a área: Silver (área 8+), Green (13+), Gold (16+). Lesser Blue cai em todo lugar. */
+const NC_CHEAP = {metal:1, minerio:1, cristal:1, essencia:1, refino:1, prata:1};
+function ncCoinFor(k){ if(NC_CHEAP[k]) return null; if(['ancestral','bencao','lblue'].includes(k)) return 'lblue'; if(['divina','lgold'].includes(k)) return 'lgold';
+  if(['scoin','gcoin','ocoin'].includes(k)) return k; const id = curStage ? curStage.id : 0, r = Math.random();
+  if(id < 8) return null; if(id < 13) return 'scoin'; if(id < 16) return r < .6 ? 'scoin' : 'gcoin'; return r < .4 ? 'gcoin' : 'ocoin'; }
+function giveMat(k, n, pos){ k = ncCoinFor(k); if(!k) return; n = (n || 1)*(['scoin','gcoin','ocoin'].includes(k) ? 3 : 1); n = Math.max(1, Math.round((n || 1)*(evFx().mat || 1)*(evFx().stone || 1))); save.mats[k] = (save.mats[k] || 0) + n; runMats[k] = (runMats[k] || 0) + n; feed('+' + n + ' ' + MATS[k].n, MATS[k].css); if(pos) floatText(pos, MATS[k].n, 'gold'); }
+function ncAddMat(k, n){ save.mats[k] = (save.mats[k] || 0) + n; feed('+' + n + ' ' + MATS[k].n, MATS[k].css); }
 let gemDrops = [], lootNear = null;
 const gemGeo = new T.OctahedronGeometry(.2);
 function giveGem(k, r, pos){
@@ -6088,6 +6106,7 @@ if(!save.stoneV){ // gemas antigas viram pedras novas; encaixes passam a aceitar
   (save.inv || []).forEach(it => { ensureSk(it); it.gm = it.gm.map(g => g ? migrateKey(g) : null); while(it.sk.length > 5){ const g = it.gm.pop(); it.sk.pop(); if(g){ const [k, r] = g.split(':'); save.gems[g] = (save.gems[g] || 0) + 1; } } it.sk = it.sk.map(() => 'W'); });
   save.coins += 10; save.mats.prata = (save.mats.prata || 0) + 5; save.stoneV = 1; }
 if(save.mats.metal > 0){ save.mats.prata = (save.mats.prata || 0) + save.mats.metal; save.mats.metal = 0; }
+{ const mm = save.mats || {}; if(mm.prata > 0) save.gold = (save.gold || 0) + mm.prata*10; if(mm.lcoin > 0) mm.scoin = (mm.scoin || 0) + mm.lcoin; mm.prata = 0; mm.lcoin = 0; save.mats = mm; }   // 22/11: sempre que achar pedra de prata antiga, vira Adena
 if(!save.shV){ // presente: ombreiras do nível da sua armadura atual, para não perder os bônus de conjunto
   const tiers = ['helmet','chest','bracers','greaves','boots'].map(s => (save.inv.find(i => i.id === save.eq[s]) || {}).tier).filter(t => t !== undefined);
   if(tiers.length){ const t = Math.min(...tiers), it = {id:save.nextId++, slot:'shoulders', tier:t, q:0, up:0}; rollSockets(it); save.inv.push(it); save.eq.shoulders = it.id; }
@@ -7916,9 +7935,10 @@ function ncBagFull(){ if(clock - ncFullT > 8){ ncFullT = clock; try{ banner('Bag
 const ncFits = it => save.inv.length < ncBagMax() && ncWeight() + ncItemW(it) <= ncWeightMax();
 function ncRoom(slot){ if(ncFits({slot})) return true; try{ banner('Bag cheia ou pesada demais', 'Libere espaço na bag antes de pegar mais uma peça.', 'danger'); }catch(e){} return false; }
 // desmanchar: a peça vira metade dos materiais da receita dela (e pedras de refino se estava evoluída)
-function ncBreak(it){ const R = recipe(it.tier, it.slot).mats, out = {}; for(const m in R){ const q = Math.floor(R[m]/3); if(q > 0) out[m] = q; }   // 21/11: destruir devolve ~1/3
-  if(!Object.keys(out).length) out[Object.keys(R)[0]] = 1; const u = Math.floor((it.up || 0)/3); if(u > 0) out.prata = (out.prata || 0) + u; return out; }
-const ncBreakTxt = out => Object.keys(out).map(m => '+' + out[m] + ' ' + MATS[m].n).join(', ');
+/* 22/11 (Arnold): destruir tem chance de devolver parte das coins usadas; arma com SA devolve parte do Lesser Blue. Peças sem coin (No Grade a C) não devolvem nada. */
+function ncBreak(it){ const R = recipe(it.tier, it.slot).mats, out = {}; if(Math.random() < .7){ const pc = .25 + Math.random()*.25; for(const m in R){ const q = Math.floor(R[m]*pc); if(q > 0) out[m] = q; } }
+  if(it.sa){ const q = Math.floor(saCost(it)*(.25 + Math.random()*.25)); if(q > 0) out.lblue = q; } return out; }
+const ncBreakTxt = out => Object.keys(out).length ? Object.keys(out).map(m => '+' + out[m] + ' ' + MATS[m].n).join(', ') : 'nada voltou desta vez';
 let bagConfirm = 0;
 function ncPopHTML(){ const pz = mode !== 'hub';
   let det = '';
@@ -8000,8 +8020,8 @@ function forgeItems(){
     (rest.length ? `<div class="eyebrow">Na mochila (Grade D ou mais)</div><div class="fsel">${rest.map(chip).join('')}</div>` : '');
 }
 function renderForge(){
-  $('#forgeTabs').innerHTML = [['craft','Fabricar'],['up','Evoluir +1 a +12'],['sa','Brilho da arma'],['gems','Pedras e encaixes']].map(([k, n]) => `<button class="chipb" data-ftab="${k}" aria-pressed="${forgeTab === k}">${n}</button>`).join('');
-  $('#forgeMats').innerHTML = matsHTML(forgeTab === 'craft' ? CRAFT_MATS : forgeTab === 'up' ? FORGE_MATS : forgeTab === 'gems' ? ['prata','lcoin'] : forgeTab === 'sa' ? ['lblue'] : []);
+  $('#forgeTabs').innerHTML = [['craft','Fabricar'],['up','Evoluir +1 a +12'],['sa','SA da arma'],['gems','Pedras e encaixes']].map(([k, n]) => `<button class="chipb" data-ftab="${k}" aria-pressed="${forgeTab === k}">${n}</button>`).join('');
+  $('#forgeMats').innerHTML = matsHTML(forgeTab === 'craft' ? CRAFT_MATS : forgeTab === 'up' ? FORGE_MATS : forgeTab === 'gems' ? ['scoin'] : forgeTab === 'sa' ? ['lblue'] : []);
   if(forgeTab === 'fuse') forgeTab = 'craft';
   $('#forgeBody').innerHTML = forgeTab === 'up' ? upHTML() : forgeTab === 'sa' ? saHTML() : forgeTab === 'gems' ? gemsHTML() : craftHTML();
 }
@@ -8010,7 +8030,7 @@ const MAT_ICO = k => '<svg class="mico" viewBox="0 0 16 16" aria-hidden="true" s
 function canCraft(t){ const R = recipe(t, craftSlot), k = evFx().craft || 1; return save.gold >= Math.round(R.gold*k) && Object.keys(R.mats).every(m => (save.mats[m] || 0) >= Math.ceil(R.mats[m]*k)); }
 function craftHTML(){
   const k = evFx().craft || 1;
-  let h = `<p class="lede">Fabrique peças com <b>Pedras de Prata</b> (No Grade a C) e <b>Lesser Coin</b> (Grade B e A). Arma, peitoral e calça custam mais. Grade S pede <b>Lesser Gold</b>.${k < 1 ? ' <b style="color:#ff9a3a">Evento Forja Ardente: tudo custa 25% menos.</b>' : ''}</p>`;
+  let h = `<p class="lede">No Grade, D e C: só <b>Adena</b>. Grade B, A e S: Adena + <b>Silver, Green ou Gold Coin</b>. Arma, peitoral e calça custam mais.${k < 1 ? ' <b style="color:#ff9a3a">Evento Forja Ardente: tudo custa 25% menos.</b>' : ''}</p>`;
   h += `<div class="fsel">${[...ARMOR, 'weapon', 'shield', 'amulet'].filter(sl => sl !== 'shield' || save.cls === 'paladin').map(sl => `<button class="chipb" data-cslot="${sl}" aria-pressed="${craftSlot === sl}">${sl === 'weapon' ? 'Arma (' + CLS().name + ')' : SLOT_INFO[sl].n}</button>`).join('')}</div><div class="blist">`;
   if(craftGr < 0){ craftGr = 0; for(let g2 = 0; g2 < GR_LV.length; g2++) if(save.level >= GR_LV[g2]) craftGr = g2; }   // abre no melhor grade que o heroi ja pode usar
   h = h.replace('<div class="blist">', '<div class="eyebrow" style="margin-top:10px">Grade</div><div class="fsel">' + GR_N.map((n, g2) => '<button class="chipb" data-cgr="' + g2 + '" aria-pressed="' + (craftGr === g2) + '">' + n + (save.level < GR_LV[g2] ? ' · nv ' + GR_LV[g2] : '') + '</button>').join('') + '</div><div class="blist">');
@@ -8032,11 +8052,11 @@ function craftItem(t){
 }
 function statsAfter(it){ const c = Object.assign({}, it, {up:(it.up || 0) + 1}); return itemStats(c); }
 function upHTML(){
-  let h = `<p class="lede">Evolua a peça de <b>+1 até +12</b>. Cada nível dá <b>+4%</b> em vida, ataque e defesa da peça. A partir de <b>+3</b> a peça começa a brilhar e de <b>+7</b> em diante pega fogo. Em <b>+10</b> e <b>+12</b> ela ganha um encaixe novo (até 5) e brilho de evolução. Até +7 nunca se perde nada; depois a peça pode cair de nível e, de +13 em diante, rachar e voltar para +10. <b>Nenhuma peça é destruída.</b> Cada falha dá +3% de chance na próxima tentativa.${evFx().up ? ' <b style="color:#ff9a3a">Evento Forja Ardente: +10% de chance.</b>' : ''}</p>` + forgeItems();
+  let h = `<p class="lede">Evolua a peça de <b>+1 até +12</b>. Cada nível dá <b>+4%</b> em vida, ataque e defesa da peça. <b>+1 a +3</b>: só Adena, sempre dá certo. <b>+4 a +6</b>: Adena + Lesser Gold, sem perder nada se falhar. <b>+7 a +12</b>: mais Lesser Gold e, se falhar, a peça cai 1 nível. Nenhuma peça é destruída.</p>` + forgeItems();
   const it = byId(forgeSel); if(!it) return h + '<div class="empty">Nenhuma peça para evoluir.</div>';
   ensureSk(it); const T = TIERS[it.tier];
   if(it.up >= NC_UP_MAX) return h + `<div class="fpanel" style="--tc:${T.css}"><div class="big">${itemName(it)}</div><div class="istat">Esta peça já está no máximo (+12).</div></div>`;
-  const U = UPG[it.up + 1], cost = upCost(it), have = save.mats[U.m] || 0, ok = have >= 1 && save.gold >= cost, risky = U.lose || U.brk;
+  const U = UPG[it.up + 1], cost = upCost(it), need = U.m ? (U.q || 1) : 0, have = U.m ? (save.mats[U.m] || 0) : 0, ok = have >= need && save.gold >= cost, risky = U.lose || U.brk;
   const prot = (U.lose && forgeOpt.selo && save.mats.selo > 0) || (U.brk && !U.lose && forgeOpt.bencao && save.mats.bencao > 0);
   const confirmNow = risky && !prot && forgeConfirm === it.id;
   return h + `<div class="fpanel evo" style="--tc:${T.css}">
@@ -8044,22 +8064,26 @@ function upHTML(){
       <div class="big">${itemName(it)} <span class="up">→ +${it.up + 1}</span></div>
       <div class="cmp"><div><div class="eyebrow">Agora</div>${statText(itemStats(it))}</div><div><div class="eyebrow">Depois</div><b>${statText(statsAfter(it))}</b></div></div>
       <div class="pbar"><i style="width:${it.up/NC_UP_MAX*100}%"></i><span>+${it.up} de +${NC_UP_MAX}</span></div></div></div>
-    <div class="row"><span class="pill ok">Chance ${Math.round(upChance(it)*100)}%</span><span class="pill">${MATS[U.m].n}: ${have}/1</span><span class="pill">${adenaTxt(cost)}</span></div>
+    <div class="row"><span class="pill ok">Chance ${Math.round(upChance(it)*100)}%</span>${U.m ? `<span class="pill">${MATS[U.m].n}: ${have}/${need}</span>` : ''}<span class="pill">${adenaTxt(cost)}</span></div>
     <div class="istat">${upRisk(U)}.</div>
     <div class="row">${false ? `<button class="chipb" data-fopt="selo" aria-pressed="${forgeOpt.selo}">Usar Selo de Ferreiro se falhar (${save.mats.selo || 0})</button>` : ''}${false ? `<button class="chipb" data-fopt="bencao" aria-pressed="${forgeOpt.bencao}">Usar Bênção da Bigorna se rachar (${save.mats.bencao || 0})</button>` : ''}</div>
-    <button class="btn ${ok ? 'primary' : ''} ${confirmNow ? 'warnb' : ''}" data-fup="${it.id}" ${ok ? '' : 'disabled'}>${!ok ? (have < 1 ? 'Falta ' + MATS[U.m].n : 'Falta ouro') : confirmNow ? 'Confirmar: a peça pode perder nível' : 'Evoluir'}</button></div>`;
+    <button class="btn ${ok ? 'primary' : ''} ${confirmNow ? 'warnb' : ''}" data-fup="${it.id}" ${ok ? '' : 'disabled'}>${!ok ? (have < need ? 'Falta ' + MATS[U.m].n : 'Falta Adena') : confirmNow ? 'Confirmar: a peça pode perder nível' : 'Evoluir'}</button></div>`;
 }
 /* BRILHO DA ARMA (SA, decisão de 21/11): com Lesser Blue a arma fica mais brilhante, com efeito mais bonito e +8% de ataque. Grade C ou acima. */
-const saCost = it => [0, 0, 50, 75, 100, 150][GR_OF[it.tier]] || 0;
+const saCost = it => [0, 0, 50, 75, 150, 200][GR_OF[it.tier]] || 0;   // 22/11 tabela: C 50, B 75, A 150, S 200 Lesser Blue
+/* SA: o jogador escolhe 1 atributo na hora. Valores por grade (C, B, A, S) - sugestão do Claude, sem desbalancear */
+const NC_SA = {atk:{n:'Ataque', f:'atkPct', v:[.06,.08,.10,.12]}, crit:{n:'Crítico', f:'crit', v:[.04,.05,.06,.08]}, aspd:{n:'Velocidade de ataque', f:'aspd', v:[.05,.06,.08,.10]}, leech:{n:'Roubo de vida', f:'leech', v:[.02,.025,.03,.04]}};
+function ncSaOpt(it){ const k = NC_SA[it.sa] ? it.sa : 'atk', D = NC_SA[k], gi = Math.max(0, Math.min(3, GR_OF[it.tier] - 2)); return {k, n:D.n, f:D.f, v:D.v[gi]}; }
+const ncSaTxt = (k, it) => { const o = ncSaOpt(Object.assign({}, it, {sa:k})); return '+' + String(Math.round(o.v*1000)/10).replace('.', ',') + '% ' + o.n.toLowerCase(); };
 function saHTML(){ const ws = save.inv.filter(i => i.slot === 'weapon' && GR_OF[i.tier] >= 2);
-  let h = '<p class="lede">Use <b>Lesser Blue</b> para dar o <b>Brilho</b> na arma: ela brilha mais, ganha efeito e <b>+8% de ataque</b>. Só armas de Grade C para cima (C 50, B 75, A 100, S 150).</p>';
+  let h = '<p class="lede">Use <b>Lesser Blue</b> para dar o <b>SA</b> na arma: só a arma brilha, e você <b>escolhe 1 atributo</b>. Só armas de Grade C para cima (C 50, B 75, A 150, S 200).</p>';
   if(!ws.length) return h + '<div class="empty">Você não tem arma de Grade C ou acima.</div>';
   return h + '<div class="blist">' + ws.map(it => { const c = saCost(it), have = save.mats.lblue || 0;
     return '<div class="frow" style="--tc:' + TIERS[it.tier].css + '">' + itemImg(it, 'ps-row') + '<div><div class="fn">' + itemName(it) + (it.sa ? ' · <b style="color:#3ae0ff">Brilho</b>' : '') + '</div><div class="istat">Lesser Blue ' + have + '/' + c + '</div></div><div class="iact">'
-      + (it.sa ? '<button class="btn sm" disabled>Já tem</button>' : '<button class="btn sm primary" data-fsa="' + it.id + '" ' + (have >= c ? '' : 'disabled') + '>Dar brilho</button>') + '</div></div>'; }).join('') + '</div>'; }
+      + (it.sa ? '<button class="btn sm" disabled>' + ncSaTxt(ncSaOpt(it).k, it) + '</button>' : Object.keys(NC_SA).map(k => '<button class="btn sm primary" data-fsa="' + it.id + '" data-sak="' + k + '" ' + (have >= c ? '' : 'disabled') + '>' + ncSaTxt(k, it) + '</button>').join('')) + '</div></div>'; }).join('') + '</div>'; }
 let stoneFilter = 'all';
 function gemsHTML(){
-  let h = `<p class="lede">Cada peça tem de <b>0 a 5 encaixes</b>, e cada encaixe aceita qualquer pedra. Existem <b>10 pedras</b> com 6 raridades (Comum a Mítica). Junte <b>3 pedras iguais</b> com ouro e Pedras de Prata para criar uma de raridade maior. Se a peça estiver cheia, encaixar troca a pedra mais fraca.</p>` + forgeItems();
+  let h = `<p class="lede">Cada peça tem de <b>0 a 5 encaixes</b>, e cada encaixe aceita qualquer pedra. Existem <b>10 pedras</b> com 6 raridades (Comum a Mítica). Junte <b>3 pedras iguais</b> com Adena para criar uma de raridade maior. Se a peça estiver cheia, encaixar troca a pedra mais fraca.</p>` + forgeItems();
   const it = byId(forgeSel);
   if(it){ ensureSk(it); const T = TIERS[it.tier];
     h += `<div class="fpanel" style="--tc:${T.css}"><div class="big">${itemName(it)} <small style="color:var(--mute)">${it.sk.length} de 5 encaixes</small></div>
@@ -8067,7 +8091,7 @@ function gemsHTML(){
         if(!g) return `<span class="sockb" style="--c:${SKC.W.css}"><span class="dot"></span>Vazio</span>`;
         const [k, r] = g.split(':');
         return `<button class="sockb" style="--c:${RAR[r - 1].css}" data-fpull="${i}" title="Tirar a pedra por ${adenaTxt(pullCost(g))}">${stoneImg(k, 20)}${stoneName(k, +r)} · tirar ${pullCost(g)}</button>`; }).join('') : '<span class="istat">Esta peça não tem encaixes.</span>'}</div>
-      <div class="row"><button class="btn sm" data-freroll="${it.id}" ${save.mats.lcoin > 0 ? '' : 'disabled'}>Sortear encaixes de novo · Lesser Coin (${save.mats.lcoin || 0})</button><span class="istat">As pedras voltam para a bolsa.</span></div></div>`; }
+      <div class="row"><button class="btn sm" data-freroll="${it.id}" ${save.mats.scoin > 0 ? '' : 'disabled'}>Sortear encaixes de novo · Silver Coin (${save.mats.scoin || 0})</button><span class="istat">As pedras voltam para a bolsa.</span></div></div>`; }
   h += `<h2>Bolsa de pedras</h2><div class="fsel">${[['all','Todas'], ...GEM_KEYS.map(k => [k, GEMS[k].st])].map(([k, n]) => `<button class="chipb" data-sfilter="${k}" aria-pressed="${stoneFilter === k}">${n}</button>`).join('')}</div>`;
   const keys = Object.keys(save.gems).filter(k => save.gems[k] > 0 && GEMS[k.split(':')[0]] && (stoneFilter === 'all' || k.startsWith(stoneFilter + ':')))
     .sort((a, b) => (+b.split(':')[1] - +a.split(':')[1]) || (GEM_KEYS.indexOf(a.split(':')[0]) - GEM_KEYS.indexOf(b.split(':')[0])));
@@ -8083,8 +8107,8 @@ function gemsHTML(){
 let shopSlot = 'helmet';
 const SHOP = [
   {n:'Pedra Comum aleatória', p:4, g:() => giveGem(rndGem(), 1)}, {n:'Pedra Incomum aleatória', p:12, g:() => giveGem(rndGem(), 2)}, {n:'Pedra Rara aleatória', p:35, g:() => giveGem(rndGem(), 3)},
-  {n:'10 Pedras de Prata', p:6, g:() => giveMat('prata', 10)}, {n:'3 Lesser Coin', p:12, g:() => giveMat('lcoin', 3)},
-  {n:'1 Lesser Blue', p:25, g:() => giveMat('lblue')}, {n:'1 Lesser Gold', p:80, g:() => giveMat('lgold')},
+  {n:'10 Silver Coin', p:15, g:() => ncAddMat('scoin', 10)}, {n:'10 Green Coin', p:30, g:() => ncAddMat('gcoin', 10)}, {n:'10 Gold Coin', p:60, g:() => ncAddMat('ocoin', 10)},
+  {n:'5 Lesser Blue', p:25, g:() => ncAddMat('lblue', 5)}, {n:'1 Lesser Gold', p:40, g:() => ncAddMat('lgold', 1)},
 ];
 const shopPrice = p => Math.max(1, Math.round(p*CFG.shopMult*NC_ECON));
 const piecePrice = t => shopPrice(5*Math.pow(1.85, t));
@@ -9968,21 +9992,39 @@ let ncPet = null;
 /* Mascotes: comprados com Adena. Cada um dá um bônus fixo enquanto acompanha, ajuda a bater, dá +10 espaços na bag e pode evoluir (nível 1 a 10) para bater mais forte.
    Preços e bônus são um primeiro chute para o Arnold ajustar. */
 const NC_PET_DEF = {
-  s_Chicken:{p:200,   b:'+5% velocidade de ataque', fx:s => { s.aspd += .05; }},
-  s_Cat:    {p:800,  b:'+6% chance de crítico',    fx:s => { s.crit += .06; }},
-  s_Dog:    {p:800,  b:'+10% vida',                fx:s => { s.hp *= 1.10; }},
-  f_Pigeon: {p:800,  b:'+8% velocidade de andar',  fx:s => { s.spd *= 1.08; }},
-  f_Glub:   {p:2000,  b:'+10% defesa',              fx:s => { s.def *= 1.10; }},
-  f_Dragon: {p:6000, b:'+8% ataque',               fx:s => { s.atk *= 1.08; }}};
+  s_Chicken:{p:1500,  b:'+5% velocidade de ataque', fx:s => { s.aspd += .05; }},
+  s_Cat:    {p:4000, b:'+6% chance de crítico',    fx:s => { s.crit += .06; }},
+  s_Dog:    {p:4000, b:'+10% vida',                fx:s => { s.hp *= 1.10; }},
+  f_Pigeon: {p:4000, b:'+8% velocidade de andar',  fx:s => { s.spd *= 1.08; }},
+  f_Glub:   {p:10000, b:'+10% defesa',              fx:s => { s.def *= 1.10; }},
+  f_Dragon: {p:30000, b:'+8% ataque',               fx:s => { s.atk *= 1.08; }}};
 const NC_PET_MAX = 10;
 const ncPetLv = k => (save.pets && save.pets[k]) || 0;
 const ncPetOn = () => (save.pet && ncPetLv(save.pet) > 0 && NC_PET_DEF[save.pet]) || null;
 const ncPetUpCost = k => Math.round(NC_PET_DEF[k].p*.4*ncPetLv(k));
 const ncPetHit = k => .22 + .06*ncPetLv(k);     // parte do ataque do herói a cada golpe do mascote
 if(save.pet && !ncPetLv(save.pet)) save.pet = '';   // mascote agora precisa ser comprado
-function ncPetHTML(){ let h = '<div class="eyebrow">Mascote</div><small class="nc-note" style="margin:0 0 8px">Comprado com Adena. Enquanto acompanha: dá o bônus dele, ajuda a bater e aumenta a bag em 10 espaços. Evoluir deixa o golpe dele mais forte.</small><div class="petl">';
+const ncPetThumbs = {}, ncPetThumbU = {};
+function ncPetThumb(key){ if(ncPetThumbs[key]) return ncPetThumbs[key];
+  return ncPetThumbs[key] = new Promise(res => monLoad(key, g => { try{ if(!g){ res(''); return; } if(!iconSc) iconSetup(); const sc = new T.Scene();
+    iconSc.children.filter(o => o.isLight).forEach(o => sc.add(o.clone())); const m = monClone(g.scene);
+    m.traverse(n => { if(n.isMesh){ n.material = new T.MeshLambertMaterial({map:monTex(), skinning:!!n.isSkinnedMesh}); n.frustumCulled = false; } });
+    try{ const mx = new T.AnimationMixer(m), c = g.animations.find(c => /^(Idle|Flying_Idle)$/.test(c.name)); if(c){ mx.clipAction(c).play(); mx.update(.3); } }catch(e){}
+    const kk = 1/Math.max(.01, g.box.getSize(new T.Vector3()).y); m.scale.setScalar(kk); m.position.y = -g.box.min.y*kk; const pv = new T.Group(); pv.add(m); pv.rotation.y = -.6; sc.add(pv); pv.updateMatrixWorld(true);
+    const box = g.box.clone(); box.min.multiplyScalar(kk); box.max.multiplyScalar(kk); box.translate(new T.Vector3(0, -g.box.min.y*kk, 0)); const c0 = box.getCenter(new T.Vector3()), sz = box.getSize(new T.Vector3());
+    const cam = new T.PerspectiveCamera(28, 1, .01, 200), R0 = Math.max(sz.x*.55, sz.y, sz.z)*.62, d = R0/Math.sin(THREE_DEG(14)); cam.position.copy(c0).add(new T.Vector3(.2, .25, 1).normalize().multiplyScalar(d)); cam.near = d/50; cam.far = d*5; cam.updateProjectionMatrix(); cam.lookAt(c0);
+    let tries = 0; const draw = () => { const pc = renderer.getClearColor(new T.Color()), pa = renderer.getClearAlpha(); renderer.setRenderTarget(iconRT); renderer.setClearColor(0, 0); renderer.clear(); renderer.render(sc, cam);
+      const px = new Uint8Array(256*256*4); renderer.readRenderTargetPixels(iconRT, 0, 0, 256, 256, px); renderer.setRenderTarget(null); renderer.setClearColor(pc, pa);
+      let any = false; for(let i = 3; i < px.length; i += 64) if(px[i]){ any = true; break; }
+      if(!any && tries++ < 6){ setTimeout(draw, 250); return; }   // às vezes a textura ainda não subiu: tenta de novo
+      const cv2 = document.createElement('canvas'); cv2.width = cv2.height = 256; const gg = cv2.getContext('2d'), id = gg.createImageData(256, 256);
+      for(let y = 0; y < 256; y++) id.data.set(px.subarray((255 - y)*1024, (256 - y)*1024), y*1024); gg.putImageData(id, 0, 0); res(ncPetThumbU[key] = any ? cv2.toDataURL('image/png') : ''); };
+    draw(); }catch(e){ res(''); } })); }
+let ncPetQ = Promise.resolve();
+function ncPetImgs(){ NC_PETS.forEach(x => { const k = x[0]; if(k) ncPetQ = ncPetQ.then(() => new Promise(r => requestAnimationFrame(r))).then(() => ncPetThumb(k)).then(u => { if(u) document.querySelectorAll('img[data-petimg="' + k + '"]').forEach(i => { i.src = u; i.style.visibility = 'visible'; }); }); }); }
+function ncPetHTML(){ setTimeout(ncPetImgs, 30); let h = '<div class="eyebrow">Mascote</div><small class="nc-note" style="margin:0 0 8px">Comprado com Adena. Enquanto acompanha: dá o bônus dele, ajuda a bater e aumenta a bag em 10 espaços. Evoluir deixa o golpe dele mais forte.</small><div class="petl">';
   NC_PETS.forEach(x => { const k = x[0]; if(!k) return; const D = NC_PET_DEF[k], lv = ncPetLv(k), on = save.pet === k && lv > 0, uc = lv ? ncPetUpCost(k) : 0;
-    h += '<div class="petc' + (on ? ' on' : '') + '"><div><b>' + x[1] + (lv ? ' <i>nv ' + lv + '</i>' : '') + '</b><span>' + D.b + (lv ? ' · golpe ' + Math.round(ncPetHit(k)*100) + '% do seu ataque' : '') + '</span></div><div class="petb">'
+    h += '<div class="petc' + (on ? ' on' : '') + '"><img class="petimg" alt="" data-petimg="' + k + '" src="' + (ncPetThumbU[k] || '') + '" style="visibility:' + (ncPetThumbU[k] ? 'visible' : 'hidden') + '"><div style="flex:1"><b>' + x[1] + (lv ? ' <i>nv ' + lv + '</i>' : '') + '</b><span>' + D.b + (lv ? ' · golpe ' + Math.round(ncPetHit(k)*100) + '% do seu ataque' : '') + '</span></div><div class="petb">'
       + (lv ? '<button class="btn sm' + (on ? '' : ' primary') + '" data-ncpet="' + (on ? '' : k) + '">' + (on ? 'Guardar' : 'Levar') + '</button>' + (lv < NC_PET_MAX ? '<button class="btn sm" data-ncpetup="' + k + '" ' + (save.gold >= uc ? '' : 'disabled') + '>Evoluir<small>' + adenaTxt(uc) + '</small></button>' : '<span class="petmax">nível máximo</span>')
             : '<button class="btn sm primary" data-ncpetbuy="' + k + '" ' + (save.gold >= D.p ? '' : 'disabled') + '>Comprar<small>' + adenaTxt(D.p) + '</small></button>') + '</div></div>'; });
   return h + '</div>'; }
@@ -9993,6 +10035,20 @@ function ncPetSpawn(){ try{ if(ncPet){ removeObj(ncPet.root); ncPet = null; } co
     root.position.set(P.pos.x - 1.4, P.pos.y, P.pos.z - 1.4); scene.add(root);
     const mixer = new T.AnimationMixer(model), f = re => { const c = g.animations.find(c => re.test(c.name)); return c ? mixer.clipAction(c) : null; };
     ncPet = {root, mixer, key, at:1, idle:f(/^(Idle|Flying_Idle)$/), move:f(/^(Walk|Run|Fast_Flying)$/), hit:f(/^(Attack|Bite_Front|Punch|Headbutt|Weapon)$/), cur:null}; }); }catch(e){} }
+/* 22/11: o mascote também aparece no menu, ao lado do herói (antes só aparecia dentro da fase) */
+let ncHubPetO = null;
+function ncHubPet(){ try{ if(ncHubPetO){ if(ncHubPetO.root.parent) ncHubPetO.root.parent.remove(ncHubPetO.root); ncHubPetO = null; }
+  const key = save.pet; if(mode !== 'hub' || !key || !ncPetLv(key) || !monOn() || !hero) return;
+  monLoad(key, g => { if(!g || mode !== 'hub' || save.pet !== key || !hero) return; const model = monClone(g.scene), root = new T.Group(), fly = key[0] === 'f';
+    model.traverse(n => { if(n.isMesh) n.material = new T.MeshLambertMaterial({map:monTex(), skinning:!!n.isSkinnedMesh}); });
+    let hh = 1.6; try{ hh = ncHeroH(hero) || hh; }catch(e){}
+    const sz = g.box.getSize(new T.Vector3()), k = hh*(fly ? .24 : .3)/Math.max(.01, sz.y); model.scale.setScalar(k); model.position.y = -g.box.min.y*k; root.add(model);
+    const hp = hero.root.position; root.position.set(hp.x + hh*.48, hp.y + (fly ? hh*.7 : 0), hp.z + hh*.3); root.rotation.y = -.35; scene.add(root);
+    const mixer = new T.AnimationMixer(model), c = g.animations.find(c => /^(Idle|Flying_Idle)$/.test(c.name)); if(c) mixer.clipAction(c).play();
+    ncHubPetO = {root, mixer, fly, y0:root.position.y}; }); }catch(e){} }
+function ncHubPetTick(dt){ const o = ncHubPetO; if(!o) return; if(mode !== 'hub' || !o.root.parent){ ncHubPetO = null; return; } o.mixer.update(dt); if(o.fly) o.root.position.y = o.y0 + Math.sin(clock*2.2)*.07; }
+buildHub = (f => function(){ const r = f.apply(this, arguments); setTimeout(ncHubPet, 300); return r; })(buildHub);
+rebuildHubHero = (f => function(){ const r = f.apply(this, arguments); setTimeout(ncHubPet, 300); return r; })(rebuildHubHero);
 let ncHvT = 0, ncHvOn = null;
 function ncHeavyFx(dt){ ncHvT -= dt; if(ncHvT > 0 || !hero || !hero.mats) return; ncHvT = .7; const hv = ncHeavy(); if(hv === ncHvOn) return; ncHvOn = hv;
   hero.mats.forEach(m => { if(!m.emissive || (m.userData.baseE && m.userData.ncKeep)) return; const b = m.userData.baseE || (m.userData.baseE = new T.Color(0)); if(hv){ m.userData.ncE0 = m.userData.ncE0 || b.clone(); b.setHex(0x6a0c0c); } else if(m.userData.ncE0) b.copy(m.userData.ncE0); m.emissive.copy(b); });
@@ -10486,7 +10542,7 @@ function toggleMount(force){
 /* 22/11 (Arnold): qualquer classe compra qualquer montaria; a primeira no nível 10; sem montaria grátis; dragão é mascote.
    Preços em Adena (100 = 1 de prata): simples 3 de prata, evoluída 25 de prata. As voadoras entram depois. */
 const NC_MOUNTS = []; (() => { const seen = {}; CLASS_ORDER.forEach(c => (NC_MOUNT_DEF[c] || []).forEach((d, i) => { if(d.fly || seen[d.nm]) return; seen[d.nm] = 1;
-  NC_MOUNTS.push(Object.assign({}, d, {id:c + i, lv:i ? 30 : 10, p:i ? 2500 : 300, tier:i})); })); NC_MOUNTS.sort((a, b) => a.tier - b.tier); })();
+  NC_MOUNTS.push(Object.assign({}, d, {id:c + i, lv:i ? 30 : 10, p:i ? 15000 : 2000, tier:i})); })); NC_MOUNTS.sort((a, b) => a.tier - b.tier); })();
 const ncMountById = id => NC_MOUNTS.find(m => m.id === id);
 const ncMountHave = id => !!(save.mounts && save.mounts[id] === 1);
 const ncMountSel = () => { const s = typeof save.mountSel === 'string' ? save.mountSel : null; if(s && ncMountHave(s)) return s; const o = NC_MOUNTS.filter(m => ncMountHave(m.id)); return o.length ? o[o.length - 1].id : null; };
@@ -11324,8 +11380,8 @@ function bossDefeated(b){
   for(let k=0;k<1 + M.gems;k++) giveGem(rndGem(id), stoneRoll('boss'));
   (b.broken || []).forEach(p => { const got = [];
     if(p.id === 'head'){ const k = rndGem(id), t = Math.min(6, stoneRoll('boss') + 1); giveGem(k, t); got.push(stoneName(k, t)); }
-    else if(p.id === 'legs'){ giveMat('superior'); giveMat('refino', 2); got.push('Lesser Coin', '2 Pedras de Prata'); }
-    else { if(id >= 3 || Math.random() < .5){ giveMat('ancestral'); got.push('Lesser Blue'); } else { giveMat('superior', 2); got.push('2 Lesser Coin'); }
+    else if(p.id === 'legs'){ giveMat('superior'); giveMat('refino', 2); got.push('Coins'); }
+    else { if(id >= 3 || Math.random() < .5){ giveMat('ancestral'); got.push('Lesser Blue'); } else { giveMat('superior', 2); got.push('Coins'); }
       if(Math.random() < .4){ const it2 = newItem(randomSlot(), rollRar('boss', Math.max(0, lo - 1), Math.min(hi, lo + 1), M.bias*.3), {boss:true}); if(addItem(it2)){ extra.push(it2); runLoot.push(it2); got.push(itemName(it2)); } } }
     breaks.push({n:p.n, got}); });
 
@@ -12162,7 +12218,7 @@ $('#rightPanel').addEventListener('click', e => {
   if(d.sell){ const it = byId(+d.sell); if(it){ save.gold += sellValue(it); returnGems(it); if(isEquipped(it)) delete save.eq[it.slot]; save.inv = save.inv.filter(i => i !== it); persist(); SFX.coin(); applyGear(hero); renderHub(); } return; }
   if(d.forge){ forge(d.forge); return; }
   if(d.ftab){ forgeTab = d.ftab; renderHub(); return; }
-  if(d.fsa){ const it = byId(+d.fsa) || byId(d.fsa); if(it && !it.sa){ const c = saCost(it); if(c && (save.mats.lblue || 0) >= c){ save.mats.lblue -= c; it.sa = 1; persist(); try{ SFX.drop(); banner('Brilho na arma!', itemName(it) + ' brilha mais e ganhou +8% de ataque.'); }catch(_){} if(isEquipped(it)){ P && (P.S = stats()); applyGear(hero); } } } renderHub(); return; }
+  if(d.fsa){ const it = byId(+d.fsa) || byId(d.fsa); if(it && !it.sa){ const c = saCost(it); if(c && (save.mats.lblue || 0) >= c){ save.mats.lblue -= c; it.sa = NC_SA[b.dataset.sak] ? b.dataset.sak : 'atk'; persist(); try{ SFX.drop(); banner('Brilho na arma!', itemName(it) + ' brilha mais e ganhou +8% de ataque.'); }catch(_){} if(isEquipped(it)){ P && (P.S = stats()); applyGear(hero); } } } renderHub(); return; }
   if(d.fsel){ forgeSel = +d.fsel; renderHub(); return; }
   if(d.fopt){ forgeOpt[d.fopt] = !forgeOpt[d.fopt]; renderHub(); return; }
   const fit = byId(forgeSel);
@@ -12481,8 +12537,8 @@ $('#hub').addEventListener('click', e => {
   if(b.dataset.ncst){ const v = b.dataset.ncst; if(v === 'x') window.ncStable(false); else { ncStTab = v; window.ncStableDraw(); } return; }
   if(b.dataset.ncmbuy){ const d = ncMountById(b.dataset.ncmbuy); if(d && !ncMountHave(d.id) && save.level >= d.lv && save.gold >= d.p){ save.gold -= d.p; save.mounts = (save.mounts && !Array.isArray(save.mounts) && typeof save.mounts === 'object') ? save.mounts : {}; save.mounts[d.id] = 1; save.mountSel = d.id; persist(); try{ SFX.drop(); banner('Montaria comprada', d.nm); }catch(_){} } renderHub(); return; }
   if(b.dataset.ncmuse){ save.mountSel = b.dataset.ncmuse; persist(); renderHub(); return; }
-  if(b.dataset.ncpet !== undefined){ save.pet = b.dataset.ncpet && ncPetLv(b.dataset.ncpet) ? b.dataset.ncpet : ''; persist(); ncCloud.draw(); try{ renderHub(); }catch(e){} return; }
-  if(b.dataset.ncpetbuy){ const k = b.dataset.ncpetbuy, D = NC_PET_DEF[k]; if(D && !ncPetLv(k) && save.gold >= D.p){ save.gold -= D.p; save.pets = save.pets || {}; save.pets[k] = 1; save.pet = k; persist(); try{ SFX.drop(); banner('Mascote comprado', D.b + ' · +10 espaços na bag'); }catch(e){} ncCloud.draw(); try{ renderHub(); }catch(e){} } return; }
+  if(b.dataset.ncpet !== undefined){ save.pet = b.dataset.ncpet && ncPetLv(b.dataset.ncpet) ? b.dataset.ncpet : ''; persist(); try{ if(mode === 'hub') ncHubPet(); else ncPetSpawn(); }catch(e){} ncCloud.draw(); try{ renderHub(); }catch(e){} return; }
+  if(b.dataset.ncpetbuy){ const k = b.dataset.ncpetbuy, D = NC_PET_DEF[k]; if(D && !ncPetLv(k) && save.gold >= D.p){ save.gold -= D.p; save.pets = save.pets || {}; save.pets[k] = 1; save.pet = k; persist(); try{ if(mode === 'hub') ncHubPet(); else ncPetSpawn(); }catch(e){} try{ SFX.drop(); banner('Mascote comprado', D.b + ' · +10 espaços na bag'); }catch(e){} ncCloud.draw(); try{ renderHub(); }catch(e){} } return; }
   if(b.dataset.ncpetup){ const k = b.dataset.ncpetup, lv = ncPetLv(k), c = lv ? ncPetUpCost(k) : 0; if(lv && lv < NC_PET_MAX && save.gold >= c){ save.gold -= c; save.pets[k] = lv + 1; persist(); try{ SFX.drop(); banner('Mascote evoluiu: nível ' + (lv + 1), 'Golpe de ' + Math.round(ncPetHit(k)*100) + '% do seu ataque'); }catch(e){} ncCloud.draw(); try{ renderHub(); }catch(e){} } return; }
   if(b.dataset.ncbak){ if(ncBak.ask !== b.dataset.ncbak){ ncBak.ask = b.dataset.ncbak; ncCloud.draw(); const dd = document.querySelector('#ncCloudBox details'); if(dd) dd.open = true; } else ncBak.restore(b.dataset.ncbak); return; }
   if(b.dataset.ncswapctl !== undefined){ save.swapCtl = save.swapCtl !== true; persist(); ncCtl(); ncCloud.draw(); return; }
@@ -12844,7 +12900,7 @@ function loop(now){
   if(gradePass) gradePass.uniforms.uHurt.value = Math.max(0, gradePass.uniforms.uHurt.value - dt*2.5);
   if(mode === 'stage'){ const fl = 2.6 + Math.sin(clock*13)*.35 + Math.sin(clock*7.3 + 1)*.3; TORCH.emissiveIntensity = fl; FIRE.emissiveIntensity = fl*.95; }
   adaptRes(dt);
-  if(mode === 'hub') updateHub(dt);
+  if(mode === 'hub'){ updateHub(dt); ncHubPetTick(dt); }
   else {
     if(running) updateStage(dt*timeScale);
     updateCamera(dt);
@@ -13324,7 +13380,7 @@ body.nc-l #hub>aside.panel::before,body.nc-r #hub>#rightPanel::before{transform:
 .spec-card b{font-family:var(--f-display);font-size:15px;color:var(--gold-hi)}.spec-card em{font-style:normal;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
 .spec-card small{color:var(--mute);font-size:12px;line-height:1.35}.spec-card .btn{margin-top:6px}
 .spec-card.on{border-color:var(--gold);background:rgba(242,193,78,.08)}
-.petl{display:grid;gap:6px}.petc{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;background:rgba(10,12,22,.5);border:1px solid rgba(138,106,255,.35)}.petc.on{border-color:var(--gold-hi,#ffd24a)}.petc b{display:block}.petc b i{font-style:normal;color:var(--gold-hi,#ffd24a);font-size:12px}.petc span{font-size:12px;color:var(--mute)}.petb{display:flex;gap:6px;flex-shrink:0}.petb .btn{display:flex;flex-direction:column;align-items:center;line-height:1.1;padding:6px 10px}.petb .btn small{font-size:10px;opacity:.8;font-family:var(--f-body);text-transform:none;letter-spacing:0}.petmax{font-size:11px;color:var(--mute);align-self:center}
+.petl{display:grid;gap:6px}.petimg{width:64px;height:64px;flex:0 0 64px;object-fit:contain;background:radial-gradient(circle,#3a2f6e,#120d2a);border:1px solid #8a78e0;border-radius:10px}.petc{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;background:rgba(10,12,22,.5);border:1px solid rgba(138,106,255,.35)}.petc.on{border-color:var(--gold-hi,#ffd24a)}.petc b{display:block}.petc b i{font-style:normal;color:var(--gold-hi,#ffd24a);font-size:12px}.petc span{font-size:12px;color:var(--mute)}.petb{display:flex;gap:6px;flex-shrink:0}.petb .btn{display:flex;flex-direction:column;align-items:center;line-height:1.1;padding:6px 10px}.petb .btn small{font-size:10px;opacity:.8;font-family:var(--f-body);text-transform:none;letter-spacing:0}.petmax{font-size:11px;color:var(--mute);align-self:center}
 #specBox{margin:12px 0 4px}#ncPetBox{margin:14px 0 4px}.nc-note{display:block;color:var(--mute);font-size:12px;margin-top:6px}.nc-cred{margin-top:12px;font-size:13px;color:var(--mute)}.nc-cred summary{cursor:pointer;color:var(--vink,#cdb8ff);font-family:var(--f-display)}.nc-cred p{line-height:1.5;margin:8px 0 0}
 #ncScene{position:fixed;inset:0;z-index:9000;display:grid;place-items:center;padding:20px;background:radial-gradient(ellipse at 50% 40%,rgba(44,33,96,.82),rgba(5,5,12,.94));animation:ncScIn .6s ease}#ncScene[hidden]{display:none}
 .ncsc-box{max-width:520px;width:100%;text-align:center;padding:30px 24px;clip-path:var(--cut);background:linear-gradient(135deg,#1c1640 0 33%,#16203f 33% 66%,#231a40 66%);box-shadow:inset 0 0 0 3px #05050c,inset 0 0 0 4px #8a6aff;font-family:var(--f-display);color:#f4efe2}
@@ -13687,6 +13743,9 @@ body.nc-l .nc-grid,body.nc-r .nc-grid,body.nc-l .nc-mini,body.nc-r .nc-mini{opac
 .nc-hb button{width:58px;height:50px;border-radius:12px;border:1px solid #8a78e0;background:linear-gradient(180deg,#3a2f6e,#231b48);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:#f4efe2;box-shadow:0 3px 0 #120d2a,0 4px 10px rgba(0,0,0,.4);cursor:pointer;-webkit-tap-highlight-color:transparent}
 .nc-hb button:active{transform:translateY(2px);box-shadow:0 1px 0 #120d2a}
 .nc-hb svg{width:19px;height:19px;fill:none;stroke:#ffd36a;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.nc-hb span{font:700 10px system-ui,sans-serif;line-height:1}
+@media (orientation:landscape) and (max-height:560px){.nc-mini{flex-direction:row!important;gap:6px!important;top:calc(env(safe-area-inset-top,0px) + 8px)!important}}
+/* 22/11: celular deitado (pouca altura) - a barra vai para o topo, no meio, em linha, longe dos botões de ataque */
+@media (orientation:landscape) and (max-height:560px){.nc-hb{position:fixed;top:calc(6px + env(safe-area-inset-top,0px));left:auto;right:calc(140px + env(safe-area-inset-right,0px));transform:none;flex-direction:row;margin-top:0;z-index:40}.nc-hb button{width:54px;height:44px}}
 #hud #potBtn,#hud #potBtn2,#hud #ncBag{display:none!important}
 body.nc-inst #hub{z-index:60;pointer-events:none}body.nc-inst #hub>*:not(#rightPanel){visibility:hidden!important;pointer-events:none!important}
 .frow [data-buypot]{display:flex;flex-direction:column;align-items:center;line-height:1.15;max-width:120px}.frow [data-buypot] small{font-size:10.5px;opacity:.85}
