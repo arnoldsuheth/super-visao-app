@@ -8074,7 +8074,10 @@ const NC_ART = {
 };
 const ncArt = (slot, wtype) => '<svg viewBox="0 0 64 64" aria-hidden="true">' + (NC_ART[slot === 'weapon' ? (wtype || CLS().wtype) : slot] || NC_ART.sword) + '</svg>';
 function pieceImg(t, slot, cls, wtype, up, sa){ const U = ncUp(Math.min(NC_UP_MAX, (up || 0) + (sa ? 3 : 0)));   /* 22/11: SA também acende o ícone, e o brilho sobe com a evolução */
-  return `<span class="pimg nci ${cls || ''} ${U ? 'up' : ''} ${U && U.f ? 'fire' : ''}" ${up ? 'data-up="+' + up + '"' : ''} style="--tc:${TIERS[t].css}${U ? ';--uc:' + U.c + ';--ug:' + U.g + 'px;--fh:' + U.f + '%' : ''}" role="img" aria-label="${SLOT_INFO[slot].n}">${ncArt(slot, wtype)}</span>`; }
+  const g = GR_OF[t] || 0, wi = slot === 'weapon' ? ncWIco(t, wtype || (CLASSES[save.cls] || {}).wtype) : null;   /* 22/11 (Arnold): moldura enfeitada (1 pedrinha por grade, brilho no A e no S) e foto da arma de verdade */
+  return `<span class="pimg nci g${g} ${cls || ''} ${U ? 'up' : ''} ${U && U.f ? 'fire' : ''}" ${up ? 'data-up="+' + up + '"' : ''} style="--tc:${TIERS[t].css}${U ? ';--uc:' + U.c + ';--ug:' + U.g + 'px;--fh:' + U.f + '%' : ''}" role="img" aria-label="${SLOT_INFO[slot].n}">${wi ? '<img class="wico" src="assets/icons/w/' + wi.replace('/', '_') + '.png" alt="">' : ncArt(slot, wtype)}${g ? '<b class="ngm">' + '<i></i>'.repeat(g) + '</b>' : ''}</span>`; }
+const NC_WICO = {sword:0, hammer:0, axe:1, staff:2, daggers:3};
+function ncWIco(t, wt){ try{ if(wt === 'fists') return NC_FIST[t]; const i = NC_WICO[wt]; return i == null ? null : NC_WPN_SET[i].f[t]; }catch(e){ return null; } }
 function pieceImgOld(t, slot, cls, wtype){
   const src = pieceSrc(t, slot, wtype, true);
   const ic = slotIcon(slot, wtype);
@@ -14030,6 +14033,15 @@ body.nc-l #hub>aside.panel::before,body.nc-r #hub>#rightPanel::before{transform:
   animation:ncFlame .7s ease-in-out infinite alternate;pointer-events:none}
 .pimg.nci[data-up]::after{content:attr(data-up);position:absolute;right:2px;top:1px;z-index:2;font:800 10px/1 system-ui,sans-serif;color:var(--uc,#fff);text-shadow:0 0 3px #000,0 1px 0 #000,1px 0 0 #000,-1px 0 0 #000}
 .pimg.nci.ps-card[data-up]::after{font-size:14px}
+/* 22/11 (Arnold escolheu a moldura C): borda dupla na cor da grade, pedrinhas por grade e brilho no A e no S */
+.pimg.nci{clip-path:none;border-radius:10px;--gl:0 0 0 transparent;box-shadow:inset 0 0 0 2px var(--tc),inset 0 0 0 3.5px #05050c,inset 0 0 0 5px color-mix(in srgb,var(--tc) 70%,transparent),var(--gl)}
+.pimg.nci.up{box-shadow:inset 0 0 0 2px var(--tc),inset 0 0 0 3.5px #05050c,inset 0 0 0 5px color-mix(in srgb,var(--tc) 70%,transparent),inset 0 0 calc(var(--ug)*1.6) var(--uc),var(--gl)}
+.pimg.nci.g4{--gl:0 0 7px color-mix(in srgb,var(--tc) 80%,transparent)}.pimg.nci.g5{--gl:0 0 12px var(--tc)}
+.pimg.nci .ngm{position:absolute;left:50%;bottom:3px;transform:translateX(-50%);display:flex;gap:2px;z-index:2;pointer-events:none}
+.pimg.nci .ngm i{position:static;width:5px;height:5px;padding:0;border-radius:0;background:var(--tc);transform:rotate(45deg);box-shadow:0 0 3px var(--tc),0 0 0 1px #05050c}
+.pimg.nci.ps-card .ngm i{width:7px;height:7px}
+.pimg.nci img.wico{position:relative;inset:auto;z-index:1;width:74%;height:74%;margin-bottom:6%;object-fit:contain;filter:drop-shadow(0 2px 2px rgba(0,0,0,.55))}
+.pimg.nci.up img.wico{filter:drop-shadow(0 0 var(--ug) var(--uc)) drop-shadow(0 0 calc(var(--ug)*.5) var(--uc))}
 @keyframes ncFlame{0%{transform:scaleY(.78) skewX(-5deg);opacity:.7}50%{transform:scaleY(1.06) skewX(3deg);opacity:1}100%{transform:scaleY(.9) skewX(6deg);opacity:.85}}
 #hud #mm.big{opacity:1!important;width:min(92vw,70vh)!important;z-index:40;clip-path:var(--cut);box-shadow:none;border:0}
 .mico{width:15px;height:15px;vertical-align:-3px;margin-right:4px;fill:currentColor;stroke:#05050c;stroke-width:1;stroke-linejoin:round}
