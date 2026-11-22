@@ -12077,7 +12077,7 @@ function bossDefeated(b){
   if(id >= 9 && Math.random() < .08 + (id - 9)*.02) giveMat('lgold'); if(Math.random() < .15) giveMat('selo'); if(st.region >= 1 && Math.random() < .06 + di0*.02) giveMat('bencao'); if(Math.random() < .4) giveMat('broca');
   for(let k=0;k<1 + M.gems;k++) giveGem(rndGem(id), stoneRoll('boss'));
   (b.broken || []).forEach(p => { const got = [];
-    if(p.id === 'head'){ const k = rndGem(id), t = Math.min(6, stoneRoll('boss') + 1); giveGem(k, t); got.push(stoneName(k, t)); }
+    if(p.id === 'head'){ if(NC_NOGEMS){ giveMat('lblue', 1); got.push('Lesser Blue'); } else { const k = rndGem(id), t = Math.min(6, stoneRoll('boss') + 1); giveGem(k, t); got.push(stoneName(k, t)); } }
     else if(p.id === 'legs'){ giveMat('superior'); giveMat('refino', 2); got.push('Coins'); }
     else { if(id >= 3 || Math.random() < .5){ giveMat('ancestral'); got.push('Lesser Blue'); } else { giveMat('superior', 2); got.push('Coins'); }
       if(Math.random() < .4){ const it2 = newItem(randomSlot(), rollRar('boss', Math.max(0, lo - 1), Math.min(hi, lo + 1), M.bias*.3), {boss:true}); if(addItem(it2)){ extra.push(it2); runLoot.push(it2); got.push(itemName(it2)); } } }
