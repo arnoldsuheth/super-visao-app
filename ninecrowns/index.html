@@ -8481,10 +8481,38 @@ function kkPaint(h){
   if(k.scythe) kkScythe(x, wt);
   if(h.cls === 'monk') ncFistSwap(x, wt);
   if(h.cls === 'priest' || h.cls === 'shaman') ncClassDeco(h, x);
+  ncHelm3D(h, x);
   ncHead(h, col);
   try{ ncSwordSwap(h); }catch(e){}
   ncWeaponFx(x.m);
 }
+/* 22/11 (Arnold: "elmo no boneco também muda de formato"): elmo 3D por grade, no osso da cabeça.
+   NG gorro de couro, D elmo do cavaleiro, C + pluma, B + chifres, A + asas, S + coroa. Só liga quando NC_HELM3D = true (esperando a aprovação da foto). */
+const NC_HELM3D = !!window.NC_HELM3D, NC_HELM_T = [0, .42, .02, 1, .84, .56, .36, .58, .22, .8];
+function ncHelm3D(h, x){ if(!(window.NC_HELM3D || NC_HELM3D)) return; const it = equipped('helmet'), g = it ? GR_OF[it.tier] : -1, key = g + ':' + (it ? it.tier : -1);
+  if(x.helm && x.helm.userData.k === key && x.helm.parent) return; [x.helm, x.helmM].forEach(o => { if(o && o.parent) o.parent.remove(o); }); x.helm = x.helmM = null; if(g < 0) return;
+  let hd = null, own = null; x.m.traverse(o => { if(!hd && o.name === 'head') hd = o; if(!own && o.isSkinnedMesh && /_Head(_Hooded)?$/.test(o.name)) own = o; }); if(!hd) return;
+  // do D em diante usa o elmo de verdade do cavaleiro (mesmo estilo dos bonecos), com enfeites por grade por cima
+  if(g >= 1){ const md = MX.models.kk_knight; if(!md){ if(!x.helmWait){ x.helmWait = 1; mxLoad('warrior', ok => { x.helmWait = 0; if(ok) try{ kkPaint(h); }catch(_){} }); } return; }
+    let src = null; md.scene.traverse(o => { if(!src && o.isMesh && o.name === 'Knight_Helmet') src = o; }); if(!src || !own) return;
+    let me; if(src.isSkinnedMesh){ const by = {}; own.skeleton.bones.forEach(b => by[b.name] = b); const nb = src.skeleton.bones.map(b => by[b.name]); if(nb.some(b => !b)) return;
+      me = new T.SkinnedMesh(src.geometry, src.material.clone()); me.bind(new T.Skeleton(nb, src.skeleton.boneInverses), own.bindMatrix); own.parent.add(me); }
+    else { me = src.clone(); me.material = src.material.clone(); hd.add(me); }
+    me.name = 'NC_HelmM'; me.frustumCulled = false; me.castShadow = true; me.scale.multiplyScalar(1.05); x.helmM = me; }
+  x.m.traverse(o => { if(o.isMesh && /_Helmet$|_Hat$/.test(o.name)) o.visible = false; });
+  const E = window.NC_HELM_T || NC_HELM_T, tc = TIERS[it.tier].hex, G = new T.Group(); G.userData.k = key; G.position.set(E[0], E[1], E[2]); G.scale.setScalar(E[3]); G.name = 'NC_Helm3D';
+  const lea = new T.MeshStandardMaterial({color:0x8a5a2a, roughness:.85}), acc = new T.MeshStandardMaterial({color:tc, roughness:.4, metalness:.3, emissive:g >= 4 ? tc : 0x000000, emissiveIntensity:g >= 4 ? .5 : 0});
+  const add = (geo, m, px, py, pz, rx, ry, rz, sx, sy, sz) => { const o = new T.Mesh(geo, m); o.position.set(px || 0, py || 0, pz || 0); o.rotation.set(rx || 0, ry || 0, rz || 0); if(sx) o.scale.set(sx, sy, sz); o.castShadow = true; G.add(o); return o; };
+  if(g === 0){ add(new T.SphereGeometry(.66, 18, 10, 0, Math.PI*2, 0, Math.PI*.5), lea, 0, .12, .04, 0, 0, 0, 1, .95, 1.05); add(new T.TorusGeometry(.66, .05, 6, 22), lea, 0, .12, .04, Math.PI/2, 0, 0, 1, 1.05, 1); }
+  if(g >= 2 && g < 5) add(new T.BoxGeometry(.08, .3, .5), acc, 0, E[4] || .62, -.05);   // pluma na cor da grade
+  if(g >= 3){ [-1, 1].forEach(sd => { const hc = new T.Group(); hc.position.set(sd*(E[5] || .5), E[6] || .3, 0); hc.rotation.z = -sd*.9; G.add(hc);
+      const c1 = new T.Mesh(new T.ConeGeometry(.11, .4, 10), acc); c1.position.y = .18; hc.add(c1); const c2 = new T.Mesh(new T.ConeGeometry(.07, .28, 10), acc); c2.position.set(-sd*.06, .46, 0); c2.rotation.z = sd*.6; hc.add(c2); }); }
+  if(g >= 4){ const wm = new T.MeshStandardMaterial({color:0xf4f6fb, roughness:.5, metalness:.3, side:T.DoubleSide});
+    [-1, 1].forEach(sd => { const sh = new T.Shape(); sh.moveTo(0, 0); sh.bezierCurveTo(.15, .3, .45, .5, .7, .55); sh.lineTo(.55, .35); sh.lineTo(.62, .22); sh.lineTo(.42, .14); sh.lineTo(.45, .02); sh.bezierCurveTo(.25, -.04, .1, -.05, 0, 0);
+      const w = new T.Mesh(new T.ExtrudeGeometry(sh, {depth:.03, bevelEnabled:false}), wm); w.position.set(sd*(E[7] || .52), E[8] || .05, -.12); w.scale.x = sd; w.rotation.y = -sd*.5; w.castShadow = true; G.add(w); }); }
+  if(g >= 5){ const cr = new T.Group(); cr.position.y = E[9] || .62; G.add(cr); cr.add(new T.Mesh(new T.CylinderGeometry(.28, .32, .12, 16, 1, true), acc));
+    for(let k = 0; k < 6; k++){ const a = k/6*Math.PI*2, sp = new T.Mesh(new T.ConeGeometry(.055, .2, 6), acc); sp.position.set(Math.sin(a)*.29, .15, Math.cos(a)*.29); cr.add(sp); } }
+  hd.add(G); x.helm = G; }
 /* 22/11 (Arnold, página de escolhas): Sacerdote com auréola de anjo e asas no lugar da capa; Xamã com capa de pele de urso. */
 const NC_DECO_T = {halo:[0, .95, 0, .32], wing:[0, .25, -.32, 1], tail:[0, -.05, -.3, 1]};
 function ncClassDeco(h, x){ const bone = nm => { let b = null; x.m.traverse(o => { if(!b && o.name === nm) b = o; }); return b; }, E = window.NC_DECO_T || NC_DECO_T;
