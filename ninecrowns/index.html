@@ -567,7 +567,16 @@ canvas.ncgrabok{cursor:grab}canvas.ncgrab,canvas.ncgrabok.ncgrab{cursor:grabbing
 .ncs-moon{position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 34% 30%,#161a36,#05060d 62%);box-shadow:0 0 0 1px rgba(255,224,138,.35),0 0 60px 6px rgba(242,193,78,.35),inset -14px -18px 40px rgba(0,0,0,.8);transform:translateX(-140%);transition:transform 2.4s cubic-bezier(.2,.8,.2,1)}
 .ncs-gem{position:absolute;left:50%;top:50%;width:9px;height:9px;margin:-4.5px;--r:calc(var(--s)*.78);transform:rotate(var(--a)) translateY(calc(var(--r)*-1)) rotate(45deg);border:1.5px solid rgba(242,193,78,.5);background:transparent;opacity:0;transition:opacity .5s,background .5s,box-shadow .5s}
 .ncs-gem.on{opacity:1;background:#f2c14e;box-shadow:0 0 14px 2px rgba(242,193,78,.85)}
-#ncSplash.on .ncs-moon{transform:none}#ncSplash.on .ncs-cor{opacity:1;transform:none}#ncSplash.on .ncs-rays{opacity:1}
+#ncSplash.on .ncs-moon{transform:none}
+/* 22/11 lua 3D: o canvas fica dentro do .ncs-moon e cobre o disco */
+.ncs-moon3d{position:absolute;inset:0;width:100%;height:100%;border-radius:50%;display:block}
+#ncSplash[data-ml=cheia] .ncs-moon{background:#0b0d1c;box-shadow:0 0 0 1px rgba(255,236,190,.35),0 0 50px 10px rgba(200,215,255,.28),0 0 120px 30px rgba(242,193,78,.18)}
+#ncSplash[data-ml=cheia] .ncs-cor{background:radial-gradient(circle,rgba(255,255,255,0) 60%,rgba(220,230,255,.55) 66%,rgba(242,193,78,.25) 76%,transparent 88%)}
+#ncSplash[data-ml=crep] .ncs-moon{background:#1a1d2a;box-shadow:0 0 0 1.5px rgba(255,255,255,.8),0 0 16px 3px rgba(255,255,255,.7),0 0 55px 12px rgba(200,225,255,.45),0 0 140px 40px rgba(170,200,255,.22);animation:ncsNeon 3.2s ease-in-out infinite}
+#ncSplash[data-ml=crep] .ncs-cor{background:radial-gradient(circle,rgba(255,255,255,0) 58%,rgba(255,255,255,.95) 65%,rgba(190,220,255,.5) 72%,transparent 86%)}
+#ncSplash[data-ml=crep] .ncs-rays{background:repeating-conic-gradient(from 0deg,rgba(255,255,255,.28) 0deg 1.5deg,transparent 1.5deg 11deg)}
+#ncSplash[data-ml=crep] .ncs-rays.r2{background:repeating-conic-gradient(from 4deg,rgba(200,225,255,.22) 0deg 1deg,transparent 1deg 17deg)}
+@keyframes ncsNeon{0%,100%{filter:drop-shadow(0 0 6px rgba(255,255,255,.55))}50%{filter:drop-shadow(0 0 16px rgba(255,255,255,.95))}}#ncSplash.on .ncs-cor{opacity:1;transform:none}#ncSplash.on .ncs-rays{opacity:1}
 .ncs-logo{margin:0;display:flex;gap:.42em;font-size:clamp(34px,9.2vw,84px);line-height:1;font-weight:700;letter-spacing:.14em;text-transform:uppercase;white-space:nowrap}
 .ncs-logo span{display:inline-flex}
 .ncs-logo b{display:inline-block;font-weight:700;opacity:0;transform:translateY(.5em) scale(1.3);filter:blur(12px);transition:opacity .7s,transform .9s cubic-bezier(.2,.8,.2,1),filter .9s;transition-delay:calc(1.5s + var(--i)*90ms)}
@@ -639,6 +648,59 @@ canvas.ncgrabok{cursor:grab}canvas.ncgrab,canvas.ncgrabok.ncgrab{cursor:grabbing
   function entrar(){if(S.classList.contains('sai'))return;var p=document.getElementById('adsPreS');if(p)p.click();S.classList.add('sai');setTimeout(function(){vivo=false;S.remove();window.dispatchEvent(new Event('nc-entrou'))},1100)}
   go.onclick=entrar;addEventListener('keydown',function(e){if((e.key==='Enter'||e.key===' ')&&!go.hidden&&document.getElementById('ncSplash'))entrar()});
   window.ncSplashAberto=function(){return !!document.getElementById('ncSplash')};
+})();
+</script>
+<script id="nc-moon3d">
+/* 22/11: LUA 3D da tela de abertura. Uma esfera desenhada pixel a pixel num canvas pequeno:
+   crateras e "mares" gerados por código, relevo com luz e sombra, e ela gira devagar.
+   Estilo: data-ml no #ncSplash = 'cheia' (lua prateada) ou 'crep' (crescente do crepúsculo). Leve: ~200 px, 30 quadros por segundo. */
+(function(){
+  var S=document.getElementById('ncSplash'),M=S&&S.querySelector('.ncs-moon');if(!M)return;
+  var estilo=(window.NC_MOON||'crep');S.setAttribute('data-ml',estilo);   /* Arnold escolheu B (crescente), cinza claro com neon branco */
+  var cv=document.createElement('canvas');cv.className='ncs-moon3d';M.appendChild(cv);var g=cv.getContext('2d');
+  // 1) mapa da lua (altura + cor), 512 x 256
+  var TW=512,TH=256,hgt=new Float32Array(TW*TH),alb=new Float32Array(TW*TH),seed=7;
+  function rnd(){seed=(seed*16807)%2147483647;return (seed-1)/2147483646}
+  var P=[];for(var i=0;i<512;i++)P.push(rnd());
+  function vn(x,y,per){var xi=Math.floor(x),yi=Math.floor(y),xf=x-xi,yf=y-yi;function h(a,b){if(per)a=((a%per)+per)%per;return P[((a*73856093)^(b*19349663))&511]}
+    var u=xf*xf*(3-2*xf),v=yf*yf*(3-2*yf);return (h(xi,yi)*(1-u)+h(xi+1,yi)*u)*(1-v)+(h(xi,yi+1)*(1-u)+h(xi+1,yi+1)*u)*v}
+  for(var y=0;y<TH;y++)for(var x=0;x<TW;x++){var X=x/TW*16,Y=y/TH*8,n=0,a=1,f=1,s=0;for(var o=0;o<5;o++){n+=vn(X*f,Y*f+o*17,16*f)*a;s+=a;a*=.5;f*=2}n/=s;
+    var mar=Math.max(0,Math.min(1,((vn(X*.25,Y*.3+9,4)*.7+vn(X*.5,Y*.6+40,8)*.3)-.43)*4));   /* ruído que fecha a volta, sem emenda */   // manchas escuras ("mares")
+    alb[y*TW+x]=.86-mar*.48+(n-.5)*.16;hgt[y*TW+x]=(n-.5)*.5-mar*.2}
+  function cratera(cx,cy,r,prof){cx=Math.round(cx);cy=Math.round(cy);var lat=(cy/TH-.5)*Math.PI,sx=1/Math.max(.25,Math.cos(lat)),rx=Math.ceil(1.6*r*sx)+1,ry=Math.ceil(1.6*r)+1;
+    for(var dy=-ry;dy<=ry;dy++){var yy=cy+dy;if(yy<0||yy>=TH)continue;for(var dx=-rx;dx<=rx;dx++){var xx=(cx+dx+TW)%TW,d=Math.sqrt((dx/sx)*(dx/sx)+dy*dy)/r;if(d>1.6)continue;var k=yy*TW+xx;
+      if(d<1){hgt[k]+=prof*(Math.pow(d,4)-1)*.9;alb[k]-=.04*(1-d)}else{var b=1-(d-1)/.6;hgt[k]+=prof*.6*b*b;alb[k]+=.09*b*b}}}}
+  for(i=0;i<30;i++)cratera(rnd()*TW,22+rnd()*(TH-44),7+rnd()*18,.3+rnd()*.2);
+  for(i=0;i<300;i++)cratera(rnd()*TW,12+rnd()*(TH-24),1.5+rnd()*5,.16+rnd()*.1);
+  cratera(TW*.62,TH*.7,13,.55);   // uma cratera grande e funda, bem visível
+  // suaviza o relevo (bordas das crateras sem serrilhado)
+  for(var pass=0;pass<2;pass++){var tmp=new Float32Array(TW*TH);for(y=0;y<TH;y++)for(x=0;x<TW;x++){var sm=0,c=0;for(var oy=-1;oy<=1;oy++){var yy=y+oy;if(yy<0||yy>=TH)continue;for(var ox=-1;ox<=1;ox++){sm+=hgt[yy*TW+(x+ox+TW)%TW];c++}}tmp[y*TW+x]=sm/c}hgt=tmp}
+  var gx=new Float32Array(TW*TH),gy=new Float32Array(TW*TH);
+  for(y=0;y<TH;y++)for(x=0;x<TW;x++){var k=y*TW+x;gx[k]=hgt[y*TW+(x+1)%TW]-hgt[y*TW+(x-1+TW)%TW];gy[k]=hgt[Math.max(0,y-1)*TW+x]-hgt[Math.min(TH-1,y+1)*TW+x]}
+  // 2) geometria da esfera na tela
+  var N,img,px,LAT,LON0,NDL,DE,DN,EDGE,CNT;
+  var L=estilo==='crep'?[.82,.28,.45]:[-.55,.45,.70];var ll=Math.hypot(L[0],L[1],L[2]);L=[L[0]/ll,L[1]/ll,L[2]/ll];
+  function prep(){var w=Math.round(M.clientWidth*Math.min(devicePixelRatio||1,2));w=Math.max(96,Math.min(w,300));N=w;cv.width=cv.height=N;img=g.createImageData(N,N);px=img.data;
+    var t=N*N;LAT=new Float32Array(t);LON0=new Float32Array(t);NDL=new Float32Array(t);DE=new Float32Array(t);DN=new Float32Array(t);EDGE=new Float32Array(t);CNT=0;
+    var r=N/2-.5;for(var j=0;j<N;j++)for(var i=0;i<N;i++){var k=j*N+i,X=(i+.5-N/2)/r,Y=(N/2-j-.5)/r,q=X*X+Y*Y;if(q>1){EDGE[k]=-1;continue}var Z=Math.sqrt(1-q);
+      var lat=Math.asin(Y),lon=Math.atan2(X,Z);LAT[k]=Math.min(TH-1.001,Math.max(0,(.5-lat/Math.PI)*TH-.5));LON0[k]=lon;
+      NDL[k]=X*L[0]+Y*L[1]+Z*L[2];var el=Math.hypot(Z,X)||1,ex=Z/el,ez=-X/el;DE[k]=ex*L[0]+ez*L[2];
+      var nx=-Y*X/el,ny=el,nz=-Y*Z/el;DN[k]=nx*L[0]+ny*L[1]+nz*L[2];EDGE[k]=Math.min(1,(1-Math.sqrt(q))*N*.5)}}
+  prep();addEventListener('resize',function(){setTimeout(prep,100)});
+  var rot=0,ult=0,crep=estilo==='crep';
+  function quadro(t){if(!document.getElementById('ncSplash'))return;requestAnimationFrame(quadro);if(t-ult<33)return;var dt=Math.min(.1,(t-ult)/1000);ult=t;rot+=dt*.32;   /* uma volta em ~20 s (Arnold pediu mais rápido) */
+    var off=rot/(2*Math.PI)*TW;
+    for(var k=0,n=N*N;k<n;k++){var o=k*4,e=EDGE[k];if(e<0){px[o+3]=0;continue}
+      var fx=((LON0[k]/(2*Math.PI)+.5)*TW+off)%TW;if(fx<0)fx+=TW;var x0=Math.floor(fx),x1=(x0+1)%TW,ax=fx-x0,y0=Math.floor(LAT[k]),ay=LAT[k]-y0,r0=y0*TW,r1=Math.min(TH-1,y0+1)*TW;
+      var w00=(1-ax)*(1-ay),w10=ax*(1-ay),w01=(1-ax)*ay,w11=ax*ay,i00=r0+x0,i10=r0+x1,i01=r1+x0,i11=r1+x1;   // mistura 4 pontos do mapa (sem serrilhado)
+      var GX=gx[i00]*w00+gx[i10]*w10+gx[i01]*w01+gx[i11]*w11,GY=gy[i00]*w00+gy[i10]*w10+gy[i01]*w01+gy[i11]*w11,AL=alb[i00]*w00+alb[i10]*w10+alb[i01]*w01+alb[i11]*w11;
+      var sh=NDL[k]+(GX*DE[k]+GY*DN[k])*1.4,a=AL*(.82+.18*Math.min(1,EDGE[k]/(N*.18))),v;
+      if(crep){var lit=Math.max(0,sh);v=a*(Math.min(1.1,lit*1.45)+.26);   // lado escuro aparece cinza fraco (luz da terra)
+        px[o]=Math.min(255,v*236+lit*14);px[o+1]=Math.min(255,v*240+lit*16);px[o+2]=Math.min(255,v*252+lit*22+10)}
+      else{var lit2=Math.max(0,sh*.85+.15);v=a*(lit2*1.08+.06);px[o]=Math.min(255,v*246);px[o+1]=Math.min(255,v*242);px[o+2]=Math.min(255,v*255)}
+      px[o+3]=Math.round(255*Math.min(1,e))}
+    g.putImageData(img,0,0)}
+  requestAnimationFrame(quadro);
 })();
 </script>
 
@@ -775,6 +837,7 @@ canvas.ncgrabok{cursor:grab}canvas.ncgrab,canvas.ncgrabok.ncgrab{cursor:grabbing
       <button type="button" data-hb="bag"><svg viewBox="0 0 24 24"><path d="M6 8h12l-1 13H7Z"/><path d="M9 8a3 3 0 0 1 6 0"/></svg><span>Mochila</span></button>
       <button type="button" data-hb="hero"><svg viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg><span>Herói</span></button>
       <button type="button" data-hb="smith"><svg viewBox="0 0 24 24"><path d="M4 20h16M7 20v-4h10v4M9 16v-3h6v3"/><path d="M14 4l6 6-2 2-6-6Z"/><path d="M12 8 4 16"/></svg><span>Forja</span></button>
+      <button type="button" data-hb="fest"><svg viewBox="0 0 24 24"><path d="M12 2l3 6H9Z"/><path d="M7 9h10l-2 5H9Z"/><path d="M5 15h14l-2 5H7Z"/><path d="M12 20v2"/></svg><span>Festivos</span></button>
       <button type="button" data-hb="merch"><svg viewBox="0 0 24 24"><path d="M4 9h16l-1 11H5Z"/><path d="M4 9l2-5h12l2 5"/><path d="M10 13h4"/></svg><span>Mercador</span></button>
     </nav>
   </div>
@@ -5849,7 +5912,7 @@ const NC_MATMAP = {metal:'prata', minerio:'prata', cristal:'prata', essencia:'pr
 const NC_GEMS4 = ['scoin','gcoin','ocoin','lblue','lgold'];
 const MAT_KEYS = Object.keys(MATS);
 const CRAFT_MATS = ['scoin','gcoin','ocoin'];
-const FORGE_MATS = ['lgold'];
+const FORGE_MATS = ['lblue','lgold'];   // evoluir usa só Adena e Lesser Gold
 /* 22/11 TABELA DA FORJA (Arnold). [armadura, peitoral/calça, arma] por grade: Adena em prata + coins.
    Peças "armadura" = elmo, luvas, botas, cinto, capa, amuleto, escudo. O 2º nível de um mesmo grade custa 1,5x. */
 const NC_FORGE = [
@@ -5858,7 +5921,7 @@ const NC_FORGE = [
   [{a:10}, {a:12}, {a:20}],                                                      // C
   [{a:15, scoin:30}, {a:17, scoin:35}, {a:25, gcoin:30}],                        // B
   [{a:50, scoin:50}, {a:60, scoin:55}, {a:100, gcoin:50}],                       // A
-  [{a:100, scoin:100}, {a:120, ocoin:120}, {a:250, ocoin:200}]];                 // S
+  [{a:100, ocoin:100}, {a:120, ocoin:120}, {a:250, ocoin:200}]];   // S armadura: Gold Coin (Arnold 22/11)                 // S
 function recipe(t, slot){
   const o = CFG.recipes[t] || CFG.recipes[String(t)]; if(o) return {mats:o.mats || {}, gold:(+o.gold || 0)*NC_ECON};
   const g = GR_OF[t], plus = t > 0 && GR_OF[t - 1] === g ? 1.5 : 1, col = slot === 'weapon' ? 2 : slot === 'chest' || slot === 'greaves' ? 1 : 0;
@@ -5884,16 +5947,19 @@ function skDots(it){ ensureSk(it); if(!it.sk.length) return '';
   return `<span class="skd" aria-label="${it.sk.length} encaixes">${it.sk.map((c, i) => { const g = it.gm[i], k = g && g.split(':')[0];
     return `<i class="${g ? 'f' : ''}" style="--c:${g ? RAR[+g.split(':')[1] - 1].css : SKC.W.css};--g:${g ? GEMS[k].css : 'none'}"></i>`; }).join('')}</span>`; }
 /* 22/11 (Arnold): +1 a +3 só Adena e 100%; +4 a +6 Adena + Lesser Gold. Do +7 em diante: sugestão do Claude (página de aprovação). */
-const UPG = [null, {p:1},{p:1},{p:1},{p:.8,m:'lgold',q:1},{p:.7,m:'lgold',q:2},{p:.6,m:'lgold',q:3},{p:.5,m:'lgold',q:4,lose:1},
-  {p:.4,m:'lgold',q:5,lose:1},{p:.3,m:'lgold',q:6,lose:1},{p:.2,m:'lgold',q:8,lose:1},{p:.15,m:'lgold',q:10,lose:1},{p:.1,m:'lgold',q:12,lose:1},
-  {p:.15,m:'ancestral',brk:.1},{p:.1,m:'ancestral',brk:.2},{p:.06,m:'ancestral',brk:.3}];
+/* 22/11 (Arnold): +1 a +3 só Adena, 100%. Do +4 em diante: Adena + Lesser subindo de 10 em 10 (+4 = 10, +5 = 20 ... +12 = 90).
+   Lesser Blue para peças até Grade A; Lesser Gold para Grade S.
+   Se falhar do +4 em diante, a peça QUEBRA e vira material (como desmanchar). */
+const ncUpMat = it => GR_OF[it.tier] >= 5 ? 'lgold' : 'lblue';
+const UPG = [null, {p:1},{p:1},{p:1}].concat([.8,.7,.6,.5,.4,.3,.2,.15,.1].map((p, i) => ({p, m:'lgold', q:10*(i + 1), brkAll:1})));
 const upCost = it => Math.round(NC_ECON*40*((it.up || 0) + 1)*Math.pow(1.35, it.tier));
 const upChance = it => Math.min(1, UPG[(it.up || 0) + 1].p + (it.fp || 0) + (evFx().up || 0));
-function upRisk(U){ return U.brk ? `Se falhar: ${Math.round(U.brk*100)}% de chance de rachar e voltar para +10 (a peça nunca é destruída)` : U.lose ? `Se falhar: perde ${U.lose} nível${U.lose > 1 ? 'is' : ''}` : U.p < 1 ? 'Se falhar: nada se perde' : 'Sucesso garantido'; }
+function upRisk(U){ return U.brkAll ? 'Se falhar: a peça QUEBRA e vira material' : U.brk ? `Se falhar: ${Math.round(U.brk*100)}% de chance de rachar e voltar para +10 (a peça nunca é destruída)` : U.lose ? `Se falhar: perde ${U.lose} nível${U.lose > 1 ? 'is' : ''}` : U.p < 1 ? 'Se falhar: nada se perde' : 'Sucesso garantido'; }
 function tryUpgrade(it){
   ensureSk(it); const nx = it.up + 1; if(nx > NC_UP_MAX) return null; const U = UPG[nx], cost = upCost(it);
-  if(save.gold < cost || (U.m && (save.mats[U.m] || 0) < (U.q || 1))) return null;
-  save.gold -= cost; if(U.m) save.mats[U.m] -= (U.q || 1);
+  if(!U) return null; const UM = U.m ? ncUpMat(it) : null;
+  if(save.gold < cost || (UM && (save.mats[UM] || 0) < (U.q || 1))) return null;
+  save.gold -= cost; if(UM) save.mats[UM] -= (U.q || 1);
   let msg;
   if(Math.random() < upChance(it)){
     it.up = nx; it.fp = 0; let extra = '+' + nx*4 + '% em vida, ataque e defesa da peça';
@@ -5901,7 +5967,11 @@ function tryUpgrade(it){
     msg = ['Sucesso! ' + itemName(it), extra, '']; SFX.drop();
   } else {
     it.fp = (it.fp || 0) + .03;
-    if(U.brk && Math.random() < U.brk){
+    if(U.brkAll){ const out = ncBreak(it); for(const m in out) save.mats[m] = (save.mats[m] || 0) + out[m]; returnGems(it);
+      if(isEquipped(it)) for(const k in save.eq) if(save.eq[k] === it.id) save.eq[k] = null;
+      save.inv = save.inv.filter(i => i !== it); forgeSel = null; try{ ncBagRefresh(); }catch(e){}
+      msg = ['A peça quebrou!', 'Virou material: ' + ncBreakTxt(out) + '.', 'danger']; }
+    else if(U.brk && Math.random() < U.brk){
       if(forgeOpt.bencao && save.mats.bencao > 0){ save.mats.bencao--; msg = ['A peça quase rachou!', 'A Bênção da Bigorna protegeu. Nada se perdeu.', 'danger']; }
       else { it.up = 10; msg = ['A peça rachou!', 'Voltou para +10. As pedras ficaram inteiras.', 'danger']; }
     } else if(U.lose){
@@ -5961,9 +6031,9 @@ let runMats = {}, runGems = {}, runFrags = {}, runCoins = 0;
 /* 22/11 (tabela da forja): o que cai agora. Restos baratos não caem mais (prata é Adena). Coins seguem a área: Silver (área 8+), Green (13+), Gold (16+). Lesser Blue cai em todo lugar. */
 const NC_CHEAP = {metal:1, minerio:1, cristal:1, essencia:1, refino:1, prata:1};
 function ncCoinFor(k){ if(NC_CHEAP[k]) return null; if(['ancestral','bencao','lblue'].includes(k)) return 'lblue'; if(['divina','lgold'].includes(k)) return 'lgold';
-  if(['scoin','gcoin','ocoin'].includes(k)) return k; const id = curStage ? curStage.id : 0, r = Math.random();
-  if(id < 8) return null; if(id < 13) return 'scoin'; if(id < 16) return r < .6 ? 'scoin' : 'gcoin'; return r < .4 ? 'gcoin' : 'ocoin'; }
-function giveMat(k, n, pos){ k = ncCoinFor(k); if(!k) return; n = (n || 1)*(['scoin','gcoin','ocoin'].includes(k) ? 3 : 1); n = Math.max(1, Math.round((n || 1)*(evFx().mat || 1)*(evFx().stone || 1))); save.mats[k] = (save.mats[k] || 0) + n; runMats[k] = (runMats[k] || 0) + n; feed('+' + n + ' ' + MATS[k].n, MATS[k].css); if(pos) floatText(pos, MATS[k].n, 'gold'); }
+  if(['scoin','gcoin','ocoin'].includes(k)) return k; const r = Math.random();
+  return r < .55 ? 'scoin' : r < .8 ? 'gcoin' : r < .9 ? 'ocoin' : 'lgold'; }   // 22/11: qualquer área; quanto melhor a coin, mais rara
+function giveMat(k, n, pos){ k = ncCoinFor(k); if(!k) return; n = (n || 1)*(['scoin','gcoin','ocoin','lgold'].includes(k) ? 3 : 1); n = Math.max(1, Math.round((n || 1)*(evFx().mat || 1)*(evFx().stone || 1))); save.mats[k] = (save.mats[k] || 0) + n; runMats[k] = (runMats[k] || 0) + n; feed('+' + n + ' ' + MATS[k].n, MATS[k].css); if(pos) floatText(pos, MATS[k].n, 'gold'); }
 function ncAddMat(k, n){ save.mats[k] = (save.mats[k] || 0) + n; feed('+' + n + ' ' + MATS[k].n, MATS[k].css); }
 let gemDrops = [], lootNear = null;
 const gemGeo = new T.OctahedronGeometry(.2);
@@ -8001,7 +8071,7 @@ const NC_ART = {
   scythe:'<path class="h" d="M12 58L40 14l6 4-28 44Z"/><path class="m" d="M30 10c14-8 26-2 30 14-8-8-18-10-28-4Z"/><path class="a" d="M36 14l8 6-4 5-8-6Z"/>',
 };
 const ncArt = (slot, wtype) => '<svg viewBox="0 0 64 64" aria-hidden="true">' + (NC_ART[slot === 'weapon' ? (wtype || CLS().wtype) : slot] || NC_ART.sword) + '</svg>';
-function pieceImg(t, slot, cls, wtype, up){ const U = ncUp(up || 0);
+function pieceImg(t, slot, cls, wtype, up, sa){ const U = ncUp(Math.min(NC_UP_MAX, (up || 0) + (sa ? 3 : 0)));   /* 22/11: SA também acende o ícone, e o brilho sobe com a evolução */
   return `<span class="pimg nci ${cls || ''} ${U ? 'up' : ''} ${U && U.f ? 'fire' : ''}" ${up ? 'data-up="+' + up + '"' : ''} style="--tc:${TIERS[t].css}${U ? ';--uc:' + U.c + ';--ug:' + U.g + 'px;--fh:' + U.f + '%' : ''}" role="img" aria-label="${SLOT_INFO[slot].n}">${ncArt(slot, wtype)}</span>`; }
 function pieceImgOld(t, slot, cls, wtype){
   const src = pieceSrc(t, slot, wtype, true);
@@ -8010,7 +8080,7 @@ function pieceImgOld(t, slot, cls, wtype){
   if(!src) return `<span class="pimg pico ${cls || ''}" style="--tc:${TIERS[t].css}">${ic}</span>`;
   return `<span class="pimg ${cls || ''}" style="--tc:${TIERS[t].css}" role="img" aria-label="${SLOT_INFO[slot].n}"><img src="${src}" alt=""><i>${ic}</i></span>`;
 }
-const itemImg = (it, cls) => pieceImg(it.tier, it.slot, cls, it.wtype, it.up);
+const itemImg = (it, cls) => pieceImg(it.tier, it.slot, cls, it.wtype, it.up, it.slot === 'weapon' && it.sa);
 function forgeItems(){
   const eqs = SLOTS.map(equipped).filter(Boolean);
   const rest = save.inv.filter(i => !isEquipped(i) && (i.tier >= 2 || i.up)).sort((a, b) => (b.tier - a.tier) || ((b.up || 0) - (a.up || 0))).slice(0, 24);
@@ -8052,11 +8122,11 @@ function craftItem(t){
 }
 function statsAfter(it){ const c = Object.assign({}, it, {up:(it.up || 0) + 1}); return itemStats(c); }
 function upHTML(){
-  let h = `<p class="lede">Evolua a peça de <b>+1 até +12</b>. Cada nível dá <b>+4%</b> em vida, ataque e defesa da peça. <b>+1 a +3</b>: só Adena, sempre dá certo. <b>+4 a +6</b>: Adena + Lesser Gold, sem perder nada se falhar. <b>+7 a +12</b>: mais Lesser Gold e, se falhar, a peça cai 1 nível. Nenhuma peça é destruída.</p>` + forgeItems();
+  let h = `<p class="lede">Evolua a peça de <b>+1 até +12</b>. Cada nível dá <b>+4%</b> em vida, ataque e defesa da peça. <b>+1 a +3</b>: só Adena, sempre dá certo. <b>+4 em diante</b>: Adena + <b>Lesser Blue</b> (até Grade A) ou <b>Lesser Gold</b> (Grade S): 10 no +4, 20 no +5, até 90 no +12. <b>Se falhar do +4 em diante, a peça quebra e vira material.</b></p>` + forgeItems();
   const it = byId(forgeSel); if(!it) return h + '<div class="empty">Nenhuma peça para evoluir.</div>';
   ensureSk(it); const T = TIERS[it.tier];
   if(it.up >= NC_UP_MAX) return h + `<div class="fpanel" style="--tc:${T.css}"><div class="big">${itemName(it)}</div><div class="istat">Esta peça já está no máximo (+12).</div></div>`;
-  const U = UPG[it.up + 1], cost = upCost(it), need = U.m ? (U.q || 1) : 0, have = U.m ? (save.mats[U.m] || 0) : 0, ok = have >= need && save.gold >= cost, risky = U.lose || U.brk;
+  const U = UPG[it.up + 1], UM = U.m ? ncUpMat(it) : null, cost = upCost(it), need = UM ? (U.q || 1) : 0, have = UM ? (save.mats[UM] || 0) : 0, ok = have >= need && save.gold >= cost, risky = U.lose || U.brk || U.brkAll;
   const prot = (U.lose && forgeOpt.selo && save.mats.selo > 0) || (U.brk && !U.lose && forgeOpt.bencao && save.mats.bencao > 0);
   const confirmNow = risky && !prot && forgeConfirm === it.id;
   return h + `<div class="fpanel evo" style="--tc:${T.css}">
@@ -8064,20 +8134,20 @@ function upHTML(){
       <div class="big">${itemName(it)} <span class="up">→ +${it.up + 1}</span></div>
       <div class="cmp"><div><div class="eyebrow">Agora</div>${statText(itemStats(it))}</div><div><div class="eyebrow">Depois</div><b>${statText(statsAfter(it))}</b></div></div>
       <div class="pbar"><i style="width:${it.up/NC_UP_MAX*100}%"></i><span>+${it.up} de +${NC_UP_MAX}</span></div></div></div>
-    <div class="row"><span class="pill ok">Chance ${Math.round(upChance(it)*100)}%</span>${U.m ? `<span class="pill">${MATS[U.m].n}: ${have}/${need}</span>` : ''}<span class="pill">${adenaTxt(cost)}</span></div>
+    <div class="row"><span class="pill ok">Chance ${Math.round(upChance(it)*100)}%</span>${UM ? `<span class="pill">${MATS[UM].n}: ${have}/${need}</span>` : ''}<span class="pill">${adenaTxt(cost)}</span></div>
     <div class="istat">${upRisk(U)}.</div>
     <div class="row">${false ? `<button class="chipb" data-fopt="selo" aria-pressed="${forgeOpt.selo}">Usar Selo de Ferreiro se falhar (${save.mats.selo || 0})</button>` : ''}${false ? `<button class="chipb" data-fopt="bencao" aria-pressed="${forgeOpt.bencao}">Usar Bênção da Bigorna se rachar (${save.mats.bencao || 0})</button>` : ''}</div>
-    <button class="btn ${ok ? 'primary' : ''} ${confirmNow ? 'warnb' : ''}" data-fup="${it.id}" ${ok ? '' : 'disabled'}>${!ok ? (have < need ? 'Falta ' + MATS[U.m].n : 'Falta Adena') : confirmNow ? 'Confirmar: a peça pode perder nível' : 'Evoluir'}</button></div>`;
+    <button class="btn ${ok ? 'primary' : ''} ${confirmNow ? 'warnb' : ''}" data-fup="${it.id}" ${ok ? '' : 'disabled'}>${!ok ? (have < need ? 'Falta ' + MATS[UM].n : 'Falta Adena') : confirmNow ? (U.brkAll ? 'Confirmar: a peça pode QUEBRAR' : 'Confirmar: a peça pode perder nível') : 'Evoluir'}</button></div>`;
 }
 /* BRILHO DA ARMA (SA, decisão de 21/11): com Lesser Blue a arma fica mais brilhante, com efeito mais bonito e +8% de ataque. Grade C ou acima. */
-const saCost = it => [0, 0, 50, 75, 150, 200][GR_OF[it.tier]] || 0;   // 22/11 tabela: C 50, B 75, A 150, S 200 Lesser Blue
+const saCost = it => [0, 25, 50, 75, 150, 200][GR_OF[it.tier]] || 0;   /* SA do Grade D para cima (Arnold). D = 25 (sugestão) */   // 22/11 tabela: C 50, B 75, A 150, S 200 Lesser Blue
 /* SA: o jogador escolhe 1 atributo na hora. Valores por grade (C, B, A, S) - sugestão do Claude, sem desbalancear */
-const NC_SA = {atk:{n:'Ataque', f:'atkPct', v:[.06,.08,.10,.12]}, crit:{n:'Crítico', f:'crit', v:[.04,.05,.06,.08]}, aspd:{n:'Velocidade de ataque', f:'aspd', v:[.05,.06,.08,.10]}, leech:{n:'Roubo de vida', f:'leech', v:[.02,.025,.03,.04]}};
-function ncSaOpt(it){ const k = NC_SA[it.sa] ? it.sa : 'atk', D = NC_SA[k], gi = Math.max(0, Math.min(3, GR_OF[it.tier] - 2)); return {k, n:D.n, f:D.f, v:D.v[gi]}; }
+const NC_SA = {atk:{n:'Ataque', f:'atkPct', v:[.04,.06,.08,.10,.12]}, crit:{n:'Crítico', f:'crit', v:[.03,.04,.05,.06,.08]}, aspd:{n:'Velocidade de ataque', f:'aspd', v:[.04,.05,.06,.08,.10]}, leech:{n:'Roubo de vida', f:'leech', v:[.015,.02,.025,.03,.04]}};   // D, C, B, A, S
+function ncSaOpt(it){ const k = NC_SA[it.sa] ? it.sa : 'atk', D = NC_SA[k], gi = Math.max(0, Math.min(4, GR_OF[it.tier] - 1)); return {k, n:D.n, f:D.f, v:D.v[gi]}; }
 const ncSaTxt = (k, it) => { const o = ncSaOpt(Object.assign({}, it, {sa:k})); return '+' + String(Math.round(o.v*1000)/10).replace('.', ',') + '% ' + o.n.toLowerCase(); };
-function saHTML(){ const ws = save.inv.filter(i => i.slot === 'weapon' && GR_OF[i.tier] >= 2);
-  let h = '<p class="lede">Use <b>Lesser Blue</b> para dar o <b>SA</b> na arma: só a arma brilha, e você <b>escolhe 1 atributo</b>. Só armas de Grade C para cima (C 50, B 75, A 150, S 200).</p>';
-  if(!ws.length) return h + '<div class="empty">Você não tem arma de Grade C ou acima.</div>';
+function saHTML(){ const ws = save.inv.filter(i => i.slot === 'weapon' && GR_OF[i.tier] >= 1);
+  let h = '<p class="lede">Use <b>Lesser Blue</b> para dar o <b>SA</b> na arma: só a arma brilha, e você <b>escolhe 1 atributo</b>. Só armas de Grade D para cima (D 25, C 50, B 75, A 150, S 200).</p>';
+  if(!ws.length) return h + '<div class="empty">Você não tem arma de Grade D ou acima.</div>';
   return h + '<div class="blist">' + ws.map(it => { const c = saCost(it), have = save.mats.lblue || 0;
     return '<div class="frow" style="--tc:' + TIERS[it.tier].css + '">' + itemImg(it, 'ps-row') + '<div><div class="fn">' + itemName(it) + (it.sa ? ' · <b style="color:#3ae0ff">SA</b>' : '') + '</div><div class="istat">Lesser Blue ' + have + '/' + c + '</div></div><div class="iact">'
       + (it.sa ? '<button class="btn sm" disabled>' + ncSaTxt(ncSaOpt(it).k, it) + '</button>' : Object.keys(NC_SA).map(k => '<button class="btn sm primary" data-fsa="' + it.id + '" data-sak="' + k + '" ' + (have >= c ? '' : 'disabled') + '>' + ncSaTxt(k, it) + '</button>').join('')) + '</div></div>'; }).join('') + '</div>'; }
@@ -8120,6 +8190,8 @@ function renderShop(){
   { const pp = NC_POT_P, rk = ncRes() === 'mp' ? 'mp' : 'sp', row = (k, n, d, have, key) => `<div class="frow" style="--tc:${k === 'hp' ? '#ff5a6a' : k === 'mp' ? '#4a9aff' : '#6ae05a'}"><span class="ncpot">${window.ncPotSvg(k)}</span><div><div class="fn">${n} <small style="color:var(--mute)">× ${have} / ${NC_POT_MAX}</small></div><div class="istat">${d}</div></div><div class="iact"><button class="btn sm primary" data-buypot="${key}" ${save.gold >= pp && have < NC_POT_MAX ? '' : 'disabled'}>Comprar<small>${adenaTxt(pp)}</small></button></div></div>`;
     h += `<h2>Poções</h2><div class="blist">` + row('hp', 'Poção de Vida', 'Cura parte da sua vida.', save.potions || 0, 'hp')
       + row(rk, ncPotResName(), rk === 'mp' ? 'Recupera 60% da mana.' : 'Recupera 60% da stamina.', save.potRes || 0, 'res') + `</div>`; }
+  /* 22/11 (Arnold): troca 10 de ouro em Adena = 1 Moeda Real */
+  h += `<h2>Trocar Adena</h2><div class="blist"><div class="frow" style="--tc:#ffd24a"><span class="ncpot"><svg viewBox="0 0 24 24" width="34" height="34"><circle cx="12" cy="12" r="10" fill="#ffd24a" stroke="#8a5a10" stroke-width="1.5"/><path d="M7 15l1-6 2.5 3L12 8l1.5 4L16 9l1 6Z" fill="#8a5a10"/></svg></span><div><div class="fn">1 Moeda Real <small style="color:var(--mute)">você tem ${save.coins}</small></div><div class="istat">Use nos Itens Festivos e no Mercador.</div></div><div class="iact"><button class="btn sm primary" data-ncreal="1" ${save.gold >= 100000 ? '' : 'disabled'}>Trocar<small>10 de ouro</small></button><button class="btn sm" data-ncreal="10" ${save.gold >= 1000000 ? '' : 'disabled'}>×10<small>100 de ouro</small></button></div></div></div>`;
   h += E ? `<div class="evbox" style="--tc:${E.css}"><div class="big">Evento: ${E.n}</div><div class="istat">Termina em ${evEnds()} dia${evEnds() > 1 ? 's' : ''}.</div><p class="lede">${E.d} Peça exclusiva do evento (+10% nos atributos, só enquanto o evento durar, 1 por semana).</p>
     <div class="row">
     <button class="btn sm primary" data-evbuy="1" ${save.coins >= shopPrice(60) && !save.evBought[evKey()] ? '' : 'disabled'}>${save.evBought[evKey()] ? 'Já comprada nesta semana' : SLOT_INFO[shopSlot].n + ' ' + E.n + ' · ' + shopPrice(60) + ' moedas'}</button></div></div>` : '';
@@ -10574,6 +10646,153 @@ window.ncStableDraw = () => { const el = document.getElementById('ncStable'); if
 window.ncStable = open => { let el = document.getElementById('ncStable'); if(!el){ el = document.createElement('div'); el.id = 'ncStable'; el.hidden = true; document.getElementById('hub').appendChild(el); }
   el.hidden = !open; document.body.classList.toggle('nc-st', !!open); if(open) window.ncStableDraw(); };
 
+/* ================= ITENS FESTIVOS (22/11, Arnold) =================
+   Itens só de aparência: não têm atributo e ficam POR CIMA do equipamento (o equipamento continua dando os pontos).
+   Comprados com Moeda Real. Dois lugares: cabeça (gorro ou chifre) e rosto (barba). Ficam para sempre depois de comprar. */
+const NC_FEST = {
+  gorro: {n:'Gorro de Papai Noel', lug:'cabeca', p:30, ev:'Natal'},
+  chifre:{n:'Chifre de rena',       lug:'cabeca', p:30, ev:'Natal'},
+  barba: {n:'Barba branca',         lug:'rosto',  p:20, ev:'Natal'}};
+const ncFestSave = () => { save.fest = save.fest || {own:{}, on:{}}; save.fest.own = save.fest.own || {}; save.fest.on = save.fest.on || {}; return save.fest; };
+const NC_FM = {};
+function ncFestMat(hex, rough){ return NC_FM[hex] || (NC_FM[hex] = new T.MeshLambertMaterial({color:new T.Color(hex).multiplyScalar(hex === 0x9e1424 ? .7 : 1)})); }
+/* Modelos feitos de formas simples, estilo chibi. Medidas em "tamanhos de cabeça" (R = raio da cabeça). */
+function ncFestMesh(k, R){ const g = new T.Group(), red = ncFestMat(0x9e1424), wh = ncFestMat(0xd9d6cf), br = ncFestMat(0x7a4a26), br2 = ncFestMat(0x9a6236);
+  const add = (geo, m, x, y, z, rx, ry, rz) => { const o = new T.Mesh(geo, m); o.position.set(x || 0, y || 0, z || 0); o.rotation.set(rx || 0, ry || 0, rz || 0); g.add(o); return o; };
+  if(k === 'gorro'){
+    add(new T.TorusGeometry(R*.98, R*.2, 8, 22), wh, 0, R*.02, 0, Math.PI/2);                          // aba branca de pelúcia
+    add(new T.CylinderGeometry(R*.55, R*1.0, R*.7, 18, 1, true), red, 0, R*.36, 0);                     // parte de baixo do gorro
+    const top = new T.Group(); top.position.set(0, R*.7, 0); top.rotation.z = -.55; g.add(top);        // ponta caída para o lado
+    const c = new T.Mesh(new T.ConeGeometry(R*.56, R*1.05, 16), red); c.position.y = R*.5; top.add(c);
+    const pom = new T.Mesh(new T.SphereGeometry(R*.24, 12, 10), wh); pom.position.y = R*1.05; top.add(pom);
+  } else if(k === 'chifre'){
+    for(const sd of [-1, 1]){ const a = new T.Group(); a.position.set(sd*R*.55, R*.55, 0); a.rotation.z = -sd*.42; g.add(a);
+      const L = R*1.05, b = new T.Mesh(new T.CylinderGeometry(R*.07, R*.11, L, 8), br); b.position.y = L/2; a.add(b);
+      [[.45, .9, .5], [.72, -.8, .42], [.95, .7, .34]].forEach(([h, ang, len]) => { const t = new T.Mesh(new T.CylinderGeometry(R*.05, R*.075, R*len, 7), br2);
+        t.position.set(sd*Math.sin(ang)*R*len*.4, L*h + Math.cos(ang)*R*len*.2, 0); t.rotation.z = -sd*ang; a.add(t); });
+      const tip = new T.Mesh(new T.SphereGeometry(R*.08, 8, 6), br2); tip.position.y = L; a.add(tip); }
+    add(new T.SphereGeometry(R*.17, 12, 10), ncFestMat(0xff2a2a), 0, -R*.18, R*1.0);                  // nariz vermelho de rena
+  } else if(k === 'barba'){
+    const bz = R*1.12;
+    [[0, -.55, 1, .42], [-.38, -.42, .9, .32], [.38, -.42, .9, .32], [-.6, -.15, .78, .26], [.6, -.15, .78, .26], [-.2, -.85, .9, .3], [.2, -.85, .9, .3], [0, -1.08, .82, .27]]
+      .forEach(([x, y, z, r]) => add(new T.SphereGeometry(R*r, 12, 10), wh, R*x, R*y, bz*z));
+    add(new T.SphereGeometry(R*.2, 10, 8), wh, -R*.2, -R*.22, bz*1.08).scale.set(1.5, .7, .8);         // bigode
+    add(new T.SphereGeometry(R*.2, 10, 8), wh, R*.2, -R*.22, bz*1.08).scale.set(1.5, .7, .8);
+  }
+  g.traverse(o => { if(o.isMesh){ o.castShadow = false; o.userData.ncFest = 1; } }); return g; }
+/* Prende na cabeça do herói: acha o osso da cabeça e o tamanho da cabeça pela malha */
+function ncFestApply(h){ try{ if(!h || !h.root) return; (h.festObjs || []).forEach(o => { if(o.parent) o.parent.remove(o); }); h.festObjs = [];
+  const F = ncFestSave(), want = ['cabeca', 'rosto'].map(l => F.on[l]).filter(k => k && F.own[k] && NC_FEST[k]); if(!want.length) return;
+  const cab = F.on.cabeca && F.own[F.on.cabeca];
+  if(cab){ (h.headwear || []).forEach(m => m.visible = false); ((h.armor && h.armor.helmet) || []).forEach(m => m.visible = false); }   // o gorro/chifre fica no lugar do chapéu e do elmo (só a aparência)
+  h.root.updateMatrixWorld(true); const bone = h.mx && h.mx.bones && h.mx.bones.head; let hh = 1.6; try{ hh = ncHeroH(h); }catch(e){}
+  const anchor = bone || h.root, hp = new T.Vector3(); (bone || h.root).getWorldPosition(hp);
+  const R = hh*.21, cy = bone ? hp.y + R*1.0 : h.root.position.y + hh - R;                              // centro da cabeça (o osso fica no pescoço)
+  const qW = new T.Quaternion(); h.root.getWorldQuaternion(qW);
+  want.forEach(k => { const m = ncFestMesh(k, R*(NC_FEST[k].lug === 'cabeca' ? 1.12 : .8)), holder = new T.Group(); holder.add(m);
+    const L = NC_FEST[k].lug, wp = new T.Vector3(hp.x, L === 'cabeca' ? cy + R*.6 : cy - R*.42, hp.z);
+    anchor.add(holder); const inv = new T.Matrix4().copy(anchor.matrixWorld).invert(); holder.position.copy(wp.clone().applyMatrix4(inv));
+    const qa = new T.Quaternion(); anchor.getWorldQuaternion(qa); holder.quaternion.copy(qa.invert().multiply(qW));
+    const sa = new T.Vector3(); anchor.getWorldScale(sa); holder.scale.setScalar(1/(sa.x || 1)); h.festObjs.push(holder); });
+  }catch(e){ console.warn('festivo', e); } }
+applyGear = (f => function(h){ const r = f.apply(this, arguments); ncFestApply(h); return r; })(applyGear);
+/* Fotos dos itens para a loja */
+const ncFestThumbU = {};
+function ncFestThumb(k){ if(ncFestThumbU[k]) return ncFestThumbU[k]; try{ if(!iconSc) iconSetup(); const sc = new T.Scene(); iconSc.children.filter(o => o.isLight).forEach(o => sc.add(o.clone()));
+  const m = ncFestMesh(k, 1); m.rotation.set(.25, -.6, 0); sc.add(m); m.updateMatrixWorld(true); const box = new T.Box3().setFromObject(m), c0 = box.getCenter(new T.Vector3()), sz = box.getSize(new T.Vector3());
+  const cam = new T.PerspectiveCamera(28, 1, .01, 100), d = Math.max(sz.x, sz.y, sz.z)*.62/Math.sin(THREE_DEG(14)); cam.position.copy(c0).add(new T.Vector3(.15, .2, 1).normalize().multiplyScalar(d)); cam.lookAt(c0);
+  const pc = renderer.getClearColor(new T.Color()), pa = renderer.getClearAlpha(); renderer.setRenderTarget(iconRT); renderer.setClearColor(0, 0); renderer.clear(); renderer.render(sc, cam);
+  const px = new Uint8Array(256*256*4); renderer.readRenderTargetPixels(iconRT, 0, 0, 256, 256, px); renderer.setRenderTarget(null); renderer.setClearColor(pc, pa);
+  const cv2 = document.createElement('canvas'); cv2.width = cv2.height = 256; const gg = cv2.getContext('2d'), id = gg.createImageData(256, 256);
+  for(let y = 0; y < 256; y++) id.data.set(px.subarray((255 - y)*1024, (256 - y)*1024), y*1024); gg.putImageData(id, 0, 0); return ncFestThumbU[k] = cv2.toDataURL('image/png'); }catch(e){ return ''; } }
+/* Painel ITENS FESTIVOS: abre no menu principal e dentro da fase (botão ao lado do minimapa) */
+let ncFestWasRunning = false;
+window.ncFestDraw = () => { const el = document.getElementById('ncFest'); if(!el || el.hidden) return; const F = ncFestSave();
+  el.innerHTML = '<div class="nf-box"><div class="nf-hd"><h2>ITENS FESTIVOS</h2><button class="nf-x" data-nfx aria-label="Fechar">×</button></div>'
+    + '<p class="nf-lede">Só aparência: ficam por cima do equipamento e não mudam os atributos. Comprou, é seu para sempre. Você tem <b>' + save.coins + ' Moedas Reais</b>.</p>'
+    + '<div class="nf-ev">🎄 Natal</div><div class="nf-list">' + Object.keys(NC_FEST).map(k => { const D = NC_FEST[k], own = !!F.own[k], on = F.on[D.lug] === k;
+      return '<div class="nf-it' + (on ? ' on' : '') + '"><img alt="" src="' + ncFestThumb(k) + '"><div class="nf-tx"><b>' + D.n + '</b><span>' + (D.lug === 'cabeca' ? 'Cabeça' : 'Rosto') + '</span></div>'
+        + (own ? '<button class="btn sm' + (on ? '' : ' primary') + '" data-nfon="' + k + '">' + (on ? 'Tirar' : 'Usar') + '</button>'
+               : '<button class="btn sm primary" data-nfbuy="' + k + '" ' + (save.coins >= D.p ? '' : 'disabled') + '>Comprar<small>' + D.p + ' Moedas Reais</small></button>') + '</div>'; }).join('') + '</div></div>'; };
+window.ncFest = open => { let el = document.getElementById('ncFest'); if(!el){ el = document.createElement('div'); el.id = 'ncFest'; el.hidden = true; document.body.appendChild(el);
+    el.addEventListener('click', e => { const b = e.target.closest('button'); if(!b){ if(e.target === el) window.ncFest(false); return; } const F = ncFestSave(), d = b.dataset;
+      if(d.nfx !== undefined){ window.ncFest(false); return; }
+      if(d.nfbuy){ const D = NC_FEST[d.nfbuy]; if(D && !F.own[d.nfbuy] && save.coins >= D.p){ save.coins -= D.p; F.own[d.nfbuy] = 1; F.on[D.lug] = d.nfbuy; persist(); try{ SFX.drop(); banner('Item festivo', D.n + ' é seu!'); }catch(_){} } }
+      if(d.nfon){ const D = NC_FEST[d.nfon]; if(D && F.own[d.nfon]){ F.on[D.lug] = F.on[D.lug] === d.nfon ? '' : d.nfon; persist(); } }
+      try{ if(hero) applyGear(hero); }catch(_){} window.ncFestDraw(); }); }
+  el.hidden = !open; document.body.classList.toggle('nc-fest', !!open);
+  if(open && mode === 'stage' && running){ ncFestWasRunning = true; running = false; try{ unlockMouse(); for(const q in keys) keys[q] = false; }catch(_){} }
+  if(!open && ncFestWasRunning){ ncFestWasRunning = false; if(mode === 'stage' && $('#pause').hidden && P && !P.dead) running = true; }
+  if(open) window.ncFestDraw(); };
+
+/* ================= NATAL (22/11, Arnold) =================
+   De hoje até 26/12 o jogo fica enfeitado: no menu (árvore, boneco de neve, iglu, rena, trenó do Papai Noel, gnomos, presentes e neve caindo)
+   e nas áreas (árvore com luzes, boneco de neve e presentes perto da fogueira; árvores na entrada). No dia 27/12 tudo some sozinho.
+   Os itens festivos que o jogador comprou NÃO somem. Formas simples (leve para celular). */
+const ncXmasOn = () => { if(window.__ncXmas != null) return !!window.__ncXmas; const d = new Date(), m = d.getMonth(), dd = d.getDate(); return (m === 10 && dd >= 22) || (m === 11 && dd <= 26); };
+const NC_XM = {};
+const xmM = (hex, glow) => NC_XM[hex + (glow ? 'g' : '')] || (NC_XM[hex + (glow ? 'g' : '')] = glow ? new T.MeshBasicMaterial({color:hex}) : new T.MeshLambertMaterial({color:new T.Color(hex).multiplyScalar(hex === 0xf2f6ff || hex === 0xeaf2ff || hex === 0xdde8fa || hex === 0xf2f2f2 ? .9 : .55)}));
+function xmPart(g, geo, hex, x, y, z, glow){ const o = new T.Mesh(geo, xmM(hex, glow)); o.position.set(x, y, z); o.castShadow = !COARSE && !glow; g.add(o); return o; }
+function xmTree(s){ const g = new T.Group(); xmPart(g, new T.CylinderGeometry(.16*s, .2*s, .5*s, 7), 0x6a4022, 0, .25*s, 0);
+  [[1.1, 1.0, .55], [.85, .85, 1.15], [.6, .7, 1.7]].forEach(([r, h, y]) => xmPart(g, new T.ConeGeometry(r*s, h*s, 9), 0x1f6b3a, 0, y*s, 0));
+  const st = xmPart(g, new T.OctahedronGeometry(.17*s), 0xffd84a, 0, 2.15*s, 0, true); st.rotation.y = .6;
+  const cols = [0xff3a4a, 0xffd84a, 0x4ab0ff, 0xffffff, 0xff7ae0]; for(let i = 0; i < 16; i++){ const t = i/16, a = t*Math.PI*6.2, y = .45 + t*1.4, r = (1.12 - t*.62)*.92;
+    xmPart(g, new T.SphereGeometry(.065*s, 6, 5), cols[i % cols.length], Math.cos(a)*r*s, y*s, Math.sin(a)*r*s, true); }
+  return g; }
+function xmSnowman(s){ const g = new T.Group(), w = 0xf2f6ff; xmPart(g, new T.SphereGeometry(.5*s, 12, 10), w, 0, .45*s, 0); xmPart(g, new T.SphereGeometry(.36*s, 12, 10), w, 0, 1.1*s, 0); xmPart(g, new T.SphereGeometry(.26*s, 12, 10), w, 0, 1.58*s, 0);
+  xmPart(g, new T.ConeGeometry(.05*s, .28*s, 8), 0xff8a2a, 0, 1.58*s, .34*s).rotation.x = Math.PI/2;
+  [-.09, .09].forEach(x => xmPart(g, new T.SphereGeometry(.035*s, 6, 5), 0x111111, x*s, 1.66*s, .22*s)); [1.2, 1.05, .9].forEach(y => xmPart(g, new T.SphereGeometry(.04*s, 6, 5), 0x111111, 0, y*s, .35*s));
+  xmPart(g, new T.TorusGeometry(.25*s, .06*s, 6, 14), 0xd8263a, 0, 1.36*s, 0).rotation.x = Math.PI/2;
+  xmPart(g, new T.CylinderGeometry(.2*s, .2*s, .05*s, 12), 0x1a1a22, 0, 1.8*s, 0); xmPart(g, new T.CylinderGeometry(.14*s, .14*s, .28*s, 12), 0x1a1a22, 0, 1.95*s, 0);
+  return g; }
+function xmIgloo(s){ const g = new T.Group(); xmPart(g, new T.SphereGeometry(1.2*s, 14, 8, 0, Math.PI*2, 0, Math.PI/2), 0xeaf2ff, 0, 0, 0);
+  const t = xmPart(g, new T.CylinderGeometry(.45*s, .45*s, .8*s, 10, 1, false, 0, Math.PI), 0xdde8fa, 0, 0, 1.15*s); t.rotation.set(Math.PI/2, 0, Math.PI/2);
+  xmPart(g, new T.CircleGeometry(.34*s, 10), 0x223044, 0, .2*s, 1.56*s); return g; }
+function xmDeer(s){ const g = new T.Group(), b = 0x8a5a32; const body = xmPart(g, new T.SphereGeometry(.45*s, 10, 8), b, 0, .85*s, 0); body.scale.set(1.5, .8, .8);
+  [[-.4, .3], [.4, .3], [-.4, -.3], [.4, -.3]].forEach(([x, z]) => xmPart(g, new T.CylinderGeometry(.06*s, .07*s, .6*s, 6), 0x5a3a20, x*s, .3*s, z*s*.6));
+  xmPart(g, new T.CylinderGeometry(.1*s, .14*s, .5*s, 8), b, .62*s, 1.15*s, 0).rotation.z = -.5;
+  const hd = xmPart(g, new T.SphereGeometry(.22*s, 10, 8), b, .82*s, 1.42*s, 0); hd.scale.set(1.3, 1, .9);
+  xmPart(g, new T.SphereGeometry(.07*s, 8, 6), 0xff2a2a, 1.1*s, 1.4*s, 0, true);
+  [-1, 1].forEach(sd => { const a = xmPart(g, new T.CylinderGeometry(.025*s, .035*s, .5*s, 5), 0x6a4a2a, .78*s, 1.78*s, sd*.14*s); a.rotation.x = sd*.5;
+    const t2 = xmPart(g, new T.CylinderGeometry(.02*s, .03*s, .25*s, 5), 0x6a4a2a, .9*s, 1.78*s, sd*.2*s); t2.rotation.set(sd*.3, 0, -.8); });
+  return g; }
+function xmSleigh(s){ const g = new T.Group(); const b = xmPart(g, new T.BoxGeometry(1.6*s, .55*s, .9*s), 0xc0182e, 0, .65*s, 0);
+  xmPart(g, new T.BoxGeometry(.25*s, .6*s, .9*s), 0xc0182e, -.75*s, 1.0*s, 0); xmPart(g, new T.BoxGeometry(1.62*s, .08*s, .92*s), 0xffd24a, 0, .95*s, 0);
+  [-.42, .42].forEach(z => { xmPart(g, new T.BoxGeometry(1.8*s, .06*s, .06*s), 0xffd24a, .05*s, .2*s, z*s); const c = xmPart(g, new T.TorusGeometry(.22*s, .035*s, 6, 10, Math.PI), 0xffd24a, .95*s, .4*s, z*s); c.rotation.z = -Math.PI/2; });
+  const sack = xmPart(g, new T.SphereGeometry(.4*s, 10, 8), 0x8a6a3a, -.2*s, 1.25*s, 0); sack.scale.set(1, 1.1, 1);
+  xmGift(g, .3*s, .25*s, 1.05*s, .2*s, 0x3ac06a); xmGift(g, .26*s, .45*s, 1.0*s, -.25*s, 0x4ab0ff); return g; }
+function xmGift(g, sz, x, y, z, hex){ const q = new T.Group(); q.position.set(x, y, z); g.add(q); xmPart(q, new T.BoxGeometry(sz, sz, sz), hex, 0, sz/2, 0);
+  xmPart(q, new T.BoxGeometry(sz*1.02, sz*1.02, sz*.18), 0xffd24a, 0, sz/2, 0); xmPart(q, new T.BoxGeometry(sz*.18, sz*1.02, sz*1.02), 0xffd24a, 0, sz/2, 0); return q; }
+function xmGnome(s){ const g = new T.Group(); xmPart(g, new T.CylinderGeometry(.18*s, .24*s, .4*s, 10), 0x3a6a9a, 0, .2*s, 0);
+  const b = xmPart(g, new T.SphereGeometry(.17*s, 10, 8), 0xf2f2f2, 0, .45*s, .06*s); b.scale.set(1, 1.2, .8);
+  xmPart(g, new T.SphereGeometry(.07*s, 8, 6), 0xf0b090, 0, .58*s, .16*s); xmPart(g, new T.ConeGeometry(.2*s, .55*s, 10), 0xd8263a, 0, .85*s, 0); return g; }
+let ncXmasSnow = null;
+function xmSnowFx(cx, cz, R, H){ const n = COARSE ? 160 : 320, geo = new T.BufferGeometry(), p = new Float32Array(n*3); for(let i = 0; i < n; i++){ p[i*3] = cx + (Math.random()*2 - 1)*R; p[i*3 + 1] = Math.random()*H; p[i*3 + 2] = cz + (Math.random()*2 - 1)*R; }
+  geo.setAttribute('position', new T.BufferAttribute(p, 3)); const m = new T.Points(geo, new T.PointsMaterial({color:0xffffff, size:COARSE ? .09 : .07, transparent:true, opacity:.85, depthWrite:false}));
+  m.userData.snow = {H, cx, cz, R}; return m; }
+function ncXmasTick(dt){ const s = ncXmasSnow; if(!s || !s.parent){ ncXmasSnow = null; return; } const a = s.geometry.attributes.position, u = s.userData.snow;
+  for(let i = 0; i < a.count; i++){ let y = a.getY(i) - dt*(.5 + (i % 5)*.08); if(y < 0) y = u.H; a.setY(i, y); a.setX(i, a.getX(i) + Math.sin(clock + i)*dt*.12); } a.needsUpdate = true; }
+/* Menu: enfeita em volta do pedestal do herói */
+function ncXmasHub(){ if(!ncXmasOn() || mode !== 'hub' || !scene) return; const g = new T.Group(); g.name = 'ncXmas'; g.userData.hub = 1;
+  const put = (o, x, z, ry) => { o.position.set(x, 0, z); o.rotation.y = ry || 0; g.add(o); return o; };
+  const por = innerHeight > innerWidth;   // celular em pé: tudo mais perto do centro para aparecer na tela
+  const tx = por ? -2.1 : -3.6, tz = por ? -6 : -2.6;
+  put(xmTree(1.45), tx, tz); put(xmSnowman(1.05), por ? 2.0 : 3.4, por ? -5.2 : -1.6, -.4); put(xmIgloo(1.1), por ? 3.4 : 5.2, -9, -.6);
+  put(xmSleigh(1.1), por ? -2.6 : -5.6, por ? -10 : -6.4, .5); put(xmDeer(1.0), por ? -.6 : -3.4, por ? -11 : -7.4, .5); put(xmDeer(.9), por ? .9 : -1.9, por ? -11.8 : -8.2, .5);
+  put(xmGnome(1.1), por ? -1.25 : -2.4, por ? -2.2 : 1.2, .5); put(xmGnome(1), por ? 1.25 : 2.6, por ? -2.0 : 1.0, -.5); put(xmGnome(1), por ? 2.6 : 4.4, -5, -.8);
+  const gf = new T.Group(); gf.position.set(tx, 0, tz); g.add(gf); xmGift(gf, .45, .9, 0, .5, 0xd8263a); xmGift(gf, .38, -.7, 0, .7, 0x3ac06a); xmGift(gf, .3, .2, 0, 1.0, 0x4ab0ff);
+  g.traverse(o => { if(o.isMesh && o.material.isMeshLambertMaterial){ if(!o.material.userData.hubC){ o.material = o.material.clone(); o.material.color.multiplyScalar(.62); o.material.userData.hubC = 1; } } });
+  scene.add(g); ncXmasSnow = xmSnowFx(0, -2, 9, 7); scene.add(ncXmasSnow); }
+/* Áreas: árvore, boneco de neve e presentes perto da fogueira; árvores na entrada e no portão do chefe */
+function ncXmasStage(){ if(!ncXmasOn() || !scene) return; const g = new T.Group(); g.name = 'ncXmas';
+  const put = (o, x, z, ry) => { o.position.set(x, heightAt(x, z), z); o.rotation.y = ry || 0; g.add(o); return o; };
+  put(xmTree(1.3), FIRE_POS.x + 3.2, FIRE_POS.z - 2.4); put(xmSnowman(1), FIRE_POS.x - 3, FIRE_POS.z - 2.2, .4);
+  const gx = FIRE_POS.x + 3.2, gz = FIRE_POS.z - 2.4; [[.9, .6, 0xd8263a], [-.8, .7, 0x3ac06a], [.1, 1.1, 0x4ab0ff]].forEach(([dx, dz, c]) => { const q = new T.Group(); q.position.set(gx + dx, heightAt(gx + dx, gz + dz), gz + dz); g.add(q); xmGift(q, .4, 0, 0, 0, c); });
+  [[-4, 3], [4, 3]].forEach(([dx, dz]) => put(xmTree(1.1), START.x + dx, START.z - dz));
+  [[-5, 0], [5, 0]].forEach(([dx]) => put(xmTree(1.2), GATE_N.x + dx, GATE_N.z + 3));
+  put(xmGnome(1.2), FIRE_POS.x + 1.6, FIRE_POS.z - 3.4, -.4); scene.add(g); }
+buildHub = (f => function(){ const r = f.apply(this, arguments); try{ ncXmasHub(); }catch(e){ console.warn('natal', e); } return r; })(buildHub);
+buildWorldBits = (f => function(){ const r = f.apply(this, arguments); try{ ncXmasStage(); }catch(e){ console.warn('natal', e); } return r; })(buildWorldBits);
 /* ================= COMBAT ================= */
 /* Alvo escolhido com o botão direito no computador (pedido do Arnold, 20/11): monstro ou ponto no chão. Ataques e habilidades miram nele. */
 let ncTgt = null, ncTgtMk = null;
@@ -12223,7 +12442,7 @@ $('#rightPanel').addEventListener('click', e => {
   if(d.fopt){ forgeOpt[d.fopt] = !forgeOpt[d.fopt]; renderHub(); return; }
   const fit = byId(forgeSel);
   if(d.fup && fit){ const U = UPG[(fit.up || 0) + 1]; const prot = U && ((U.lose && forgeOpt.selo && save.mats.selo > 0) || (U.brk && !U.lose && forgeOpt.bencao && save.mats.bencao > 0));
-    if(U && (U.lose || U.brk) && !prot && forgeConfirm !== fit.id){ forgeConfirm = fit.id; renderHub(); return; }
+    if(U && (U.lose || U.brk || U.brkAll) && !prot && forgeConfirm !== fit.id){ forgeConfirm = fit.id; renderHub(); return; }
     forgeConfirm = 0; const m = tryUpgrade(fit); if(m){ banner(m[0], m[1], m[2]); if(isEquipped(fit)) applyGear(hero); } renderHub(); return; }
   if(d.cslot){ craftSlot = d.cslot; renderHub(); return; }
   if(d.cgr !== undefined){ craftGr = +d.cgr; renderHub(); return; }
@@ -12232,6 +12451,7 @@ $('#rightPanel').addEventListener('click', e => {
   if(d.sslot){ shopSlot = d.sslot; renderHub(); return; }
   if(d.sbuy !== undefined){ const t = +d.sbuy, p = piecePrice(t); if(save.coins >= p && t <= CFG.shopMaxTier && ncRoom(shopSlot)){ save.coins -= p; buyPiece(t); applyGear(hero); } renderHub(); return; }
   if(d.mbuy !== undefined){ const o = SHOP[+d.mbuy], p = shopPrice(o.p); if(save.coins >= p){ save.coins -= p; o.g(); persist(); SFX.coin(); } renderHub(); return; }
+  if(d.ncreal){ const n = +d.ncreal, c = n*100000; if(save.gold >= c){ save.gold -= c; save.coins = (save.coins || 0) + n; SFX.coin(); persist(); feed('+' + n + ' Moeda Real', '#ffd24a'); } renderHub(); return; }
   if(d.buypot){ const pp = NC_POT_P, k = d.buypot === 'hp' ? 'potions' : 'potRes'; if(save.gold >= pp && (save[k] || 0) < NC_POT_MAX){ save.gold -= pp; save[k] = (save[k] || 0) + 1; SFX.coin(); persist(); } renderHub(); return; }
   if(d.evbuy){ const E = curEvent(), p = shopPrice(60); if(E && save.coins >= p && !save.evBought[evKey()] && ncRoom(shopSlot)){ save.coins -= p; save.evBought[evKey()] = 1; const t = clamp(Math.round(gearPower()) - 1, 1, CFG.shopMaxTier); buyPiece(t, 'ev:' + E.id); } renderHub(); return; }
   if(d.fragx !== undefined){ const t = +d.fragx, need = CFG.frag[t]; if(need && (save.frags[t] || 0) >= need && ncRoom(shopSlot)){ save.frags[t] -= need; buyPiece(t); applyGear(hero); } renderHub(); return; }
@@ -12580,6 +12800,7 @@ function ncStagePanel(k){ if(mode !== 'stage' || !P || P.dead || !running) retur
 new MutationObserver(() => { if(ncInst && !document.body.classList.contains('nc-r')){ ncInst = false; document.body.classList.remove('nc-inst'); $('#hub').hidden = true; if(mode === 'stage' && $('#pause').hidden && !P.dead) running = true; } }).observe(document.body, {attributes:true, attributeFilter:['class']});
 document.querySelector('.nc-hb').addEventListener('click', e => { const b = e.target.closest('[data-hb]'); if(!b) return; const k = b.dataset.hb;
   if(k === 'party'){ try{ ncCoop.friends(); }catch(_){} return; }
+  if(k === 'fest'){ try{ window.ncFest(true); }catch(_){} return; }
   if(k === 'bag' || k === 'hero'){ if(!$('#pause').hidden){ togglePause(false); return; } $('#ncBag').click(); setTimeout(() => { const t = document.querySelector(k === 'bag' ? '#pauseGear .bgrid' : '#pauseGear .eqgrid'); if(t) t.scrollIntoView({block:k === 'bag' ? 'center' : 'start'}); }, 60); return; }
   ncStagePanel(k); });
 $('#ncBag').onclick = () => { if(!$('#pause').hidden){ togglePause(false); return; } togglePause(true); try{ const b = document.querySelector('#pause .stabs button[data-sec="gear"]'); if(b) b.click(); const g = document.getElementById('pauseGear'); if(g) g.scrollIntoView({block:'start'}); }catch(e){} };
@@ -12901,6 +13122,7 @@ function loop(now){
   if(mode === 'stage'){ const fl = 2.6 + Math.sin(clock*13)*.35 + Math.sin(clock*7.3 + 1)*.3; TORCH.emissiveIntensity = fl; FIRE.emissiveIntensity = fl*.95; }
   adaptRes(dt);
   if(mode === 'hub'){ updateHub(dt); ncHubPetTick(dt); }
+  if(ncXmasSnow) ncXmasTick(dt);
   else {
     if(running) updateStage(dt*timeScale);
     updateCamera(dt);
@@ -13394,7 +13616,7 @@ body.nc-l #hub>aside.panel::before,body.nc-r #hub>#rightPanel::before{transform:
 (function(){
   var hub=document.getElementById('hub');if(!hub||hub.dataset.nc)return;hub.dataset.nc=1;
   var L=hub.querySelector('aside.panel'),R=document.getElementById('rightPanel');
-  var I={hero:'<path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/>',play:'<path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/>',set:'<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>',
+  var I={fest:'<path d="M12 2l3 6H9Z"/><path d="M7 9h10l-2 5H9Z"/><path d="M5 15h14l-2 5H7Z"/><path d="M12 20v2"/>',hero:'<path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/>',play:'<path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/>',set:'<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>',
     stages:'<path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2Z"/><path d="M9 4v14M15 6v14"/>',gear:'<path d="M12 3l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6Z"/>',forge:'<path d="M3 9h12a4 4 0 0 0 4-4v0M7 9v3h7V9M9 12v4M12 12v4M5 20h11"/>',
     shop:'<path d="M12 3v18M16 7.5c0-1.7-1.8-2.5-4-2.5s-4 .9-4 2.8c0 4 8 2 8 6 0 2-1.800 3.200-4 3.200s-4-1-4-2.800"/>',missions:'<path d="M6 3h12v18l-6-4-6 4Z"/>',music:'<path d="M9 18V6l10-2v12"/><circle cx="6.500" cy="18" r="2.500"/><circle cx="16.500" cy="16" r="2.500"/>'};
   var NAMES={hero:'Herói',play:'Progresso',set:'Ajustes',stages:'Mundo',gear:'Equipamento',forge:'Forja',shop:'Loja',missions:'Missões',music:'Músicas'};
@@ -13419,7 +13641,7 @@ body.nc-l #hub>aside.panel::before,body.nc-r #hub>#rightPanel::before{transform:
   var CARDS=[['hero','Herói',function(){toggle('l','hero')}],['skills','Habilidades',function(){try{window.ncSkillsPop(true)}catch(e){}}],['gear','Equipamento',function(){toggle('r','gear')}],
     ['bag','Mochila',function(){toggle('r','gear');setTimeout(function(){var b=document.getElementById('invFilters');if(b)b.scrollIntoView({block:'start',behavior:'smooth'})},120)}],
     ['smith','Ferreiro',function(){toggle('r','forge');npc('smith')}],['merch','Mercador',function(){toggle('r','shop');npc('merch')}],
-    ['stable','Estábulo',function(){try{window.ncStable(true)}catch(e){}}],['conn','Conexão',function(){try{window.ncCoop.friends()}catch(e){}}],['missions','Missões',function(){toggle('r','missions')}]];
+    ['stable','Estábulo',function(){try{window.ncStable(true)}catch(e){}}],['fest','Festivos',function(){try{window.ncFest(true)}catch(e){}}],['conn','Conexão',function(){try{window.ncCoop.friends()}catch(e){}}],['missions','Missões',function(){toggle('r','missions')}]];
   var grid=document.createElement('nav');grid.className='nc-grid';
   CARDS.forEach(function(c){var b=document.createElement('button');b.type='button';b.className='nc-card';b.dataset.card=c[0];b.innerHTML='<svg viewBox="0 0 24 24">'+I[c[0]]+'</svg><span>'+c[1]+'</span>';b.onclick=c[2];grid.appendChild(b)});
   hub.appendChild(grid);
@@ -13736,19 +13958,29 @@ body #hub>#rightPanel.panel::before,body #hub>#rightPanel.panel::after{display:n
 .nc-play{bottom:calc(166px + env(safe-area-inset-bottom,0px))!important}
 body.nc-l .nc-grid,body.nc-r .nc-grid,body.nc-l .nc-mini,body.nc-r .nc-mini{opacity:0;pointer-events:none}
 .nc-card{min-width:0;padding:0 2px;-webkit-text-size-adjust:100%}.nc-card span{font-size:clamp(9px,2.45vw,12px);letter-spacing:-.15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;display:block}
+#ncFest{position:fixed;inset:0;z-index:8600;display:grid;place-items:center;padding:12px;background:rgba(6,6,16,.6)}#ncFest[hidden]{display:none}
+#ncFest .nf-box{width:min(460px,100%);max-height:calc(100dvh - 24px);overflow:auto;background:linear-gradient(180deg,#2a2160,#17123a);border:1px solid #8a78e0;border-radius:16px;padding:16px;color:#f4efe2;box-shadow:0 10px 40px rgba(0,0,0,.6)}
+#ncFest .nf-hd{display:flex;justify-content:space-between;align-items:center}#ncFest h2{margin:0;font:400 24px var(--f-display,serif);color:#ffd36a;letter-spacing:.06em}
+#ncFest .nf-x{width:40px;height:40px;border-radius:12px;border:1px solid #8a78e0;background:#231b48;color:#fff;font-size:22px;cursor:pointer}
+#ncFest .nf-lede{font:500 14px/1.4 system-ui,sans-serif;color:#cfc6e6;margin:8px 0 12px}#ncFest .nf-lede b{color:#ffd36a}
+#ncFest .nf-ev{font:700 13px system-ui;color:#ff8a8a;margin:4px 0 8px;letter-spacing:.05em}
+#ncFest .nf-list{display:grid;gap:8px}#ncFest .nf-it{display:flex;align-items:center;gap:10px;padding:8px;background:rgba(10,12,22,.5);border:1px solid rgba(138,106,255,.35);border-radius:12px}
+#ncFest .nf-it.on{border-color:#ffd24a}#ncFest .nf-it img{width:64px;height:64px;flex:0 0 64px;border-radius:10px;background:radial-gradient(circle,#3a2f6e,#120d2a);border:1px solid #8a78e0}
+#ncFest .nf-tx{flex:1;display:grid}#ncFest .nf-tx b{font:700 15px system-ui}#ncFest .nf-tx span{font:500 12px system-ui;color:#cfc6e6}
+#ncFest .btn small{display:block;font-size:10px}
 #ncStable{position:fixed;inset:0;z-index:8500;display:grid;place-items:center;padding:12px;background:rgba(6,6,16,.55)}#ncStable[hidden]{display:none}
 .nc-stbox{width:min(480px,100%);max-height:calc(100% - 20px);overflow:auto;padding:14px;border-radius:14px;background:linear-gradient(180deg,#241c4a,#16112e);border:1px solid #8a78e0;box-shadow:0 0 0 3px #05050c,0 0 0 4px #c9a24a,0 20px 50px rgba(0,0,0,.6);color:#f4efe2}
 .nc-stbox .nc-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}.nc-stbox .nc-head b{font:400 22px var(--f-display);color:#ffd36a;letter-spacing:.06em}
-.nc-hb{display:flex;flex-direction:column;gap:6px;align-items:flex-end;margin-top:8px;pointer-events:auto}
-.nc-hb button{width:58px;height:50px;border-radius:12px;border:1px solid #8a78e0;background:linear-gradient(180deg,#3a2f6e,#231b48);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:#f4efe2;box-shadow:0 3px 0 #120d2a,0 4px 10px rgba(0,0,0,.4);cursor:pointer;-webkit-tap-highlight-color:transparent}
+.nc-hb{display:flex;flex-direction:column;gap:5px;align-items:flex-end;margin-top:8px;pointer-events:auto}
+.nc-hb button{width:58px;height:46px;border-radius:12px;border:1px solid #8a78e0;background:linear-gradient(180deg,#3a2f6e,#231b48);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:#f4efe2;box-shadow:0 3px 0 #120d2a,0 4px 10px rgba(0,0,0,.4);cursor:pointer;-webkit-tap-highlight-color:transparent}
 .nc-hb button:active{transform:translateY(2px);box-shadow:0 1px 0 #120d2a}
 .nc-hb svg{width:19px;height:19px;fill:none;stroke:#ffd36a;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.nc-hb span{font:700 10px system-ui,sans-serif;line-height:1}
 @media (orientation:landscape) and (max-height:560px){.nc-mini{flex-direction:row!important;gap:6px!important;top:calc(env(safe-area-inset-top,0px) + 8px)!important}}
 /* 22/11: celular deitado (pouca altura) - a barra vai para o topo, no meio, em linha, longe dos botões de ataque */
-@media (orientation:landscape) and (max-height:560px){.nc-hb{position:fixed;top:calc(6px + env(safe-area-inset-top,0px));left:auto;right:calc(140px + env(safe-area-inset-right,0px));transform:none;flex-direction:row;margin-top:0;z-index:40}.nc-hb button{width:54px;height:44px}}
+@media (orientation:landscape) and (max-height:560px){.nc-hb{position:fixed;top:calc(6px + env(safe-area-inset-top,0px));left:auto;right:calc(158px + env(safe-area-inset-right,0px));transform:none;flex-direction:row;gap:4px;margin-top:0;z-index:40}.nc-hb button{width:43px;height:42px}.nc-hb span{font-size:8.5px;letter-spacing:-.2px}.nc-hb svg{width:16px;height:16px}}
 #hud #potBtn,#hud #potBtn2,#hud #ncBag{display:none!important}
 body.nc-inst #hub{z-index:60;pointer-events:none}body.nc-inst #hub>*:not(#rightPanel){visibility:hidden!important;pointer-events:none!important}
-.frow [data-buypot]{display:flex;flex-direction:column;align-items:center;line-height:1.15;max-width:120px}.frow [data-buypot] small{font-size:10.5px;opacity:.85}
+.frow [data-buypot]{display:flex;flex-direction:column;align-items:center;line-height:1.15;max-width:120px}.frow [data-buypot] small{font-size:10.5px;opacity:.85}.frow [data-ncreal]{display:flex;flex-direction:column;align-items:center;line-height:1.15;max-width:120px;min-width:96px}.frow [data-ncreal] small{font-size:10.5px;opacity:.85}.frow .iact:has([data-ncreal]){display:flex;flex-direction:column;gap:6px}
 body.nc-st #ncRoomHud,body.nc-st #ncWorlds,body.nc-st .nc-grid,body.nc-st .nc-mini,body.nc-st .nc-top{visibility:hidden!important}
 .nc-sttabs{display:flex;gap:8px;margin-bottom:8px}.nc-mlist{display:grid;gap:8px;margin:8px 0}
 .nc-mcard{display:flex;align-items:center;gap:10px;padding:8px;border-radius:12px;background:rgba(10,12,22,.55);border:1px solid #8a78e055}.nc-mcard.on{border-color:#ffd36a;box-shadow:inset 0 0 12px #ffd36a33}
@@ -13758,7 +13990,7 @@ body.nc-st #ncRoomHud,body.nc-st #ncWorlds,body.nc-st .nc-grid,body.nc-st .nc-mi
 .nc-npc{display:flex;gap:12px;align-items:center;background:linear-gradient(90deg,rgba(242,193,78,.14),transparent);border:1px solid #f2c14e55;border-radius:12px;padding:8px 10px;margin:0 0 12px}
 .nc-npc img{width:72px;height:72px;object-fit:cover;object-position:top;border-radius:10px;background:#1a1438;flex:none}
 .nc-npc b{color:#ffd36a;font:800 15px system-ui,sans-serif}.nc-npc p{margin:3px 0 0;color:#e8e2f6;font:500 13px/1.35 system-ui,sans-serif}
-@media (min-width:901px){.nc-grid>.nc-card{flex-basis:calc((100% - 48px)/9)}.nc-grid{width:min(980px,calc(100vw - 40px))}.nc-play{bottom:calc(100px + env(safe-area-inset-bottom,0px))!important}}
+@media (min-width:901px){.nc-grid>.nc-card{flex-basis:calc((100% - 54px)/10)}.nc-grid{width:min(980px,calc(100vw - 40px))}.nc-play{bottom:calc(100px + env(safe-area-inset-bottom,0px))!important}}
 </style>
 
 <script id="nc-uiscale">
