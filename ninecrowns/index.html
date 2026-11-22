@@ -8488,8 +8488,10 @@ function kkPaint(h){
 }
 /* 22/11 (Arnold: "elmo no boneco também muda de formato"): elmo 3D por grade, no osso da cabeça.
    NG gorro de couro, D elmo do cavaleiro, C + pluma, B + chifres, A + asas, S + coroa. Só liga quando NC_HELM3D = true (esperando a aprovação da foto). */
-const NC_HELM3D = !!window.NC_HELM3D, NC_HELM_T = [0, .42, .02, 1, 1.0, .56, .36, .58, .22, .8];
-function ncHelm3D(h, x){ if(!(window.NC_HELM3D || NC_HELM3D)) return; const it = equipped('helmet'), g = it ? GR_OF[it.tier] : -1, key = g + ':' + (it ? it.tier : -1);
+const NC_HELM3D = true,   // 22/11: aprovado pelo Arnold
+  NC_HELM_T = [0, .42, .02, 1, 1.0, .56, .36, .58, .22, .8];
+function ncHelm3D(h, x){ if(!(window.NC_HELM3D || NC_HELM3D)) return; let fc = 0; try{ const F = ncFestSave(); fc = F.on.cabeca && F.own[F.on.cabeca]; }catch(_){}
+  const it = fc ? null : equipped('helmet'), g = it ? GR_OF[it.tier] : -1, key = g + ':' + (it ? it.tier : -1);   // com gorro de evento, o elmo some (o gorro fica no lugar)
   if(x.helm && x.helm.userData.k === key && x.helm.parent) return; [x.helm, x.helmM].forEach(o => { if(o && o.parent) o.parent.remove(o); }); x.helm = x.helmM = null; if(g < 0) return;
   let hd = null, own = null; x.m.traverse(o => { if(!hd && o.name === 'head') hd = o; if(!own && o.isSkinnedMesh && /_Head(_Hooded)?$/.test(o.name)) own = o; }); if(!hd) return;
   if(h.cls === 'priest'){ x.m.traverse(o => { if(o.isMesh && /_Helmet$|_Hat$/.test(o.name)) o.visible = false; }); return; }   // Sacerdote: sem chapéu; a auréola muda por grade (ncClassDeco)
