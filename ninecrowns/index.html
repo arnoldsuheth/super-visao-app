@@ -7880,6 +7880,7 @@ function renderStages(){
       <div class="acts">
         <button class="btn ${wins ? '' : 'primary'}" data-play="${st.id}">${(save.fires || {})[st.id] ? 'Viajar até a fogueira' : 'Ir para a área'}</button>
         ${wins ? `<button class="btn primary" data-boss="${st.id}">Desafiar chefe</button>` : ''}
+        ${NC_DG_ON && un ? `<button class="btn" data-dg="${st.id}">Masmorra${(save.dgWins || {})['s' + st.id] ? ' ✓' : ''}</button>` : ''}${NC_DG_ON && un && st.id % 2 === 1 ? `<button class="btn" data-dgd="${st.id}">Masmorra de dupla${(save.dgWins || {})['d' + st.id] ? ' ✓' : ''}</button>` : ''}
       </div></div>`;
   }).join('') + worldCard(hubRegion);
 }
@@ -10316,6 +10317,64 @@ function ncPetUpdate(dt){ ncHeavyFx(dt); const p = ncPet; if(!p || !P) return; i
   try{ p.root.position.y = heightAt(p.root.position.x, p.root.position.z); }catch(e){ p.root.position.y = P.pos.y; }
   const want = d > .4 && p.move ? p.move : p.idle; if(want && want !== p.cur){ want.reset().play(); if(p.cur) p.cur.crossFadeTo(want, .15, false); p.cur = want; }
   p.mixer.update(dt); }
+/* ===== 22/11 MASMORRAS (regras do Arnold): 2 por reino (uma por área = 18), mais 1 de dupla por reino.
+   5 salas fechadas em sequência: limpa a sala, a porta abre; o chefe no fim. Entrada livre, sem limite.
+   Monstros com +50% de vida e dano. A de dupla pode entrar sozinho, mas fica bem mais difícil.
+   Prêmio: baú no fim com peça garantida do grade do reino (o grade do chefe da área) e pedras. */
+const NC_DG_ON = location.hash === '#nctest' || !!window.NC_DG;   // escondido até o Arnold aprovar as fotos
+let ncDG = null, ncDgG = null;
+const NC_DG_COL = [0x6a5a8a, 0x5a7a9a, 0x8a5a4a, 0x4a7a5a, 0x9a3a3a];   // cor das tochas de cada sala
+function ncDgParty(){ try{ return (ncCoop && ncCoop.ch && ncCoop.peers) ? Math.max(1, Object.keys(ncCoop.peers).length + 1) : 1; }catch(_){ return 1; } }
+function ncDgStart(stId, duo){ ncDG = {st:stId, room:0, rooms:5, duo:!!duo, mult:duo ? (ncDgParty() > 1 ? 1.7 : 2.4) : 1.5, door:false, boss:false, boosted:false, live:[]}; startStage(stId, true, false, {}); }
+function ncDgSetup(){ if(!ncDG) return; WORLD.bossRest = true; gateOpen = true;
+  const C = ncDG.C = {x:0, z:ARENA_Z}; const y0 = heightAt(C.x, C.z);   // as salas ficam dentro da arena (chão plano); o chefe espera escondido
+  if(boss){ ncDG.bz = boss.pos.z; boss.pos.z = ARENA_Z - 60; boss.cr.root.visible = false; }
+  // limpa os monstros do caminho (a masmorra tem os dela)
+  for(const e of enemies) if(e.kind === 'minion' && !e.dead){ e.dead = true; removeObj(e.cr.root); removeObj(e.bar.g); }
+  const G = ncDgG = new T.Group(); G.position.set(C.x, y0, C.z); scene.add(G);
+  const stone = mat(0x3c3846, {roughness:.95}), stone2 = mat(0x2c2834, {roughness:.95}), wood = mat(0x5a3a22, {roughness:.9});
+  const R = 11, N = 22;
+  for(let i = 0; i < N; i++){ const a = i/N*Math.PI*2; if(Math.abs(angDiff(a, Math.PI)) < .2) continue;   // vão da porta (lado do chefe)
+    const b = new T.Mesh(new T.BoxGeometry(3.2, 3.6 + (i % 3)*.5, 1.4), i % 2 ? stone : stone2); b.position.set(Math.sin(a)*R, 1.7, Math.cos(a)*R); b.rotation.y = a; b.castShadow = true; b.receiveShadow = true; G.add(b);
+    if(i % 4 === 1){ const t = new T.Group(); t.position.set(Math.sin(a)*(R - .9), 2.4, Math.cos(a)*(R - .9)); G.add(t); t.add(new T.Mesh(new T.CylinderGeometry(.07, .09, .7, 6), wood));
+      const fl = new T.Mesh(new T.OctahedronGeometry(.2), mat(NC_DG_COL[0], {emissive:NC_DG_COL[0], emissiveIntensity:2.4})); fl.position.y = .5; fl.userData.dgFlame = 1; t.add(fl); } }
+  const fl = new T.Mesh(new T.CylinderGeometry(R + .5, R + .5, .12, 32), mat(0x24202c, {roughness:1})); fl.position.y = .04; fl.receiveShadow = true; G.add(fl);
+  // porta: dois pilares, arco e o portal que acende quando a sala fica limpa
+  const dz = -R; [-1.9, 1.9].forEach(x => { const pl = new T.Mesh(new T.BoxGeometry(1, 4.6, 1.4), stone); pl.position.set(x, 2.3, dz); pl.castShadow = true; G.add(pl); });
+  const li = new T.Mesh(new T.BoxGeometry(4.8, .9, 1.5), stone); li.position.set(0, 4.8, dz); G.add(li);
+  const gate = new T.Mesh(new T.BoxGeometry(2.8, 4.1, .3), mat(0x3a2a1a, {roughness:.9})); gate.position.set(0, 2.05, dz); G.add(gate); ncDG.gate = gate;
+  const por = new T.Mesh(new T.PlaneGeometry(2.8, 4.1), new T.MeshBasicMaterial({color:0x9ad8ff, transparent:true, opacity:.75, side:T.DoubleSide})); por.position.set(0, 2.05, dz + .2); por.visible = false; G.add(por); ncDG.portal = por;
+  ncDgRoom(); }
+function ncDgRoom(){ const D = ncDG, st = curStage; D.room++; D.door = false; if(D.gate) D.gate.visible = true; if(D.portal) D.portal.visible = false;
+  const col = NC_DG_COL[(D.room - 1) % NC_DG_COL.length]; if(ncDgG) ncDgG.traverse(o => { if(o.userData.dgFlame){ o.material.color.setHex(col); o.material.emissive.setHex(col); } });
+  P.pos.set(D.C.x, heightAt(D.C.x, D.C.z), D.C.z + 6); P.face = P.targetFace = Math.PI;
+  const n = 4 + D.room*2, el = D.room >= 3 ? D.room - 2 : 0; D.live = [];
+  for(let i = 0; i < n + el; i++){ const a = Math.random()*Math.PI*2, r = 2.5 + Math.random()*5.5, x = D.C.x + Math.sin(a)*r, z = D.C.z - 2 + Math.cos(a)*r*.8;
+    const e = spawnMinion(st, x, z, true, i >= n, null); e.hp = e.maxHp = Math.round(e.maxHp*D.mult); e.dmg *= D.mult; D.live.push(e); }
+  banner((D.duo ? 'Masmorra de dupla' : 'Masmorra') + ' · Sala ' + D.room + ' de ' + D.rooms, 'Derrote todos os monstros para abrir a porta', D.room >= D.rooms ? 'danger' : ''); }
+function ncDgTick(dt){ const D = ncDG; if(!D || mode !== 'stage' || !D.C) return;
+  if(D.busy) return;
+  if(!D.boss){ const dx = P.pos.x - D.C.x, dz = P.pos.z - D.C.z, m = Math.hypot(dx, dz), lim = 9.9;
+    const atDoor = D.door && Math.abs(dx) < 1.6 && dz < -lim + 1.5;
+    if(m > lim && !atDoor){ P.pos.x = D.C.x + dx/m*lim; P.pos.z = D.C.z + dz/m*lim; }
+    for(const e of D.live) if(!e.dead){ const ex = e.pos.x - D.C.x, ez = e.pos.z - D.C.z, em = Math.hypot(ex, ez); if(em > lim){ e.pos.x = D.C.x + ex/em*lim; e.pos.z = D.C.z + ez/em*lim; } }
+    if(!D.door && D.live.every(e => e.dead || e.hp <= 0)){ D.door = true; if(D.gate) D.gate.visible = false; if(D.portal) D.portal.visible = true; SFX.drop && SFX.drop(); banner('Sala limpa!', D.room >= D.rooms ? 'A porta do chefe abriu' : 'A porta abriu: siga para a próxima sala'); }
+    if(D.portal && D.portal.visible) D.portal.material.opacity = .55 + Math.sin(performance.now()/180)*.2;
+    if(D.door && dz < -lim + .6 && Math.abs(dx) < 1.6){
+      $('#fade').classList.add('on'); D.busy = true;
+      setTimeout(() => { if(!ncDG) return; D.busy = false; if(D.room < D.rooms) ncDgRoom(); else ncDgBoss(); setTimeout(() => $('#fade').classList.remove('on'), 150); }, 380);
+      D.door = false; } }
+  else if(!D.boosted && boss){ D.boosted = true; boss.hp = boss.maxHp = Math.round(boss.maxHp*D.mult); boss.dmg *= D.mult; } }
+function ncDgBoss(){ const D = ncDG; D.boss = true; if(ncDgG){ ncDgG.parent && ncDgG.parent.remove(ncDgG); ncDgG = null; }
+  if(boss){ boss.pos.z = D.bz != null ? D.bz : ARENA_Z - 3; boss.cr.root.visible = true; }
+  WORLD.bossRest = false; gateOpen = true; P.pos.set(0, heightAt(0, ARENA_Z + 8), ARENA_Z + 8); P.face = P.targetFace = Math.PI;
+  banner('Sala do chefe', 'Vença ' + curStage.boss + ' para abrir o baú da masmorra', 'danger'); }
+function ncDgReward(st){ const D = ncDG; if(!D) return null; const [lo, hi] = bossRange(st), out = [];
+  const it = newItem(randomSlot(), Math.min(hi, lo + (Math.random() < .35 ? 1 : 0)), {wtype:CLS().wtype}); if(addItem(it)){ out.push(it); runLoot.push(it); }
+  if(D.duo){ const it2 = newItem(randomSlot(), hi, {wtype:CLS().wtype}); if(addItem(it2)){ out.push(it2); runLoot.push(it2); } }
+  try{ giveMat('scoin', 2 + st.region); if(st.region >= 1) giveMat('gcoin', 1 + st.region); if(st.region >= 2) giveMat('lblue', 2); }catch(_){}
+  save.dgWins = save.dgWins || {}; const k = (D.duo ? 'd' : 's') + st.id; save.dgWins[k] = (save.dgWins[k] || 0) + 1;
+  banner('Baú da masmorra!', out.length ? 'Ganhou ' + out.map(itemName).join(' e ') : 'Bolsa cheia: libere espaço', 'gold'); ncDG = null; return out; }
 function spawnMinion(st, x, z, awake, elite, type){
   if(elite) type = null; const ET = type ? ETYPE[type] : null;
   let col = st.minion.color; if(ET && ET.tint !== 1) col = new T.Color(col).multiplyScalar(ET.tint).getHex(); if(type === 'bomber') col = new T.Color(col).lerp(new T.Color(0xd04020), .55).getHex(); if(type === 'shaman') col = new T.Color(col).lerp(new T.Color(0x6a3aa0), .5).getHex();
@@ -11942,6 +12001,7 @@ function bossDefeated(b){
   for(const e of enemies) if(e.kind === 'minion' && !e.dead && Math.hypot(e.pos.x, e.pos.z - ARENA_Z) < ARENA_R + 6){ burst(e.pos, curStage.minion.color, 8, 5, 5); e.dead = true; removeObj(e.cr.root); removeObj(e.bar.g); }
   const st = curStage, id = st.id;
   const ncFirst = !(save.beaten[id] > 0);
+  try{ if(ncDG && ncDG.boss) ncDgReward(st); }catch(_){ ncDG = null; }
   save.beaten[id] = (save.beaten[id]||0) + 1; ncKingFall(id, ncFirst);
   const hadSet = ownsSet(st.region*2 + 2);
   let main;
@@ -12467,6 +12527,7 @@ function updateHUD(){
   const nR = runes.filter(r => r.taken).length; let near = null, nd = 1e9;
   for(const r of runes) if(!r.taken){ const d = Math.hypot(P.pos.x - r.x, P.pos.z - r.z); if(d < nd){ nd = d; near = r; } }
   $('#hObj').innerHTML = bossActive ? `Derrote o <b>${curStage.boss}</b>` : boss && boss.dying ? 'Vitória!' :
+    (ncDG && ncDG.C) ? (ncDG.door ? 'Porta aberta: <b>siga em frente</b>' : `Sala <b>${ncDG.room}/${ncDG.rooms}</b> · monstros: <b>${ncDG.live.filter(e => !e.dead).length}</b>`) :
     gateOpen ? 'Portal aberto: siga para a <b>arena no norte</b>' :
     `Postos libertados <b>${nR}/${runes.length}</b>` + (near ? (nd < 22 ? `<br>Guardas neste posto: <b>${near.guards}</b>` : '<br>Siga os feixes roxos e derrote os guardas marcados') : '');
   const fr = [Math.max(0, P.atkCd)/atkCooldown(), P.cd[ncSlot(0)]/(c.skills[ncSlot(0)].cd*ncSkFast(ncSlot(0))), P.cd[ncSlot(1)]/(c.skills[ncSlot(1)].cd*ncSkFast(ncSlot(1))), Math.max(0, P.dashCd)/(c.attack === 'bolt' || c.attack === 'dark' ? .9 : .7), 0];
@@ -12590,6 +12651,7 @@ function updateCamera(dt){
 /* ================= FLOW ================= */
 function hideModals(){ ['#result','#dead','#pause'].forEach(s => $(s).hidden = true); }
 function goHub(){
+  ncDG = null; if(ncDgG){ try{ ncDgG.parent && ncDgG.parent.remove(ncDgG); }catch(_){} ncDgG = null; }
   persist();
   mode = 'hub'; running = false; inputLocked = false; resultT = deadT = -1; timeScale = 1;
   hideModals(); $('#hud').hidden = true; $('#touch').hidden = true; $('#bossBar').hidden = true; $('#banner').className = ''; $('#mm').classList.remove('big'); $('#feed').innerHTML = '';
@@ -12688,6 +12750,7 @@ function startStage(id, onlyBoss, world, o){
   if(WORLD.busy){ WORLD.busy = false; setTimeout(() => $('#fade').classList.remove('on'), 150); }
   if(o.carry){ const c = o.carry; P.hp = Math.max(1, Math.round(P.S.hp*Math.min(1, c.hp))); runLoot = c.runLoot; runMats = c.runMats; runGems = c.runGems; runFrags = c.runFrags; runCoins = c.runCoins; }
   mode = 'stage'; running = true; inputLocked = false; resultT = deadT = -1; timeScale = 1; shake = 0;
+  if(ncDG && ncDG.st === id && !ncDG.C) setTimeout(ncDgSetup, 250); else if(ncDG && ncDG.st !== id) ncDG = null;
   attackHeld = attackPressed = dashPressed = false;
   renderSkillbar(); playMusic(themeNow());
   $('#hud').hidden = false; $('#touch').hidden = inputDev !== 'touch'; $('#skillbar').hidden = inputDev === 'touch'; $('#bossBar').hidden = true; $('#bossBar').classList.remove('rage');
@@ -12798,6 +12861,8 @@ $('#rightPanel').addEventListener('click', e => {
   const d = b.dataset;
   if(d.view){ hubView = d.view; renderHub(); return; }
   if(d.region !== undefined){ hubRegion = +d.region; renderHub(); return; }
+  if(d.dg){ ncDgStart(+d.dg, false); return; }
+  if(d.dgd){ ncDgStart(+d.dgd, true); return; }
   if(d.play){ startStage(+d.play, false, false); return; }
   if(d.boss){ startStage(+d.boss, true, false); return; }
   if(d.filter){ invFilter = d.filter; renderHub(); return; }
@@ -13491,6 +13556,7 @@ function loop(now){
   if(mode === 'stage'){ const fl = 2.6 + Math.sin(clock*13)*.35 + Math.sin(clock*7.3 + 1)*.3; TORCH.emissiveIntensity = fl; FIRE.emissiveIntensity = fl*.95; }
   adaptRes(dt);
   if(ncXmasSnow) ncXmasTick(dt);
+  if(ncDG) ncDgTick(dt);
   if(ncSAura) ncSAuraTick(dt);
   if(mode === 'hub'){ updateHub(dt); ncHubPetTick(dt); }
   else {
