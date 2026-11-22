@@ -6144,7 +6144,8 @@ const ncBak = {
 try{ ncBak.make(); }catch(e){}
 setTimeout(() => { try{ ncCloud.boot(); }catch(e){} }, 2500);
 
-const xpNeed = l => Math.round(40 * Math.pow(1 + (l - 1)*NC_LV_K, 1.45) * NC_LV_K * 1.5);   // NINE CROWNS: 80 niveis no mesmo caminho que antes dava 44
+const NC_XP = {need:4, minion:.35, elite:6, boss:3};
+const xpNeed = l => Math.round(40 * Math.pow(1 + (l - 1)*NC_LV_K, 1.45) * NC_LV_K * NC_XP.need);   // NINE CROWNS: 80 niveis no mesmo caminho que antes dava 44
 const baseChance = id => Math.max(.06, .12 - id*.0035);
 const chanceFor = id => (save.pity[id] || 0) >= CFG.pity.hard ? 1 : Math.min(1, (baseChance(id) + DF().drop*.3 + (save.pity[id] || 0)*CFG.pity.inc)*LUCK());
 const exChance = id => (save.pityEx[id] || 0) >= CFG.pity.exHard ? 1 : Math.min(1, (CFG.pity.exCh + (save.pityEx[id] || 0)*CFG.pity.exInc)*LUCK());
@@ -10805,7 +10806,8 @@ function killMinion(e){
   if(e.post && !e.post.taken){ e.post.guards--; if(e.post.guards <= 0) postFreed(e.post); else floatText(e.pos, 'Guardas: ' + e.post.guards, 'gold'); }
   burst(e.pos, curStage.minion.color, 12, 6, 6);
   const id = curStage.id, k = e.elite ? 5 : 1;
-  gainXP(Math.round(10*Math.pow(1.2, id))*k);
+  /* 22/11 (Arnold): jogo para ~80 h; comum dá pouco XP, elite dá muito, para puxar o jogador às áreas de elite e ao Boss */
+  gainXP(Math.round(10*Math.pow(1.2, id)*(e.elite ? NC_XP.elite : NC_XP.minion)));
   spawnPickup('gold', e.pos, Math.round((2 + Math.random()*3)*Math.pow(1.15, id))*k);
   const rw = Math.min(2, DF().reward)*LUCK(), sp = CFG.species[id] || 'metal', basic = id % 2 ? 'minerio' : 'metal', ev = evFx();
   save.cnt.kills = (save.cnt.kills || 0) + 1;
@@ -11308,7 +11310,7 @@ function bossDefeated(b){
 
   const xp = Math.round(120*Math.pow(1.2, id)*DF().reward), gold = Math.round(30*Math.pow(1.2, id)*DF().reward);
   save.best = save.best || {}; const di = DIFF_ORDER.indexOf(save.diff); if(di > (save.best[id] ?? -1)) save.best[id] = di;
-  gainXP(Math.round(xp/DF().reward)); save.gold += gold;
+  gainXP(Math.round(xp/DF().reward*NC_XP.boss)); save.gold += gold;
   const setDone = !hadSet && ownsSet(st.region*2 + 2);
   persist();
   P.S = stats(); applyGear(hero);
@@ -13641,9 +13643,9 @@ body #hub>#rightPanel.panel::before,body #hub>#rightPanel.panel::after{display:n
 .nc-card:hover{background:linear-gradient(180deg,#46398a,#2a2058)}
 .nc-card:active,.nc-card.on{transform:translateY(3px);box-shadow:0 1px 0 #120d2a,0 2px 6px rgba(0,0,0,.45),inset 0 2px 6px rgba(0,0,0,.4)}
 .nc-mini{position:absolute;right:calc(10px + env(safe-area-inset-right,0px));top:calc(env(safe-area-inset-top,0px) + 78px);z-index:4;display:flex;flex-direction:column;gap:6px}
-.nc-minib{width:42px;height:42px;border-radius:12px;border:1px solid #ffffff44;background:rgba(15,12,30,.55);display:grid;place-items:center;cursor:pointer;box-shadow:0 3px 0 rgba(0,0,0,.4)}
+.nc-minib{width:62px;height:54px;border-radius:12px;border:1px solid #8a78e0;background:linear-gradient(180deg,#3a2f6e,#231b48);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;box-shadow:0 3px 0 #120d2a,0 4px 10px rgba(0,0,0,.4);color:#f4efe2}
 .nc-minib:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(0,0,0,.4)}
-.nc-minib svg{width:20px;height:20px;fill:none;stroke:#f4efe2;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.nc-minib span{display:none}
+.nc-minib svg{width:20px;height:20px;fill:none;stroke:#ffd36a;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.nc-minib span{display:block;font:700 10.5px system-ui,sans-serif;line-height:1}
 .nc-play{bottom:calc(166px + env(safe-area-inset-bottom,0px))!important}
 body.nc-l .nc-grid,body.nc-r .nc-grid,body.nc-l .nc-mini,body.nc-r .nc-mini{opacity:0;pointer-events:none}
 .nc-card span{font-size:11.5px}
