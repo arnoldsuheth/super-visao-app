@@ -8453,6 +8453,7 @@ function ncHead(h, col0){ const x = h.mx; if(!x || !x.d.kk2) return; const col =
 function kkPaint(h){
   const x = h.mx; if(!x) return; const d = x.d, k = d.kk2, tOf = s => { const it = equipped(s); return it ? it.tier : -1; }, mix = (a, b, t) => new T.Color(a).lerp(new T.Color(b), t).getHex();
   const hide = k.hide.slice(); if(tOf('helmet') < 0) hide.push('_Helmet$', '_Hat$');
+  try{ const F = ncFestSave(); if(F.on.cabeca && F.own[F.on.cabeca]) hide.push('_Helmet$', '_Hat$'); }catch(_){}   // 22/11 (Arnold): gorro/chifre de evento fica NO LUGAR do chapéu e do elmo, não por cima
   if(d.model === 'kk_knight' && !k.noShield){ const st = tOf('shield'), want = h.cls === 'paladin' ? (st >= 7 ? 'Spike_Shield' : 'Rectangle_Shield') : st >= 8 ? 'Spike_Shield' : st >= 5 ? 'Rectangle_Shield' : st >= 3 ? 'Badge_Shield' : 'Round_Shield';
     ['Badge_Shield','Rectangle_Shield','Round_Shield','Spike_Shield'].forEach(n => { const i = hide.indexOf(n); if(i >= 0) hide.splice(i, 1); if(n !== want) hide.push('^' + n + '$'); }); }
   if(h.cls === 'archer' && GR_OF[Math.max(0, tOf('weapon'))] < 2){ const i = hide.indexOf('1H_Crossbow'); if(i >= 0) hide.splice(i, 1); hide.push('2H_Crossbow'); }   // 22/11: NG e D usam a besta pequena; do C em diante, a besta grande
@@ -10825,7 +10826,7 @@ function ncFestMesh(k, R){ const g = new T.Group(), red = ncFestMat(0x9e1424), w
 function ncFestApply(h){ try{ if(!h || !h.root) return; (h.festObjs || []).forEach(o => { if(o.parent) o.parent.remove(o); }); h.festObjs = [];
   const F = ncFestSave(), want = ['cabeca', 'rosto', 'pescoco'].map(l => F.on[l]).filter(k => k && F.own[k] && NC_FEST[k]); if(!want.length) return;
   const cab = F.on.cabeca && F.own[F.on.cabeca];
-  if(cab){ (h.headwear || []).forEach(m => m.visible = false); ((h.armor && h.armor.helmet) || []).forEach(m => m.visible = false); }   // o gorro/chifre fica no lugar do chapéu e do elmo (só a aparência)
+  if(cab){ (h.headwear || []).forEach(m => m.visible = false); ((h.armor && h.armor.helmet) || []).forEach(m => m.visible = false); if(h.mx && h.mx.m) h.mx.m.traverse(m => { if(m.isMesh && /_Helmet$|_Hat$/.test(m.name)) m.visible = false; }); }   // o gorro/chifre fica no lugar do chapéu e do elmo (só a aparência)
   h.root.updateMatrixWorld(true); const bone = h.mx && h.mx.bones && h.mx.bones.head; let hh = 1.6; try{ hh = ncHeroH(h); }catch(e){}
   const anchor = bone || h.root, hp = new T.Vector3(); (bone || h.root).getWorldPosition(hp);
   const R = hh*.21, cy = bone ? hp.y + R*1.0 : h.root.position.y + hh - R;                              // centro da cabeça (o osso fica no pescoço)
