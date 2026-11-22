@@ -5713,7 +5713,7 @@ CLASSES.necro = {name:'Necromante', tag:'Foice e mortos-vivos', wtype:'scythe', 
             {id:'corpse', name:'Cadáver', full:'Explosão de Cadáver', cd:10, desc:'explode a área do alvo com energia verde'},
             {id:'scythe', name:'Foice', full:'Foice Sombria', cd:9, desc:'gira a foice em volta: dano e recupera 10% de vida'},
             {id:'reaper', name:'Ceifador', full:'Ceifador', cd:30, desc:'SUPREMA: um corte de morte em linha gigante que devolve 20% de vida'}]};
-/* 22/11: classes novas (Sacerdote e Xamã). Ficam ESCONDIDAS até o Arnold aprovar o visual na página de aprovação; só aparecem no modo de teste (#nctest). */
+/* 22/11: classes novas (Sacerdote e Xamã). Aprovadas pelo Arnold em 22/11. */
 CLASSES.priest = {name:'Sacerdote', tag:'Cura e proteção', wtype:'staff', desc:'Cura e protege o grupo com a luz, e pune os inimigos de longe.', hp:.9, atk:.8, def:.95, spd:1, block:0, crit:0, cd:.48, attack:'holy', dash:'Passo da Luz',
   skills:[{id:'pheal', name:'Cura', full:'Cura', cd:6, desc:'cura 25% da vida'},
           {id:'pshield', name:'Escudo', full:'Escudo Sagrado', cd:14, desc:'um escudo de luz segura o dano por 6 s'},
@@ -5728,7 +5728,7 @@ CLASSES.shaman = {name:'Xamã', tag:'Totens e natureza', wtype:'staff', desc:'Ch
             {id:'squake', name:'Terremoto', full:'Terremoto', cd:9, desc:'treme o chão em volta e atordoa'},
             {id:'swolf', name:'Lobo', full:'Lobo Espiritual', cd:16, desc:'chama um aliado que luta junto'},
             {id:'sstorm', name:'Tempestade', full:'Tempestade Ancestral', cd:30, desc:'SUPREMA: raios caem na área por vários segundos'}]};
-const NC_NEWCLS = location.hash === '#nctest' || !!window.NC_NEWCLS;
+const NC_NEWCLS = true;   // 22/11: Arnold aprovou o visual do Sacerdote e do Xamã
 const CLASS_ORDER = ['warrior','barbarian','mage','archer','paladin','assassin','monk','necro'].concat(NC_NEWCLS ? ['priest','shaman'] : []);
 const CLS = () => CLASSES[save.cls] || CLASSES.warrior;
 // Especializacao (nivel 30): cada classe escolhe 1 de 2 caminhos. A escolha fica guardada por classe.
@@ -8431,7 +8431,7 @@ function kkTex(model, col){
 /* Rosto e cabelo (aprovado pelo Arnold em 20/11): troca a cabeça inteira por a de outro boneco KayKit, que usa o mesmo esqueleto.
    Assim não fica cabelo por cima de cabelo. A cor do cabelo e da pele continua valendo, pela cartela de cores de cada modelo. */
 const NC_HEADS = [['', 'Da classe'], ['kk_knight', 'Loiro curto'], ['kk_barbarian', 'Careca de barba'], ['kk_mage', 'Cabelo escuro'], ['kk_rogue', 'Cabelo comprido']];   // capuz não é cabelo: é acessório de cabeça (aparece com o capacete equipado)
-MX_DEF.priest = {model:'kk_mage', anims:'kk:priest', h:1.95, kk2:{hide:['^Spellbook$','Spellbook_open','1H_Wand','_Hat$'], clips:{atk1:'Spellcast_Shoot', atk2:'Spellcast_Shoot', atk3:'Spellcast_Raise', smash:'Spellcast_Long', spin:'Spellcast_Raise'}, cloth:0xf4f0e6, cape:0xd8b65c, trim:0xd8b65c, hair:0xf0d890}, atk:{at:.2, speed:1.9}};   // visual provisório: espera a escolha do Arnold
+MX_DEF.priest = {model:'kk_mage', anims:'kk:priest', h:1.95, kk2:{hide:['^Spellbook$','Spellbook_open','1H_Wand','_Hat$'], clips:{atk1:'Spellcast_Shoot', atk2:'Spellcast_Shoot', atk3:'Spellcast_Raise', smash:'Spellcast_Long', spin:'Spellcast_Raise'}, cloth:0xf4f0e6, cape:0xd8b65c, trim:0xd8b65c, hair:0xf0d890}, atk:{at:.2, speed:1.9}};
 MX_DEF.shaman = {model:'kk_barbarian', anims:'kk:shaman', h:2.15, kk2:{hide:['Offhand','Barbarian_Round_Shield','^1H_Axe$','Mug'], clips:{atk1:'Spellcast_Shoot', atk2:'Spellcast_Shoot', atk3:'Spellcast_Raise', smash:'Spellcast_Long', spin:'Spellcast_Raise'}, cloth:0x2a8a7a, cape:0xd0702a, trim:0xf4efe6}, atk:{at:.2, speed:1.9}};
 const NC_HEAD_CLS = {kk_knight:'warrior', kk_barbarian:'barbarian', kk_mage:'mage', kk_rogue:'assassin', kk_rogue_hooded:'archer'};
 function ncHead(h, col0){ const x = h.mx; if(!x || !x.d.kk2) return; const col = {}; if(col0.hair) col.hair = col0.hair; if(col0.skin) col.skin = col0.skin;   // o rosto só recebe cor de cabelo e pele
@@ -13796,7 +13796,9 @@ window.ncCoop = ncCoop;
     horse:'M7 21v-9a5 5 0 0 1 10 0v9 M5 21h4 M15 21h4 M8.500 14h.01 M15.500 14h.01',potion:'M10 3h4 M10.500 3v5L6 16a3.500 3.500 0 0 0 3 5h6a3.500 3.500 0 0 0 3-5l-4.500-8V3 M7.500 14h9'};
   /* ícones pintados das habilidades (Painterly Spell Icons, eleazzaar, CC-BY 3.0): escolha do Arnold em 20/11 */
   var PIC={icelance:1,meteor:1,arcshield:1,storm:1,trap:1,backstep:1,explarrow:1,eagle:1,healight:1,charge:1,judgment:1,kingaura:1,poison:1,smoke:1,deathmark:1,bladedance:1,hundred:1,meditate:1,flykick:1,dragon:1,curse:1,corpse:1,scythe:1,reaper:1,axeboom:1,thunder:1,chain:1,cataclysm:1,wcry:1,cleave:1,wall:1,kingblade:1,bash:1,whirl:1,leap:1,rage:1,fireball:1,frost:1,volley:1,pierce:1,holy:1,aegis:1,shadow:1,fan:1,quake:1,cyclone:1,drain:1,army:1};
-  function url(k,c){if(PIC[k]&&!c)return 'url("assets/skills/'+k+'.jpg")';var d=P[k]||P.atk;return "url(\"data:image/svg+xml,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="'+(c||'#fff')+'" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="'+d+'"/></svg>')+"\")"}
+  /* 22/11: Sacerdote e Xamã usam ícones do mesmo pacote pintado */
+  var AL={pheal:'healight',pshield:'arcshield',psmite:'judgment',pbless:'kingaura',prenew:'meditate',pchoir:'holy',stotem:'healight',schain:'chain',sfury:'rage',squake:'quake',swolf:'eagle',sstorm:'storm'};
+  function url(k,c){if(AL[k])k=AL[k];if(PIC[k]&&!c)return 'url("assets/skills/'+k+'.jpg")';var d=P[k]||P.atk;return "url(\"data:image/svg+xml,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="'+(c||'#fff')+'" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="'+d+'"/></svg>')+"\")"}
   var G={atk:'radial-gradient(circle at 35% 26%,#ff8a7c,#c0303a 60%,#6e141c)',skl:'radial-gradient(circle at 35% 26%,#a88bff,#5a36c0 60%,#281259)',dash:'radial-gradient(circle at 35% 26%,#6fe0d0,#1f8f8a 60%,#0d3f47)',horse:'radial-gradient(circle at 35% 26%,#ffd27a,#b9801f 60%,#5a380a)'};
   /* poções pintadas (22/11): frasco redondo com líquido, reflexo, bolhas e rolha. hp = vermelha, mp = azul, sp = verde */
   var PC={hp:['#ff8a8a','#e0283a','#7a0a1a'],mp:['#8ac8ff','#2a6ae0','#0a2470'],sp:['#b8ff8a','#3ac040','#0e5a1a']};
