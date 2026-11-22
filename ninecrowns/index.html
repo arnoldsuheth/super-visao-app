@@ -8206,12 +8206,14 @@ function gemsHTML(){
 /* ===== LOJA ===== */
 let shopSlot = 'helmet';
 const SHOP = [
-  {n:'Pedra Comum aleatória', p:4, g:() => giveGem(rndGem(), 1)}, {n:'Pedra Incomum aleatória', p:12, g:() => giveGem(rndGem(), 2)}, {n:'Pedra Rara aleatória', p:35, g:() => giveGem(rndGem(), 3)},
-  {n:'10 Silver Coin', p:15, g:() => ncAddMat('scoin', 10)}, {n:'10 Green Coin', p:30, g:() => ncAddMat('gcoin', 10)}, {n:'10 Gold Coin', p:60, g:() => ncAddMat('ocoin', 10)},
-  {n:'5 Lesser Blue', p:25, g:() => ncAddMat('lblue', 5)}, {n:'1 Lesser Gold', p:40, g:() => ncAddMat('lgold', 1)},
+  {n:'Pedra Comum aleatória', a:100, g:() => giveGem(rndGem(), 1)}, {n:'Pedra Incomum aleatória', a:300, g:() => giveGem(rndGem(), 2)}, {n:'Pedra Rara aleatória', a:900, g:() => giveGem(rndGem(), 3)},
+  {n:'10 Silver Coin', a:300, g:() => ncAddMat('scoin', 10)}, {n:'10 Green Coin', a:800, g:() => ncAddMat('gcoin', 10)}, {n:'10 Gold Coin', a:2500, g:() => ncAddMat('ocoin', 10)},
+  {n:'5 Lesser Blue', a:1500, g:() => ncAddMat('lblue', 5)}, {n:'1 Lesser Gold', a:5000, g:() => ncAddMat('lgold', 1)},   // preços em Adena (bronze): 100 = 1 de prata
 ];
 const shopPrice = p => Math.max(1, Math.round(p*CFG.shopMult*NC_ECON));
-const piecePrice = t => shopPrice(5*Math.pow(1.85, t));
+/* 22/11 (Arnold): o Mercador vende em ADENA (Moeda Real é a moeda especial). Preço em prata, um pouco acima da Forja (lá precisa de material) */
+const NC_SHOP_PRATA = [2, 4, 9, 15, 20, 32, 45, 120];
+const piecePrice = t => Math.round((NC_SHOP_PRATA[t] || 120)*100);
 const evKey = () => { const e = curEvent(); return e ? e.id + Math.floor(Date.now()/6048e5) : ''; };
 function renderShop(){
   const E = curEvent();
@@ -8222,23 +8224,30 @@ function renderShop(){
       + row(rk, ncPotResName(), rk === 'mp' ? 'Recupera 60% da mana.' : 'Recupera 60% da stamina.', save.potRes || 0, 'res') + `</div>`; }
   /* 22/11 (Arnold): troca 10 de ouro em Adena = 1 Moeda Real */
   h += `<h2>Trocar Adena</h2><div class="blist"><div class="frow" style="--tc:#ffd24a"><span class="ncpot"><svg viewBox="0 0 24 24" width="34" height="34"><circle cx="12" cy="12" r="10" fill="#ffd24a" stroke="#8a5a10" stroke-width="1.5"/><path d="M7 15l1-6 2.5 3L12 8l1.5 4L16 9l1 6Z" fill="#8a5a10"/></svg></span><div><div class="fn">1 Moeda Real <small style="color:var(--mute)">você tem ${save.coins}</small></div><div class="istat">Use nos Itens Festivos e no Mercador.</div></div><div class="iact"><button class="btn sm primary" data-ncreal="1" ${save.gold >= 100000 ? '' : 'disabled'}>Trocar<small>10 de ouro</small></button><button class="btn sm" data-ncreal="10" ${save.gold >= 1000000 ? '' : 'disabled'}>×10<small>100 de ouro</small></button></div></div></div>`;
-  h += E ? `<div class="evbox" style="--tc:${E.css}"><div class="big">Evento: ${E.n}</div><div class="istat">Termina em ${evEnds()} dia${evEnds() > 1 ? 's' : ''}.</div><p class="lede">${E.d} Peça exclusiva do evento (+10% nos atributos, só enquanto o evento durar, 1 por semana).</p>
+  h += E ? `<h2>Evento</h2><div class="evbox" style="--tc:${E.css}"><div class="big">Evento: ${E.n}</div><div class="istat">Termina em ${evEnds()} dia${evEnds() > 1 ? 's' : ''}.</div><p class="lede">${E.d} Peça exclusiva do evento (+10% nos atributos, só enquanto o evento durar, 1 por semana).</p>
     <div class="row">
     <button class="btn sm primary" data-evbuy="1" ${save.coins >= shopPrice(60) && !save.evBought[evKey()] ? '' : 'disabled'}>${save.evBought[evKey()] ? 'Já comprada nesta semana' : SLOT_INFO[shopSlot].n + ' ' + E.n + ' · ' + shopPrice(60) + ' moedas'}</button></div></div>` : '';
-  h += `<h2>Equipamentos <small>Toque numa peça para comprar com Moedas Reais (você ganha Moedas Reais em missões e chefes). A loja vende até ${TIERS[CFG.shopMaxTier].sc}; Grade A e S só caindo de chefe ou na Forja.</small></h2>
+  h += `<h2>Equipamentos <small>Compre com Adena. A loja vende até ${TIERS[CFG.shopMaxTier].sc}; Grade A e S só caindo de chefe ou na Forja.</small></h2>
     <div class="fsel">${[...ARMOR, 'weapon', 'shield', 'amulet'].filter(sl => sl !== 'shield' || save.cls === 'paladin').map(sl => `<button class="chipb" data-sslot="${sl}" aria-pressed="${shopSlot === sl}">${SLOT_INFO[sl].n}</button>`).join('')}</div><div class="shopgrid">`;
   for(let t = 0; t <= Math.min(CFG.shopMaxTier, 7); t++){ const p = piecePrice(t);
     let st = ''; try{ const pv = {id:-1, slot:shopSlot, tier:t, q:0, up:0, cls:save.cls}; if(shopSlot === 'weapon'){ pv.wtype = CLS().wtype; pv.v = 0; } st = statText(itemStats(pv)); }catch(e){}
     const lvOk = save.level >= grLv(t);
-    h += `<button class="scard" style="--tc:${TIERS[t].css}" data-sbuy="${t}" ${save.coins >= p ? '' : 'disabled'}>${pieceImg(t, shopSlot, 'ps-card', shopSlot === 'weapon' ? CLS().wtype : null)}<b>${shopSlot === 'weapon' ? 'Arma' : SLOT_INFO[shopSlot].n} ${TIERS[t].pre}</b><small>${TIERS[t].sc} · ${TIERS[t].n}</small><small style="color:#f4efe2">${st}</small><small style="color:${lvOk ? 'var(--mute)' : '#ff7a6a'}">${lvOk ? 'Você já pode usar' : 'Para usar: nível ' + grLv(t)}</small><span>${p} Moedas Reais${save.coins >= p ? '' : ' (você tem ' + save.coins + ')'}</span></button>`; }
+    h += `<button class="scard" style="--tc:${TIERS[t].css}" data-sbuy="${t}" ${save.gold >= p ? '' : 'disabled'}>${pieceImg(t, shopSlot, 'ps-card', shopSlot === 'weapon' ? CLS().wtype : null)}<b>${shopSlot === 'weapon' ? 'Arma' : SLOT_INFO[shopSlot].n} ${TIERS[t].pre}</b><small>${TIERS[t].sc} · ${TIERS[t].n}</small><small style="color:#f4efe2">${st}</small><small style="color:${lvOk ? 'var(--mute)' : '#ff7a6a'}">${lvOk ? 'Você já pode usar' : 'Para usar: nível ' + grLv(t)}</small><span>${adenaTxt(p)}${save.gold >= p ? '' : ' (você tem ' + adenaTxt(save.gold) + ')'}</span></button>`; }   // 22/11: o preço é em Adena (o texto dizia Moedas Reais por engano)
   h += `</div><h2>Trocar fragmentos <small>junte fragmentos de uma armadura para trocar por uma peça dela</small></h2><div class="blist">`;
   h += TIERS.map((T, t) => { const need = CFG.frag[t], have = save.frags[t] || 0;
     return `<div class="frow" style="--tc:${T.css}">${pieceImg(t, 'chest', 'ps-row')}<div><div class="fn" style="color:${T.css}">Fragmentos ${T.pre} · ${T.sc}</div>
       ${need ? `<div class="pbar"><i style="width:${Math.min(100, have/need*100)}%"></i><span>${have} / ${need}</span></div>` : `<div class="istat">Você tem ${have}. A ${T.model} não pode ser trocada: só cai de Chefes Mundiais ou é fabricada com Lesser Gold.</div>`}</div>
       <button class="btn sm ${need && have >= need ? 'primary' : ''}" data-fragx="${t}" ${need && have >= need ? '' : 'disabled'}>Trocar</button></div>`; }).join('') + '</div>';
-  h += `<h2>Materiais e pedras</h2><div class="blist">${SHOP.map((o, i) => `<div class="frow"><span></span><div class="fn">${o.n}</div><button class="btn sm" data-mbuy="${i}" ${save.coins >= shopPrice(o.p) ? '' : 'disabled'}>${shopPrice(o.p)} moedas</button></div>`).join('')}</div>`;
-  $('#shopBody').innerHTML = h;
+  h += `<h2>Materiais e pedras</h2><div class="blist">${SHOP.map((o, i) => `<div class="frow"><span></span><div class="fn">${o.n}</div><button class="btn sm" data-mbuy="${i}" ${save.gold >= o.a ? '' : 'disabled'}>${adenaHTML(o.a)}</button></div>`).join('')}</div>`;
+  $('#shopBody').innerHTML = ncTabify(h, 'shop');
 }
+/* 22/11 (Arnold: "não estão separados por abas dentro dos menus"): cada título <h2> do menu vira uma aba; mostra uma seção por vez */
+window.ncTabSel = window.ncTabSel || {};
+function ncTabify(h, key){ const parts = h.split('<h2>'); if(parts.length < 3) return h; const head = parts.shift();
+  const secs = parts.map(p => { const i = p.indexOf('</h2>'), t = p.slice(0, i).replace(/<small>.*?<\/small>/g, '').replace(/<[^>]+>/g, '').trim(); return {t, body:'<h2>' + p}; });
+  let sel = ncTabSel[key]; if(!secs.some(x => x.t === sel)) sel = ncTabSel[key] = secs[0].t;
+  return head + '<div class="fsel nc-tabs" role="tablist">' + secs.map(x => `<button class="chipb" role="tab" data-nctab="${key}|${x.t}" aria-pressed="${x.t === sel}">${x.t}</button>`).join('') + '</div>' + secs.filter(x => x.t === sel).map(x => x.body).join(''); }
+document.addEventListener('click', ev => { const b = ev.target.closest && ev.target.closest('[data-nctab]'); if(!b) return; const [k, t] = b.dataset.nctab.split('|'); ncTabSel[k] = t; if(k === 'shop') renderShop(); });
 function buyPiece(t, ex){ const it = newItem(shopSlot, t, {wtype:CLS().wtype, cls:save.cls}); if(ex) it.ex = ex; addItem(it); persist(); SFX.drop(); banner('Comprado: ' + itemName(it), TIERS[t].sc + ' · ' + TIERS[t].n); discover(it); }
 /* ===== MISSÕES ===== */
 const MISSIONS = [
@@ -12883,8 +12892,8 @@ $('#rightPanel').addEventListener('click', e => {
   if(d.craft !== undefined){ craftItem(+d.craft); applyGear(hero); renderHub(); return; }
   if(d.sfilter){ stoneFilter = d.sfilter; renderHub(); return; }
   if(d.sslot){ shopSlot = d.sslot; renderHub(); return; }
-  if(d.sbuy !== undefined){ const t = +d.sbuy, p = piecePrice(t); if(save.coins >= p && t <= CFG.shopMaxTier && ncRoom(shopSlot)){ save.coins -= p; buyPiece(t); applyGear(hero); } renderHub(); return; }
-  if(d.mbuy !== undefined){ const o = SHOP[+d.mbuy], p = shopPrice(o.p); if(save.coins >= p){ save.coins -= p; o.g(); persist(); SFX.coin(); } renderHub(); return; }
+  if(d.sbuy !== undefined){ const t = +d.sbuy, p = piecePrice(t); if(save.gold >= p && t <= CFG.shopMaxTier && ncRoom(shopSlot)){ save.gold -= p; buyPiece(t); applyGear(hero); } renderHub(); return; }
+  if(d.mbuy !== undefined){ const o = SHOP[+d.mbuy], p = o.a; if(save.gold >= p){ save.gold -= p; o.g(); persist(); SFX.coin(); } renderHub(); return; }
   if(d.ncreal){ const n = +d.ncreal, c = n*100000; if(save.gold >= c){ save.gold -= c; save.coins = (save.coins || 0) + n; SFX.coin(); persist(); feed('+' + n + ' Moeda Real', '#ffd24a'); } renderHub(); return; }
   if(d.buypot){ const pp = NC_POT_P, k = d.buypot === 'hp' ? 'potions' : 'potRes'; if(save.gold >= pp && (save[k] || 0) < NC_POT_MAX){ save.gold -= pp; save[k] = (save[k] || 0) + 1; SFX.coin(); persist(); } renderHub(); return; }
   if(d.evbuy){ const E = curEvent(), p = shopPrice(60); if(E && save.coins >= p && !save.evBought[evKey()] && ncRoom(shopSlot)){ save.coins -= p; save.evBought[evKey()] = 1; const t = clamp(Math.round(gearPower()) - 1, 1, CFG.shopMaxTier); buyPiece(t, 'ev:' + E.id); } renderHub(); return; }
