@@ -13667,19 +13667,19 @@ body #hub>#rightPanel.panel::before,body #hub>#rightPanel.panel::after{display:n
 
 /* ===== MENU C ===== */
 .nc-rail{display:none!important}
-.nc-grid{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:4;display:grid;grid-template-columns:repeat(5,1fr);gap:7px;width:min(600px,calc(100vw - 16px))}
+.nc-grid{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:4;display:flex;flex-wrap:wrap;justify-content:center;gap:6px;width:min(600px,calc(100vw - 16px))}.nc-grid>.nc-card{flex:0 0 calc((100% - 24px)/5)}
 .nc-card{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;height:68px;border-radius:14px;border:1px solid #8a78e0;background:linear-gradient(180deg,#3a2f6e,#231b48);color:#f4efe2;font:700 12px system-ui,sans-serif;cursor:pointer;
   box-shadow:0 4px 0 #120d2a,0 6px 14px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.18);transition:transform .08s,box-shadow .08s,background .15s;-webkit-tap-highlight-color:transparent}
 .nc-card svg{width:24px;height:24px;fill:none;stroke:#ffd36a;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .nc-card:hover{background:linear-gradient(180deg,#46398a,#2a2058)}
 .nc-card:active,.nc-card.on{transform:translateY(3px);box-shadow:0 1px 0 #120d2a,0 2px 6px rgba(0,0,0,.45),inset 0 2px 6px rgba(0,0,0,.4)}
 .nc-mini{position:absolute;right:calc(10px + env(safe-area-inset-right,0px));top:calc(env(safe-area-inset-top,0px) + 78px);z-index:4;display:flex;flex-direction:column;gap:6px}
-.nc-minib{width:62px;height:54px;border-radius:12px;border:1px solid #8a78e0;background:linear-gradient(180deg,#3a2f6e,#231b48);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;box-shadow:0 3px 0 #120d2a,0 4px 10px rgba(0,0,0,.4);color:#f4efe2}
+.nc-minib{-webkit-text-size-adjust:100%;width:62px;height:54px;border-radius:12px;border:1px solid #8a78e0;background:linear-gradient(180deg,#3a2f6e,#231b48);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;box-shadow:0 3px 0 #120d2a,0 4px 10px rgba(0,0,0,.4);color:#f4efe2}
 .nc-minib:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(0,0,0,.4)}
 .nc-minib svg{width:20px;height:20px;fill:none;stroke:#ffd36a;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.nc-minib span{display:block;font:700 10.5px system-ui,sans-serif;line-height:1}
 .nc-play{bottom:calc(166px + env(safe-area-inset-bottom,0px))!important}
 body.nc-l .nc-grid,body.nc-r .nc-grid,body.nc-l .nc-mini,body.nc-r .nc-mini{opacity:0;pointer-events:none}
-.nc-card span{font-size:11.5px}
+.nc-card{min-width:0;padding:0 2px;-webkit-text-size-adjust:100%}.nc-card span{font-size:clamp(9px,2.45vw,12px);letter-spacing:-.15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;display:block}
 #ncStable{position:fixed;inset:0;z-index:8500;display:grid;place-items:center;padding:12px;background:rgba(6,6,16,.55)}#ncStable[hidden]{display:none}
 .nc-stbox{width:min(480px,100%);max-height:calc(100% - 20px);overflow:auto;padding:14px;border-radius:14px;background:linear-gradient(180deg,#241c4a,#16112e);border:1px solid #8a78e0;box-shadow:0 0 0 3px #05050c,0 0 0 4px #c9a24a,0 20px 50px rgba(0,0,0,.6);color:#f4efe2}
 .nc-stbox .nc-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}.nc-stbox .nc-head b{font:400 22px var(--f-display);color:#ffd36a;letter-spacing:.06em}
@@ -13699,7 +13699,7 @@ body.nc-st #ncRoomHud,body.nc-st #ncWorlds,body.nc-st .nc-grid,body.nc-st .nc-mi
 .nc-npc{display:flex;gap:12px;align-items:center;background:linear-gradient(90deg,rgba(242,193,78,.14),transparent);border:1px solid #f2c14e55;border-radius:12px;padding:8px 10px;margin:0 0 12px}
 .nc-npc img{width:72px;height:72px;object-fit:cover;object-position:top;border-radius:10px;background:#1a1438;flex:none}
 .nc-npc b{color:#ffd36a;font:800 15px system-ui,sans-serif}.nc-npc p{margin:3px 0 0;color:#e8e2f6;font:500 13px/1.35 system-ui,sans-serif}
-@media (min-width:901px){.nc-grid{grid-template-columns:repeat(9,1fr);width:min(980px,calc(100vw - 40px))}.nc-play{bottom:calc(100px + env(safe-area-inset-bottom,0px))!important}}
+@media (min-width:901px){.nc-grid>.nc-card{flex-basis:calc((100% - 48px)/9)}.nc-grid{width:min(980px,calc(100vw - 40px))}.nc-play{bottom:calc(100px + env(safe-area-inset-bottom,0px))!important}}
 </style>
 
 <script id="nc-uiscale">
