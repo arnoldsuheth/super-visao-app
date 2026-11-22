@@ -8038,7 +8038,8 @@ function ncBreakGive(out){ for(const m in out){ if(m === '_gold') save.gold += o
 let bagConfirm = 0;
 function ncPopHTML(){ const pz = mode !== 'hub';
   let det = '';
-  if(typeof bagSel === 'string' && bagSel.indexOf('g:') === 0){ const key = bagSel.slice(2), [k, r] = key.split(':'), q = (save.gems || {})[key] || 0;
+  if(bagSel === 'p:petisco' && (save.petisco || 0) > 0) det = '<div class="irow" style="--tc:#e8a85a"><span class="bcell mat" style="--tc:#e8a85a;width:44px">' + NC_PETISCO_ICO + '</span><div><div class="iname">Petisco × ' + save.petisco + '</div><div class="istat">' + (save.petDead ? 'Seu mascote está caído: dê o petisco para ele voltar.' : 'Seu mascote está bem. Guarde para quando ele cair.') + '</div></div><button class="btn sm primary" data-petfeed="1" ' + (save.petDead ? '' : 'disabled') + '>Dar ao mascote</button></div>';
+  else   if(typeof bagSel === 'string' && bagSel.indexOf('g:') === 0){ const key = bagSel.slice(2), [k, r] = key.split(':'), q = (save.gems || {})[key] || 0;
     if(GEMS[k] && q > 0) det = '<div class="irow" style="--tc:' + RAR[+r - 1].css + '"><span class="bcell mat" style="--tc:' + RAR[+r - 1].css + ';width:44px">' + stoneImg(k, 30) + '</span><div><div class="iname" style="color:' + RAR[+r - 1].css + '">' + stoneName(k, +r) + ' × ' + q + '</div><div class="istat">' + stoneDesc(k, +r) + '</div><div class="istat">Encaixe numa peça com espaço livre na Forja (aba Pedras)</div></div></div>'; }
   else   if(typeof bagSel === 'string' && bagSel.indexOf('m:') === 0){ const k = bagSel.slice(2), M = MATS[k]; if(M && save.mats[k] > 0) det = '<div class="irow" style="--tc:' + M.css + '"><span class="bcell mat" style="--tc:' + M.css + ';width:44px">' + MAT_ICO(k) + '</span><div><div class="iname">' + M.n + ' × ' + save.mats[k] + '</div><div class="istat">Material de forja. Cai dos monstros e é usado em Fabricar e Evoluir.</div></div></div>'; }
   else { const it = save.inv.find(i => String(i.id) === String(bagSel) && !isEquipped(i)); if(it){ const wrong = !itemOk(it);
@@ -8072,6 +8073,7 @@ function ncBagHTML(list, pz){
     + (heavy ? '<div class="bag-hv">Pesado demais: o herói fica vermelho e anda 25% mais devagar. Venda ou desmanche itens para aliviar.</div>' : '');
   const cells = list.map(it => '<button class="bcell' + (String(bagSel) === String(it.id) ? ' on' : '') + (itemOk(it) ? '' : ' no') + '" data-bsel="' + it.id + '">' + itemImg(it, 'ps-bag') + '</button>');
   if((pz ? pFilter : invFilter) === 'all') Object.keys(MATS).forEach(k => { const q = save.mats[k] || 0; if(q > 0) cells.push('<button class="bcell mat' + (bagSel === 'm:' + k ? ' on' : '') + '" data-bsel="m:' + k + '" style="--tc:' + MATS[k].css + '">' + MAT_ICO(k) + '<em>' + q + '</em></button>'); });
+  if((pz ? pFilter : invFilter) === 'all' && (save.petisco || 0) > 0) cells.push('<button class="bcell mat' + (bagSel === 'p:petisco' ? ' on' : '') + '" data-bsel="p:petisco" style="--tc:#e8a85a">' + NC_PETISCO_ICO.replace('width="34" height="34"', 'width="26" height="26"') + '<em>' + save.petisco + '</em></button>');
   // 22/11 (Arnold: "as pedras não vão para a bag"): as pedras guardadas também aparecem na mochila
   if((pz ? pFilter : invFilter) === 'all') Object.keys(save.gems || {}).forEach(key => { const q = save.gems[key] || 0; if(q <= 0) return; const [k, r] = key.split(':'); if(!GEMS[k] || !RAR[+r - 1]) return;
     cells.push('<button class="bcell mat' + (bagSel === 'g:' + key ? ' on' : '') + '" data-bsel="g:' + key + '" style="--tc:' + RAR[+r - 1].css + '">' + stoneImg(k, 26) + '<em>' + q + '</em></button>'); });
@@ -8221,13 +8223,18 @@ const shopPrice = p => Math.max(1, Math.round(p*CFG.shopMult*NC_ECON));
 const NC_SHOP_PRATA = [2, 4, 9, 15, 20, 32, 45, 120];
 const piecePrice = t => Math.round((NC_SHOP_PRATA[t] || 120)*100);
 const evKey = () => { const e = curEvent(); return e ? e.id + Math.floor(Date.now()/6048e5) : ''; };
+const NC_PETISCO_P = 300, NC_PETISCO_ICO = '<svg viewBox="0 0 24 24" width="34" height="34"><path d="M6 9a3 3 0 1 1 3-4l6 6a3 3 0 1 1 4 3 3 3 0 1 1-3 4l-6-6a3 3 0 1 1-4-3z" fill="#f1e2c2" stroke="#7a5a30" stroke-width="1.4"/></svg>';
+document.addEventListener('click', ev => { const b = ev.target.closest && ev.target.closest('[data-petbuy],[data-petfeed]'); if(!b) return;
+  if(b.dataset.petbuy && save.gold >= NC_PETISCO_P){ save.gold -= NC_PETISCO_P; save.petisco = (save.petisco || 0) + 1; persist(); try{ SFX.coin(); }catch(_){} renderShop(); }
+  if(b.dataset.petfeed && (save.petisco || 0) > 0 && save.petDead){ save.petisco--; save.petDead = false; persist(); try{ banner('Mascote de pé!', 'Ele voltou a lutar ao seu lado', 'gold'); }catch(_){} if(mode === 'stage') ncPetSpawn(); else try{ ncHubPet(); }catch(_){} try{ bagSel = null; ncBagRefresh(); ncPopDraw(); }catch(_){} } });
 function renderShop(){
   const E = curEvent();
   let h = `<div class="mats">${matsHTML(NC_GEMS4)}</div>`;
   if(ncNight()) h += ncNightBox();
   { const pp = NC_POT_P, rk = ncRes() === 'mp' ? 'mp' : 'sp', row = (k, n, d, have, key) => `<div class="frow" style="--tc:${k === 'hp' ? '#ff5a6a' : k === 'mp' ? '#4a9aff' : '#6ae05a'}"><span class="ncpot">${window.ncPotSvg(k)}</span><div><div class="fn">${n} <small style="color:var(--mute)">× ${have} / ${NC_POT_MAX}</small></div><div class="istat">${d}</div></div><div class="iact"><button class="btn sm primary" data-buypot="${key}" ${save.gold >= pp && have < NC_POT_MAX ? '' : 'disabled'}>Comprar<small>${adenaTxt(pp)}</small></button></div></div>`;
     h += `<h2>Poções</h2><div class="blist">` + row('hp', 'Poção de Vida', 'Cura parte da sua vida.', save.potions || 0, 'hp')
-      + row(rk, ncPotResName(), rk === 'mp' ? 'Recupera 60% da mana.' : 'Recupera 60% da stamina.', save.potRes || 0, 'res') + `</div>`; }
+      + row(rk, ncPotResName(), rk === 'mp' ? 'Recupera 60% da mana.' : 'Recupera 60% da stamina.', save.potRes || 0, 'res')
+      + `<div class="frow" style="--tc:#e8a85a"><span class="ncpot">${NC_PETISCO_ICO}</span><div><div class="fn">Petisco <small style="color:var(--mute)">× ${save.petisco || 0}</small></div><div class="istat">Revive o mascote caído (use na Mochila).</div></div><button class="btn sm primary" data-petbuy="1" ${save.gold >= NC_PETISCO_P ? '' : 'disabled'}>Comprar<small>${adenaTxt(NC_PETISCO_P)}</small></button></div>` + `</div>`; }
   /* 22/11 (Arnold): troca 10 de ouro em Adena = 1 Moeda Real */
   h += `<h2>Trocar Adena</h2><div class="blist"><div class="frow" style="--tc:#ffd24a"><span class="ncpot"><svg viewBox="0 0 24 24" width="34" height="34"><circle cx="12" cy="12" r="10" fill="#ffd24a" stroke="#8a5a10" stroke-width="1.5"/><path d="M7 15l1-6 2.5 3L12 8l1.5 4L16 9l1 6Z" fill="#8a5a10"/></svg></span><div><div class="fn">1 Moeda Real <small style="color:var(--mute)">você tem ${save.coins}</small></div><div class="istat">Use nos Itens Festivos e no Mercador.</div></div><div class="iact"><button class="btn sm primary" data-ncreal="1" ${save.gold >= 100000 ? '' : 'disabled'}>Trocar<small>10 de ouro</small></button><button class="btn sm" data-ncreal="10" ${save.gold >= 1000000 ? '' : 'disabled'}>×10<small>100 de ouro</small></button></div></div></div>`;
   // 22/11: a peça semanal do evento saiu do Mercador (armadura só na Forja)
@@ -8247,7 +8254,17 @@ function ncTabify(h, key){ const parts = h.split('<h2>'); if(parts.length < 3) r
   const secs = parts.map(p => { const i = p.indexOf('</h2>'), t = p.slice(0, i).replace(/<small>.*?<\/small>/g, '').replace(/<[^>]+>/g, '').trim(); return {t, body:'<h2>' + p}; });
   let sel = ncTabSel[key]; if(!secs.some(x => x.t === sel)) sel = ncTabSel[key] = secs[0].t;
   return head + '<div class="fsel nc-tabs" role="tablist">' + secs.map(x => `<button class="chipb" role="tab" data-nctab="${key}|${x.t}" aria-pressed="${x.t === sel}">${x.t}</button>`).join('') + '</div>' + secs.filter(x => x.t === sel).map(x => x.body).join(''); }
-document.addEventListener('click', ev => { const b = ev.target.closest && ev.target.closest('[data-nctab]'); if(!b) return; const [k, t] = b.dataset.nctab.split('|'); ncTabSel[k] = t; if(k === 'shop') renderShop(); });
+document.addEventListener('click', ev => { const b = ev.target.closest && ev.target.closest('[data-nctab]'); if(!b) return; const [k, t] = b.dataset.nctab.split('|'); ncTabSel[k] = t; if(k === 'shop') renderShop(); else if(k === 'miss') renderMissions(); else if(k === 'hero') ncHeroTabs(); });
+/* abas do Herói: Classe / Visual / Mais (o painel era uma lista comprida) */
+function ncHeroTabs(){ const host = document.querySelector('.sec[data-s="hero"]'); if(!host) return;
+  const G = {Classe:['#classGrid', '#classInfo', '#specBox', '#ncTreeBox'], Visual:['.nc-namebox', '.look'], Mais:['#ncTitleBox', '#ncPetBox', '#ncCloudBox']};
+  let bar = host.querySelector('.nc-herotabs'); if(!bar){ bar = document.createElement('div'); bar.className = 'fsel nc-tabs nc-herotabs'; const lede = host.querySelector('.lede'); (lede || host.firstChild).after ? (lede ? lede.after(bar) : host.prepend(bar)) : host.prepend(bar);
+    const eb = [...host.children].find(c => c.classList && c.classList.contains('eyebrow') && /Herói/.test(c.textContent)); if(eb) eb.dataset.ncg = 'Classe'; }
+  const sel = ncTabSel.hero || (ncTabSel.hero = 'Classe');
+  bar.innerHTML = Object.keys(G).map(t => `<button class="chipb" role="tab" data-nctab="hero|${t}" aria-pressed="${t === sel}">${t}</button>`).join('');
+  Object.keys(G).forEach(t => G[t].forEach(q => { const el = host.querySelector(q); if(el) el.dataset.ncg = t; }));
+  [...host.children].forEach(c => { if(c.dataset && c.dataset.ncg) c.style.display = c.dataset.ncg === sel ? '' : 'none'; }); }
+setTimeout(ncHeroTabs, 400);
 function buyPiece(t, ex){ const it = newItem(shopSlot, t, {wtype:CLS().wtype, cls:save.cls}); if(ex) it.ex = ex; addItem(it); persist(); SFX.drop(); banner('Comprado: ' + itemName(it), TIERS[t].sc + ' · ' + TIERS[t].n); discover(it); }
 /* ===== MISSÕES ===== */
 const MISSIONS = [
@@ -8283,7 +8300,7 @@ function renderMissions(){
     return `<div class="frow mis" style="--tc:${done ? '#86d873' : '#3a405c'}"><span class="mlv">Nv ${p.q.lvl + 1}</span><div><div class="fn">${m.n}</div><div class="istat">${m.d(p.goal, p.q)}</div>
       <div class="pbar"><i style="width:${p.cur/p.goal*100}%"></i><span>${p.cur} / ${p.goal}</span></div><div class="istat">Recompensa: ${rwText(rw)}</div></div>
       <button class="btn sm ${done ? 'primary' : ''}" data-mclaim="${m.id}" ${done ? '' : 'disabled'}>Receber</button></div>`; }).join('') + '</div>';
-  $('#missBody').innerHTML = h;
+  $('#missBody').innerHTML = ncTabify(h, 'miss');
 }
 /* ===== BOLSA ===== */
 function bagHTML(){
@@ -8508,8 +8525,8 @@ function ncHelm3D(h, x){ if(!(window.NC_HELM3D || NC_HELM3D)) return; let fc = 0
   if(h.cls === 'mage' || h.cls === 'necro'){   // 22/11 (Arnold): Mago e Necro ficam com o chapéu, que ganha detalhes por grade
     const tc = TIERS[it.tier].hex, acc = new T.MeshStandardMaterial({color:tc, roughness:.4, metalness:.3, emissive:g >= 4 ? tc : 0x000000, emissiveIntensity:g >= 4 ? .6 : 0}), G = new T.Group(); G.userData.k = key; G.name = 'NC_Helm3D';
     const add = (geo, m, px, py, pz, rx, ry, rz) => { const o = new T.Mesh(geo, m); o.position.set(px || 0, py || 0, pz || 0); o.rotation.set(rx || 0, ry || 0, rz || 0); o.castShadow = true; G.add(o); return o; };
-    if(g >= 1) add(new T.TorusGeometry(.53, .065, 8, 28), acc, 0, .98, 0, Math.PI/2, 0, 0);
-    if(g >= 2){ add(new T.OctahedronGeometry(.13), acc, 0, 1.0, .56); }
+    // 22/11 (Arnold): a faixa em volta do chapéu parecia auréola; saiu. D = pedra pequena, C em diante = pedra maior
+    if(g >= 1) add(new T.OctahedronGeometry(g >= 2 ? .14 : .1), acc, 0, 1.0, .56);
     if(g >= 3){ const sh = new T.Shape(); sh.moveTo(0, 0); sh.quadraticCurveTo(.16, .35, .05, .75); sh.quadraticCurveTo(-.08, .35, 0, 0); const f = new T.Mesh(new T.ExtrudeGeometry(sh, {depth:.03, bevelEnabled:false}), acc); f.position.set(.45, 1.05, .1); f.rotation.set(0, -.6, -.35); f.castShadow = true; G.add(f); }
     if(g >= 4){ const wm = new T.MeshStandardMaterial({color:0xf4f6fb, roughness:.5, metalness:.3, side:T.DoubleSide});
       [-1, 1].forEach(sd => { const sh = new T.Shape(); sh.moveTo(0, 0); sh.bezierCurveTo(.15, .3, .45, .5, .7, .55); sh.lineTo(.55, .35); sh.lineTo(.62, .22); sh.lineTo(.42, .14); sh.lineTo(.45, .02); sh.bezierCurveTo(.25, -.04, .1, -.05, 0, 0);
@@ -10288,12 +10305,14 @@ function ncPetHTML(){ setTimeout(ncPetImgs, 30); let h = '<div class="eyebrow">M
             : '<button class="btn sm primary" data-ncpetbuy="' + k + '" ' + (save.gold >= D.p ? '' : 'disabled') + '>Comprar<small>' + adenaTxt(D.p) + '</small></button>') + '</div></div>'; });
   return h + '</div>'; }
 function ncPetSpawn(){ try{ if(ncPet){ removeObj(ncPet.root); ncPet = null; } const key = save.pet; if(!key || !ncPetLv(key) || !monOn()) return;
+  if(save.petDead){ setTimeout(() => { try{ banner('Seu mascote está caído', (save.petisco || 0) > 0 ? 'Dê um Petisco a ele (na Mochila) para reviver' : 'Compre um Petisco no Mercador para reviver', 'danger'); }catch(_){} }, 2500); return; }
   monLoad(key, g => { if(!g || save.pet !== key || !P) return; const model = monClone(g.scene), root = new T.Group(), fly = key[0] === 'f';
     model.traverse(n => { if(n.isMesh){ n.material = new T.MeshLambertMaterial({map:monTex(), skinning:!!n.isSkinnedMesh}); n.castShadow = !COARSE; } });
     const sz = g.box.getSize(new T.Vector3()), k = .95/Math.max(.01, sz.y); model.scale.setScalar(k); model.position.y = -g.box.min.y*k + (fly ? .9 : 0); root.add(model);
     root.position.set(P.pos.x - 1.4, P.pos.y, P.pos.z - 1.4); scene.add(root);
     const mixer = new T.AnimationMixer(model), f = re => { const c = g.animations.find(c => re.test(c.name)); return c ? mixer.clipAction(c) : null; };
-    ncPet = {root, mixer, key, at:1, idle:f(/^(Idle|Flying_Idle)$/), move:f(/^(Walk|Run|Fast_Flying)$/), hit:f(/^(Attack|Bite_Front|Punch|Headbutt|Weapon)$/), cur:null}; }); }catch(e){} }
+    const mh = Math.round((P.S ? P.S.hp : 300)*(.3 + .05*ncPetLv(key)));
+    ncPet = {root, mixer, key, at:1, hp:mh, maxHp:mh, hurtT:1, idle:f(/^(Idle|Flying_Idle)$/), move:f(/^(Walk|Run|Fast_Flying)$/), hit:f(/^(Attack|Bite_Front|Punch|Headbutt|Weapon)$/), cur:null}; }); }catch(e){} }
 /* 22/11: o mascote também aparece no menu, ao lado do herói (antes só aparecia dentro da fase) */
 let ncHubPetO = null;
 function ncHubPet(){ try{ if(ncHubPetO){ if(ncHubPetO.root.parent) ncHubPetO.root.parent.remove(ncHubPetO.root); ncHubPetO = null; }
@@ -10319,6 +10338,11 @@ function ncPetUpdate(dt){ ncHeavyFx(dt); const p = ncPet; if(!p || !P) return; i
   p.at -= dt; let tg = null; try{ if(!P.dead){ const ok = e => e && !e.dead && !e.dying && enemies.includes(e) && Math.hypot(e.pos.x - P.pos.x, e.pos.z - P.pos.z) < 16;
     if(ok(p.tg)) tg = p.tg; else { let nd = 12; for(const e of enemies){ if(e.dead || e.dying || (!e.awake && e.kind === 'boss')) continue; if(!e.awake && Math.hypot(e.pos.x - P.pos.x, e.pos.z - P.pos.z) > 6) continue; const de = Math.hypot(e.pos.x - P.pos.x, e.pos.z - P.pos.z); if(de < nd){ nd = de; tg = e; } } }
     p.tg = tg; } }catch(e){}
+  /* 22/11 (Arnold): o mascote tem vida; o inimigo que ele está atacando bate nele; se a vida acaba, ele cai (revive com Petisco) */
+  if(tg && tg.awake && !tg.dying){ const pd = Math.hypot(p.root.position.x - tg.pos.x, p.root.position.z - tg.pos.z); p.hurtT -= dt;
+    if(pd < 2.4 && p.hurtT <= 0){ p.hurtT = 1.6 + Math.random()*.6; const dm = Math.max(1, Math.round(tg.dmg*(tg.kind === 'boss' ? .9 : .55))); p.hp -= dm; try{ floatText(p.root.position, '-' + dm, 'hurt'); }catch(_){}
+      if(p.hp <= 0){ save.petDead = true; persist(); try{ burst(p.root.position, 0xd8c8a8, 14, 3, 4, .5); }catch(_){} removeObj(p.root); ncPet = null; try{ banner('Seu mascote caiu!', (save.petisco || 0) > 0 ? 'Dê um Petisco a ele (na Mochila) para reviver' : 'Compre um Petisco no Mercador para reviver', 'danger'); }catch(_){} return; } } }
+  else if(p.hp < p.maxHp) p.hp = Math.min(p.maxHp, p.hp + p.maxHp*.03*dt);   // fora de luta, recupera aos poucos
   if(tg){ const ax = p.root.position.x - tg.pos.x, az = p.root.position.z - tg.pos.z, ad = Math.hypot(ax, az) || 1; tx = tg.pos.x + ax/ad*1.1; tz = tg.pos.z + az/ad*1.1;
     if(ad < 2 && p.at <= 0){ p.at = 1.1; try{ damageEnemy(tg, Math.max(1, Math.round(P.S.atk*ncPetHit(p.key))), false, -ax/ad, -az/ad, 0, false); burst(tg.pos, 0xffe08a, 5, 3, 3); if(p.hit){ p.hit.reset().setLoop(T.LoopOnce, 1).play(); p.cur = null; } }catch(e){} } }
   const dx = tx - p.root.position.x, dz = tz - p.root.position.z, d = Math.hypot(dx, dz);
