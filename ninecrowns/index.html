@@ -5988,7 +5988,7 @@ function tryUpgrade(it){
     msg = ['Sucesso! ' + itemName(it), extra, '']; SFX.drop();
   } else {
     it.fp = (it.fp || 0) + .03;
-    if(U.brkAll){ const out = ncBreak(it); for(const m in out) save.mats[m] = (save.mats[m] || 0) + out[m]; returnGems(it);
+    if(U.brkAll){ const out = ncBreak(it); ncBreakGive(out); returnGems(it);
       if(isEquipped(it)) for(const k in save.eq) if(save.eq[k] === it.id) save.eq[k] = null;
       save.inv = save.inv.filter(i => i !== it); forgeSel = null; try{ ncBagRefresh(); }catch(e){}
       msg = ['A peça quebrou!', 'Virou material: ' + ncBreakTxt(out) + '.', 'danger']; }
@@ -8031,13 +8031,16 @@ const ncFits = it => save.inv.length < ncBagMax() && ncWeight() + ncItemW(it) <=
 function ncRoom(slot){ if(ncFits({slot})) return true; try{ banner('Bag cheia ou pesada demais', 'Libere espaço na bag antes de pegar mais uma peça.', 'danger'); }catch(e){} return false; }
 // desmanchar: a peça vira metade dos materiais da receita dela (e pedras de refino se estava evoluída)
 /* 22/11 (Arnold): destruir tem chance de devolver parte das coins usadas; arma com SA devolve parte do Lesser Blue. Peças sem coin (No Grade a C) não devolvem nada. */
-function ncBreak(it){ const R = recipe(it.tier, it.slot).mats, out = {}; if(Math.random() < .7){ const pc = .25 + Math.random()*.25; for(const m in R){ const q = Math.floor(R[m]*pc); if(q > 0) out[m] = q; } }
+function ncBreak(it){ const RR = recipe(it.tier, it.slot), R = RR.mats, out = {}; if(Math.random() < .7){ const pc = .25 + Math.random()*.25; for(const m in R){ const q = Math.floor(R[m]*pc); if(q > 0) out[m] = q; } const gq = Math.floor((RR.gold || 0)*pc); if(gq > 0) out._gold = gq; }   // 22/11: peça feita só com Adena devolve parte da Adena (antes não voltava nada)
   if(it.sa){ const q = Math.floor(saCost(it)*(.25 + Math.random()*.25)); if(q > 0) out.lblue = q; } return out; }
-const ncBreakTxt = out => Object.keys(out).length ? Object.keys(out).map(m => '+' + out[m] + ' ' + MATS[m].n).join(', ') : 'nada voltou desta vez';
+const ncBreakTxt = out => Object.keys(out).length ? Object.keys(out).map(m => m === '_gold' ? '+' + adenaTxt(out[m]) : '+' + out[m] + ' ' + MATS[m].n).join(', ') : 'nada voltou desta vez';
+function ncBreakGive(out){ for(const m in out){ if(m === '_gold') save.gold += out[m]; else save.mats[m] = (save.mats[m] || 0) + out[m]; } }
 let bagConfirm = 0;
 function ncPopHTML(){ const pz = mode !== 'hub';
   let det = '';
-  if(typeof bagSel === 'string' && bagSel.indexOf('m:') === 0){ const k = bagSel.slice(2), M = MATS[k]; if(M && save.mats[k] > 0) det = '<div class="irow" style="--tc:' + M.css + '"><span class="bcell mat" style="--tc:' + M.css + ';width:44px">' + MAT_ICO(k) + '</span><div><div class="iname">' + M.n + ' × ' + save.mats[k] + '</div><div class="istat">Material de forja. Cai dos monstros e é usado em Fabricar e Evoluir.</div></div></div>'; }
+  if(typeof bagSel === 'string' && bagSel.indexOf('g:') === 0){ const key = bagSel.slice(2), [k, r] = key.split(':'), q = (save.gems || {})[key] || 0;
+    if(GEMS[k] && q > 0) det = '<div class="irow" style="--tc:' + RAR[+r - 1].css + '"><span class="bcell mat" style="--tc:' + RAR[+r - 1].css + ';width:44px">' + stoneImg(k, 30) + '</span><div><div class="iname" style="color:' + RAR[+r - 1].css + '">' + stoneName(k, +r) + ' × ' + q + '</div><div class="istat">' + stoneDesc(k, +r) + '</div><div class="istat">Encaixe numa peça com espaço livre na Forja (aba Pedras)</div></div></div>'; }
+  else   if(typeof bagSel === 'string' && bagSel.indexOf('m:') === 0){ const k = bagSel.slice(2), M = MATS[k]; if(M && save.mats[k] > 0) det = '<div class="irow" style="--tc:' + M.css + '"><span class="bcell mat" style="--tc:' + M.css + ';width:44px">' + MAT_ICO(k) + '</span><div><div class="iname">' + M.n + ' × ' + save.mats[k] + '</div><div class="istat">Material de forja. Cai dos monstros e é usado em Fabricar e Evoluir.</div></div></div>'; }
   else { const it = save.inv.find(i => String(i.id) === String(bagSel) && !isEquipped(i)); if(it){ const wrong = !itemOk(it);
     const out = ncBreak(it);
     const cur = equipped(it.slot);
@@ -8060,7 +8063,7 @@ document.addEventListener('click', e => { const b = e.target.closest('[data-bsel
   else if(d.bagsort !== undefined){ save.inv.sort((a, b) => (SLOTS.indexOf(a.slot) - SLOTS.indexOf(b.slot)) || (b.tier - a.tier) || ((b.up || 0) - (a.up || 0)) || (a.id - b.id)); bagSel = null; persist(); try{ SFX.item(); }catch(e){} }
   else { const it = byId(+(d.bagsell || d.bagbrk || d.bagdel)); if(!it || isEquipped(it)) return;
     if(d.bagsell){ save.gold += sellValue(it); take(it); try{ SFX.coin(); }catch(e){} }
-    else if(d.bagbrk){ const out = ncBreak(it); for(const m in out) save.mats[m] = (save.mats[m] || 0) + out[m]; take(it); try{ SFX.drop(); banner('Desmanchado', ncBreakTxt(out)); }catch(e){} }
+    else if(d.bagbrk){ const out = ncBreak(it); ncBreakGive(out); take(it); try{ SFX.drop(); banner('Desmanchado', ncBreakTxt(out)); }catch(e){} }
     else if(d.bagdel){ if(bagConfirm !== it.id){ bagConfirm = it.id; } else take(it); } }
   ncBagRefresh(); });
 function ncBagHTML(list, pz){
@@ -8069,6 +8072,9 @@ function ncBagHTML(list, pz){
     + (heavy ? '<div class="bag-hv">Pesado demais: o herói fica vermelho e anda 25% mais devagar. Venda ou desmanche itens para aliviar.</div>' : '');
   const cells = list.map(it => '<button class="bcell' + (String(bagSel) === String(it.id) ? ' on' : '') + (itemOk(it) ? '' : ' no') + '" data-bsel="' + it.id + '">' + itemImg(it, 'ps-bag') + '</button>');
   if((pz ? pFilter : invFilter) === 'all') Object.keys(MATS).forEach(k => { const q = save.mats[k] || 0; if(q > 0) cells.push('<button class="bcell mat' + (bagSel === 'm:' + k ? ' on' : '') + '" data-bsel="m:' + k + '" style="--tc:' + MATS[k].css + '">' + MAT_ICO(k) + '<em>' + q + '</em></button>'); });
+  // 22/11 (Arnold: "as pedras não vão para a bag"): as pedras guardadas também aparecem na mochila
+  if((pz ? pFilter : invFilter) === 'all') Object.keys(save.gems || {}).forEach(key => { const q = save.gems[key] || 0; if(q <= 0) return; const [k, r] = key.split(':'); if(!GEMS[k] || !RAR[+r - 1]) return;
+    cells.push('<button class="bcell mat' + (bagSel === 'g:' + key ? ' on' : '') + '" data-bsel="g:' + key + '" style="--tc:' + RAR[+r - 1].css + '">' + stoneImg(k, 26) + '<em>' + q + '</em></button>'); });
   const free = Math.max(0, Math.min(15, cap - used)); for(let i = 0; i < free; i++) cells.push('<span class="bcell empty"></span>');
   h += '<div class="bgrid">' + cells.join('') + '</div>';
   if(cap - used > 15) h += '<div class="bag-more">+ ' + (cap - used - 15) + ' espaços vazios</div>';
@@ -13582,7 +13588,7 @@ requestAnimationFrame(loop);
    Usa o canal de tempo real do Supabase (projeto nine-crowns). O anfitrião escolhe a fase e os outros entram junto.
    Nesta primeira versão cada um vê os outros heróis andando e atacando, mas os monstros ainda são de cada aparelho. ===== */
 var ncCoop = {
-  url:'https://xdcsxcopyfdufdtyywhu.supabase.co', key:'sb_publishable_ctr8HbFHDdS6WEyB21E8eg_Iu8VF6uq', MAX:4,
+  url:'https://xdcsxcopyfdufdtyywhu.supabase.co', key:'sb_publishable_ctr8HbFHDdS6WEyB21E8eg_Iu8VF6uq', MAX:6,   // 22/11 (Arnold): até 6 pessoas por mundo
   sb:null, ch:null, code:'', host:false, id:Math.random().toString(36).slice(2, 8), at:Date.now(), peers:{}, list:[], msg:'', sendT:0, hubT:0, atkN:0, lastSw:0, ok:false,
   async lib(){ if(window.supabase && window.supabase.createClient) return window.supabase;
     await new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js'; s.onload = ok; s.onerror = no; document.head.appendChild(s); });
