@@ -769,6 +769,13 @@ canvas.ncgrabok{cursor:grab}canvas.ncgrab,canvas.ncgrabok.ncgrab{cursor:grabbing
       <button class="chip" id="pauseBtn" aria-label="Pausar">II</button>
     </div>
     <canvas id="mm" width="480" height="600" aria-label="Minimapa. Toque para ampliar"></canvas>
+    <nav class="nc-hb" aria-label="Atalhos">
+      <button type="button" data-hb="party"><svg viewBox="0 0 24 24"><circle cx="7" cy="8" r="3"/><circle cx="17" cy="8" r="3"/><path d="M2 20c0-3 2-5 5-5s5 2 5 5M12 20c0-3 2-5 5-5s5 2 5 5"/></svg><span>Grupo</span></button>
+      <button type="button" data-hb="bag"><svg viewBox="0 0 24 24"><path d="M6 8h12l-1 13H7Z"/><path d="M9 8a3 3 0 0 1 6 0"/></svg><span>Mochila</span></button>
+      <button type="button" data-hb="hero"><svg viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg><span>Herói</span></button>
+      <button type="button" data-hb="smith"><svg viewBox="0 0 24 24"><path d="M4 20h16M7 20v-4h10v4M9 16v-3h6v3"/><path d="M14 4l6 6-2 2-6-6Z"/><path d="M12 8 4 16"/></svg><span>Forja</span></button>
+      <button type="button" data-hb="merch"><svg viewBox="0 0 24 24"><path d="M4 9h16l-1 11H5Z"/><path d="M4 9l2-5h12l2 5"/><path d="M10 13h4"/></svg><span>Mercador</span></button>
+    </nav>
   </div>
   <div class="bossbar" id="bossBar" hidden>
     <div class="bname" id="bName"></div>
@@ -12510,6 +12517,15 @@ $('#resumeBtn').onclick = () => togglePause(false);
 $('#quitBtn').onclick = () => goHub();
 $('#pauseBtn').onclick = () => togglePause(true);
 $('#pauseX').onclick = () => togglePause(false);
+/* atalhos com nome na fase: Mochila e Herói abrem a pausa; Forja e Mercador abrem o painel do menu por cima da fase, com o jogo parado */
+let ncInst = false;
+function ncStagePanel(k){ if(mode !== 'stage' || !P || P.dead || !running) return; running = false; unlockMouse(); for(const q in keys) keys[q] = false; attackHeld = false;
+  ncInst = true; document.body.classList.add('nc-inst'); $('#hub').hidden = false; renderHub(); try{ window.ncMenu.toggle('r', k === 'smith' ? 'forge' : 'shop'); window.ncMenu.npc(k); }catch(_){} }
+new MutationObserver(() => { if(ncInst && !document.body.classList.contains('nc-r')){ ncInst = false; document.body.classList.remove('nc-inst'); $('#hub').hidden = true; if(mode === 'stage' && $('#pause').hidden && !P.dead) running = true; } }).observe(document.body, {attributes:true, attributeFilter:['class']});
+document.querySelector('.nc-hb').addEventListener('click', e => { const b = e.target.closest('[data-hb]'); if(!b) return; const k = b.dataset.hb;
+  if(k === 'party'){ try{ ncCoop.friends(); }catch(_){} return; }
+  if(k === 'bag' || k === 'hero'){ if(!$('#pause').hidden){ togglePause(false); return; } $('#ncBag').click(); setTimeout(() => { const t = document.querySelector(k === 'bag' ? '#pauseGear .bgrid' : '#pauseGear .eqgrid'); if(t) t.scrollIntoView({block:k === 'bag' ? 'center' : 'start'}); }, 60); return; }
+  ncStagePanel(k); });
 $('#ncBag').onclick = () => { if(!$('#pause').hidden){ togglePause(false); return; } togglePause(true); try{ const b = document.querySelector('#pause .stabs button[data-sec="gear"]'); if(b) b.click(); const g = document.getElementById('pauseGear'); if(g) g.scrollIntoView({block:'start'}); }catch(e){} };
 
 function syncVolUI(){ const v = save.vol || (save.vol = {master:.7, music:.5, sfx:.8}); document.querySelectorAll('[data-vol]').forEach(el => { el.value = Math.round(v[el.dataset.vol]*100); }); }
@@ -13667,6 +13683,12 @@ body.nc-l .nc-grid,body.nc-r .nc-grid,body.nc-l .nc-mini,body.nc-r .nc-mini{opac
 #ncStable{position:fixed;inset:0;z-index:8500;display:grid;place-items:center;padding:12px;background:rgba(6,6,16,.55)}#ncStable[hidden]{display:none}
 .nc-stbox{width:min(480px,100%);max-height:calc(100% - 20px);overflow:auto;padding:14px;border-radius:14px;background:linear-gradient(180deg,#241c4a,#16112e);border:1px solid #8a78e0;box-shadow:0 0 0 3px #05050c,0 0 0 4px #c9a24a,0 20px 50px rgba(0,0,0,.6);color:#f4efe2}
 .nc-stbox .nc-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}.nc-stbox .nc-head b{font:400 22px var(--f-display);color:#ffd36a;letter-spacing:.06em}
+.nc-hb{display:flex;flex-direction:column;gap:6px;align-items:flex-end;margin-top:8px;pointer-events:auto}
+.nc-hb button{width:58px;height:50px;border-radius:12px;border:1px solid #8a78e0;background:linear-gradient(180deg,#3a2f6e,#231b48);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:#f4efe2;box-shadow:0 3px 0 #120d2a,0 4px 10px rgba(0,0,0,.4);cursor:pointer;-webkit-tap-highlight-color:transparent}
+.nc-hb button:active{transform:translateY(2px);box-shadow:0 1px 0 #120d2a}
+.nc-hb svg{width:19px;height:19px;fill:none;stroke:#ffd36a;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.nc-hb span{font:700 10px system-ui,sans-serif;line-height:1}
+#hud #potBtn,#hud #potBtn2,#hud #ncBag{display:none!important}
+body.nc-inst #hub{z-index:60;pointer-events:none}body.nc-inst #hub>*:not(#rightPanel){visibility:hidden!important;pointer-events:none!important}
 .frow [data-buypot]{display:flex;flex-direction:column;align-items:center;line-height:1.15;max-width:120px}.frow [data-buypot] small{font-size:10.5px;opacity:.85}
 body.nc-st #ncRoomHud,body.nc-st #ncWorlds,body.nc-st .nc-grid,body.nc-st .nc-mini,body.nc-st .nc-top{visibility:hidden!important}
 .nc-sttabs{display:flex;gap:8px;margin-bottom:8px}.nc-mlist{display:grid;gap:8px;margin:8px 0}
