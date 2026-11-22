@@ -8449,7 +8449,7 @@ function kkPaint(h){
   x.m.traverse(o => { if(o.isMesh && o.material && o.name.indexOf('Scythe_') !== 0 && o.name !== 'NC_Head'){ if(!o.userData.kkM){ o.material = o.material.clone(); o.userData.kkM = 1; } const tx = texFor(o.name); if(o.material.map !== tx){ o.material.map = tx; o.material.needsUpdate = true; } } });
   if(k.scythe) kkScythe(x, wt);
   ncHead(h, col);
-  try{ if(['warrior','paladin'].includes(h.cls || save.cls)) ncSwordSwap(h); }catch(e){}
+  try{ ncSwordSwap(h); }catch(e){}
   ncWeaponFx(x.m);
 }
 // Foice do Necromante (o pacote de bonecos nao traz foice; esta e feita aqui): cabo de madeira e lamina curva na cor do grade
@@ -8483,22 +8483,32 @@ function ncWpnDeco(o, w){ (o.userData.ncDeco || []).forEach(d => o.remove(d)); o
   if(g >= 4){ const runeM = new T.MeshBasicMaterial({color:hexG, transparent:true, opacity:.9, blending:T.AdditiveBlending}); for(let i = 0; i < 4; i++) add(new T.BoxGeometry(t*.2, t*.2, t*.2).scale(ax === 'x' ? 3 : 1, ax === 'y' ? 3 : 1, ax === 'z' ? 3 : 1), runeM, at(.45 + i*.12, {[other]:t*.12})); }   // A+: runas
   if(g >= 5){ const crM = new T.MeshStandardMaterial({color:0xe8f4ff, emissive:0x9ae8ff, emissiveIntensity:1.4, transparent:true, opacity:.85}); for(let i = 0; i < 3; i++){ const a = i/3*Math.PI*2; add(new T.OctahedronGeometry(t*.35), crM, at(.55 + i*.13, {[side]:Math.cos(a)*t*2.2, [other]:Math.sin(a)*t*2.2})); } }   // S: cristais
 }
-/* 22/11 (Arnold escolheu na página): uma espada diferente para cada faixa de grade (Guerreiro e Paladino).
-   Modelos do pacote grátis "30 Unique Lowpoly Swords" (CC0). Ficam no mesmo lugar da espada original, do mesmo tamanho. */
-const NC_SWORDS = ['26-Wooden','17-Smoke','22-Antler','28-Asymmetrical','27-Pattern','27-Pattern','19-Heirloom','24-Coral','4-Elemental','1-Crystal'];
+/* 22/11 (Arnold): uma arma diferente para cada faixa de grade, em todas as classes que têm arma do modelo.
+   Pacotes grátis CC0: KayKit Fantasy Weapons Bits, 30 Unique Lowpoly Swords, Binbun RPG Weapons, RG Poly Medieval Weapons.
+   A peça nova fica no mesmo lugar e do mesmo tamanho da original (que é escondida). 10 faixas: No Grade(2), D(2), C(2), B, A(2), S. */
+const NC_WPN_SET = [
+  {re:/^(1H|2H)_Sword$/, f:['kk_sword_A','kk_sword_A','kk_sword_B','kk_sword_E','swords/27-Pattern','swords/27-Pattern','swords/19-Heirloom','swords/24-Coral','swords/4-Elemental','swords/1-Crystal']},
+  {re:/^2H_Axe$/, f:['bb_Axe_02','bb_Axe_02','bb_Axe_04','bb_Axe_07','kk_axe_A','kk_axe_A','kk_axe_B','kk_axe_C','kk_axe_C','kk_halberd']},
+  {re:/^2H_Staff$/, f:['kk_staff_A','kk_staff_A','rg_DruidStaff_1_1_A','rg_DruidStaff_1_1_A','rg_DruidStaff_2_1_A','rg_DruidStaff_2_1_A','rg_DruidStaff_1_1_B','kk_staff_B','kk_staff_B','kk_staff_B']},
+  {re:/^Knife(_Offhand)?$/, f:['bb_Dagger_01','bb_Dagger_01','bb_Dagger_03','bb_Dagger_03','bb_Dagger_05','bb_Dagger_05','bb_Dagger_07','kk_dagger_A','kk_dagger_A','kk_dagger_B']},
+  {re:/^(Round|Badge|Rectangle|Spike)_Shield$/, slot:'shield', f:['kk_shield_A','kk_shield_A',null,null,null,null,'kk_shield_B','kk_shield_C','kk_shield_C',null]}];
 const ncSwCache = {};
-function ncSwLoad(n){ return ncSwCache[n] || (ncSwCache[n] = new Promise(ok => new T.GLTFLoader().load('assets/weapons/swords/' + n + '.glb', g => ok(g), undefined, () => ok(null)))); }
-function ncSwordSwap(h){ const x = h && h.mx; if(!x) return; const w = equipped('weapon'), name = w ? NC_SWORDS[w.tier] : NC_SWORDS[0];
-  let orig = null; x.m.traverse(o => { if(o.isMesh && /^(1H|2H)_Sword$/.test(o.name) && o.visible) orig = o; }); if(!orig){ return; }
-  if(x.swd && x.swd.userData.n === name && x.swd.parent === orig.parent){ orig.visible = false; return; }
-  ncSwLoad(name).then(g => { if(!g) return; let o2 = null; x.m.traverse(o => { if(o.isMesh && /^(1H|2H)_Sword$/.test(o.name) && (o.visible || o.userData.ncHid)) o2 = o; }); if(!o2) return;
-    if(x.swd && x.swd.parent) x.swd.parent.remove(x.swd);
-    const src = g.scene.clone(true), hold = new T.Group(); hold.userData.n = name; hold.add(src);
-    src.traverse(q => { if(q.isMesh){ q.material = q.material.clone(); q.name = 'NC_Sword'; q.castShadow = true; q.frustumCulled = false; } });
-    if(!o2.geometry.boundingBox) o2.geometry.computeBoundingBox(); const ob = o2.geometry.boundingBox, nb = new T.Box3().setFromObject(src);
-    const k = (ob.max.y - ob.min.y)/Math.max(.001, nb.max.y - nb.min.y); src.scale.setScalar(k); src.position.y = (ob.min.y - nb.min.y*k);
-    hold.position.copy(o2.position); hold.rotation.copy(o2.rotation); o2.parent.add(hold); o2.visible = false; o2.userData.ncHid = 1; x.swd = hold;
-    try{ ncWeaponFx(x.m); }catch(e){} }); }
+function ncSwLoad(n){ return ncSwCache[n] || (ncSwCache[n] = new Promise(ok => new T.GLTFLoader().load('assets/weapons/' + n + '.glb', g => ok(g), undefined, () => ok(null)))); }
+function ncSwordSwap(h){ const x = h && h.mx; if(!x) return; x.swds = x.swds || {};
+  NC_WPN_SET.forEach(S => { const it = equipped(S.slot || 'weapon'), name = it ? S.f[it.tier] : S.f[0];
+    const origs = []; x.m.traverse(o => { if(o.isMesh && S.re.test(o.name)) origs.push(o); });   // kkPaint já decidiu quais aparecem (visible)
+    origs.forEach(o => { const key = o.uuid, cur = x.swds[key];
+      if(!o.visible){ if(cur && cur.parent) cur.parent.remove(cur); delete x.swds[key]; return; }
+      if(!name){ if(cur && cur.parent) cur.parent.remove(cur); delete x.swds[key]; return; }
+      if(cur && cur.userData.n === name && cur.parent){ o.visible = false; return; }
+      ncSwLoad(name).then(g => { if(!g || !o.parent) return; const c0 = x.swds[key]; if(c0 && c0.parent) c0.parent.remove(c0);
+        const src = g.scene.clone(true), hold = new T.Group(); hold.userData.n = name; hold.add(src);
+        src.traverse(q => { if(q.isMesh){ q.material = q.material.clone(); q.name = /Shield/.test(o.name) ? 'NC_Shield' : 'NC_Sword'; q.castShadow = true; q.frustumCulled = false; } });
+        if(!o.geometry.boundingBox) o.geometry.computeBoundingBox(); const ob = o.geometry.boundingBox, nb = new T.Box3().setFromObject(src);
+        const k = (ob.max.y - ob.min.y)/Math.max(.001, nb.max.y - nb.min.y); src.scale.setScalar(k); src.position.y = (ob.min.y - nb.min.y*k);
+        src.position.x = -((nb.min.x + nb.max.x)/2)*k + (ob.min.x + ob.max.x)/2; src.position.z = -((nb.min.z + nb.max.z)/2)*k + (ob.min.z + ob.max.z)/2;
+        hold.position.copy(o.position); hold.rotation.copy(o.rotation); hold.scale.copy(o.scale); o.parent.add(hold); o.visible = false; x.swds[key] = hold;
+        try{ ncWeaponFx(x.m); }catch(e){} }); }); }); }
 function ncWeaponFx(root){
   const w = equipped('weapon'), U = w ? ncUp(Math.min(NC_UP_MAX, (w.up || 0) + (w.sa ? 3 : 0))) : null;
   if(!ncFlameTex){ const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'), r = g.createRadialGradient(32, 38, 2, 32, 34, 30); r.addColorStop(0, 'rgba(255,255,255,1)'); r.addColorStop(.35, 'rgba(255,255,255,.55)'); r.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = r; g.fillRect(0, 0, 64, 64); ncFlameTex = new T.CanvasTexture(c); }
