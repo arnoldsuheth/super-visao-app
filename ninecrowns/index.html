@@ -5726,7 +5726,7 @@ function itemName(it){
   if(it.slot === 'weapon') return WVAR[it.wtype][it.v].n + ' ' + TIERS[it.tier].pre + u;
   return SLOT_INFO[it.slot].n + ' ' + TIERS[it.tier].pre + u;
 }
-function itemStats(it){ const b = Object.assign({}, itemStatsBase(it)); if(it.tier >= 6) b.atkPct = (b.atkPct || 0) + .04*(it.tier - 5);
+function itemStats(it){ const b = Object.assign({}, itemStatsBase(it)); if(it.tier >= 6) b.atkPct = (b.atkPct || 0) + .04*(it.tier - 5); if(it.sa) b.atkPct = (b.atkPct || 0) + .08;
   const u = it.up || 0, xk = it.ex ? (it.ex.startsWith('boss:') ? 1.12 : 1.1) : 1; if(u || xk > 1){ const k = (1 + .04*u)*xk; ['hp','def','atk'].forEach(n => { if(b[n]) b[n] = Math.round(b[n]*k); }); } return b; }
 function itemStatsBase(it){
   const t = it.tier, m = TIERS[t].mult, r = Math.round, f = v => Math.round(v*100)/100;
@@ -5832,15 +5832,20 @@ const MATS = {
   essencia:{n:'Essência Mágica', css:'#d06aff', r:2}, nucleo:{n:'Núcleo Elemental', css:'#ff6a3a', r:3}, escama:{n:'Escama de Dragão', css:'#ff4a6a', r:4},
   divina:{n:'Poeira Divina', css:'#ffe6a0', r:5},
   refino:{n:'Pedra de Refino', css:'#d0d0dc', r:0}, superior:{n:'Pedra Superior', css:'#6ac8ff', r:2}, ancestral:{n:'Pedra Ancestral', css:'#ff9a3a', r:3},
-  selo:{n:'Selo de Ferreiro', css:'#86d873', r:2}, bencao:{n:'Bênção da Bigorna', css:'#ffd86a', r:4}, broca:{n:'Broca Solar', css:'#f2c14e', r:1}};
+  selo:{n:'Selo de Ferreiro', css:'#86d873', r:2}, bencao:{n:'Bênção da Bigorna', css:'#ffd86a', r:4}, broca:{n:'Broca Solar', css:'#f2c14e', r:1},
+  /* 22/11 (Arnold aprovou): as 4 pedras da forja substituem todos os materiais acima */
+  prata:{n:'Pedra de Prata', css:'#d8dde8', r:0}, lcoin:{n:'Lesser Coin', css:'#ff9a3a', r:2}, lblue:{n:'Lesser Blue', css:'#3ae0ff', r:3}, lgold:{n:'Lesser Gold', css:'#ffd23a', r:5}};
+const NC_MATMAP = {metal:'prata', minerio:'prata', cristal:'prata', essencia:'prata', refino:'prata', broca:'lcoin', superior:'lcoin', nucleo:'lcoin', escama:'lcoin', selo:'lcoin', ancestral:'lblue', bencao:'lblue', divina:'lgold'};
+const NC_GEMS4 = ['prata','lcoin','lblue','lgold'];
 const MAT_KEYS = Object.keys(MATS);
-const CRAFT_MATS = ['metal','minerio','cristal','essencia','nucleo','escama','divina'];
-const FORGE_MATS = ['refino','superior','ancestral','selo','bencao','broca'];
-function recipe(t){
+const CRAFT_MATS = ['prata','lcoin','lgold'];
+const FORGE_MATS = ['prata','lcoin','lblue','lgold'];
+function recipe(t, slot){
   const o = CFG.recipes[t] || CFG.recipes[String(t)]; if(o) return {mats:o.mats || {}, gold:(+o.gold || 0)*NC_ECON};
-  const R = [{metal:4}, {metal:6, minerio:2}, {metal:8, minerio:4, cristal:1}, {minerio:6, cristal:3, essencia:2}, {minerio:8, cristal:5, essencia:4, nucleo:1},
-    {cristal:8, essencia:6, nucleo:3, escama:1}, {essencia:8, nucleo:5, escama:3}, {nucleo:8, escama:6, divina:1}, {nucleo:10, escama:10, divina:3}, {nucleo:15, escama:15, divina:10}];
-  return {mats:R[t], gold:Math.round(NC_ECON*80*Math.pow(1.9, t))};
+  const g = GR_OF[t], plus = t > 0 && GR_OF[t - 1] === g ? 1.5 : 1, w = slot === 'weapon', big = slot === 'chest' || slot === 'greaves' ? 1.5 : 1;
+  const P = w ? [3, 10, 20, 20, 40, 60] : [1, 5, 10, 10, 20, 30], C = w ? [0, 0, 0, 45, 90, 0] : [0, 0, 0, 30, 60, 0];
+  const m = {prata:Math.ceil(P[g]*big*plus)}; if(C[g]) m.lcoin = Math.ceil(C[g]*big*plus); if(g >= 5) m.lgold = Math.ceil(3*big*plus);
+  return {mats:m, gold:Math.round(NC_ECON*20*Math.pow(1.6, t))};
 }
 
 /* ===== SOQUETES (0 a 5 por peça) ===== */
@@ -5860,8 +5865,8 @@ function gemFx(it, add){ ensureSk(it); it.gm.forEach(g => { if(!g) return; const
 function skDots(it){ ensureSk(it); if(!it.sk.length) return '';
   return `<span class="skd" aria-label="${it.sk.length} encaixes">${it.sk.map((c, i) => { const g = it.gm[i], k = g && g.split(':')[0];
     return `<i class="${g ? 'f' : ''}" style="--c:${g ? RAR[+g.split(':')[1] - 1].css : SKC.W.css};--g:${g ? GEMS[k].css : 'none'}"></i>`; }).join('')}</span>`; }
-const UPG = [null, {p:1,m:'refino'},{p:1,m:'refino'},{p:1,m:'refino'},{p:1,m:'refino'},{p:1,m:'refino'},{p:.8,m:'refino'},{p:.7,m:'refino'},
-  {p:.6,m:'superior',lose:1},{p:.5,m:'superior',lose:1},{p:.4,m:'superior',lose:1},{p:.3,m:'ancestral',lose:2},{p:.22,m:'ancestral',lose:2},
+const UPG = [null, {p:1,m:'prata'},{p:1,m:'prata'},{p:1,m:'prata'},{p:1,m:'prata'},{p:1,m:'prata'},{p:.8,m:'prata'},{p:.7,m:'prata'},
+  {p:.6,m:'lcoin',lose:1},{p:.5,m:'lcoin',lose:1},{p:.4,m:'lcoin',lose:1},{p:.3,m:'lgold',lose:2},{p:.22,m:'lgold',lose:2},
   {p:.15,m:'ancestral',brk:.1},{p:.1,m:'ancestral',brk:.2},{p:.06,m:'ancestral',brk:.3}];
 const upCost = it => Math.round(NC_ECON*40*((it.up || 0) + 1)*Math.pow(1.35, it.tier));
 const upChance = it => Math.min(1, UPG[(it.up || 0) + 1].p + (it.fp || 0) + (evFx().up || 0));
@@ -5893,8 +5898,8 @@ const gemMatCost = r => r;  // cristais de energia por combinação
 const pullCost = key => NC_ECON*20*Math.pow(+key.split(':')[1], 2);
 function fuseGem(k, r){
   const key = k + ':' + r; if((save.gems[key] || 0) < 3 || r >= 6) return null; const c = gemCost(r), mc = gemMatCost(r);
-  if(save.gold < c || (save.mats.cristal || 0) < mc) return null;
-  save.gold -= c; save.mats.cristal -= mc; const p = Math.min(1, (CFG.stoneFuse[r] ?? .5) + (save.gemPity[r] || 0));
+  if(save.gold < c || (save.mats.prata || 0) < mc) return null;
+  save.gold -= c; save.mats.prata -= mc; const p = Math.min(1, (CFG.stoneFuse[r] ?? .5) + (save.gemPity[r] || 0));
   if(Math.random() < p){ save.gems[key] -= 3; addGem(k, r + 1); save.gemPity[r] = 0; persist(); SFX.drop(); return ['Combinação perfeita!', stoneName(k, r + 1), '']; }
   save.gems[key] -= 1; save.gemPity[r] = (save.gemPity[r] || 0) + .05; persist(); SFX.miss();
   return ['A combinação falhou', 'Perdeu 1 pedra. A próxima tentativa tem +5% de chance.', 'danger'];
@@ -5910,7 +5915,7 @@ function insertGem(it, key){
   save.gems[key]--; it.gm[i] = key; persist(); return true;
 }
 function removeGem(it, i){ const key = it.gm[i]; if(!key) return; const c = pullCost(key); if(save.gold < c) return; save.gold -= c; it.gm[i] = null; const [k, r] = key.split(':'); addGem(k, +r); persist(); }
-function rerollSockets(it){ if(!(save.mats.broca > 0)) return; save.mats.broca--; returnGems(it); rollSockets(it, true); persist(); }
+function rerollSockets(it){ if(!(save.mats.lcoin > 0)) return; save.mats.lcoin--; returnGems(it); rollSockets(it, true); persist(); }
 
 /* ===== EVENTOS (rodízio semanal; o painel admin pode forçar um) ===== */
 const EVENTS = [
@@ -5934,7 +5939,7 @@ const evEnds = () => { const ms = 6048e5 - (Date.now() % 6048e5); return Math.ce
 
 /* ===== RECOMPENSAS EM CAMPO ===== */
 let runMats = {}, runGems = {}, runFrags = {}, runCoins = 0;
-function giveMat(k, n, pos){ n = Math.max(1, Math.round((n || 1)*(CRAFT_MATS.includes(k) ? (evFx().mat || 1) : 1))); save.mats[k] = (save.mats[k] || 0) + n; runMats[k] = (runMats[k] || 0) + n; feed('+' + n + ' ' + MATS[k].n, MATS[k].css); if(pos) floatText(pos, MATS[k].n, 'gold'); }
+function giveMat(k, n, pos){ k = NC_MATMAP[k] || k; n = Math.max(1, Math.round((n || 1)*(evFx().mat || 1)*(evFx().stone || 1))); save.mats[k] = (save.mats[k] || 0) + n; runMats[k] = (runMats[k] || 0) + n; feed('+' + n + ' ' + MATS[k].n, MATS[k].css); if(pos) floatText(pos, MATS[k].n, 'gold'); }
 let gemDrops = [], lootNear = null;
 const gemGeo = new T.OctahedronGeometry(.2);
 function giveGem(k, r, pos){
@@ -5950,7 +5955,7 @@ function giveCoins(n){ n = Math.round(n*(evFx().coins || 1)); save.coins += n; r
 const rndGem = id => (id !== undefined && Math.random() < .4) ? GEM_KEYS[id % GEM_KEYS.length] : GEM_KEYS[Math.floor(Math.random()*GEM_KEYS.length)];
 function stoneRoll(src){ const w = CFG.stoneRar.map((v, i) => i >= 2 ? v*LUCK() : v), max = CFG.stoneMax[src] || 3; let tot = 0; for(let i=0;i<max;i++) tot += w[i]; let r = Math.random()*tot, i = 0; while(i < max - 1 && r >= w[i]){ r -= w[i]; i++; } return i + 1; }
 const gemTierFor = (id, bias) => stoneRoll(bias >= 1 ? 'boss' : bias > 0 ? 'elite' : 'minion');
-let forgeTab = 'fuse', forgeSel = null, forgeConfirm = 0; const forgeOpt = {selo:true, bencao:true};
+let forgeTab = 'craft', forgeSel = null, forgeConfirm = 0; const forgeOpt = {selo:false, bencao:false};
 
 /* ================= STAGES ================= */
 const ST_DEF = [
@@ -6067,13 +6072,15 @@ if(!save.ncCls){ (save.inv || []).forEach(it => { if(it.slot !== 'weapon' && it.
 save.mats = Object.assign({refino:0, superior:0, ancestral:0, selo:0, bencao:0, broca:0}, save.mats || {}); save.gems = save.gems || {}; save.gemPity = save.gemPity || {};
 if(!save.skV){ (save.inv || []).forEach(ensureSk); save.mats.refino += 3; save.mats.broca += 1; save.skV = 1; }
 if(save.potRes == null) save.potRes = 2;
+if(!save.matV2){ const mm = save.mats || {}; Object.keys(NC_MATMAP).forEach(k => { if(mm[k] > 0){ const n = NC_MATMAP[k]; mm[n] = (mm[n] || 0) + mm[k]; } delete mm[k]; }); save.mats = mm; save.matV2 = 1; }
 save.diff = 'normal';   // 22/11: não existe mais escolha de dificuldade
 save.frags = save.frags || [0,0,0,0,0,0,0,0,0,0]; save.coins = save.coins || 0; save.cnt = save.cnt || {}; save.mq = save.mq || {}; save.seq = save.seq || {step:0, lvl:0};
 save.look = Object.assign({tunic:0, hair:0, skin:0}, save.look || {}); if(save.look.head === 'kk_rogue_hooded') save.look.head = ''; save.pityEx = save.pityEx || {}; save.evBought = save.evBought || {}; save.worldWins = save.worldWins || {};
 if(!save.stoneV){ // gemas antigas viram pedras novas; encaixes passam a aceitar qualquer pedra (máx. 5)
   const ng = {}; for(const k in save.gems){ if(save.gems[k] > 0){ const nk = migrateKey(k); ng[nk] = (ng[nk] || 0) + save.gems[k]; } } save.gems = ng; save.gemPity = {};
   (save.inv || []).forEach(it => { ensureSk(it); it.gm = it.gm.map(g => g ? migrateKey(g) : null); while(it.sk.length > 5){ const g = it.gm.pop(); it.sk.pop(); if(g){ const [k, r] = g.split(':'); save.gems[g] = (save.gems[g] || 0) + 1; } } it.sk = it.sk.map(() => 'W'); });
-  save.coins += 10; save.mats.metal = (save.mats.metal || 0) + 5; save.stoneV = 1; }
+  save.coins += 10; save.mats.prata = (save.mats.prata || 0) + 5; save.stoneV = 1; }
+if(save.mats.metal > 0){ save.mats.prata = (save.mats.prata || 0) + save.mats.metal; save.mats.metal = 0; }
 if(!save.shV){ // presente: ombreiras do nível da sua armadura atual, para não perder os bônus de conjunto
   const tiers = ['helmet','chest','bracers','greaves','boots'].map(s => (save.inv.find(i => i.id === save.eq[s]) || {}).tier).filter(t => t !== undefined);
   if(tiers.length){ const t = Math.min(...tiers), it = {id:save.nextId++, slot:'shoulders', tier:t, q:0, up:0}; rollSockets(it); save.inv.push(it); save.eq.shoulders = it.id; }
@@ -7759,7 +7766,7 @@ function renderStages(){
 function worldCard(r){
   const last = STAGES[r*6 + 5], open = save.beaten[last.id] > 0, [lo, hi] = worldRange(r), w = save.worldWins[r] || 0;
   return `<div class="card world ${open ? '' : 'locked'}" style="--tc:#ff4ae0"><div class="num">★</div><div class="cname">Chefe Mundial: ${last.boss} Ancestral</div>
-    <div class="cmeta">4× mais vida, já começa furioso. Sempre deixa uma armadura de <b>${GR(lo)} a ${GR(hi)}</b>, Poeira Divina, pedras de até Mítica e muitos fragmentos.</div>
+    <div class="cmeta">4× mais vida, já começa furioso. Sempre deixa uma armadura de <b>${GR(lo)} a ${GR(hi)}</b>, Lesser Gold, pedras de até Mítica e muitos fragmentos.</div>
     <div class="pills">${open ? `<span class="pill">Vencido ${w}×</span>` : `<span class="pill">Derrote o ${last.boss} (fase ${last.id + 1}) para liberar</span>`}</div>
     <div class="acts"><button class="btn ${open ? 'primary' : ''}" data-world="${r}" ${open ? '' : 'disabled'}>Desafiar Chefe Mundial</button></div></div>`;
 }
@@ -7902,8 +7909,8 @@ function ncBagFull(){ if(clock - ncFullT > 8){ ncFullT = clock; try{ banner('Bag
 const ncFits = it => save.inv.length < ncBagMax() && ncWeight() + ncItemW(it) <= ncWeightMax();
 function ncRoom(slot){ if(ncFits({slot})) return true; try{ banner('Bag cheia ou pesada demais', 'Libere espaço na bag antes de pegar mais uma peça.', 'danger'); }catch(e){} return false; }
 // desmanchar: a peça vira metade dos materiais da receita dela (e pedras de refino se estava evoluída)
-function ncBreak(it){ const R = recipe(it.tier).mats, out = {}; for(const m in R){ const q = Math.floor(R[m]*.5); if(q > 0) out[m] = q; }
-  if(!Object.keys(out).length) out[Object.keys(R)[0]] = 1; const u = Math.floor((it.up || 0)/3); if(u > 0) out.refino = (out.refino || 0) + u; return out; }
+function ncBreak(it){ const R = recipe(it.tier, it.slot).mats, out = {}; for(const m in R){ const q = Math.floor(R[m]/3); if(q > 0) out[m] = q; }   // 21/11: destruir devolve ~1/3
+  if(!Object.keys(out).length) out[Object.keys(R)[0]] = 1; const u = Math.floor((it.up || 0)/3); if(u > 0) out.prata = (out.prata || 0) + u; return out; }
 const ncBreakTxt = out => Object.keys(out).map(m => '+' + out[m] + ' ' + MATS[m].n).join(', ');
 let bagConfirm = 0;
 function ncPopHTML(){ const pz = mode !== 'hub';
@@ -7986,20 +7993,21 @@ function forgeItems(){
     (rest.length ? `<div class="eyebrow">Na mochila (Grade D ou mais)</div><div class="fsel">${rest.map(chip).join('')}</div>` : '');
 }
 function renderForge(){
-  $('#forgeTabs').innerHTML = [['fuse','Fusão'],['craft','Fabricar'],['up','Evoluir +1 a +12'],['gems','Pedras e encaixes']].map(([k, n]) => `<button class="chipb" data-ftab="${k}" aria-pressed="${forgeTab === k}">${n}</button>`).join('');
-  $('#forgeMats').innerHTML = matsHTML(forgeTab === 'craft' ? CRAFT_MATS : forgeTab === 'up' ? FORGE_MATS : forgeTab === 'gems' ? ['cristal','broca'] : []);
-  $('#forgeBody').innerHTML = forgeTab === 'up' ? upHTML() : forgeTab === 'gems' ? gemsHTML() : forgeTab === 'craft' ? craftHTML() : fuseHTML();
+  $('#forgeTabs').innerHTML = [['craft','Fabricar'],['up','Evoluir +1 a +12'],['sa','Brilho da arma'],['gems','Pedras e encaixes']].map(([k, n]) => `<button class="chipb" data-ftab="${k}" aria-pressed="${forgeTab === k}">${n}</button>`).join('');
+  $('#forgeMats').innerHTML = matsHTML(forgeTab === 'craft' ? CRAFT_MATS : forgeTab === 'up' ? FORGE_MATS : forgeTab === 'gems' ? ['prata','lcoin'] : forgeTab === 'sa' ? ['lblue'] : []);
+  if(forgeTab === 'fuse') forgeTab = 'craft';
+  $('#forgeBody').innerHTML = forgeTab === 'up' ? upHTML() : forgeTab === 'sa' ? saHTML() : forgeTab === 'gems' ? gemsHTML() : craftHTML();
 }
 let craftSlot = 'helmet', craftGr = -1;
-const MAT_ICO = k => '<svg class="mico" viewBox="0 0 16 16" aria-hidden="true" style="color:' + ((MATS[k] || {}).css || '#ccc') + '"><path d="' + ({metal:'M3 12 6 3l5 2 2 7-5 2z', minerio:'M2 11 5 5l4-2 5 4-1 6-7 1z', cristal:'M8 1l4 5-4 9-4-9z', essencia:'M8 1c3 4 5 6 5 9a5 5 0 0 1-10 0c0-3 2-5 5-9z', nucleo:'M8 2a6 6 0 1 0 0 12A6 6 0 0 0 8 2zm0 3a3 3 0 1 1 0 6 3 3 0 0 1 0-6z', escama:'M8 1c4 2 6 5 6 9l-6 5-6-5c0-4 2-7 6-9z', divina:'M8 1l2 5 5 .5-4 3.5 1.300 5L8 12l-4.300 3 1.300-5-4-3.500L6 6z'}[k] || 'M8 2l5 4-2 8H5L3 6z') + '"/></svg>';
-function canCraft(t){ const R = recipe(t), k = evFx().craft || 1; return save.gold >= Math.round(R.gold*k) && Object.keys(R.mats).every(m => (save.mats[m] || 0) >= Math.ceil(R.mats[m]*k)); }
+const MAT_ICO = k => '<svg class="mico" viewBox="0 0 16 16" aria-hidden="true" style="color:' + ((MATS[k] || {}).css || '#ccc') + '"><path d="' + ({prata:'M8 1l6 5-6 9-6-9z', lcoin:'M8 1l6 5-6 9-6-9z M2 6h12', lblue:'M8 1l6 5-6 9-6-9z M5 6l3 9 3-9', lgold:'M8 1l6 5-6 9-6-9z M2 6h12 M8 1v14',metal:'M3 12 6 3l5 2 2 7-5 2z', minerio:'M2 11 5 5l4-2 5 4-1 6-7 1z', cristal:'M8 1l4 5-4 9-4-9z', essencia:'M8 1c3 4 5 6 5 9a5 5 0 0 1-10 0c0-3 2-5 5-9z', nucleo:'M8 2a6 6 0 1 0 0 12A6 6 0 0 0 8 2zm0 3a3 3 0 1 1 0 6 3 3 0 0 1 0-6z', escama:'M8 1c4 2 6 5 6 9l-6 5-6-5c0-4 2-7 6-9z', divina:'M8 1l2 5 5 .5-4 3.5 1.300 5L8 12l-4.300 3 1.300-5-4-3.500L6 6z'}[k] || 'M8 2l5 4-2 8H5L3 6z') + '"/></svg>';
+function canCraft(t){ const R = recipe(t, craftSlot), k = evFx().craft || 1; return save.gold >= Math.round(R.gold*k) && Object.keys(R.mats).every(m => (save.mats[m] || 0) >= Math.ceil(R.mats[m]*k)); }
 function craftHTML(){
   const k = evFx().craft || 1;
-  let h = `<p class="lede">Fabrique peças com os materiais que os monstros deixam cair. Cada espécie solta um material próprio, e as armaduras mais raras pedem materiais de chefes e de <b>Chefes Mundiais</b> (Poeira Divina).${k < 1 ? ' <b style="color:#ff9a3a">Evento Forja Ardente: tudo custa 25% menos.</b>' : ''}</p>`;
+  let h = `<p class="lede">Fabrique peças com <b>Pedras de Prata</b> (No Grade a C) e <b>Lesser Coin</b> (Grade B e A). Arma, peitoral e calça custam mais. Grade S pede <b>Lesser Gold</b>.${k < 1 ? ' <b style="color:#ff9a3a">Evento Forja Ardente: tudo custa 25% menos.</b>' : ''}</p>`;
   h += `<div class="fsel">${[...ARMOR, 'weapon', 'shield', 'amulet'].filter(sl => sl !== 'shield' || save.cls === 'paladin').map(sl => `<button class="chipb" data-cslot="${sl}" aria-pressed="${craftSlot === sl}">${sl === 'weapon' ? 'Arma (' + CLS().name + ')' : SLOT_INFO[sl].n}</button>`).join('')}</div><div class="blist">`;
   if(craftGr < 0){ craftGr = 0; for(let g2 = 0; g2 < GR_LV.length; g2++) if(save.level >= GR_LV[g2]) craftGr = g2; }   // abre no melhor grade que o heroi ja pode usar
   h = h.replace('<div class="blist">', '<div class="eyebrow" style="margin-top:10px">Grade</div><div class="fsel">' + GR_N.map((n, g2) => '<button class="chipb" data-cgr="' + g2 + '" aria-pressed="' + (craftGr === g2) + '">' + n + (save.level < GR_LV[g2] ? ' · nv ' + GR_LV[g2] : '') + '</button>').join('') + '</div><div class="blist">');
-  h += TIERS.map((T, t) => { if(GR_OF[t] !== craftGr) return ''; const R = recipe(t), ok = canCraft(t);
+  h += TIERS.map((T, t) => { if(GR_OF[t] !== craftGr) return ''; const R = recipe(t, craftSlot), ok = canCraft(t);
     let st = ''; try{ const pv = {id:-1, slot:craftSlot, tier:t, q:0, up:0, cls:save.cls}; if(craftSlot === 'weapon'){ pv.wtype = CLS().wtype; pv.v = 0; } st = statText(itemStats(pv)); }catch(e){}
     const lvOk = save.level >= grLv(t);
     const need = Object.keys(R.mats).map(m => { const q = Math.ceil(R.mats[m]*k), have = save.mats[m] || 0; return `<span class="${have >= q ? 'ok' : 'no'}" style="--tc:${MATS[m].css}">${MAT_ICO(m)}${q} ${MATS[m].n} (você tem ${have})</span>`; }).join('');
@@ -8010,7 +8018,7 @@ function craftHTML(){
   return h;
 }
 function craftItem(t){
-  if(!canCraft(t) || !ncRoom(craftSlot)) return; const R = recipe(t), k = evFx().craft || 1;
+  if(!canCraft(t) || !ncRoom(craftSlot)) return; const R = recipe(t, craftSlot), k = evFx().craft || 1;
   save.gold -= Math.round(R.gold*k); for(const m in R.mats) save.mats[m] -= Math.ceil(R.mats[m]*k);
   const it = newItem(craftSlot, t, {wtype:CLS().wtype, cls:save.cls}); addItem(it); persist(); SFX.drop();
   banner('Fabricado: ' + itemName(it), TIERS[t].sc + ' · ' + TIERS[t].n); discover(it);
@@ -8031,12 +8039,20 @@ function upHTML(){
       <div class="pbar"><i style="width:${it.up/NC_UP_MAX*100}%"></i><span>+${it.up} de +${NC_UP_MAX}</span></div></div></div>
     <div class="row"><span class="pill ok">Chance ${Math.round(upChance(it)*100)}%</span><span class="pill">${MATS[U.m].n}: ${have}/1</span><span class="pill">${adenaTxt(cost)}</span></div>
     <div class="istat">${upRisk(U)}.</div>
-    <div class="row">${U.lose ? `<button class="chipb" data-fopt="selo" aria-pressed="${forgeOpt.selo}">Usar Selo de Ferreiro se falhar (${save.mats.selo || 0})</button>` : ''}${U.brk ? `<button class="chipb" data-fopt="bencao" aria-pressed="${forgeOpt.bencao}">Usar Bênção da Bigorna se rachar (${save.mats.bencao || 0})</button>` : ''}</div>
+    <div class="row">${false ? `<button class="chipb" data-fopt="selo" aria-pressed="${forgeOpt.selo}">Usar Selo de Ferreiro se falhar (${save.mats.selo || 0})</button>` : ''}${false ? `<button class="chipb" data-fopt="bencao" aria-pressed="${forgeOpt.bencao}">Usar Bênção da Bigorna se rachar (${save.mats.bencao || 0})</button>` : ''}</div>
     <button class="btn ${ok ? 'primary' : ''} ${confirmNow ? 'warnb' : ''}" data-fup="${it.id}" ${ok ? '' : 'disabled'}>${!ok ? (have < 1 ? 'Falta ' + MATS[U.m].n : 'Falta ouro') : confirmNow ? 'Confirmar: a peça pode perder nível' : 'Evoluir'}</button></div>`;
 }
+/* BRILHO DA ARMA (SA, decisão de 21/11): com Lesser Blue a arma fica mais brilhante, com efeito mais bonito e +8% de ataque. Grade C ou acima. */
+const saCost = it => [0, 0, 50, 75, 100, 150][GR_OF[it.tier]] || 0;
+function saHTML(){ const ws = save.inv.filter(i => i.slot === 'weapon' && GR_OF[i.tier] >= 2);
+  let h = '<p class="lede">Use <b>Lesser Blue</b> para dar o <b>Brilho</b> na arma: ela brilha mais, ganha efeito e <b>+8% de ataque</b>. Só armas de Grade C para cima (C 50, B 75, A 100, S 150).</p>';
+  if(!ws.length) return h + '<div class="empty">Você não tem arma de Grade C ou acima.</div>';
+  return h + '<div class="blist">' + ws.map(it => { const c = saCost(it), have = save.mats.lblue || 0;
+    return '<div class="frow" style="--tc:' + TIERS[it.tier].css + '">' + itemImg(it, 'ps-row') + '<div><div class="fn">' + itemName(it) + (it.sa ? ' · <b style="color:#3ae0ff">Brilho</b>' : '') + '</div><div class="istat">Lesser Blue ' + have + '/' + c + '</div></div><div class="iact">'
+      + (it.sa ? '<button class="btn sm" disabled>Já tem</button>' : '<button class="btn sm primary" data-fsa="' + it.id + '" ' + (have >= c ? '' : 'disabled') + '>Dar brilho</button>') + '</div></div>'; }).join('') + '</div>'; }
 let stoneFilter = 'all';
 function gemsHTML(){
-  let h = `<p class="lede">Cada peça tem de <b>0 a 5 encaixes</b>, e cada encaixe aceita qualquer pedra. Existem <b>10 pedras</b> com 6 raridades (Comum a Mítica). Junte <b>3 pedras iguais</b> com ouro e Cristais de Energia para criar uma de raridade maior. Se a peça estiver cheia, encaixar troca a pedra mais fraca.</p>` + forgeItems();
+  let h = `<p class="lede">Cada peça tem de <b>0 a 5 encaixes</b>, e cada encaixe aceita qualquer pedra. Existem <b>10 pedras</b> com 6 raridades (Comum a Mítica). Junte <b>3 pedras iguais</b> com ouro e Pedras de Prata para criar uma de raridade maior. Se a peça estiver cheia, encaixar troca a pedra mais fraca.</p>` + forgeItems();
   const it = byId(forgeSel);
   if(it){ ensureSk(it); const T = TIERS[it.tier];
     h += `<div class="fpanel" style="--tc:${T.css}"><div class="big">${itemName(it)} <small style="color:var(--mute)">${it.sk.length} de 5 encaixes</small></div>
@@ -8044,15 +8060,15 @@ function gemsHTML(){
         if(!g) return `<span class="sockb" style="--c:${SKC.W.css}"><span class="dot"></span>Vazio</span>`;
         const [k, r] = g.split(':');
         return `<button class="sockb" style="--c:${RAR[r - 1].css}" data-fpull="${i}" title="Tirar a pedra por ${adenaTxt(pullCost(g))}">${stoneImg(k, 20)}${stoneName(k, +r)} · tirar ${pullCost(g)}</button>`; }).join('') : '<span class="istat">Esta peça não tem encaixes.</span>'}</div>
-      <div class="row"><button class="btn sm" data-freroll="${it.id}" ${save.mats.broca > 0 ? '' : 'disabled'}>Sortear encaixes de novo · Broca Solar (${save.mats.broca || 0})</button><span class="istat">As pedras voltam para a bolsa.</span></div></div>`; }
+      <div class="row"><button class="btn sm" data-freroll="${it.id}" ${save.mats.lcoin > 0 ? '' : 'disabled'}>Sortear encaixes de novo · Lesser Coin (${save.mats.lcoin || 0})</button><span class="istat">As pedras voltam para a bolsa.</span></div></div>`; }
   h += `<h2>Bolsa de pedras</h2><div class="fsel">${[['all','Todas'], ...GEM_KEYS.map(k => [k, GEMS[k].st])].map(([k, n]) => `<button class="chipb" data-sfilter="${k}" aria-pressed="${stoneFilter === k}">${n}</button>`).join('')}</div>`;
   const keys = Object.keys(save.gems).filter(k => save.gems[k] > 0 && GEMS[k.split(':')[0]] && (stoneFilter === 'all' || k.startsWith(stoneFilter + ':')))
     .sort((a, b) => (+b.split(':')[1] - +a.split(':')[1]) || (GEM_KEYS.indexOf(a.split(':')[0]) - GEM_KEYS.indexOf(b.split(':')[0])));
   h += keys.length ? `<div class="blist">${keys.map(key => { const [k, rs] = key.split(':'), r = +rs, G = GEMS[k], n = save.gems[key];
-    const fc = gemCost(r), fm = gemMatCost(r), fp = r < 6 ? Math.min(1, (CFG.stoneFuse[r] ?? .5) + (save.gemPity[r] || 0)) : 0, canF = r < 6 && n >= 3 && save.gold >= fc && (save.mats.cristal || 0) >= fm;
+    const fc = gemCost(r), fm = gemMatCost(r), fp = r < 6 ? Math.min(1, (CFG.stoneFuse[r] ?? .5) + (save.gemPity[r] || 0)) : 0, canF = r < 6 && n >= 3 && save.gold >= fc && (save.mats.prata || 0) >= fm;
     return `<div class="frow stone r${r}" style="--tc:${RAR[r - 1].css}">${stoneImg(k, 40)}<div><div class="fn" style="color:${RAR[r - 1].css}">${stoneName(k, r)} <small style="color:var(--mute)">× ${n}</small></div>
       <div class="istat">${G.st}: ${stoneDesc(k, r)}</div></div>
-      <div class="iact"><button class="btn sm ${it && it.sk.length ? 'primary' : ''}" data-fins="${key}" ${it && it.sk.length ? '' : 'disabled'}>Encaixar</button>${r < 6 ? `<button class="btn sm" data-ffuse="${key}" ${canF ? '' : 'disabled'} title="Precisa de 3 pedras, ${fc} de ouro e ${fm} Cristal de Energia">Combinar 3 · ${Math.round(fp*100)}%</button>` : ''}</div></div>`; }).join('')}</div>`
+      <div class="iact"><button class="btn sm ${it && it.sk.length ? 'primary' : ''}" data-fins="${key}" ${it && it.sk.length ? '' : 'disabled'}>Encaixar</button>${r < 6 ? `<button class="btn sm" data-ffuse="${key}" ${canF ? '' : 'disabled'} title="Precisa de 3 pedras, ${fc} de ouro e ${fm} Pedra de Prata">Combinar 3 · ${Math.round(fp*100)}%</button>` : ''}</div></div>`; }).join('')}</div>`
     : '<div class="empty">Nenhuma pedra aqui. Elas caem de monstros, elites, baús e chefes, e também estão na Loja.</div>';
   return h;
 }
@@ -8060,17 +8076,15 @@ function gemsHTML(){
 let shopSlot = 'helmet';
 const SHOP = [
   {n:'Pedra Comum aleatória', p:4, g:() => giveGem(rndGem(), 1)}, {n:'Pedra Incomum aleatória', p:12, g:() => giveGem(rndGem(), 2)}, {n:'Pedra Rara aleatória', p:35, g:() => giveGem(rndGem(), 3)},
-  {n:'5 Fragmentos Metálicos + 3 Minérios Raros', p:6, g:() => { giveMat('metal', 5); giveMat('minerio', 3); }}, {n:'3 Cristais de Energia', p:10, g:() => giveMat('cristal', 3)},
-  {n:'3 Essências Mágicas', p:12, g:() => giveMat('essencia', 3)}, {n:'1 Núcleo Elemental', p:15, g:() => giveMat('nucleo')}, {n:'1 Escama de Dragão', p:20, g:() => giveMat('escama')},
-  {n:'5 Pedras de Refino', p:6, g:() => giveMat('refino', 5)}, {n:'1 Pedra Superior', p:10, g:() => giveMat('superior')}, {n:'1 Pedra Ancestral', p:30, g:() => giveMat('ancestral')},
-  {n:'1 Selo de Ferreiro', p:20, g:() => giveMat('selo')}, {n:'1 Bênção da Bigorna', p:45, g:() => giveMat('bencao')}, {n:'1 Broca Solar', p:8, g:() => giveMat('broca')},
+  {n:'10 Pedras de Prata', p:6, g:() => giveMat('prata', 10)}, {n:'3 Lesser Coin', p:12, g:() => giveMat('lcoin', 3)},
+  {n:'1 Lesser Blue', p:25, g:() => giveMat('lblue')}, {n:'1 Lesser Gold', p:80, g:() => giveMat('lgold')},
 ];
 const shopPrice = p => Math.max(1, Math.round(p*CFG.shopMult*NC_ECON));
 const piecePrice = t => shopPrice(5*Math.pow(1.85, t));
 const evKey = () => { const e = curEvent(); return e ? e.id + Math.floor(Date.now()/6048e5) : ''; };
 function renderShop(){
   const E = curEvent();
-  let h = `<div class="mats">${matsHTML(['metal','minerio','cristal'])}</div>`;
+  let h = `<div class="mats">${matsHTML(NC_GEMS4)}</div>`;
   if(ncNight()) h += ncNightBox();
   { const pp = NC_POT_P, rk = ncRes() === 'mp' ? 'mp' : 'sp', row = (k, n, d, have, key) => `<div class="frow" style="--tc:${k === 'hp' ? '#ff5a6a' : k === 'mp' ? '#4a9aff' : '#6ae05a'}"><span class="ncpot">${window.ncPotSvg(k)}</span><div><div class="fn">${n} <small style="color:var(--mute)">× ${have} / ${NC_POT_MAX}</small></div><div class="istat">${d}</div></div><div class="iact"><button class="btn sm primary" data-buypot="${key}" ${save.gold >= pp && have < NC_POT_MAX ? '' : 'disabled'}>Comprar<small>${adenaTxt(pp)}</small></button></div></div>`;
     h += `<h2>Poções</h2><div class="blist">` + row('hp', 'Poção de Vida', 'Cura parte da sua vida.', save.potions || 0, 'hp')
@@ -8087,7 +8101,7 @@ function renderShop(){
   h += `</div><h2>Trocar fragmentos <small>junte fragmentos de uma armadura para trocar por uma peça dela</small></h2><div class="blist">`;
   h += TIERS.map((T, t) => { const need = CFG.frag[t], have = save.frags[t] || 0;
     return `<div class="frow" style="--tc:${T.css}">${pieceImg(t, 'chest', 'ps-row')}<div><div class="fn" style="color:${T.css}">Fragmentos ${T.pre} · ${T.sc}</div>
-      ${need ? `<div class="pbar"><i style="width:${Math.min(100, have/need*100)}%"></i><span>${have} / ${need}</span></div>` : `<div class="istat">Você tem ${have}. A ${T.model} não pode ser trocada: só cai de Chefes Mundiais ou é fabricada com Poeira Divina.</div>`}</div>
+      ${need ? `<div class="pbar"><i style="width:${Math.min(100, have/need*100)}%"></i><span>${have} / ${need}</span></div>` : `<div class="istat">Você tem ${have}. A ${T.model} não pode ser trocada: só cai de Chefes Mundiais ou é fabricada com Lesser Gold.</div>`}</div>
       <button class="btn sm ${need && have >= need ? 'primary' : ''}" data-fragx="${t}" ${need && have >= need ? '' : 'disabled'}>Trocar</button></div>`; }).join('') + '</div>';
   h += `<h2>Materiais e pedras</h2><div class="blist">${SHOP.map((o, i) => `<div class="frow"><span></span><div class="fn">${o.n}</div><button class="btn sm" data-mbuy="${i}" ${save.coins >= shopPrice(o.p) ? '' : 'disabled'}>${shopPrice(o.p)} moedas</button></div>`).join('')}</div>`;
   $('#shopBody').innerHTML = h;
@@ -8151,7 +8165,7 @@ function cmpText(it){ const e = equipped(it.slot); if(!e || e === it) return '';
   [['hp','vida'],['atk','ataque'],['def','defesa']].forEach(([k, n]) => { const d = (a[k] || 0) - (b[k] || 0); if(d) out.push(`<span class="${d > 0 ? 'up1' : 'dn1'}">${d > 0 ? '+' : ''}${d} ${n}</span>`); });
   return out.length ? `<div class="cmpl">vs equipado: ${out.join(' ')}</div>` : ''; }
 function fuseHTML(){
-  return `<p class="lede">Funda <b>3 peças iguais</b> (mesmo tipo e mesma estrela) para criar uma peça com <b>uma faixa acima</b>. A fusão vai até Grade A (Ródio). A Armadura de <b class="prism">Rutênio (Grade S)</b> não sai da fusão: ela vem de Chefes Mundiais ou é fabricada com Poeira Divina. As pedras das peças fundidas voltam para a bolsa, e se uma delas estava em +10 ou mais, a peça nova já nasce em +5.</p><div class="blist">` + SLOTS.map(slot => {
+  return `<p class="lede">Funda <b>3 peças iguais</b> (mesmo tipo e mesma estrela) para criar uma peça com <b>uma faixa acima</b>. A fusão vai até Grade A (Ródio). A Armadura de <b class="prism">Rutênio (Grade S)</b> não sai da fusão: ela vem de Chefes Mundiais ou é fabricada com Lesser Gold. As pedras das peças fundidas voltam para a bolsa, e se uma delas estava em +10 ou mais, a peça nova já nasce em +5.</p><div class="blist">` + SLOTS.map(slot => {
     const f = fuseInputs(slot), w = CLS().wtype;
     if(!f){ let bt = -1, bc = 0; for(let t = 7; t >= 2; t--){ const c = save.inv.filter(i => i.slot === slot && i.tier === t && (slot !== 'weapon' || i.wtype === w)).length; if(c > bc){ bc = c; bt = t; } }
       return `<div class="frow">${pieceImg(Math.max(0, bt), slot, 'ps-row', slot === 'weapon' ? CLS().wtype : null)}<div><div class="fn">${SLOT_INFO[slot].n}</div><div class="istat">${bt >= 0 ? `Tem ${bc} · faltam ${3 - bc}` : 'Precisa de 3 iguais'}</div></div><button class="btn sm" disabled>Fundir</button></div>`; }
@@ -8341,7 +8355,7 @@ function kkScythe(x, tier){
 // arma equipada: do +3 em diante ela brilha; do +7 em diante ganha chamas (mais chamas a cada nivel)
 let ncFlameTex = null;
 function ncWeaponFx(root){
-  const w = equipped('weapon'), U = w ? ncUp(w.up || 0) : null;
+  const w = equipped('weapon'), U = w ? ncUp(Math.min(NC_UP_MAX, (w.up || 0) + (w.sa ? 3 : 0))) : null;
   if(!ncFlameTex){ const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'), r = g.createRadialGradient(32, 38, 2, 32, 34, 30); r.addColorStop(0, 'rgba(255,255,255,1)'); r.addColorStop(.35, 'rgba(255,255,255,.55)'); r.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = r; g.fillRect(0, 0, 64, 64); ncFlameTex = new T.CanvasTexture(c); }
   root.traverse(o => { if(!o.isMesh || !/Sword|Axe|Wand|Staff|Crossbow|Knife|Scythe_Blade/.test(o.name) || !o.material || !o.material.emissive) return;
     (o.userData.ncFl || []).forEach(sp => { o.remove(sp); sp.material.dispose(); }); o.userData.ncFl = [];
@@ -11299,12 +11313,12 @@ function bossDefeated(b){
   const di0 = DIFF_ORDER.indexOf(save.diff), breaks = [];
   giveMat('refino', 2 + Math.floor(Math.random()*3)); giveMat('superior', 1 + (Math.random() < .4 ? 1 : 0));
   if(Math.random() < .2 + st.region*.15 + Math.max(0, di0 - 1)*.15) giveMat('ancestral');
-  if(Math.random() < .15) giveMat('selo'); if(st.region >= 1 && Math.random() < .06 + di0*.02) giveMat('bencao'); if(Math.random() < .4) giveMat('broca');
+  if(id >= 9 && Math.random() < .08 + (id - 9)*.02) giveMat('lgold'); if(Math.random() < .15) giveMat('selo'); if(st.region >= 1 && Math.random() < .06 + di0*.02) giveMat('bencao'); if(Math.random() < .4) giveMat('broca');
   for(let k=0;k<1 + M.gems;k++) giveGem(rndGem(id), stoneRoll('boss'));
   (b.broken || []).forEach(p => { const got = [];
     if(p.id === 'head'){ const k = rndGem(id), t = Math.min(6, stoneRoll('boss') + 1); giveGem(k, t); got.push(stoneName(k, t)); }
-    else if(p.id === 'legs'){ giveMat('superior'); giveMat('refino', 2); got.push('Pedra Superior', '2 Pedras de Refino'); }
-    else { if(id >= 3 || Math.random() < .5){ giveMat('ancestral'); got.push('Pedra Ancestral'); } else { giveMat('superior', 2); got.push('2 Pedras Superiores'); }
+    else if(p.id === 'legs'){ giveMat('superior'); giveMat('refino', 2); got.push('Lesser Coin', '2 Pedras de Prata'); }
+    else { if(id >= 3 || Math.random() < .5){ giveMat('ancestral'); got.push('Lesser Blue'); } else { giveMat('superior', 2); got.push('2 Lesser Coin'); }
       if(Math.random() < .4){ const it2 = newItem(randomSlot(), rollRar('boss', Math.max(0, lo - 1), Math.min(hi, lo + 1), M.bias*.3), {boss:true}); if(addItem(it2)){ extra.push(it2); runLoot.push(it2); got.push(itemName(it2)); } } }
     breaks.push({n:p.n, got}); });
 
@@ -12141,6 +12155,7 @@ $('#rightPanel').addEventListener('click', e => {
   if(d.sell){ const it = byId(+d.sell); if(it){ save.gold += sellValue(it); returnGems(it); if(isEquipped(it)) delete save.eq[it.slot]; save.inv = save.inv.filter(i => i !== it); persist(); SFX.coin(); applyGear(hero); renderHub(); } return; }
   if(d.forge){ forge(d.forge); return; }
   if(d.ftab){ forgeTab = d.ftab; renderHub(); return; }
+  if(d.fsa){ const it = byId(+d.fsa) || byId(d.fsa); if(it && !it.sa){ const c = saCost(it); if(c && (save.mats.lblue || 0) >= c){ save.mats.lblue -= c; it.sa = 1; persist(); try{ SFX.drop(); banner('Brilho na arma!', itemName(it) + ' brilha mais e ganhou +8% de ataque.'); }catch(_){} if(isEquipped(it)){ P && (P.S = stats()); applyGear(hero); } } } renderHub(); return; }
   if(d.fsel){ forgeSel = +d.fsel; renderHub(); return; }
   if(d.fopt){ forgeOpt[d.fopt] = !forgeOpt[d.fopt]; renderHub(); return; }
   const fit = byId(forgeSel);
