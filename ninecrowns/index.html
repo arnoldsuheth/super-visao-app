@@ -8432,7 +8432,7 @@ function kkTex(model, col){
    Assim não fica cabelo por cima de cabelo. A cor do cabelo e da pele continua valendo, pela cartela de cores de cada modelo. */
 const NC_HEADS = [['', 'Da classe'], ['kk_knight', 'Loiro curto'], ['kk_barbarian', 'Careca de barba'], ['kk_mage', 'Cabelo escuro'], ['kk_rogue', 'Cabelo comprido']];   // capuz não é cabelo: é acessório de cabeça (aparece com o capacete equipado)
 MX_DEF.priest = {model:'kk_mage', anims:'kk:priest', h:1.95, kk2:{hide:['^Spellbook$','Spellbook_open','1H_Wand','_Hat$'], clips:{atk1:'Spellcast_Shoot', atk2:'Spellcast_Shoot', atk3:'Spellcast_Raise', smash:'Spellcast_Long', spin:'Spellcast_Raise'}, cloth:0xf4f0e6, cape:0xd8b65c, trim:0xd8b65c, hair:0xf0d890}, atk:{at:.2, speed:1.9}};   // visual provisório: espera a escolha do Arnold
-MX_DEF.shaman = {model:'kk_barbarian', anims:'kk:shaman', h:2.15, kk2:{hide:['Offhand','Barbarian_Round_Shield','^1H_Axe$','Mug'], clips:{atk1:'Spellcast_Shoot', atk2:'Spellcast_Shoot', atk3:'Spellcast_Raise', smash:'Spellcast_Long', spin:'Spellcast_Raise'}, cloth:0x2a8a7a, cape:0x1e5a50, trim:0xe0b040}, atk:{at:.2, speed:1.9}};
+MX_DEF.shaman = {model:'kk_barbarian', anims:'kk:shaman', h:2.15, kk2:{hide:['Offhand','Barbarian_Round_Shield','^1H_Axe$','Mug'], clips:{atk1:'Spellcast_Shoot', atk2:'Spellcast_Shoot', atk3:'Spellcast_Raise', smash:'Spellcast_Long', spin:'Spellcast_Raise'}, cloth:0x2a8a7a, cape:0xd0702a, trim:0xf4efe6}, atk:{at:.2, speed:1.9}};
 const NC_HEAD_CLS = {kk_knight:'warrior', kk_barbarian:'barbarian', kk_mage:'mage', kk_rogue:'assassin', kk_rogue_hooded:'archer'};
 function ncHead(h, col0){ const x = h.mx; if(!x || !x.d.kk2) return; const col = {}; if(col0.hair) col.hair = col0.hair; if(col0.skin) col.skin = col0.skin;   // o rosto só recebe cor de cabelo e pele
   let want = (save.look && save.look.head) || ''; if(want === 'kk_rogue_hooded') want = '';
@@ -8479,9 +8479,27 @@ function kkPaint(h){
   x.m.traverse(o => { if(o.isMesh && o.material && o.name.indexOf('Scythe_') !== 0 && o.name !== 'NC_Head'){ if(!o.userData.kkM){ o.material = o.material.clone(); o.userData.kkM = 1; } const tx = texFor(o.name); if(o.material.map !== tx){ o.material.map = tx; o.material.needsUpdate = true; } } });
   if(k.scythe) kkScythe(x, wt);
   if(h.cls === 'monk') ncFistSwap(x, wt);
+  if(h.cls === 'priest' || h.cls === 'shaman') ncClassDeco(h, x);
   ncHead(h, col);
   try{ ncSwordSwap(h); }catch(e){}
   ncWeaponFx(x.m);
+}
+/* 22/11 (Arnold, página de escolhas): Sacerdote com auréola de anjo e asas no lugar da capa; Xamã com capa de pele de urso. */
+const NC_DECO_T = {halo:[0, .95, 0, .32], wing:[0, .25, -.32, 1], tail:[0, -.05, -.3, 1]};
+function ncClassDeco(h, x){ const bone = nm => { let b = null; x.m.traverse(o => { if(!b && o.name === nm) b = o; }); return b; }, E = window.NC_DECO_T || NC_DECO_T;
+  x.m.traverse(o => { if(o.isMesh && /_Cape$/.test(o.name) && h.cls === 'priest') o.visible = false; });
+  if(x.deco) return; x.deco = 1;
+  if(h.cls === 'priest'){
+    const hd = bone('head'), ch = bone('chest'); if(!hd || !ch) return;
+    const gm = new T.MeshStandardMaterial({color:0xffe28a, emissive:0xffc840, emissiveIntensity:1.6, roughness:.3, metalness:.4});
+    const halo = new T.Mesh(new T.TorusGeometry(E.halo[3], .035, 8, 32), gm); halo.rotation.x = Math.PI/2; halo.position.set(E.halo[0], E.halo[1], E.halo[2]); halo.name = 'NC_Halo'; hd.add(halo);
+    const wm = new T.MeshStandardMaterial({color:0xffffff, emissive:0xfff2d0, emissiveIntensity:.35, roughness:.6, side:T.DoubleSide});
+    const W = new T.Group(); W.position.set(E.wing[0], E.wing[1], E.wing[2]); W.scale.setScalar(E.wing[3]); W.name = 'NC_Wings';
+    [-1, 1].forEach(sd => { const sh = new T.Shape(); sh.moveTo(0, 0); sh.bezierCurveTo(.25, .35, .7, .55, .95, .5); sh.lineTo(.8, .3); sh.lineTo(.88, .18); sh.lineTo(.68, .06); sh.lineTo(.72, -.08); sh.lineTo(.48, -.12); sh.lineTo(.42, -.3); sh.bezierCurveTo(.2, -.2, .05, -.1, 0, 0);
+      const w = new T.Mesh(new T.ExtrudeGeometry(sh, {depth:.04, bevelEnabled:true, bevelSize:.015, bevelThickness:.015, bevelSegments:1}), wm); w.scale.x = sd; w.rotation.y = sd*.45; w.castShadow = true; W.add(w); });
+    ch.add(W);
+  }
+  // Xamã: a capa de pele de urso do próprio boneco já é a 'capa de animal' (combina com o capuz de urso)
 }
 /* 22/11 (Arnold: "as armas mudam por grade"): o Monge luta de punho; a arma dele é uma soqueira nas duas mãos que muda por grade.
    NG/D = soqueira simples, C = soqueira dupla, B/A/S = garras (o S ainda pega a cor do grade). */
@@ -8543,7 +8561,7 @@ function ncWpnDeco(o, w){ (o.userData.ncDeco || []).forEach(d => o.remove(d)); o
    A peça nova fica no mesmo lugar e do mesmo tamanho da original (que é escondida). 10 faixas: No Grade(2), D(2), C(2), B, A(2), S. */
 const NC_WPN_SET = [
   {re:/^(1H|2H)_Sword$/, f:['kk_sword_A','kk_sword_A','swords/28-Asymmetrical','swords/28-Asymmetrical','swords/27-Pattern','swords/27-Pattern','swords/19-Heirloom','swords/24-Coral','swords/4-Elemental','swords/1-Crystal']},
-  {re:/^2H_Axe$/, cls:'shaman', f:['rg_DruidStaff_1_1_A','rg_DruidStaff_1_1_A','rg_DruidStaff_1_1_A','rg_DruidStaff_1_1_A','rg_DruidStaff_2_1_A','rg_DruidStaff_2_1_A','rg_DruidStaff_1_1_B','rg_DruidStaff_1_1_B','rg_DruidStaff_1_1_B','rg_DruidStaff_1_1_B']},
+  {re:/^2H_Axe$/, cls:'shaman', f:Array(10).fill('rg_DruidStaff_1_1_B')},
   {re:/^2H_Axe$/, not:'shaman', f:['bb_Axe_02','bb_Axe_02','bb_Axe_04','bb_Axe_07','kk_axe_A','kk_axe_A','kk_axe_B','kk_axe_C','kk_axe_C','kk_halberd']},
   {re:/^2H_Staff$/, f:['kk_staff_A','kk_staff_A','rg_DruidStaff_1_1_A','rg_DruidStaff_1_1_A','rg_DruidStaff_2_1_A','rg_DruidStaff_2_1_A','rg_DruidStaff_1_1_B','kk_staff_B','kk_staff_B','kk_staff_B']},
   {re:/^Knife(_Offhand)?$/, f:['bb_Dagger_01','bb_Dagger_01','bb_Dagger_03','bb_Dagger_03','bb_Dagger_05','bb_Dagger_05','bb_Dagger_07','kk_dagger_A','kk_dagger_A','kk_dagger_B']},
