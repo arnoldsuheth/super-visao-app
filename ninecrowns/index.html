@@ -5713,7 +5713,23 @@ CLASSES.necro = {name:'Necromante', tag:'Foice e mortos-vivos', wtype:'scythe', 
             {id:'corpse', name:'Cadáver', full:'Explosão de Cadáver', cd:10, desc:'explode a área do alvo com energia verde'},
             {id:'scythe', name:'Foice', full:'Foice Sombria', cd:9, desc:'gira a foice em volta: dano e recupera 10% de vida'},
             {id:'reaper', name:'Ceifador', full:'Ceifador', cd:30, desc:'SUPREMA: um corte de morte em linha gigante que devolve 20% de vida'}]};
-const CLASS_ORDER = ['warrior','barbarian','mage','archer','paladin','assassin','monk','necro'];
+/* 22/11: classes novas (Sacerdote e Xamã). Ficam ESCONDIDAS até o Arnold aprovar o visual na página de aprovação; só aparecem no modo de teste (#nctest). */
+CLASSES.priest = {name:'Sacerdote', tag:'Cura e proteção', wtype:'staff', desc:'Cura e protege o grupo com a luz, e pune os inimigos de longe.', hp:.9, atk:.8, def:.95, spd:1, block:0, crit:0, cd:.48, attack:'holy', dash:'Passo da Luz',
+  skills:[{id:'pheal', name:'Cura', full:'Cura', cd:6, desc:'cura 25% da vida'},
+          {id:'pshield', name:'Escudo', full:'Escudo Sagrado', cd:14, desc:'um escudo de luz segura o dano por 6 s'},
+            {id:'psmite', name:'Luz', full:'Luz Punitiva', cd:7, desc:'luz cai na área do inimigo e atordoa'},
+            {id:'pbless', name:'Bênção', full:'Bênção', cd:20, desc:'bate 15% mais forte por 10 s'},
+            {id:'prenew', name:'Renovar', full:'Renovar', cd:12, desc:'cura um pouco a cada segundo por 8 s'},
+            {id:'pchoir', name:'Coro', full:'Coro Celestial', cd:30, desc:'SUPREMA: cura enorme e dano de luz em volta'}]};
+CLASSES.shaman = {name:'Xamã', tag:'Totens e natureza', wtype:'staff', desc:'Chama a força da natureza: totens que curam, raios em cadeia e um lobo espiritual.', hp:1, atk:.88, def:.95, spd:1, block:0, crit:.03, cd:.48, attack:'nature', dash:'Salto da Fera',
+  skills:[{id:'stotem', name:'Totem', full:'Totem de Cura', cd:12, desc:'um totem cura você aos poucos por 8 s'},
+          {id:'schain', name:'Raio', full:'Raio em Cadeia', cd:6, desc:'raios pulam entre os inimigos da área'},
+            {id:'sfury', name:'Fúria', full:'Totem da Fúria', cd:18, desc:'ataca 20% mais rápido por 10 s'},
+            {id:'squake', name:'Terremoto', full:'Terremoto', cd:9, desc:'treme o chão em volta e atordoa'},
+            {id:'swolf', name:'Lobo', full:'Lobo Espiritual', cd:16, desc:'chama um aliado que luta junto'},
+            {id:'sstorm', name:'Tempestade', full:'Tempestade Ancestral', cd:30, desc:'SUPREMA: raios caem na área por vários segundos'}]};
+const NC_NEWCLS = location.hash === '#nctest' || !!window.NC_NEWCLS;
+const CLASS_ORDER = ['warrior','barbarian','mage','archer','paladin','assassin','monk','necro'].concat(NC_NEWCLS ? ['priest','shaman'] : []);
 const CLS = () => CLASSES[save.cls] || CLASSES.warrior;
 // Especializacao (nivel 30): cada classe escolhe 1 de 2 caminhos. A escolha fica guardada por classe.
 const NC_SPEC_LV = 30;
@@ -5734,6 +5750,10 @@ const NC_SPEC = {
             {id:'venenosa', tn:'Nuvem Tóxica', td:'toda habilidade solta uma nuvem de veneno em volta', tf:() => { ncT.nova(4.5, 1.3, 0x7dff8a); }, n:'Venenosa', r:'Veneno', d:'Todo golpe deixa o inimigo queimando de veneno, +10% de ataque e rouba 3% de vida', fx:s => { s.burn = true; s.atk *= 1.1; s.leech += .03; }}],
   monk:[{id:'ferro', tn:'Impacto', td:'toda habilidade solta uma onda de choque que atordoa', tf:() => { ncT.nova(4.5, 1.4, 0xffb347, 1); }, n:'Punho de Ferro', r:'Força', d:'+20% de ataque, 15% de chance de atordoar e +10% de defesa', fx:s => { s.atk *= 1.2; s.stunCh += .15; s.def *= 1.1; }},
         {id:'vento', tn:'Brisa', td:'ao usar uma habilidade, fica 1 s intocável e recupera 4% da vida', tf:() => { ncT.inv(1); ncT.heal(.04); }, n:'Mestre do Vento', r:'Velocidade', d:'Anda 12% mais rápido, golpes 18% mais rápidos e 6% menos dano recebido', fx:s => { s.spd *= 1.12; s.aspd += .18; s.dmgRes += .06; }}],
+  priest:[{id:'luz', tn:'Graça', td:'toda habilidade cura 6% da vida', tf:() => { ncT.heal(.06); }, n:'Sumo Sacerdote', r:'Cura', d:'+25% de vida e recupera vida o tempo todo', fx:s => { s.hp *= 1.25; }},
+          {id:'juiz', tn:'Julgamento', td:'toda habilidade solta uma onda de luz que atordoa', tf:() => { ncT.nova(4.5, 1.2, 0xfff0a0, 1); }, n:'Inquisidor', r:'Poder', d:'+20% de ataque e +6% de chance de crítico', fx:s => { s.atk *= 1.2; s.crit += .06; }}],
+  shaman:[{id:'terra', tn:'Espírito da Terra', td:'toda habilidade chama um aliado para lutar por você', tf:() => { ncT.ally(); }, n:'Guardião da Terra', r:'Resistência', d:'+20% de vida e +12% de defesa', fx:s => { s.hp *= 1.2; s.def *= 1.12; }},
+          {id:'trovao', tn:'Trovão', td:'toda habilidade solta uma onda de raios em volta', tf:() => { ncT.nova(4.5, 1.3, 0x8ad8ff); }, n:'Senhor do Trovão', r:'Poder', d:'+22% de ataque e golpes 8% mais rápidos', fx:s => { s.atk *= 1.22; }}],
 };
 // Tecnica da especializacao: dispara junto com qualquer habilidade da classe
 const ncT = {
@@ -6399,6 +6419,8 @@ const CLASS_SFX = {
   monk:     () => { sfxNoise(.06,.22,'bandpass',1500,500,1.1); tone(160,.12,'sine',.18,60); },
   necro:    () => { tone(110,.38,'sawtooth',.05,78,0,{lp:700,rev:1}); tone(117,.38,'sawtooth',.045,82,0,{lp:700}); sfxNoise(.32,.07,'bandpass',500,2200,2,0,{rev:1}); },
 };
+CLASS_SFX.priest = () => { tone(880,.3,'sine',.05,1320,0,{rev:1}); tone(1320,.25,'sine',.03,null,.04,{rev:1}); };
+CLASS_SFX.shaman = () => { sfxNoise(.18,.12,'bandpass',900,300,1.2); tone(220,.18,'triangle',.08,330,0,{rev:1}); };
 const playAttackSfx = () => (CLASS_SFX[save.cls] || CLASS_SFX.warrior)();
 const SFX = {
   swing:()=>sfxNoise(.14,.18,'bandpass',2400,700,1.2), heavy:()=>{sfxNoise(.24,.22,'lowpass',1000,180,.9);tone(110,.18,'sine',.12,55,.08)}, stab:()=>sfxNoise(.07,.18,'bandpass',4400,1600,2),
@@ -8076,7 +8098,7 @@ const ncArt = (slot, wtype) => '<svg viewBox="0 0 64 64" aria-hidden="true">' + 
 function pieceImg(t, slot, cls, wtype, up, sa){ const U = ncUp(Math.min(NC_UP_MAX, (up || 0) + (sa ? 3 : 0)));   /* 22/11: SA também acende o ícone, e o brilho sobe com a evolução */
   const g = GR_OF[t] || 0, wi = slot === 'weapon' ? ncWIco(t, wtype || (CLASSES[save.cls] || {}).wtype) : null;   /* 22/11 (Arnold): moldura enfeitada (1 pedrinha por grade, brilho no A e no S) e foto da arma de verdade */
   return `<span class="pimg nci g${g} ${cls || ''} ${U ? 'up' : ''} ${U && U.f ? 'fire' : ''}" ${up ? 'data-up="+' + up + '"' : ''} style="--tc:${TIERS[t].css}${U ? ';--uc:' + U.c + ';--ug:' + U.g + 'px;--fh:' + U.f + '%' : ''}" role="img" aria-label="${SLOT_INFO[slot].n}">${wi ? '<img class="wico" src="assets/icons/w/' + wi.replace('/', '_') + '.png" alt="">' : ncArt(slot, wtype)}${g ? '<b class="ngm">' + '<i></i>'.repeat(g) + '</b>' : ''}</span>`; }
-const NC_WICO = {sword:0, hammer:0, axe:1, staff:2, daggers:3};
+const NC_WICO = {sword:0, hammer:0, axe:2, staff:3, daggers:4};
 function ncWIco(t, wt){ try{ if(wt === 'fists') return NC_FIST[t]; if(wt === 'bow') return GR_OF[t] < 2 ? 'kk_1H_Crossbow' : 'kk_2H_Crossbow'; if(wt === 'scythe') return 'scythe_' + GR_OF[t]; const i = NC_WICO[wt]; return i == null ? null : NC_WPN_SET[i].f[t]; }catch(e){ return null; } }
 function pieceImgOld(t, slot, cls, wtype){
   const src = pieceSrc(t, slot, wtype, true);
@@ -8407,6 +8429,8 @@ function kkTex(model, col){
 /* Rosto e cabelo (aprovado pelo Arnold em 20/11): troca a cabeça inteira por a de outro boneco KayKit, que usa o mesmo esqueleto.
    Assim não fica cabelo por cima de cabelo. A cor do cabelo e da pele continua valendo, pela cartela de cores de cada modelo. */
 const NC_HEADS = [['', 'Da classe'], ['kk_knight', 'Loiro curto'], ['kk_barbarian', 'Careca de barba'], ['kk_mage', 'Cabelo escuro'], ['kk_rogue', 'Cabelo comprido']];   // capuz não é cabelo: é acessório de cabeça (aparece com o capacete equipado)
+MX_DEF.priest = {model:'kk_mage', anims:'kk:priest', h:1.95, kk2:{hide:['^Spellbook$','Spellbook_open','1H_Wand','_Hat$'], clips:{atk1:'Spellcast_Shoot', atk2:'Spellcast_Shoot', atk3:'Spellcast_Raise', smash:'Spellcast_Long', spin:'Spellcast_Raise'}, cloth:0xf4f0e6, cape:0xd8b65c, trim:0xd8b65c, hair:0xf0d890}, atk:{at:.2, speed:1.9}};   // visual provisório: espera a escolha do Arnold
+MX_DEF.shaman = {model:'kk_barbarian', anims:'kk:shaman', h:2.15, kk2:{hide:['Offhand','Barbarian_Round_Shield','^1H_Axe$','Mug'], clips:{atk1:'Spellcast_Shoot', atk2:'Spellcast_Shoot', atk3:'Spellcast_Raise', smash:'Spellcast_Long', spin:'Spellcast_Raise'}, cloth:0x2a8a7a, cape:0x1e5a50, trim:0xe0b040}, atk:{at:.2, speed:1.9}};
 const NC_HEAD_CLS = {kk_knight:'warrior', kk_barbarian:'barbarian', kk_mage:'mage', kk_rogue:'assassin', kk_rogue_hooded:'archer'};
 function ncHead(h, col0){ const x = h.mx; if(!x || !x.d.kk2) return; const col = {}; if(col0.hair) col.hair = col0.hair; if(col0.skin) col.skin = col0.skin;   // o rosto só recebe cor de cabelo e pele
   let want = (save.look && save.look.head) || ''; if(want === 'kk_rogue_hooded') want = '';
@@ -8517,14 +8541,15 @@ function ncWpnDeco(o, w){ (o.userData.ncDeco || []).forEach(d => o.remove(d)); o
    A peça nova fica no mesmo lugar e do mesmo tamanho da original (que é escondida). 10 faixas: No Grade(2), D(2), C(2), B, A(2), S. */
 const NC_WPN_SET = [
   {re:/^(1H|2H)_Sword$/, f:['kk_sword_A','kk_sword_A','swords/28-Asymmetrical','swords/28-Asymmetrical','swords/27-Pattern','swords/27-Pattern','swords/19-Heirloom','swords/24-Coral','swords/4-Elemental','swords/1-Crystal']},
-  {re:/^2H_Axe$/, f:['bb_Axe_02','bb_Axe_02','bb_Axe_04','bb_Axe_07','kk_axe_A','kk_axe_A','kk_axe_B','kk_axe_C','kk_axe_C','kk_halberd']},
+  {re:/^2H_Axe$/, cls:'shaman', f:['rg_DruidStaff_1_1_A','rg_DruidStaff_1_1_A','rg_DruidStaff_1_1_A','rg_DruidStaff_1_1_A','rg_DruidStaff_2_1_A','rg_DruidStaff_2_1_A','rg_DruidStaff_1_1_B','rg_DruidStaff_1_1_B','rg_DruidStaff_1_1_B','rg_DruidStaff_1_1_B']},
+  {re:/^2H_Axe$/, not:'shaman', f:['bb_Axe_02','bb_Axe_02','bb_Axe_04','bb_Axe_07','kk_axe_A','kk_axe_A','kk_axe_B','kk_axe_C','kk_axe_C','kk_halberd']},
   {re:/^2H_Staff$/, f:['kk_staff_A','kk_staff_A','rg_DruidStaff_1_1_A','rg_DruidStaff_1_1_A','rg_DruidStaff_2_1_A','rg_DruidStaff_2_1_A','rg_DruidStaff_1_1_B','kk_staff_B','kk_staff_B','kk_staff_B']},
   {re:/^Knife(_Offhand)?$/, f:['bb_Dagger_01','bb_Dagger_01','bb_Dagger_03','bb_Dagger_03','bb_Dagger_05','bb_Dagger_05','bb_Dagger_07','kk_dagger_A','kk_dagger_A','kk_dagger_B']},
   {re:/^(Round|Badge|Rectangle|Spike)_Shield$/, slot:'shield', f:['kk_shield_A','kk_shield_A',null,null,null,null,'kk_shield_B','kk_shield_C','kk_shield_C',null]}];
 const ncSwCache = {};
 function ncSwLoad(n){ return ncSwCache[n] || (ncSwCache[n] = new Promise(ok => new T.GLTFLoader().load('assets/weapons/' + n + '.glb', g => ok(g), undefined, () => ok(null)))); }
 function ncSwordSwap(h){ const x = h && h.mx; if(!x) return; x.swds = x.swds || {};
-  NC_WPN_SET.forEach(S => { const it = equipped(S.slot || 'weapon'), name = it ? S.f[it.tier] : S.f[0];
+  NC_WPN_SET.forEach(S => { if((S.cls && S.cls !== h.cls) || (S.not && S.not === h.cls)) return; const it = equipped(S.slot || 'weapon'), name = it ? S.f[it.tier] : S.f[0];
     const origs = []; x.m.traverse(o => { if(o.isMesh && S.re.test(o.name)) origs.push(o); });   // kkPaint já decidiu quais aparecem (visible)
     origs.forEach(o => { const key = o.uuid, cur = x.swds[key];
       if(!o.visible){ if(cur && cur.parent) cur.parent.remove(cur); delete x.swds[key]; return; }
@@ -11085,6 +11110,8 @@ function doAttack(){
   if(P.mounted) toggleMount(false);
   { const t = ncTgtOk(); if(t){ const tx = t.e ? t.e.pos.x : t.x, tz = t.e ? t.e.pos.z : t.z; if(Math.hypot(tx - P.pos.x, tz - P.pos.z) < 18) P.face = P.targetFace = Math.atan2(tx - P.pos.x, tz - P.pos.z); } }
   P.atkCd = atkCooldown();
+  if(c.attack === 'holy' || c.attack === 'nature'){ const a = aimAngle(15); if(a !== null) P.face = P.targetFace = a; P.castT = .18;   // Sacerdote (luz) e Xamã (natureza): magia de longe
+    firePlayer({kind:'dark', col:c.attack === 'holy' ? 0xfff0a0 : 0x7aff9a, ang:P.face, spd:19, mult:1, life:.9, r:.5}); playAttackSfx(); return; }
   if(c.attack === 'bolt' || c.attack === 'arrow' || c.attack === 'dark'){
     const a = aimAngle(c.attack === 'arrow' ? 17 : 15); if(a !== null) P.face = P.targetFace = a;
     P.castT = .18;
@@ -11223,7 +11250,9 @@ function firePlayer(o){
   scene.add(m);
   pprojs.push(Object.assign({m, vx:Math.sin(o.ang)*o.spd, vz:Math.cos(o.ang)*o.spd, hit:new Set(), y0:oy - 1.3}, o));
 }
-const NC_SKFX = {icelance:{t:"line", L:12, W:1.2, m:2.2, c:0x8fe6ff, stun:1}, meteor:{t:"tgt", R:4, m:3.2, c:0xff7a1a, d:0.7, fall:1}, arcshield:{t:"buff", wall:6, heal:0.1, c:0xa0a8ff}, storm:{t:"tgt", R:6, m:1.2, c:0xb070ff, waves:6, gap:0.3, bolt:1}, trap:{t:"self", R:3.2, m:1.8, c:0xc8a060, stun:2, d:0.8}, backstep:{t:"dash", D:-6, R:3, m:1.2, c:0xa8ffb0}, explarrow:{t:"tgt", R:3.5, m:2.4, c:0xff9a3a, d:0.3}, eagle:{t:"line", L:18, W:1.6, m:4, c:0xffe070, cry:10, crit:1}, healight:{t:"buff", heal:0.35, c:0xfff2a0}, charge:{t:"dash", D:7, R:2.2, m:2, c:0xffe28a, stun:1, line:1}, judgment:{t:"tgt", R:3, m:3, c:0xfff0a0, d:0.4, bolt:1, stun:1.5}, kingaura:{t:"self", R:6, m:2.5, c:0xffd24a, wall:8, cry:8}, poison:{t:"tgt", R:2.8, m:0.6, c:0x7aff5a, waves:6, gap:0.5}, smoke:{t:"self", R:4, m:0.8, c:0x8a8a9a, stun:2, inv:1.5}, deathmark:{t:"tgt", R:1.6, m:4.5, c:0xff3a5a, d:1, crit:1}, bladedance:{t:"self", R:4.2, m:1.1, c:0xd8dee8, waves:7, gap:0.18, inv:1.4}, hundred:{t:"line", L:3.4, W:1.6, m:0.55, c:0xffe0a0, waves:8, gap:0.08}, meditate:{t:"buff", heal:0.3, res:1, cry:6, c:0x9affe0}, flykick:{t:"dash", D:6, R:2.6, m:2.2, c:0xffb070, stun:1.2}, dragon:{t:"line", L:16, W:2.2, m:5, c:0xff4a1a, crit:1}, curse:{t:"tgt", R:4, m:0.7, c:0x9a3ad8, waves:5, gap:0.6}, corpse:{t:"tgt", R:4, m:2.6, c:0x4aff7a, d:0.25}, scythe:{t:"self", R:4.5, m:2.2, c:0x7a2ad8, heal:0.1}, reaper:{t:"line", L:14, W:2.5, m:5.5, c:0x6a1ab8, heal:0.2, crit:1}};
+const NC_SKFX = {pheal:{t:"buff", heal:0.25, c:0xfff2a0}, pshield:{t:"buff", wall:6, c:0xfff0c0}, psmite:{t:"tgt", R:3.2, m:2.2, c:0xfff0a0, d:0.3, bolt:1, stun:1.2}, pbless:{t:"buff", cry:10, c:0xffe28a}, prenew:{t:"buff", hot:8, c:0xbfffb0}, pchoir:{t:"self", R:6, m:2.8, c:0xfff6c0, heal:0.4},
+  stotem:{t:"buff", hot:8, totem:1, c:0x7aff9a}, schain:{t:"tgt", R:3.4, m:0.9, c:0x8ad8ff, waves:4, gap:0.12, bolt:1}, sfury:{t:"buff", rage:10, c:0xff8a3a}, squake:{t:"self", R:4.5, m:1.8, c:0xc8a060, stun:1.5}, swolf:{t:"buff", ally:1, c:0x9ad8ff}, sstorm:{t:"tgt", R:6, m:1.3, c:0x8ad8ff, waves:7, gap:0.35, bolt:1},
+ icelance:{t:"line", L:12, W:1.2, m:2.2, c:0x8fe6ff, stun:1}, meteor:{t:"tgt", R:4, m:3.2, c:0xff7a1a, d:0.7, fall:1}, arcshield:{t:"buff", wall:6, heal:0.1, c:0xa0a8ff}, storm:{t:"tgt", R:6, m:1.2, c:0xb070ff, waves:6, gap:0.3, bolt:1}, trap:{t:"self", R:3.2, m:1.8, c:0xc8a060, stun:2, d:0.8}, backstep:{t:"dash", D:-6, R:3, m:1.2, c:0xa8ffb0}, explarrow:{t:"tgt", R:3.5, m:2.4, c:0xff9a3a, d:0.3}, eagle:{t:"line", L:18, W:1.6, m:4, c:0xffe070, cry:10, crit:1}, healight:{t:"buff", heal:0.35, c:0xfff2a0}, charge:{t:"dash", D:7, R:2.2, m:2, c:0xffe28a, stun:1, line:1}, judgment:{t:"tgt", R:3, m:3, c:0xfff0a0, d:0.4, bolt:1, stun:1.5}, kingaura:{t:"self", R:6, m:2.5, c:0xffd24a, wall:8, cry:8}, poison:{t:"tgt", R:2.8, m:0.6, c:0x7aff5a, waves:6, gap:0.5}, smoke:{t:"self", R:4, m:0.8, c:0x8a8a9a, stun:2, inv:1.5}, deathmark:{t:"tgt", R:1.6, m:4.5, c:0xff3a5a, d:1, crit:1}, bladedance:{t:"self", R:4.2, m:1.1, c:0xd8dee8, waves:7, gap:0.18, inv:1.4}, hundred:{t:"line", L:3.4, W:1.6, m:0.55, c:0xffe0a0, waves:8, gap:0.08}, meditate:{t:"buff", heal:0.3, res:1, cry:6, c:0x9affe0}, flykick:{t:"dash", D:6, R:2.6, m:2.2, c:0xffb070, stun:1.2}, dragon:{t:"line", L:16, W:2.2, m:5, c:0xff4a1a, crit:1}, curse:{t:"tgt", R:4, m:0.7, c:0x9a3ad8, waves:5, gap:0.6}, corpse:{t:"tgt", R:4, m:2.6, c:0x4aff7a, d:0.25}, scythe:{t:"self", R:4.5, m:2.2, c:0x7a2ad8, heal:0.1}, reaper:{t:"line", L:14, W:2.5, m:5.5, c:0x6a1ab8, heal:0.2, crit:1}};
 /* Executa as habilidades novas a partir da ficha acima (t = tipo):
    line = golpe em linha · tgt = cai no alvo · self = em volta de você · dash = avança/recua · buff = cura e reforços */
 function ncSkFx(f, i){ const skm = ncSkMul(i), ox = P.pos.x, oz = P.pos.z, oy = P.pos.y, o = {skm, stun:f.stun || 0, kb:8, crit:!!f.crit};
@@ -11246,6 +11275,11 @@ function ncSkFx(f, i){ const skm = ncSkMul(i), ox = P.pos.x, oz = P.pos.z, oy = 
   if(f.res) try{ P.res = ncResMax(); }catch(_){}
   if(f.wall) P.wallT = Math.max(P.wallT || 0, f.wall);
   if(f.cry) P.cryT = Math.max(P.cryT || 0, f.cry);
+  if(f.hot){ for(let k = 1; k <= f.hot; k++) setTimeout(() => { if(mode === 'stage' && P && !P.dead) ncT.heal(.04); }, k*1000); }   // cura aos poucos (Renovar, Totem de Cura)
+  if(f.rage) P.rageT = Math.max(P.rageT || 0, f.rage);
+  if(f.ally) ncT.ally();
+  if(f.totem) try{ const tm = new T.Mesh(new T.CylinderGeometry(.18, .24, 1.4, 6), mat(0x6a4a2a, {roughness:.8})); tm.position.set(P.pos.x + Math.sin(P.face)*1.2, P.pos.y + .7, P.pos.z + Math.cos(P.face)*1.2); scene.add(tm);
+    const top = new T.Mesh(new T.OctahedronGeometry(.22), mat(f.c, {emissive:f.c, emissiveIntensity:1.2})); top.position.y = .85; tm.add(top); setTimeout(() => scene.remove(tm), f.hot*1000); }catch(_){}
   if(f.inv) P.inv = Math.max(P.inv, f.inv);
   if(f.t === 'buff') ring(P.pos.x, P.pos.z, 2.2);
   SFX.heavy(); addShake(f.m >= 3 ? .45 : .2); }
@@ -11484,7 +11518,7 @@ function hurtPlayer(raw, elemental){
 }
 /* Mana e stamina (pedido do Arnold, 20/11): Mago e Necromante gastam mana; as classes de luta gastam stamina.
    Gasto pequeno no ataque básico e maior nas habilidades. Volta sozinho com o tempo; a poção também recupera. */
-const NC_MANA = {mage:1, necro:1};
+const NC_MANA = {mage:1, necro:1, priest:1, shaman:1};
 const ncRes = () => NC_MANA[save.cls] ? 'mp' : 'sp';
 const ncResMax = () => Math.round((ncRes() === 'mp' ? 100 : 100) + save.level*2);
 const ncResRegen = () => ncRes() === 'mp' ? 7 + save.level*.08 : 14 + save.level*.1;
