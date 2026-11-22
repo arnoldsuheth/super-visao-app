@@ -8488,10 +8488,23 @@ function kkPaint(h){
 }
 /* 22/11 (Arnold: "elmo no boneco também muda de formato"): elmo 3D por grade, no osso da cabeça.
    NG gorro de couro, D elmo do cavaleiro, C + pluma, B + chifres, A + asas, S + coroa. Só liga quando NC_HELM3D = true (esperando a aprovação da foto). */
-const NC_HELM3D = !!window.NC_HELM3D, NC_HELM_T = [0, .42, .02, 1, .84, .56, .36, .58, .22, .8];
+const NC_HELM3D = !!window.NC_HELM3D, NC_HELM_T = [0, .42, .02, 1, 1.0, .56, .36, .58, .22, .8];
 function ncHelm3D(h, x){ if(!(window.NC_HELM3D || NC_HELM3D)) return; const it = equipped('helmet'), g = it ? GR_OF[it.tier] : -1, key = g + ':' + (it ? it.tier : -1);
   if(x.helm && x.helm.userData.k === key && x.helm.parent) return; [x.helm, x.helmM].forEach(o => { if(o && o.parent) o.parent.remove(o); }); x.helm = x.helmM = null; if(g < 0) return;
   let hd = null, own = null; x.m.traverse(o => { if(!hd && o.name === 'head') hd = o; if(!own && o.isSkinnedMesh && /_Head(_Hooded)?$/.test(o.name)) own = o; }); if(!hd) return;
+  if(h.cls === 'priest'){ x.m.traverse(o => { if(o.isMesh && /_Helmet$|_Hat$/.test(o.name)) o.visible = false; }); return; }   // Sacerdote: sem chapéu; a auréola muda por grade (ncClassDeco)
+  if(h.cls === 'mage' || h.cls === 'necro'){   // 22/11 (Arnold): Mago e Necro ficam com o chapéu, que ganha detalhes por grade
+    const tc = TIERS[it.tier].hex, acc = new T.MeshStandardMaterial({color:tc, roughness:.4, metalness:.3, emissive:g >= 4 ? tc : 0x000000, emissiveIntensity:g >= 4 ? .6 : 0}), G = new T.Group(); G.userData.k = key; G.name = 'NC_Helm3D';
+    const add = (geo, m, px, py, pz, rx, ry, rz) => { const o = new T.Mesh(geo, m); o.position.set(px || 0, py || 0, pz || 0); o.rotation.set(rx || 0, ry || 0, rz || 0); o.castShadow = true; G.add(o); return o; };
+    if(g >= 1) add(new T.TorusGeometry(.53, .065, 8, 28), acc, 0, .98, 0, Math.PI/2, 0, 0);
+    if(g >= 2){ add(new T.OctahedronGeometry(.13), acc, 0, 1.0, .56); }
+    if(g >= 3){ const sh = new T.Shape(); sh.moveTo(0, 0); sh.quadraticCurveTo(.16, .35, .05, .75); sh.quadraticCurveTo(-.08, .35, 0, 0); const f = new T.Mesh(new T.ExtrudeGeometry(sh, {depth:.03, bevelEnabled:false}), acc); f.position.set(.45, 1.05, .1); f.rotation.set(0, -.6, -.35); f.castShadow = true; G.add(f); }
+    if(g >= 4){ const wm = new T.MeshStandardMaterial({color:0xf4f6fb, roughness:.5, metalness:.3, side:T.DoubleSide});
+      [-1, 1].forEach(sd => { const sh = new T.Shape(); sh.moveTo(0, 0); sh.bezierCurveTo(.15, .3, .45, .5, .7, .55); sh.lineTo(.55, .35); sh.lineTo(.62, .22); sh.lineTo(.42, .14); sh.lineTo(.45, .02); sh.bezierCurveTo(.25, -.04, .1, -.05, 0, 0);
+        const w = new T.Mesh(new T.ExtrudeGeometry(sh, {depth:.03, bevelEnabled:false}), wm); w.position.set(sd*.48, 1.1, -.05); w.scale.set(sd*.7, .7, .7); w.rotation.y = -sd*.5; w.castShadow = true; G.add(w); }); }
+    if(g >= 5){ const cr = new T.Group(); cr.position.y = 1.4; G.add(cr); cr.add(new T.Mesh(new T.CylinderGeometry(.25, .29, .09, 16, 1, true), acc));
+      for(let k = 0; k < 6; k++){ const a = k/6*Math.PI*2, sp = new T.Mesh(new T.ConeGeometry(.045, .16, 6), acc); sp.position.set(Math.sin(a)*.27, .12, Math.cos(a)*.27); cr.add(sp); } }
+    hd.add(G); x.helm = G; return; }
   // do D em diante usa o elmo de verdade do cavaleiro (mesmo estilo dos bonecos), com enfeites por grade por cima
   if(g >= 1){ const md = MX.models.kk_knight; if(!md){ if(!x.helmWait){ x.helmWait = 1; mxLoad('warrior', ok => { x.helmWait = 0; if(ok) try{ kkPaint(h); }catch(_){} }); } return; }
     let src = null; md.scene.traverse(o => { if(!src && o.isMesh && o.name === 'Knight_Helmet') src = o; }); if(!src || !own) return;
@@ -8504,7 +8517,7 @@ function ncHelm3D(h, x){ if(!(window.NC_HELM3D || NC_HELM3D)) return; const it =
   const lea = new T.MeshStandardMaterial({color:0x8a5a2a, roughness:.85}), acc = new T.MeshStandardMaterial({color:tc, roughness:.4, metalness:.3, emissive:g >= 4 ? tc : 0x000000, emissiveIntensity:g >= 4 ? .5 : 0});
   const add = (geo, m, px, py, pz, rx, ry, rz, sx, sy, sz) => { const o = new T.Mesh(geo, m); o.position.set(px || 0, py || 0, pz || 0); o.rotation.set(rx || 0, ry || 0, rz || 0); if(sx) o.scale.set(sx, sy, sz); o.castShadow = true; G.add(o); return o; };
   if(g === 0){ add(new T.SphereGeometry(.66, 18, 10, 0, Math.PI*2, 0, Math.PI*.5), lea, 0, .12, .04, 0, 0, 0, 1, .95, 1.05); add(new T.TorusGeometry(.66, .05, 6, 22), lea, 0, .12, .04, Math.PI/2, 0, 0, 1, 1.05, 1); }
-  if(g >= 2 && g < 5) add(new T.BoxGeometry(.08, .3, .5), acc, 0, E[4] || .62, -.05);   // pluma na cor da grade
+  if(g >= 2 && g < 5){ add(new T.BoxGeometry(.1, .42, .8), acc, 0, E[4] || .62, -.08); add(new T.TorusGeometry(.6, .05, 6, 24), acc, 0, .08, .02, Math.PI/2, 0, 0, 1.02, 1.06, 1); }   // pluma alta e faixa na cor da grade
   if(g >= 3){ [-1, 1].forEach(sd => { const hc = new T.Group(); hc.position.set(sd*(E[5] || .5), E[6] || .3, 0); hc.rotation.z = -sd*.9; G.add(hc);
       const c1 = new T.Mesh(new T.ConeGeometry(.11, .4, 10), acc); c1.position.y = .18; hc.add(c1); const c2 = new T.Mesh(new T.ConeGeometry(.07, .28, 10), acc); c2.position.set(-sd*.06, .46, 0); c2.rotation.z = sd*.6; hc.add(c2); }); }
   if(g >= 4){ const wm = new T.MeshStandardMaterial({color:0xf4f6fb, roughness:.5, metalness:.3, side:T.DoubleSide});
@@ -8517,11 +8530,17 @@ function ncHelm3D(h, x){ if(!(window.NC_HELM3D || NC_HELM3D)) return; const it =
 const NC_DECO_T = {halo:[0, .95, 0, .32], wing:[0, .25, -.32, 1], tail:[0, -.05, -.3, 1]};
 function ncClassDeco(h, x){ const bone = nm => { let b = null; x.m.traverse(o => { if(!b && o.name === nm) b = o; }); return b; }, E = window.NC_DECO_T || NC_DECO_T;
   x.m.traverse(o => { if(o.isMesh && /_Cape$/.test(o.name) && h.cls === 'priest') o.visible = false; });
+  if(h.cls === 'priest'){ const it = equipped('helmet'), g = it ? GR_OF[it.tier] : -1; if(x.deco && x.decoG !== g && x.haloG){ x.haloG.parent && x.haloG.parent.remove(x.haloG); x.haloG = null; } x.decoG = g;
+    if(!x.haloG){ const hd = bone('head'); if(hd){ const tc = g >= 1 ? TIERS[it.tier].hex : 0xffe28a, gm = new T.MeshStandardMaterial({color:tc, emissive:tc, emissiveIntensity:g >= 4 ? 2.2 : 1.4, roughness:.3, metalness:.4}), HG = new T.Group(); HG.position.set(E.halo[0], E.halo[1], E.halo[2]); HG.name = 'NC_Halo';
+      const R = E.halo[3]*(g >= 5 ? 1.25 : 1), ring = new T.Mesh(new T.TorusGeometry(R, g >= 3 ? .045 : .035, 8, 32), gm); ring.rotation.x = Math.PI/2; HG.add(ring);   // 22/11 (Arnold): a auréola do Sacerdote muda por grade
+      if(g >= 2){ const r2 = new T.Mesh(new T.TorusGeometry(R*.7, .025, 8, 28), gm); r2.rotation.x = Math.PI/2; r2.position.y = .09; HG.add(r2); }
+      if(g >= 3) for(let k = 0; k < 8; k++){ const a = k/8*Math.PI*2, c = new T.Mesh(new T.ConeGeometry(.035, .14, 6), gm); c.position.set(Math.sin(a)*(R + .07), 0, Math.cos(a)*(R + .07)); c.rotation.set(Math.PI/2, 0, 0); c.lookAt(c.position.clone().multiplyScalar(2)); c.rotateX(Math.PI/2); HG.add(c); }
+      if(g >= 4){ const wm = new T.MeshStandardMaterial({color:0xffffff, emissive:0xfff2d0, emissiveIntensity:.4, side:T.DoubleSide}); [-1, 1].forEach(sd => { const sh = new T.Shape(); sh.moveTo(0, 0); sh.bezierCurveTo(.1, .2, .3, .32, .45, .35); sh.lineTo(.35, .2); sh.lineTo(.4, .1); sh.lineTo(.25, .06); sh.bezierCurveTo(.15, .0, .05, -.02, 0, 0); const w = new T.Mesh(new T.ExtrudeGeometry(sh, {depth:.02, bevelEnabled:false}), wm); w.position.set(sd*.55, -.45, -.05); w.scale.x = sd; w.rotation.y = -sd*.5; HG.add(w); }); }
+      if(g >= 5) for(let k = 0; k < 6; k++){ const a = k/6*Math.PI*2, sp = new T.Mesh(new T.ConeGeometry(.05, .2, 6), gm); sp.position.set(Math.sin(a)*R, .12, Math.cos(a)*R); HG.add(sp); }
+      hd.add(HG); x.haloG = HG; } } }
   if(x.deco) return; x.deco = 1;
   if(h.cls === 'priest'){
     const hd = bone('head'), ch = bone('chest'); if(!hd || !ch) return;
-    const gm = new T.MeshStandardMaterial({color:0xffe28a, emissive:0xffc840, emissiveIntensity:1.6, roughness:.3, metalness:.4});
-    const halo = new T.Mesh(new T.TorusGeometry(E.halo[3], .035, 8, 32), gm); halo.rotation.x = Math.PI/2; halo.position.set(E.halo[0], E.halo[1], E.halo[2]); halo.name = 'NC_Halo'; hd.add(halo);
     const wm = new T.MeshStandardMaterial({color:0xffffff, emissive:0xfff2d0, emissiveIntensity:.35, roughness:.6, side:T.DoubleSide});
     const W = new T.Group(); W.position.set(E.wing[0], E.wing[1], E.wing[2]); W.scale.setScalar(E.wing[3]); W.name = 'NC_Wings';
     [-1, 1].forEach(sd => { const sh = new T.Shape(); sh.moveTo(0, 0); sh.bezierCurveTo(.25, .35, .7, .55, .95, .5); sh.lineTo(.8, .3); sh.lineTo(.88, .18); sh.lineTo(.68, .06); sh.lineTo(.72, -.08); sh.lineTo(.48, -.12); sh.lineTo(.42, -.3); sh.bezierCurveTo(.2, -.2, .05, -.1, 0, 0);
