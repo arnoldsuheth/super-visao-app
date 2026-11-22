@@ -6294,7 +6294,7 @@ function bonuses(){
 }
 function stats(){
   const L = (save.level - 1)*NC_LV_K, c = CLS();
-  const s = {hp:100 + L*24, atk:10 + L*3.2, def:2 + Math.floor(L*.9), spd:7, aspd:0, crit:.05 + c.crit, critMult:2, block:.05, range:0, regen:0,
+  const s = {hp:100 + L*24, atk:10 + L*3.2, def:2 + Math.floor(L*.9), spd:5.8, aspd:0, crit:.05 + c.crit, critMult:2, block:.05, range:0, regen:0,
              atkPct:0, leech:0, stunCh:0, multi:0, elem:null, freezeCh:0, chainCh:0, burn:false, hpPct:0, defPct:0, spdPct:0, dmgRes:0, elemRes:0, pen:0, luck:0};
   const addG = (k, v) => s[k] = (s[k] || 0) + v;
   for(const slot of SLOTS){ const it = equipped(slot); if(!it) continue; const b = itemStats(it); for(const k in b){ if(k === 'elem') s.elem = b.elem; else s[k] += b[k]; } gemFx(it, addG); }
@@ -10255,9 +10255,12 @@ function ncHeavyFx(dt){ ncHvT -= dt; if(ncHvT > 0 || !hero || !hero.mats) return
 function ncPetUpdate(dt){ ncHeavyFx(dt); const p = ncPet; if(!p || !P) return; if(!p.root.parent){ ncPet = null; return; }
   let tx = P.pos.x - Math.sin(P.face)*1.5 + Math.cos(P.face)*1.1, tz = P.pos.z - Math.cos(P.face)*1.5 - Math.sin(P.face)*1.1;
   // ajuda a bater: vai no inimigo acordado mais perto do herói e golpeia a cada 1,4 s
-  p.at -= dt; let tg = null; try{ if(!P.dead){ let nd = 7; for(const e of enemies){ if(e.dead || e.dying || !e.awake) continue; const de = Math.hypot(e.pos.x - P.pos.x, e.pos.z - P.pos.z); if(de < nd){ nd = de; tg = e; } } } }catch(e){}
+  /* 22/11 (Arnold): o mascote não larga o inimigo; só volta para perto do herói quando não sobra ameaça num raio de 12 m do herói */
+  p.at -= dt; let tg = null; try{ if(!P.dead){ const ok = e => e && !e.dead && !e.dying && enemies.includes(e) && Math.hypot(e.pos.x - P.pos.x, e.pos.z - P.pos.z) < 16;
+    if(ok(p.tg)) tg = p.tg; else { let nd = 12; for(const e of enemies){ if(e.dead || e.dying || (!e.awake && e.kind === 'boss')) continue; if(!e.awake && Math.hypot(e.pos.x - P.pos.x, e.pos.z - P.pos.z) > 6) continue; const de = Math.hypot(e.pos.x - P.pos.x, e.pos.z - P.pos.z); if(de < nd){ nd = de; tg = e; } } }
+    p.tg = tg; } }catch(e){}
   if(tg){ const ax = p.root.position.x - tg.pos.x, az = p.root.position.z - tg.pos.z, ad = Math.hypot(ax, az) || 1; tx = tg.pos.x + ax/ad*1.1; tz = tg.pos.z + az/ad*1.1;
-    if(ad < 2 && p.at <= 0){ p.at = 1.4; try{ damageEnemy(tg, Math.max(1, Math.round(P.S.atk*ncPetHit(p.key))), false, -ax/ad, -az/ad, 0, false); burst(tg.pos, 0xffe08a, 5, 3, 3); if(p.hit){ p.hit.reset().setLoop(T.LoopOnce, 1).play(); p.cur = null; } }catch(e){} } }
+    if(ad < 2 && p.at <= 0){ p.at = 1.1; try{ damageEnemy(tg, Math.max(1, Math.round(P.S.atk*ncPetHit(p.key))), false, -ax/ad, -az/ad, 0, false); burst(tg.pos, 0xffe08a, 5, 3, 3); if(p.hit){ p.hit.reset().setLoop(T.LoopOnce, 1).play(); p.cur = null; } }catch(e){} } }
   const dx = tx - p.root.position.x, dz = tz - p.root.position.z, d = Math.hypot(dx, dz);
   if(d > 14){ p.root.position.x = tx; p.root.position.z = tz; } else if(d > .25){ const v = Math.min(d, (4 + d*2.2)*dt); p.root.position.x += dx/d*v; p.root.position.z += dz/d*v; p.root.rotation.y = Math.atan2(dx, dz); }
   try{ p.root.position.y = heightAt(p.root.position.x, p.root.position.z); }catch(e){ p.root.position.y = P.pos.y; }
