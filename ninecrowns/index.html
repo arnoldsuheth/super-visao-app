@@ -8077,7 +8077,7 @@ function pieceImg(t, slot, cls, wtype, up, sa){ const U = ncUp(Math.min(NC_UP_MA
   const g = GR_OF[t] || 0, wi = slot === 'weapon' ? ncWIco(t, wtype || (CLASSES[save.cls] || {}).wtype) : null;   /* 22/11 (Arnold): moldura enfeitada (1 pedrinha por grade, brilho no A e no S) e foto da arma de verdade */
   return `<span class="pimg nci g${g} ${cls || ''} ${U ? 'up' : ''} ${U && U.f ? 'fire' : ''}" ${up ? 'data-up="+' + up + '"' : ''} style="--tc:${TIERS[t].css}${U ? ';--uc:' + U.c + ';--ug:' + U.g + 'px;--fh:' + U.f + '%' : ''}" role="img" aria-label="${SLOT_INFO[slot].n}">${wi ? '<img class="wico" src="assets/icons/w/' + wi.replace('/', '_') + '.png" alt="">' : ncArt(slot, wtype)}${g ? '<b class="ngm">' + '<i></i>'.repeat(g) + '</b>' : ''}</span>`; }
 const NC_WICO = {sword:0, hammer:0, axe:1, staff:2, daggers:3};
-function ncWIco(t, wt){ try{ if(wt === 'fists') return NC_FIST[t]; const i = NC_WICO[wt]; return i == null ? null : NC_WPN_SET[i].f[t]; }catch(e){ return null; } }
+function ncWIco(t, wt){ try{ if(wt === 'fists') return NC_FIST[t]; if(wt === 'bow') return GR_OF[t] < 2 ? 'kk_1H_Crossbow' : 'kk_2H_Crossbow'; if(wt === 'scythe') return 'scythe_' + GR_OF[t]; const i = NC_WICO[wt]; return i == null ? null : NC_WPN_SET[i].f[t]; }catch(e){ return null; } }
 function pieceImgOld(t, slot, cls, wtype){
   const src = pieceSrc(t, slot, wtype, true);
   const ic = slotIcon(slot, wtype);
