@@ -13967,6 +13967,9 @@ body.nc-l #hub>aside.panel::before,body.nc-r #hub>#rightPanel::before{transform:
   var grid=document.createElement('nav');grid.className='nc-grid';
   CARDS.forEach(function(c){var b=document.createElement('button');b.type='button';b.className='nc-card';b.dataset.card=c[0];b.innerHTML='<svg viewBox="0 0 24 24">'+I[c[0]]+'</svg><span>'+c[1]+'</span>';b.onclick=c[2];grid.appendChild(b)});
   hub.appendChild(grid);
+  /* 22/11: nome que não cabe no botão (ex.: "Equipamento" no iPhone) diminui a letra até caber, em vez de cortar com "..." */
+  function fitCards(){[].forEach.call(document.querySelectorAll('.nc-card span,.nc-minib span'),function(sp){sp.style.fontSize='';var f=parseFloat(getComputedStyle(sp).fontSize)||12,n=0;while(sp.scrollWidth>sp.clientWidth+1&&f>7&&n<12){f-=.5;n++;sp.style.fontSize=f+'px'}})}
+  setTimeout(fitCards,60);addEventListener('resize',function(){clearTimeout(fitCards.t);fitCards.t=setTimeout(fitCards,120)});try{document.fonts&&document.fonts.ready.then(fitCards)}catch(e){}
   var mini=document.createElement('nav');mini.className='nc-mini';
   [['stages','Mundo','r'],['play','Progresso','l'],['set','Ajustes','l'],['music','Música','r']].forEach(function(c){var b=document.createElement('button');b.type='button';b.className='nc-minib';b.title=c[1];b.setAttribute('aria-label',c[1]);b.innerHTML='<svg viewBox="0 0 24 24">'+I[c[0]]+'</svg><span>'+c[1]+'</span>';b.onclick=function(){toggle(c[2],c[0])};mini.appendChild(b)});
   hub.appendChild(mini);
