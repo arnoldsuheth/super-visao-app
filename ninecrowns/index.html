@@ -8426,6 +8426,7 @@ function kkPaint(h){
   const hide = k.hide.slice(); if(tOf('helmet') < 0) hide.push('_Helmet$', '_Hat$');
   if(d.model === 'kk_knight' && !k.noShield){ const st = tOf('shield'), want = h.cls === 'paladin' ? (st >= 7 ? 'Spike_Shield' : 'Rectangle_Shield') : st >= 8 ? 'Spike_Shield' : st >= 5 ? 'Rectangle_Shield' : st >= 3 ? 'Badge_Shield' : 'Round_Shield';
     ['Badge_Shield','Rectangle_Shield','Round_Shield','Spike_Shield'].forEach(n => { const i = hide.indexOf(n); if(i >= 0) hide.splice(i, 1); if(n !== want) hide.push('^' + n + '$'); }); }
+  if(h.cls === 'archer' && GR_OF[Math.max(0, tOf('weapon'))] < 2){ const i = hide.indexOf('1H_Crossbow'); if(i >= 0) hide.splice(i, 1); hide.push('2H_Crossbow'); }   // 22/11: NG e D usam a besta pequena; do C em diante, a besta grande
   x.m.traverse(o => { if(o.isMesh){ o.visible = !hide.some(r => new RegExp(r).test(o.name)); if(/_Helmet$|_Hat$/.test(o.name) && !o.userData.kkS){ o.scale.multiplyScalar(1.05); o.userData.kkS = 1; } } });   // elmo um pouco maior: o cabelo nao atravessa mais
   const lk = save.look || {}, col = {};
   const tun = lk.tunic != null && TUNICS[lk.tunic] ? TUNICS[lk.tunic].c : null;   // a 1ª cor (Azul) também vale; antes só valia da 2ª em diante
@@ -8448,23 +8449,48 @@ function kkPaint(h){
   x.m.traverse(o => { if(o.isMesh && /_Cape$/.test(o.name) && tOf('chest') < 0) o.visible = false; });   // aldeão não tem capa
   x.m.traverse(o => { if(o.isMesh && o.material && o.name.indexOf('Scythe_') !== 0 && o.name !== 'NC_Head'){ if(!o.userData.kkM){ o.material = o.material.clone(); o.userData.kkM = 1; } const tx = texFor(o.name); if(o.material.map !== tx){ o.material.map = tx; o.material.needsUpdate = true; } } });
   if(k.scythe) kkScythe(x, wt);
+  if(h.cls === 'monk') ncFistSwap(x, wt);
   ncHead(h, col);
   try{ ncSwordSwap(h); }catch(e){}
   ncWeaponFx(x.m);
 }
+/* 22/11 (Arnold: "as armas mudam por grade"): o Monge luta de punho; a arma dele é uma soqueira nas duas mãos que muda por grade.
+   NG/D = soqueira simples, C = soqueira dupla, B/A/S = garras (o S ainda pega a cor do grade). */
+const NC_FIST = ['kk_fistweapon_A','kk_fistweapon_A','kk_fistweapon_A','kk_fistweapon_A','kk_fistweapon_A_stacked','kk_fistweapon_A_stacked','kk_fistweapon_B','kk_fistweapon_B','kk_fistweapon_B','kk_fistweapon_B'];
+const NC_FIST_T = [-1.5708, 0, 3.1416, 0, 0, 0, 1];   // giro (x,y,z), posição (x,y,z) e tamanho da soqueira na mão
+function ncFistSwap(x, wt){ x.fist = x.fist || {};
+  const name = wt >= 0 ? NC_FIST[wt] : null, slots = {};
+  x.m.traverse(o => { if(/^handslot[._]?(l|r)$/i.test(o.name)) slots[o.name.slice(-1).toLowerCase()] = o; });
+  ['l', 'r'].forEach(sd => { const cur = x.fist[sd], slot = slots[sd]; if(!slot) return;
+    if(!name){ if(cur && cur.parent) cur.parent.remove(cur); delete x.fist[sd]; return; }
+    if(cur && cur.userData.n === name && cur.userData.t === wt && cur.parent) return;
+    ncSwLoad(name).then(g => { if(!g) return; const c0 = x.fist[sd]; if(c0 && c0.parent) c0.parent.remove(c0);
+      const e = window.NC_FIST_T || NC_FIST_T, src = g.scene.clone(true), hold = new T.Group(); hold.userData.n = name; hold.userData.t = wt; hold.add(src);
+      src.traverse(q => { if(q.isMesh){ q.material = q.material.clone(); if(GR_OF[wt] >= 4 && q.material.color) q.material.color.lerp(new T.Color(TIERS[wt].hex), .35); q.name = 'NC_Fist'; q.castShadow = true; q.frustumCulled = false; } });
+      hold.rotation.set(e[0], e[1], e[2]); hold.position.set(e[3], e[4], e[5]); hold.scale.setScalar(e[6]); if(sd === 'l') hold.scale.x *= -1;
+      slot.add(hold); x.fist[sd] = hold; try{ ncWeaponFx(x.m); }catch(er){} }); }); }
 // Foice do Necromante (o pacote de bonecos nao traz foice; esta e feita aqui): cabo de madeira e lamina curva na cor do grade
 const KK_SCY = [0, 3.1416, 1.5708, 0, 0, 0];   // giro e posicao da foice na mao
 function kkScythe(x, tier){
+  /* 22/11 (Arnold: "as armas mudam por grade"): a foice muda de forma por grade.
+     NG = foice simples de madeira; D = lâmina maior; C = espinho atrás; B = cabo de metal escuro; A = segunda lâmina; S = pedra brilhando e lâmina na cor do grade. */
+  const g = tier >= 0 ? GR_OF[tier] : -1;
+  if(x.scy && x.scy.g0 !== g){ if(x.scy.g.parent) x.scy.g.parent.remove(x.scy.g); x.scy = null; }
   if(!x.scy){ let slot = null; x.m.traverse(o => { if(!slot && (o.name === 'handslotr' || o.name === 'handslot.r')) slot = o; }); if(!slot) return;
-    const g = new T.Group(); g.name = 'Scythe_NC'; g.quaternion.set(0, -1, 0, 0);
-    const hm = new T.MeshStandardMaterial({color:0x3a2a22, roughness:.8}), bm = new T.MeshStandardMaterial({color:0xb8c0cc, roughness:.35, metalness:.55});
+    const G = new T.Group(); G.name = 'Scythe_NC'; G.quaternion.set(0, -1, 0, 0);
+    const hm = new T.MeshStandardMaterial(g >= 3 ? {color:0x2a2a33, roughness:.45, metalness:.6} : {color:0x3a2a22, roughness:.8}), bm = new T.MeshStandardMaterial({color:0xb8c0cc, roughness:.35, metalness:.55});
     const handle = new T.Mesh(new T.CylinderGeometry(.035, .042, 2.25, 8), hm); handle.position.y = .22; handle.name = 'Scythe_Handle';
-    const sh = new T.Shape(); sh.moveTo(0, 1.34); sh.quadraticCurveTo(.62, 1.42, 1.02, .78); sh.quadraticCurveTo(.60, 1.14, 0, 1.08); sh.lineTo(0, 1.34);
-    const blade = new T.Mesh(new T.ExtrudeGeometry(sh, {depth:.045, bevelEnabled:false}), bm); blade.position.z = -.022; blade.name = 'Scythe_Blade';
-    const ring = new T.Mesh(new T.CylinderGeometry(.06, .06, .12, 8), bm); ring.position.y = 1.2; ring.name = 'Scythe_Ring';
-    [handle, blade, ring].forEach(o => { o.castShadow = true; g.add(o); }); slot.add(g); x.scy = {g, bm}; }
+    const bladeShape = (L, y0) => { const sh = new T.Shape(); sh.moveTo(0, y0 + .26); sh.quadraticCurveTo(.62*L, y0 + .34, 1.02*L, y0 - .30*L); sh.quadraticCurveTo(.60*L, y0 + .06, 0, y0); sh.lineTo(0, y0 + .26); return sh; };
+    const L = 1 + Math.max(0, g)*.1, parts = [handle];
+    const blade = new T.Mesh(new T.ExtrudeGeometry(bladeShape(L, 1.08), {depth:.045, bevelEnabled:false}), bm); blade.position.z = -.022; blade.name = 'Scythe_Blade'; parts.push(blade);
+    if(g >= 2){ const sp = new T.Shape(); sp.moveTo(0, 1.12); sp.lineTo(-.34, 1.02); sp.lineTo(0, 1.28); sp.lineTo(0, 1.12);
+      const spike = new T.Mesh(new T.ExtrudeGeometry(sp, {depth:.04, bevelEnabled:false}), bm); spike.position.z = -.02; spike.name = 'Scythe_Blade'; parts.push(spike); }
+    if(g >= 4){ const b2 = new T.Mesh(new T.ExtrudeGeometry(bladeShape(L*.62, .74), {depth:.04, bevelEnabled:false}), bm); b2.position.z = -.02; b2.name = 'Scythe_Blade'; parts.push(b2); }
+    const ring = new T.Mesh(new T.CylinderGeometry(.06, .06, .12, 8), bm); ring.position.y = 1.2; ring.name = 'Scythe_Ring'; parts.push(ring);
+    if(g >= 5){ const gm = new T.MeshStandardMaterial({color:TIERS[tier].hex, emissive:TIERS[tier].hex, emissiveIntensity:1.4, roughness:.2}); const gem = new T.Mesh(new T.OctahedronGeometry(.085), gm); gem.position.set(0, 1.2, .06); gem.name = 'Scythe_Gem'; parts.push(gem); }
+    parts.forEach(o => { o.castShadow = true; G.add(o); }); slot.add(G); x.scy = {g:G, bm, g0:g}; }
   { const e = window.__scy || KK_SCY; x.scy.g.quaternion.set(0, -1, 0, 0).multiply(_kkQ.setFromEuler(_kkE.set(e[0], e[1], e[2]))); x.scy.g.position.set(e[3] || 0, e[4] || 0, e[5] || 0); }
-  x.scy.bm.color.set(tier >= 0 ? new T.Color(0xb8c0cc).lerp(new T.Color(TIERS[tier].hex), .55) : 0xb8c0cc);
+  x.scy.bm.color.set(tier >= 0 ? new T.Color(0xb8c0cc).lerp(new T.Color(TIERS[tier].hex), g >= 5 ? .75 : .55) : 0xb8c0cc);
 }
 // arma equipada: do +3 em diante ela brilha; do +7 em diante ganha chamas (mais chamas a cada nivel)
 let ncFlameTex = null;
@@ -8512,7 +8538,7 @@ function ncSwordSwap(h){ const x = h && h.mx; if(!x) return; x.swds = x.swds || 
 function ncWeaponFx(root){
   const w = equipped('weapon'), U = w ? ncUp(Math.min(NC_UP_MAX, (w.up || 0) + (w.sa ? 3 : 0))) : null;
   if(!ncFlameTex){ const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'), r = g.createRadialGradient(32, 38, 2, 32, 34, 30); r.addColorStop(0, 'rgba(255,255,255,1)'); r.addColorStop(.35, 'rgba(255,255,255,.55)'); r.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = r; g.fillRect(0, 0, 64, 64); ncFlameTex = new T.CanvasTexture(c); }
-  root.traverse(o => { if(!o.isMesh || !/Sword|Axe|Wand|Staff|Crossbow|Knife|Scythe_Blade/.test(o.name) || !o.material || !o.material.emissive) return;
+  root.traverse(o => { if(!o.isMesh || !/Sword|Axe|Wand|Staff|Crossbow|Knife|Scythe_Blade|NC_Fist/.test(o.name) || !o.material || !o.material.emissive) return;
     (o.userData.ncFl || []).forEach(sp => { o.remove(sp); sp.material.dispose(); }); o.userData.ncFl = [];
     try{ ncWpnDeco(o, w); }catch(e){}
     if(!U || !o.visible){ o.material.emissive.setHex(0); o.material.emissiveIntensity = 1; o.material.userData.baseE = new T.Color(0); return; }
