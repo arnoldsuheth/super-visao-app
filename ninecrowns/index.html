@@ -10250,7 +10250,7 @@ function mmTarget(){ let tg = null, bd = 1e9, txt = '';
   for(const r of runes) if(!r.taken){ const d = Math.hypot(r.x - P.pos.x, r.z - P.pos.z); if(d < bd){ bd = d; tg = {x:r.x, z:r.z}; } }
   if(tg) txt = 'Posto'; else if(gateOpen && boss && !boss.dead){ tg = {x:boss.pos.x, z:boss.pos.z}; bd = Math.hypot(tg.x - P.pos.x, tg.z - P.pos.z); txt = 'Chefe'; }
   return {t:tg, d:Math.round(bd), txt}; }
-function mmIco(g, t, x, y, s){ g.save(); g.translate(x, y); g.scale(s, s); g.lineWidth = .9; g.strokeStyle = '#140c00';
+function mmIco(g, t, x, y, s){ if((t === 'ch' || t === 'q') && window.ncMapGlyph && window.ncMapGlyph(g, t, x, y, (t === 'q' ? 11 : 10) * s)) return; g.save(); g.translate(x, y); g.scale(s, s); g.lineWidth = .9; g.strokeStyle = '#140c00';
   if(t === 'you'){ g.fillStyle = P.mounted ? '#ffe08a' : '#fff'; g.beginPath(); g.moveTo(0, -5); g.lineTo(3.5, 4); g.lineTo(0, 2.2); g.lineTo(-3.5, 4); g.closePath(); g.fill(); g.stroke(); }
   else if(t === 'boss'){ g.fillStyle = '#ff4a3a'; g.beginPath(); g.arc(0, 0, 4, 0, 7); g.fill(); g.stroke(); g.fillStyle = '#ffe36a'; g.beginPath(); g.moveTo(-3, -1); g.lineTo(-3.5, -4); g.lineTo(-1.2, -2.5); g.lineTo(0, -5); g.lineTo(1.2, -2.5); g.lineTo(3.5, -4); g.lineTo(3, -1); g.closePath(); g.fill(); }
   else if(t === 'ch'){ g.fillStyle = '#c8902a'; g.fillRect(-3.5, -2.5, 7, 5); g.strokeRect(-3.5, -2.5, 7, 5); g.fillStyle = '#ffe08a'; g.fillRect(-.8, -1, 1.6, 2); }
@@ -13783,7 +13783,7 @@ function ncNotify(tx, kind, key){ const day = new Date().toDateString(); key = k
 window.ncNotify = ncNotify;
 const NT_IC = {party:'👥', friend:'🟢', miss:'📜', daily:'🎁', event:'🌙', chest:'🧰', skill:'⚡', pet:'🐾', bag:'🎒', info:'🔔'};
 function ncBellDraw(){ let b = document.getElementById('ncBell'); if(!b){ b = document.createElement('button'); b.id = 'ncBell'; b.type = 'button'; b.setAttribute('aria-label', 'Notificações'); b.innerHTML = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><i></i>'; document.body.appendChild(b); b.addEventListener('click', () => ncBellPop(true)); }
-  const n = ncNt.list.filter(x => !x.rd).length; b.querySelector('i').textContent = n > 9 ? '9+' : n || ''; b.classList.toggle('has', n > 0);
+  const n = ncNt.list.filter(x => !x.rd).length; b.querySelector(':scope>i').textContent = n > 9 ? '9+' : n || ''; b.classList.toggle('has', n > 0);
   const el = document.getElementById('ncBellPop'); if(el && !el.hidden) ncBellPop(true, true); }
 function ncBellPop(open, keep){ let el = document.getElementById('ncBellPop'); if(!el){ el = document.createElement('div'); el.id = 'ncBellPop'; el.hidden = true; document.body.appendChild(el);
     el.addEventListener('click', e => { if(e.target === el || e.target.closest('[data-btx]')){ el.hidden = true; return; } if(e.target.closest('[data-bclr]')){ ncNt.list = []; ncBellDraw(); ncBellPop(true); } }); }
@@ -14510,7 +14510,7 @@ body.nc-l #hub>aside.panel::before,body.nc-r #hub>#rightPanel::before{transform:
 .st-more summary{font-size:13px}#ncWorldSw{margin:8px 0}
 .rh-inv{display:inline-block;margin:0 6px 4px 0;padding:3px 8px;font-size:12px;border-radius:8px;background:#2a2450;border:1px solid #6a5ae0;color:#e8e0ff}
 #ncBell{position:fixed;z-index:45;left:calc(10px + env(safe-area-inset-left,0px));bottom:calc(env(safe-area-inset-bottom) + 182px);width:42px;height:42px;border-radius:50%;border:1px solid #6a5ae0;background:rgba(20,16,44,.85);color:#ffe08a;display:grid;place-items:center;cursor:pointer}
-#ncBell i{position:absolute;top:-3px;right:-3px;min-width:18px;height:18px;padding:0 4px;border-radius:9px;background:#e2504c;color:#fff;font:700 11px/18px system-ui;font-style:normal;display:none}#ncBell.has i{display:block}
+#ncBell>i{z-index:2;position:absolute;top:-3px;right:-3px;min-width:18px;height:18px;padding:0 4px;border-radius:9px;background:#e2504c;color:#fff;font:700 11px/18px system-ui;font-style:normal;display:none}#ncBell.has>i{display:block}
 body:not(.nc-play-ok) #ncBell{}
 #ncBellPop{position:fixed;inset:0;z-index:90;background:rgba(5,6,14,.5);display:flex;justify-content:flex-end}#ncBellPop[hidden]{display:none}
 .bp-box{width:min(360px,92vw);height:100%;overflow:auto;background:#141832;border-left:2px solid #3a3070;padding:12px 14px}
@@ -14816,5 +14816,76 @@ body.nc-st #ncRoomHud,body.nc-st #ncWorlds,body.nc-st .nc-grid,body.nc-st .nc-mi
   run();
 })();
 </script>
+<script id="nc-med-js">
+/* ÍCONES NOVOS (23/11/2026, aprovados pelo Arnold): medalhão dourado igual aos emblemas das classes,
+   uma cor por tema (mesma família = mesma cor). No mapa e no minimapa só o desenho, sem moldura. */
+(function(){
+const D='#1b1206';
+const G={
+mochila:`<path d="M38 20q0-10 12-10t12 10v4h-6v-3q0-5-6-5t-6 5v3h-6z"/><path d="M22 40q0-16 16-16h24q16 0 16 16v42q0 8-8 8H30q-8 0-8-8z"/><path d="M22 40q0-16 16-16h24q16 0 16 16v8q-12 8-28 8t-28-8z" fill="${D}" opacity=".35"/><rect x="45" y="50" width="10" height="12" rx="2" fill="${D}" opacity=".7"/><rect x="47.5" y="53" width="5" height="6" rx="1"/><path d="M30 66h40v14H30z" fill="${D}" opacity=".28"/><path d="M14 46q-4 0-4 6v22q0 6 6 6h6V46zM86 46q4 0 4 6v22q0 6-6 6h-6V46z"/>`,
+heroi:`<path d="M50 10c-20 0-32 14-32 34v30l10 12h44l10-12V44c0-20-12-34-32-34z"/><path d="M28 46h44v10H56v24h-12V56H28z" fill="${D}" opacity=".75"/><path d="M50 4l5 10h-10z"/><path d="M47 14h6v30h-6z" fill="${D}" opacity=".3"/>`,
+forja:`<path d="M14 40h56q14 0 20 6-10 2-16 8v6H22v-8q-8-2-8-12z"/><path d="M32 60h28l6 18H26z"/><rect x="20" y="78" width="52" height="8" rx="2"/><g transform="rotate(-35 62 24)"><rect x="50" y="6" width="30" height="14" rx="3"/><rect x="62" y="20" width="6" height="26" rx="2"/></g><path d="M30 34l3-8 3 8M40 32l2-6 2 6" stroke="currentColor" stroke-width="3" fill="none"/>`,
+mercador:`<path d="M38 18q12-8 24 0l-6 9H44z"/><path d="M44 27h12q24 8 24 32 0 22-30 22S20 81 20 59q0-24 24-32z"/><path d="M38 28h24" stroke="${D}" stroke-width="4" opacity=".5"/><ellipse cx="50" cy="56" rx="11" ry="11" fill="${D}" opacity=".55"/><path d="M50 49l6 7-6 7-6-7z"/><ellipse cx="74" cy="84" rx="14" ry="5"/><ellipse cx="74" cy="79" rx="14" ry="5" stroke="${D}" stroke-width="2"/><ellipse cx="74" cy="74" rx="14" ry="5" stroke="${D}" stroke-width="2"/>`,
+grupo:`<circle cx="22" cy="38" r="10"/><path d="M4 78q0-26 18-26 9 0 14 6-6 7-6 20z"/><circle cx="78" cy="38" r="10"/><path d="M96 78q0-26-18-26-9 0-14 6 6 7 6 20z"/><circle cx="50" cy="34" r="13" stroke="${D}" stroke-width="3"/><path d="M24 90q0-34 26-34t26 34z" stroke="${D}" stroke-width="3"/>`,
+mapa:`<path d="M12 22l24-8 28 8 24-8v66l-24 8-28-8-24 8z"/><path d="M36 14v66M64 22v66" stroke="${D}" stroke-width="3" opacity=".45"/><path d="M22 66q10-14 20-6t22-8 16-18" stroke="${D}" stroke-width="3.5" fill="none" stroke-dasharray="5 5" opacity=".75"/><path d="M72 28l8 8m0-8l-8 8" stroke="#c0281a" stroke-width="4.5" stroke-linecap="round"/>`,
+portal:`<path d="M14 92V44q0-34 36-34t36 34v48H72V46q0-22-22-22T28 46v46z"/><path d="M28 92V46q0-22 22-22t22 22v46z" fill="${D}" opacity=".85"/><path d="M20 30l8 4M18 46h10M80 30l-8 4M82 46H72M38 14l4 8M62 14l-4 8" stroke="${D}" stroke-width="3" opacity=".6"/><path d="M50 40c-10 0-16 6-16 14 0 5 3 8 6 10v6h20v-6c3-2 6-5 6-10 0-8-6-14-16-14z"/><circle cx="44" cy="54" r="4" fill="${D}"/><circle cx="56" cy="54" r="4" fill="${D}"/><path d="M48 62h4l-2 3z" fill="${D}"/><path d="M44 70v5M50 70v5M56 70v5" stroke="${D}" stroke-width="2"/><path d="M36 92h28" stroke="currentColor" stroke-width="4"/>`,
+sino:`<path d="M50 10q5 0 5 6 20 6 20 32v16l9 12H16l9-12V48q0-26 20-32 0-6 5-6z"/><path d="M40 82h20q0 10-10 10t-10-10z"/><path d="M32 50q0-16 12-22" stroke="${D}" stroke-width="4" fill="none" opacity=".35" stroke-linecap="round"/>`,
+missao:`<path d="M24 14h48q8 0 8 8v4H32v56q0 8-8 8t-8-8V22q0-8 8-8z"/><path d="M32 26h44v58q0 6-6 6H24q8 0 8-8z"/><path d="M42 38h26M42 50h26M42 62h18" stroke="${D}" stroke-width="4" opacity=".6" stroke-linecap="round"/><path d="M74 54l12 20-12 6-12-6z" fill="#c0281a"/>`,
+bau:`<path d="M14 44q0-26 36-26t36 26z"/><rect x="14" y="44" width="72" height="40" rx="3"/><path d="M14 44h72v8H14zM30 20v64M70 20v64" fill="${D}" stroke="${D}" stroke-width="3" opacity=".45"/><rect x="42" y="40" width="16" height="20" rx="3"/><circle cx="50" cy="49" r="3" fill="${D}"/><path d="M49 49h2v7h-2z" fill="${D}"/>`,
+ajustes:`<path d="M44 8h12l2 12 8 4 10-7 8 8-7 10 4 8 12 2v12l-12 2-4 8 7 10-8 8-10-7-8 4-2 12H44l-2-12-8-4-10 7-8-8 7-10-4-8-12-2V44l12-2 4-8-7-10 8-8 10 7 8-4z"/><circle cx="50" cy="50" r="14" fill="${D}" opacity=".8"/><circle cx="50" cy="50" r="6"/>`,
+habilid:`<path d="M58 6L26 54h20l-8 40 36-52H52z"/><path d="M58 6L46 34" stroke="${D}" stroke-width="3" opacity=".3"/>`};
+G.progresso=`<path d="M28 12h44v18q0 22-22 26-22-4-22-26z"/><path d="M28 18H14q0 18 16 20M72 18h14q0 18-16 20" stroke="currentColor" stroke-width="6" fill="none"/><path d="M44 56h12v14H44z"/><path d="M30 76h40l4 12H26z"/><path d="M50 22l4 8 8 1-6 6 2 8-8-4-8 4 2-8-6-6 8-1z" fill="${D}" opacity=".55"/>`;
+G.musica=`<path d="M36 22l46-10v52"/><path d="M36 22v56" stroke="currentColor" stroke-width="8"/><path d="M36 22l46-10v14L36 36z"/><ellipse cx="26" cy="78" rx="14" ry="11"/><ellipse cx="72" cy="66" rx="14" ry="11"/><path d="M82 12v54" stroke="currentColor" stroke-width="8"/>`;
+G.estabulo=`<path d="M26 88V48q0-34 24-34t24 34v40H60V48q0-20-10-20T40 48v40z"/><circle cx="33" cy="52" r="3.5" fill="${D}"/><circle cx="33" cy="68" r="3.5" fill="${D}"/><circle cx="67" cy="52" r="3.5" fill="${D}"/><circle cx="67" cy="68" r="3.5" fill="${D}"/><circle cx="50" cy="22" r="3.5" fill="${D}"/>`;
+G.festivos=`<rect x="14" y="40" width="72" height="18" rx="3"/><rect x="20" y="58" width="60" height="32" rx="3"/><path d="M44 40h12v50H44z" fill="${D}" opacity=".4"/><path d="M50 40q-22-26-26-10t26 10q22-26 26-10t-26 10z" stroke="currentColor" stroke-width="6" fill="none"/>`;
+
+const C={azul:'#3f6fb0',marrom:'#7a5232',laranja:'#b8502a',ouro:'#c79a2a',verde:'#2f8a5a',teal:'#2a8a8a',roxo:'#5a2a7a',verm:'#a03a2a',cinza:'#556070',ambar:'#c08a24'};
+// chave do botão -> [desenho, cor do tema]
+const K={hero:['heroi',C.azul],skills:['habilid',C.azul],play:['progresso',C.azul],
+ bag:['mochila',C.marrom],gear:['mochila',C.marrom],smith:['forja',C.laranja],forge:['forja',C.laranja],
+ merch:['mercador',C.ouro],shop:['mercador',C.ouro],fest:['festivos',C.ouro],
+ party:['grupo',C.verde],conn:['grupo',C.verde],stable:['estabulo',C.teal],
+ stages:['mapa',C.roxo],portal:['portal',C.roxo],missions:['missao',C.verm],set:['ajustes',C.cinza],music:['musica',C.cinza],bell:['sino',C.ambar],bau:['bau',C.marrom]};
+const BYNAME={'Mundo':'stages','Progresso':'play','Ajustes':'set','Música':'music'};
+const svg=k=>`<svg class="nc-mg" viewBox="0 0 100 100" fill="currentColor" aria-hidden="true">${G[k]}</svg>`;
+function med(key){const k=K[key];if(!k)return '';return `<span class="nc-med" style="--c:${k[1]}" aria-hidden="true"><i class="r"></i><i class="n"></i><i class="g"></i><i class="f"></i>${svg(k[0])}</span>`}
+window.ncMed=med;
+function swap(el,key){if(!el||el.dataset.med===key)return;const s=el.querySelector(':scope>svg');const h=med(key);if(!h)return;if(s)s.outerHTML=h;else el.insertAdjacentHTML('afterbegin',h);el.dataset.med=key;el.classList.add('has-med')}
+function all(){
+ document.querySelectorAll('.nc-hb [data-hb]').forEach(b=>swap(b,b.dataset.hb));
+ document.querySelectorAll('.nc-card[data-card]').forEach(b=>swap(b,b.dataset.card));
+ document.querySelectorAll('.nc-b[data-nc]').forEach(b=>swap(b,b.dataset.nc));
+ document.querySelectorAll('.nc-minib').forEach(b=>{const k=BYNAME[b.title];if(k)swap(b,k)});
+ const bag=document.getElementById('ncBag');if(bag)swap(bag,'bag');
+ const bell=document.getElementById('ncBell');if(bell)swap(bell,'bell');
+ document.querySelectorAll('#stages .dgc').forEach(c=>{const h=c.querySelector('.cname');if(h&&!h.querySelector('.nc-med')){h.insertAdjacentHTML('afterbegin',med('portal'));h.classList.add('has-med')}});
+}
+let t=0;new MutationObserver(()=>{clearTimeout(t);t=setTimeout(all,60)}).observe(document.body,{childList:true,subtree:true});
+if(document.readyState!=='loading')all();else addEventListener('DOMContentLoaded',all);setTimeout(all,500);setTimeout(all,2000);
+// mapa e minimapa: só o desenho (imagem pronta, desenhada uma vez)
+const IMG={};function img(k,c){const id=k+c;if(IMG[id])return IMG[id];const i=new Image();i.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="96" height="96" fill="${c}" color="${c}">${G[k]}</svg>`);IMG[id]=i;return i}
+window.ncMapGlyph=function(g,k,x,y,size){const m={ch:['bau','#ffd36a'],q:['missao','#ffe14a'],portal:['portal','#d9b8ff']}[k];if(!m)return false;const i=img(m[0],m[1]);if(!i.complete||!i.naturalWidth)return false;
+ g.save();g.shadowColor='rgba(0,0,0,.85)';g.shadowBlur=3;g.drawImage(i,x-size/2,y-size/2,size,size);g.restore();return true};
+['bau','missao','portal'].forEach((k,i)=>img(k,['#ffd36a','#ffe14a','#d9b8ff'][i]));
+})();
+</script>
+<style id="nc-med-css">
+.nc-med{position:relative;display:block;width:var(--ms,34px);height:var(--ms,34px);flex:0 0 auto}
+.nc-med i{position:absolute;border-radius:50%;display:block}
+.nc-med .r{inset:0;background:conic-gradient(from 0deg,#fff2b0,#c08a24,#ffe08a,#8a5a10,#ffe8a0,#b07a1a,#fff2b0);box-shadow:0 2px 4px #000a}
+.nc-med .n{inset:0;background:repeating-conic-gradient(#0000 0 7deg,#5a3a0866 7deg 8deg);mix-blend-mode:multiply}
+.nc-med .g{inset:8%;background:#3a2606;box-shadow:inset 0 0 0 1px #f6dc8a}
+.nc-med .f{inset:11%;overflow:hidden;background:radial-gradient(circle at 38% 30%,color-mix(in srgb,var(--c) 55%,#fff),var(--c) 45%,color-mix(in srgb,var(--c) 40%,#000) 92%);box-shadow:inset 0 -4px 6px #0007,inset 0 2px 4px #fff3}
+.nc-med .f::after{content:"";position:absolute;left:12%;top:6%;width:76%;height:40%;border-radius:50%;background:linear-gradient(#ffffff38,#fff0)}
+.nc-med svg.nc-mg{position:absolute;inset:22%;width:56%!important;height:56%!important;color:#fff4d0;fill:currentColor!important;stroke:none!important;filter:drop-shadow(0 1px 1px #000c)}
+.nc-hb button.has-med{--ms:28px;height:52px;gap:2px}
+.nc-card.has-med{--ms:36px;height:74px}
+.nc-b.has-med{--ms:30px}
+.nc-minib.has-med{--ms:28px;height:58px}
+#ncBag.has-med{--ms:22px;gap:6px}
+#ncBell.has-med{--ms:42px;background:none!important;border:0!important;box-shadow:none!important;padding:0;display:grid;place-items:center}
+.has-med>.nc-med{margin:0 auto}.cname.has-med{display:flex;align-items:center;gap:8px}.cname.has-med>.nc-med{--ms:30px;margin:0}
+@media (max-width:600px){.nc-card.has-med{--ms:32px;height:70px}.nc-b.has-med{--ms:26px}}
+</style>
 </body>
 </html>
