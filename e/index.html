@@ -1,5 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Lista de reparos por loja. Toque para abrir e marcar o que foi resolvido.">
+<meta property="og:type" content="website"><meta property="og:site_name" content="SUPER VISÃO · Arnold Suheth"><meta property="og:title" content="Reparos das lojas · Indus"><meta property="og:description" content="Lista de reparos por loja. Toque para abrir e marcar o que foi resolvido.">
 <meta name="robots" content="noindex,nofollow"><title>Reparos das lojas · Indus</title>
 <style>
 :root{--or:#f97316;--ink:#17181c;--gr:#7a7f8a;--ln:#e6e6e9;--bg:#f7f7f8;--ok:#16a34a;--okl:#e8f8ee;--at:#d98a00;--ru:#dc2626;--rul:#fdeaea}
@@ -29,15 +31,15 @@
 <script>
 /* Checklist de reparos para o Ely (23/11/2026). Marcar = resolvido; o SUPER VISÃO do Arnold recebe na próxima vez que abrir. */
 const URL_DB='https://mgqwzaizkllkqqqbbcna.supabase.co',KEY='sb_publishable_nBJrSlD-qcQg26UIhVCWkQ_d9_fZCPc';
-const id=new URLSearchParams(location.search).get('r'),$=s=>document.querySelector(s);
+let id=new URLSearchParams(location.search).get('r');const K=new URLSearchParams(location.search).get('k'),$=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const dm=iso=>iso?iso.slice(8,10)+'/'+iso.slice(5,7):'';const hoje=new Date().toLocaleDateString('en-CA',{timeZone:'America/Sao_Paulo'});
 const dias=(a,b)=>Math.max(0,Math.round((Date.parse(b)-Date.parse(a))/864e5));
 const rpc=(f,b)=>fetch(URL_DB+'/rest/v1/rpc/'+f,{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify(b)}).then(r=>{if(!r.ok)throw 0;return r.json()});
 let D=null,aba='mes';
 function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.h);toast.h=setTimeout(()=>e.classList.remove('on'),2200)}
-async function carregar(){if(!id){$('#app').innerHTML='<p class="erro">Link incompleto. Peça o link de novo ao Arnold.</p>';return}
- try{const j=await rpc('sv_ler',{p_id:id});if(!j||j.tipo!=='ely')throw 0;D=j;desenhar()}catch(e){console.error(e);$('#app').innerHTML='<p class="erro">Não foi possível abrir a lista agora. Tente de novo em instantes.</p>'}}
+async function carregar(){if(!id&&!K){$('#app').innerHTML='<p class="erro">Link incompleto. Peça o link de novo ao Arnold.</p>';return}
+ try{const j=K?await rpc('sv_ler_curto',{p_k:K}):await rpc('sv_ler',{p_id:id});if(j&&j.id)id=j.id;if(!j||j.tipo!=='ely')throw 0;D=j;desenhar()}catch(e){console.error(e);$('#app').innerHTML='<p class="erro">Não foi possível abrir a lista agora. Tente de novo em instantes.</p>'}}
 function desenhar(){const S=D.dados.semanas||[],R=D.resolvidos||{};
  // abas Semana 1..N (pelo dia em que o problema foi visto) e Mês (tudo em aberto)
  const W=null; /* 23/11/2026: o Ely vê tudo junto, sem abas */ const L=(D.dados.lojas||[]).map(l=>({...l,itens:l.itens.filter(i=>!W||(i.desde>=W.ini&&i.desde<=W.fim))})).filter(l=>l.itens.length);

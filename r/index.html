@@ -1,5 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Lojas visitadas, notas, ranking e pendências da semana e do mês.">
+<meta property="og:type" content="website"><meta property="og:site_name" content="SUPER VISÃO · Arnold Suheth"><meta property="og:title" content="Relatório das lojas · Indus"><meta property="og:description" content="Lojas visitadas, notas, ranking e pendências da semana e do mês.">
 <meta name="robots" content="noindex,nofollow"><title>Relatório das lojas · Indus</title>
 <style>
 :root{--or:#f97316;--ink:#17181c;--gr:#7a7f8a;--ln:#e6e6e9;--bg:#f7f7f8;--ok:#16a34a;--okl:#e8f8ee;--at:#d98a00;--atl:#fff6df;--ru:#dc2626;--rul:#fdeaea}
@@ -46,7 +48,7 @@ h2{font-size:13px;letter-spacing:.12em;color:var(--or);margin:22px 0 10px}
 <script>
 /* Relatório das lojas para a administração (23/11/2026). Só leitura: os dados vêm do SUPER VISÃO. */
 const URL_DB='https://mgqwzaizkllkqqqbbcna.supabase.co',KEY='sb_publishable_nBJrSlD-qcQg26UIhVCWkQ_d9_fZCPc';
-const id=new URLSearchParams(location.search).get('r');
+let id=new URLSearchParams(location.search).get('r');const K=new URLSearchParams(location.search).get('k');
 const $=s=>document.querySelector(s),RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const n1=n=>Number(n||0).toFixed(1).replace('.',',');
@@ -56,8 +58,8 @@ const dia=iso=>SEM[new Date(iso+'T12:00:00Z').getUTCDay()]+', '+iso.slice(8)+'/'
 const corN=n=>n>=8?'ok':n>=6?'at':'ur';
 const TROFEU='<svg viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe9a6"/><stop offset=".5" stop-color="#e8b33a"/><stop offset="1" stop-color="#a8740f"/></linearGradient></defs><path d="M18 8h28v12c0 9-6 16-14 17-8-1-14-8-14-17z" fill="url(#g)"/><path d="M18 12H8c0 9 5 14 11 15M46 12h10c0 9-5 14-11 15" fill="none" stroke="#e8b33a" stroke-width="4"/><rect x="28" y="36" width="8" height="10" fill="#c9921f"/><path d="M20 46h24l3 10H17z" fill="url(#g)"/><path d="M32 14l3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1z" fill="#fff8dc" opacity=".9"/></svg>';
 let D=null,aba=null,filtro=null;
-async function carregar(){if(!id){$('#app').innerHTML='<p class="erro">Link incompleto. Peça o link de novo ao Arnold.</p>';return}
- try{const r=await fetch(URL_DB+'/rest/v1/rpc/sv_ler',{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({p_id:id})});const j=await r.json();
+async function carregar(){if(!id&&!K){$('#app').innerHTML='<p class="erro">Link incompleto. Peça o link de novo ao Arnold.</p>';return}
+ try{const r=await fetch(URL_DB+'/rest/v1/rpc/'+(K?'sv_ler_curto':'sv_ler'),{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify(K?{p_k:K}:{p_id:id})});const j=await r.json();
   if(!j||j.tipo!=='adm')throw 0;D=j;aba=(j.dados.semanas&&j.dados.semanas.length)?'s'+(j.dados.atual??0):'mes';desenhar(true)}catch(e){$('#app').innerHTML='<p class="erro">Não foi possível abrir o relatório agora. Tente de novo em instantes.</p>'}}
 function desenhar(primeira){const S=D.dados.semanas||[],eS=aba!=='mes',P0=eS?S[+aba.slice(1)]:D.dados.mes,P={...P0,visitas:P0.visitas||(D.dados.mes.visitas||[]).filter(v=>v.data>=P0.ini&&v.data<=P0.fim)},top=P.ranking[0],max=10;
  const frase=!P.visitadas?'Sem vistorias registradas neste período.':(P.atencao+P.urgente===0?'Tudo em ordem nas lojas visitadas.':`${P.bem} de ${P.visitadas} lojas visitadas estão bem e ${P.atencao+P.urgente} ${P.atencao+P.urgente===1?'precisa':'precisam'} de ação.`);
