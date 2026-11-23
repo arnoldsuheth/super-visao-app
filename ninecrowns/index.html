@@ -5692,7 +5692,7 @@ CLASSES.monk = {name:'Monge', tag:'Punhos e chutes', wtype:'fists', desc:'Luta d
             {id:'flykick', name:'Chute', full:'Chute Voador', cd:8, desc:'voa para frente com um chute que atordoa ao cair'},
             {id:'dragon', name:'Dragão', full:'Punho do Dragão', cd:30, desc:'SUPREMA: um dragão de fogo sai do punho em linha, dano enorme'}]};
 CLASSES.necro = {name:'Necromante', tag:'Foice e mortos-vivos', wtype:'scythe', desc:'Ataca de longe com magia sombria, rouba vida e levanta esqueletos que lutam por você.', hp:.85, atk:.9, def:.85, spd:1, block:0, crit:0, cd:.5, attack:'dark', dash:'Névoa',
-  skills:[{id:'drain', name:'Drenar', full:'Drenar Vida', cd:5, desc:'prende um raio no inimigo mais próximo e suga a vida dele por 2 s; metade do dano volta em vida'},
+  skills:[{id:'drain', name:'Drenar', full:'Drenar Vida', cd:5, desc:'prende um raio no inimigo mais próximo e suga a vida dele por 2 s; 80% do dano volta em vida, mais um pouco da sua vida máxima'},
           {id:'army', name:'Exército', full:'Exército dos Mortos', cd:18, desc:'levanta 3 esqueletos que lutam ao seu lado por 12 s'},
             {id:'curse', name:'Maldição', full:'Maldição', cd:8, desc:'amaldiçoa a área do alvo: dano por 3 s'},
             {id:'corpse', name:'Cadáver', full:'Explosão de Cadáver', cd:10, desc:'explode a área do alvo com energia verde'},
@@ -10360,13 +10360,14 @@ function monAttach(cr, key, o){
   });
 }
 function monPlay(m, n){
+  if(!m || !m.acts) return;   /* 23/11: monstro ainda carregando o modelo travava o jogo */
   if(!m.acts[n]) n = 'idle'; if(m.cur === n || !m.acts[n]) return;
   const a = m.acts[n], prev = m.cur && m.acts[m.cur]; a.reset(); a.timeScale = n === 'atk' ? 1.6 : n === 'move' ? 1.25 : 1; a.play();
   if(prev && prev !== a){ prev.crossFadeTo(a, .12, false); } m.cur = n;
   m.lock = n === 'atk' ? a.getClip().duration/1.6*.85 : n === 'hit' ? Math.min(.3, a.getClip().duration) : 0;
 }
 function monUpdate(e, dt){
-  const cr = e.cr, m = cr && cr.mon; if(!m) return;
+  const cr = e.cr, m = cr && cr.mon; if(!m || !m.acts || !m.mixer) return;
   const lg = cr.legL.rotation.x, ar = Math.min(cr.armR.rotation.x, cr.armL.rotation.x);
   if(Math.abs(lg - m.lg) > 1e-4) m.mvT = .14; else m.mvT -= dt; m.lg = lg;
   const hitNow = e.flashT > m.fl + .01 || (e.hitT > 0 && !(m.ht > 0)); m.fl = e.flashT || 0; m.ht = e.hitT || 0;
@@ -13809,11 +13810,11 @@ function ncBellDraw(){ let b = document.getElementById('ncBell'); if(!b){ b = do
   const n = ncNt.list.filter(x => !x.rd).length; b.querySelector(':scope>i').textContent = n > 9 ? '9+' : n || ''; b.classList.toggle('has', n > 0);
   const el = document.getElementById('ncBellPop'); if(el && !el.hidden) ncBellPop(true, true); }
 function ncBellPop(open, keep){ let el = document.getElementById('ncBellPop'); if(!el){ el = document.createElement('div'); el.id = 'ncBellPop'; el.hidden = true; document.body.appendChild(el);
-    el.addEventListener('click', e => { if(e.target === el || e.target.closest('[data-btx]')){ el.hidden = true; return; } if(e.target.closest('[data-bclr]')){ ncNt.list = []; ncBellDraw(); ncBellPop(true); } }); }
+    el.addEventListener('click', e => { const rw = e.target.closest('[data-bkind]'); if(rw){ el.hidden = true; ncNtGo(rw.dataset.bkind); return; } if(e.target === el || e.target.closest('[data-btx]')){ el.hidden = true; return; } if(e.target.closest('[data-bclr]')){ ncNt.list = []; ncBellDraw(); ncBellPop(true); } }); }
   el.hidden = !open; if(!open) return; if(!keep){ ncNt.list.forEach(x => x.rd = true); setTimeout(ncBellDraw, 50); }
   const ago = t => { const m = Math.round((Date.now() - t)/60000); return m < 1 ? 'agora' : m < 60 ? m + ' min' : Math.round(m/60) + ' h'; };
   el.innerHTML = '<div class="bp-box"><div class="nc-head"><b>Notificações</b><button class="nc-x" type="button" data-btx aria-label="Fechar">×</button></div>'
-    + (ncNt.list.length ? ncNt.list.map(x => '<div class="bp-r' + (x.rd ? '' : ' new') + '"><span>' + (NT_IC[x.kind] || '🔔') + '</span><p>' + x.tx + '</p><small>' + ago(x.t) + '</small></div>').join('') + '<button class="btn sm" data-bclr style="width:100%;margin-top:8px">Limpar</button>'
+    + (ncNt.list.length ? ncNt.list.map(x => '<div class="bp-r' + (x.rd ? '' : ' new') + '" data-bkind="' + x.kind + '" style="cursor:pointer"><span>' + (NT_IC[x.kind] || '🔔') + '</span><p>' + x.tx + '</p><small>' + ago(x.t) + '</small></div>').join('') + '<button class="btn sm" data-bclr style="width:100%;margin-top:8px">Limpar</button>'
       : '<p class="istat">Nada novo por enquanto.</p>') + '</div>'; }
 function ncBellCheck(){ try{
   const day = new Date().toDateString();
@@ -14235,6 +14236,31 @@ damageEnemy = (f => function(e, dmg, crit, nx, nz, kb, quiet){
         f.pts.geometry.attributes.position.needsUpdate = true; f.pts.material.opacity = Math.max(0, 1 - f.t/1.8); f.pts.material.size = 1.6 + f.t*.5;
         if(f.t > 1.8 || mode !== 'hub'){ scene.remove(f.pts); f.pts.geometry.dispose(); f.pts.material.dispose(); fw.splice(k, 1); } } }catch(_){} }
   requestAnimationFrame(tick); })();
+
+/* 23/11/2026: notificação leva até o lugar dela */
+function ncNtGo(kind){ try{
+  const clica = nomes => { const els = [...document.querySelectorAll('button,[role=button]')].filter(b => b.getClientRects().length && !b.closest('#ncBellPop'));
+    for(const n of nomes){ const b = els.find(x => (x.innerText || '').trim().replace(/\s+/g, ' ') === n || (x.getAttribute('aria-label') || '') === n); if(b){ b.click(); return true; } } return false; };
+  if(kind === 'daily'){ if(window.ncDaily) window.ncDaily(true); return; }
+  if(kind === 'miss'){ if(!clica(['Missões', 'Missão'])) banner('Missões', 'Volte para a cidade e toque em Missões para receber.'); return; }
+  if(kind === 'skill'){ if(!clica(['Habilidades'])) clica(['Herói']); return; }
+  if(kind === 'pet' || kind === 'bag' || kind === 'chest'){ clica(['Mochila']); return; }
+  if(kind === 'party' || kind === 'friend'){ if(!clica(['Grupo', 'Conexão'])) try{ ncCoop.friends(); }catch(_){} return; }
+  if(kind === 'event'){ clica(['Festivos']); return; }
+}catch(e){ console.warn('ncNtGo', e); } }
+/* 23/11/2026: marca no corpo da página quando há uma janela aberta (para esconder nome, sino e chat) */
+(function(){ const OUT = new Set(['stage','hub','hud','fx','fade','ncGavBg','ncErr','ncChat','ncBell','pickCards','banner','ncRoomHud','ncWorlds','ncParty']);
+  function aberta(){ const b = document.body.classList; if(b.contains('nc-l') || b.contains('nc-r') || b.contains('nc-st') || b.contains('nc-inst')) return true;
+    if(document.querySelector('dialog[open]')) return true;
+    const W = innerWidth, H = innerHeight;
+    for(const el of [...document.body.children, ...(document.getElementById('hub') ? document.getElementById('hub').children : [])]){
+      if(!el.id && !el.className) continue; if(OUT.has(el.id) || el.classList.contains('nc-ptag') || el.classList.contains('ltag')) continue;
+      if(el.hidden) continue; const cs = getComputedStyle(el); if(cs.display === 'none' || cs.visibility === 'hidden' || +cs.opacity < .1) continue;
+      if(cs.position !== 'fixed' && cs.position !== 'absolute') continue; if(el.tagName === 'CANVAS' || el.tagName === 'ASIDE' || el.tagName === 'NAV' || el.id === 'rightPanel') continue;
+      let r = el.getBoundingClientRect(); if(r.width < W*.5 || r.height < H*.4){ const box = el.firstElementChild; if(!box) continue; r = box.getBoundingClientRect(); if(r.width < W*.5 || r.height < H*.4) continue; }
+      if(el.classList.contains('nc-rail') || el.classList.contains('spacer')) continue; return true; }
+    return false; }
+  setInterval(() => { try{ document.body.classList.toggle('nc-ov', aberta()); }catch(_){} }, 250); })();
 /* 23/11/2026: posiciona o ranking dos amigos logo abaixo do cartão "Node Land · Amigos" */
 (function(){ const pos = () => { const f = document.getElementById('ncFriends'), w = ['ncRoomHud','ncWorlds'].map(id => document.getElementById(id)).find(x => x && !x.hidden && x.getClientRects().length && x.getBoundingClientRect().width > 40); if(!f || f.hidden) return;
     const r = w ? w.getBoundingClientRect() : null;
@@ -15061,6 +15087,9 @@ body.nc-l #ncGavBg,body.nc-r #ncGavBg{display:block}
   border:1px solid #e8c36a88!important;border-image:none!important;border-radius:12px!important;clip-path:none!important;padding:10px 12px!important;box-sizing:border-box;
   background:linear-gradient(180deg,#1c1640f5,#141a36f5)!important;box-shadow:0 10px 30px #000a!important;animation:ncFrDown .2s ease-out}
 @keyframes ncFrDown{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+
+/* 23/11/2026: com janela aberta, o nome do herói, o sino e o chat somem (antes ficavam por cima das janelas) */
+body.nc-ov .nc-me,body.nc-ov #ncBell,body.nc-ov #ncChat{display:none!important}
 </style>
 </body>
 </html>
