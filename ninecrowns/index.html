@@ -11058,6 +11058,8 @@ const NC_FEST = {
   gorro: {n:'Gorro de Papai Noel', lug:'cabeca', p:30, ev:'Natal'},
   chifre:{n:'Chifre de rena',       lug:'cabeca', p:30, ev:'Natal'},
   barba: {n:'Barba branca',         lug:'rosto',  p:20, ev:'Natal'},
+  gorrola:{n:'Gorro de Lã com Pompom', lug:'cabeca', p:30, ev:'Natal'},          /* 23/11 (Arnold) */
+  boneco:{n:'Cabeça de Boneco de Neve', lug:'cabeca', p:45, ev:'Natal'},
   cachecol:{n:'Cachecol de Gelo',   lug:'pescoco', p:0, ev:'Natal', drop:'Só derrotando o Boneco de Neve Gigante'}};
 const ncFestSave = () => { save.fest = save.fest || {own:{}, on:{}}; save.fest.own = save.fest.own || {}; save.fest.on = save.fest.on || {}; return save.fest; };
 const NC_FM = {};
@@ -11078,6 +11080,19 @@ function ncFestMesh(k, R){ const g = new T.Group(), red = ncFestMat(0x9e1424), w
         t.position.set(sd*Math.sin(ang)*R*len*.4, L*h + Math.cos(ang)*R*len*.2, 0); t.rotation.z = -sd*ang; a.add(t); });
       const tip = new T.Mesh(new T.SphereGeometry(R*.08, 8, 6), br2); tip.position.y = L; a.add(tip); }
     add(new T.SphereGeometry(R*.17, 12, 10), ncFestMat(0xff2a2a), 0, -R*.18, R*1.0);                  // nariz vermelho de rena
+  } else if(k === 'gorrola'){   /* gorro de tricô branco e azul, com pompom e flocos */
+    const az = ncFestMat(0x2f5fb0), bc = ncFestMat(0xf2f2f6);
+    add(new T.TorusGeometry(R*.96, R*.17, 8, 24), az, 0, R*.02, 0, Math.PI/2);                          // barra dobrada
+    [-.12, .12].forEach(y => add(new T.TorusGeometry(R*.97, R*.035, 6, 24), bc, 0, R*(.02 + y), 0, Math.PI/2));
+    const dome = add(new T.SphereGeometry(R*.98, 18, 12, 0, Math.PI*2, 0, Math.PI/2), bc, 0, R*.05, 0); dome.scale.y = 1.05;
+    for(let i = 0; i < 6; i++){ const a = i/6*Math.PI*2; add(new T.OctahedronGeometry(R*.09), az, Math.sin(a)*R*.86, R*.42, Math.cos(a)*R*.86); }
+    add(new T.SphereGeometry(R*.3, 12, 10), az, 0, R*1.08, 0);                                          // pompom
+  } else if(k === 'boneco'){   /* cabeça de boneco de neve: bola branca, olhos de carvão, nariz de cenoura e sorriso */
+    const neve = ncFestMat(0xf6f8fc), carv = ncFestMat(0x1a1a1e), cen = ncFestMat(0xff7a1a), cy0 = -R*.54;
+    add(new T.SphereGeometry(R*1.1, 22, 16), neve, 0, cy0, 0);
+    [-1, 1].forEach(sd => add(new T.SphereGeometry(R*.11, 10, 8), carv, sd*R*.36, cy0 + R*.22, R*1.0));
+    add(new T.ConeGeometry(R*.13, R*.62, 12), cen, 0, cy0, R*1.36, Math.PI/2);                       // nariz de cenoura
+    for(let i = 0; i < 5; i++){ const a = (i - 2)*.28; add(new T.SphereGeometry(R*.06, 8, 6), carv, Math.sin(a)*R*.62, cy0 - R*.36 - Math.cos(a*1.3)*R*.06 + R*.06, Math.cos(a)*R*.86 + R*.1); }
   } else if(k === 'cachecol'){
     const ice = ncFestMat(0x7ad0ff), ice2 = ncFestMat(0xdff4ff);
     add(new T.TorusGeometry(R*.62, R*.16, 8, 20), ice, 0, 0, 0, Math.PI/2);
@@ -14198,6 +14213,27 @@ damageEnemy = (f => function(e, dmg, crit, nx, nz, kb, quiet){
         if(cc.bleed > 0){ cc.bleed -= .5; d += (cc.bdps || 0)*.5; burst(P.pos, 0xc81e2a, 3, 1.5, 2, .8); }
         if(cc.poison > 0){ cc.poison -= .5; d += P.S.hp*.006*cc.pst; if(cc.poison <= 0) cc.pst = 0; }
         if(d > 0 && !P.inv){ d = Math.round(d); P.hp -= d; floatText(P.pos, '-' + d, 'hurt'); if(P.hp <= 0){ P.hp = 0; playerDie(); } } } }catch(_){} }
+  requestAnimationFrame(tick); })();
+
+/* ===== 23/11/2026 (Arnold): FOGOS DE ARTIFÍCIO coloridos no céu da cidade nas festividades
+   Natal (22/11 a 26/12), Réveillon (31/12 e 1/1) e todo dia no evento das 22h à meia-noite. Leves: no máximo 3 explosões ao mesmo tempo. */
+(function(){ const fw = []; let nextT = 0, last = performance.now();
+  const festa = () => { try{ const d = new Date(), h = d.getHours(), m = d.getMonth(), dd = d.getDate(); return ncXmasOn() || h >= 22 || (m === 11 && dd === 31) || (m === 0 && dd === 1); }catch(_){ return false; } };
+  function solta(){ const n = (typeof COARSE !== 'undefined' && COARSE) ? 40 : 70, pos = new Float32Array(n*3), vel = [], col = new Float32Array(n*3);
+    const cx = (Math.random() - .5)*36, cy = 7 + Math.random()*7, cz = -22 - Math.random()*14, hue = Math.random(), c2 = (hue + .33 + Math.random()*.3) % 1;
+    for(let i = 0; i < n; i++){ pos[i*3] = cx; pos[i*3 + 1] = cy; pos[i*3 + 2] = cz; const th = Math.random()*Math.PI*2, ph = Math.acos(2*Math.random() - 1), sp = 7 + Math.random()*4;
+      vel.push([Math.sin(ph)*Math.cos(th)*sp, Math.cos(ph)*sp, Math.sin(ph)*Math.sin(th)*sp]); const c = new T.Color().setHSL(i % 3 ? hue : c2, 1, .6); col[i*3] = c.r; col[i*3 + 1] = c.g; col[i*3 + 2] = c.b; }
+    const g = new T.BufferGeometry(); g.setAttribute('position', new T.BufferAttribute(pos, 3)); g.setAttribute('color', new T.BufferAttribute(col, 3));
+    const mt = new T.PointsMaterial({size:1.6, map:DOT, vertexColors:true, transparent:true, opacity:1, depthWrite:false, blending:T.AdditiveBlending, fog:false});
+    const pts = new T.Points(g, mt); pts.frustumCulled = false; pts.renderOrder = 2; scene.add(pts); fw.push({pts, vel, t:0, n});
+    try{ if(SFX && SFX.zap && Math.random() < .5) SFX.zap(); }catch(_){} }
+  function tick(){ requestAnimationFrame(tick); const now = performance.now(), dt = Math.min(.05, (now - last)/1000); last = now;
+    try{ const on = mode === 'hub' && festa() && !document.hidden;
+      if(on && now > nextT && fw.length < 3){ solta(); nextT = now + 700 + Math.random()*1600; }
+      for(let k = fw.length - 1; k >= 0; k--){ const f = fw[k]; f.t += dt; const p = f.pts.geometry.attributes.position.array;
+        for(let i = 0; i < f.n; i++){ const v = f.vel[i]; v[1] -= 6*dt; v[0] *= .985; v[1] *= .985; v[2] *= .985; p[i*3] += v[0]*dt; p[i*3 + 1] += v[1]*dt; p[i*3 + 2] += v[2]*dt; }
+        f.pts.geometry.attributes.position.needsUpdate = true; f.pts.material.opacity = Math.max(0, 1 - f.t/1.8); f.pts.material.size = 1.6 + f.t*.5;
+        if(f.t > 1.8 || mode !== 'hub'){ scene.remove(f.pts); f.pts.geometry.dispose(); f.pts.material.dispose(); fw.splice(k, 1); } } }catch(_){} }
   requestAnimationFrame(tick); })();
 /* 23/11/2026: posiciona o ranking dos amigos logo abaixo do cartão "Node Land · Amigos" */
 (function(){ const pos = () => { const f = document.getElementById('ncFriends'), w = ['ncRoomHud','ncWorlds'].map(id => document.getElementById(id)).find(x => x && !x.hidden && x.getClientRects().length && x.getBoundingClientRect().width > 40); if(!f || f.hidden) return;
