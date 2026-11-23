@@ -11,7 +11,8 @@
 .eb{font:700 11px system-ui;letter-spacing:.14em;color:var(--or);margin:0}
 h1{font-size:clamp(26px,6vw,34px);margin:4px 0 2px;letter-spacing:-.5px}.sub{color:var(--gr);margin:0 0 14px;font-size:14px}
 .frase{font-size:15.5px;margin:0 0 14px}
-.tabs{display:flex;gap:8px;margin:6px 0 16px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}.tabs button small{display:block;font:600 11px system-ui;opacity:.7}.tabs button{line-height:1.2;flex:0 0 auto;border:1px solid var(--ln);background:#fff;border-radius:999px;padding:10px 18px;font:700 14px system-ui;color:var(--gr);min-height:44px;cursor:pointer}
+.tabs{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:8px;margin:6px 0 16px}.tabs::-webkit-scrollbar{display:none}.tabs button small{display:block;font:600 11px system-ui;opacity:.7}.tabs button{line-height:1.2;min-width:0;white-space:nowrap;border:1px solid var(--ln);background:#fff;border-radius:999px;padding:10px 18px;font:700 14px system-ui;color:var(--gr);min-height:44px;cursor:pointer}
+.tabs .c{display:none}@media(max-width:560px){.tabs{gap:5px}.tabs button{padding:8px 2px!important;font-size:13px!important}.tabs .l{display:none}.tabs .c{display:inline}}
 .tabs button[aria-pressed=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
 .nums{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;background:var(--bg);border-radius:14px;padding:14px}
 .nums b{display:block;font-size:clamp(22px,5vw,30px);font-variant-numeric:tabular-nums}.nums small{color:var(--gr);font-size:12px}
@@ -66,7 +67,7 @@ function desenhar(primeira){const S=D.dados.semanas||[],eS=aba!=='mes',P0=eS?S[+
  const frase=!P.visitadas?'Sem vistorias registradas neste período.':(P.atencao+P.urgente===0?'Tudo em ordem nas lojas visitadas.':`${P.bem} de ${P.visitadas} lojas visitadas estão bem e ${P.atencao+P.urgente} ${P.atencao+P.urgente===1?'precisa':'precisam'} de ação.`);
  $('#app').innerHTML=`<p class="eb">INDUS.CORP · SUPERVISÃO DE LOJAS</p><h1>${eS?'Relatório da Semana '+P.n:'Relatório do mês'}</h1>
  <p class="sub">${per(P.ini,P.fim)} · ${esc(D.dados.por||'')}</p>
- <div class="tabs" role="group" aria-label="Período">${S.map((w,k)=>`<button data-a="s${k}" aria-pressed="${aba==='s'+k}">Semana ${w.n}<small>${w.ini.slice(8)}–${w.fim.slice(8)}</small></button>`).join('')}<button data-a="mes" aria-pressed="${aba==='mes'}">Mês<small>${MES[+P.fim.slice(5,7)-1].slice(0,3)}</small></button></div>
+ <div class="tabs" role="group" aria-label="Período">${S.map((w,k)=>`<button data-a="s${k}" aria-pressed="${aba==='s'+k}"><span class="l">Semana</span><span class="c">Sem.</span> ${w.n}<small>${w.ini.slice(8)}–${w.fim.slice(8)}</small></button>`).join('')}<button data-a="mes" aria-pressed="${aba==='mes'}">Mês<small>${MES[+P.fim.slice(5,7)-1].slice(0,3)}</small></button></div>
  <p class="frase rv">${esc(frase)}</p>
  <div class="nums rv"><span><b data-c="${P.visitadas}" data-s=" de ${P.lojas}">0</b><small>lojas visitadas</small></span><span><b data-c="${P.media}" data-d="1">0</b><small>nota média</small></span><span><b data-c="${P.resolvidas}">0</b><small>pendências resolvidas</small></span></div>
  <div class="sem rv" role="group" aria-label="Filtrar lojas">${[['bem','ok','bem'],['atencao','at','atenção'],['urgente','ur','urgente']].map(([k,c,n])=>`<button class="${c}${filtro===k?' sel':''}" data-f="${k}" aria-pressed="${filtro===k}"><b data-c="${P[k]}">0</b>${n}<small>${filtro===k?'mostrando ✕':'toque para ver'}</small></button>`).join('')}</div>
@@ -81,7 +82,7 @@ function desenhar(primeira){const S=D.dados.semanas||[],eS=aba!=='mes',P0=eS?S[+
  <p class="rod">Atualizado em ${new Date(D.atualizado).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})} · Indus.corp · Uso interno</p>`;
  document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{if(aba!==b.dataset.a){aba=b.dataset.a;filtro=null;desenhar(true)}});
  document.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>{filtro=filtro===b.dataset.f?null:b.dataset.f;desenhar(false);if(filtro)setTimeout(()=>$('#visitas').scrollIntoView({behavior:'smooth',block:'start'}),80)});
- const on=document.querySelector('.tabs [aria-pressed=true]');if(on)on.scrollIntoView({inline:'center',block:'nearest'});
+ 
  document.querySelectorAll('.lh').forEach(b=>b.onclick=()=>{const l=b.parentNode;l.classList.toggle('on');const on=l.classList.contains('on');b.setAttribute('aria-expanded',on);const tx=b.querySelector('.tx');if(tx)tx.textContent=on?'Fechar':'Ver tudo'});
  animar(primeira);
 }
