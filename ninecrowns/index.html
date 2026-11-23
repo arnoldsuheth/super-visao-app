@@ -9795,7 +9795,62 @@ function medDress(st){
   // torres de vigia de madeira perto dos acampamentos
   LAY.pois.filter(p => p.type === 'camp').forEach((p, i) => { if(i%2) return; const a = R()*Math.PI*2, x = p.x + Math.cos(a)*(p.r + 1.5), z = p.z + Math.sin(a)*(p.r + 1.5); if(ok(x, z, 2)) mTower(x, z); });
 }
+
+/* ===== CASAS E BAÚS NOVOS (22/11, Arnold escolheu): peças da Quaternius (CC0), texturas leves para celular.
+   Três casas misturadas em cada vila: A sobrado enxaimel de 2 andares, B casa de pedra, C casa de reboco com chaminé.
+   Se as peças ainda não carregaram, a casa antiga aparece no lugar (nada quebra). ===== */
+const NCQ = {m:{}, ok:false, busy:false};
+const NCQ_LIST = ['Wall_Plaster_WoodGrid','Wall_Plaster_Door_Round','Wall_Plaster_Window_Wide_Round','Wall_UnevenBrick_Straight','Wall_UnevenBrick_Door_Round','Wall_UnevenBrick_Window_Wide_Round','Wall_Plaster_Straight','Wall_Plaster_Door_Flat','Wall_Plaster_Window_Wide_Flat','Corner_Exterior_Wood','Corner_Exterior_Brick','Roof_RoundTiles_6x6','Roof_Front_Brick6','Floor_WoodDark','Prop_Chimney','Prop_Chimney2','Door_1_Round','Door_1_Flat','Chest_Wood','Barrel','Crate_Wooden'];
+function ncqLoad(){ if(NCQ.busy || NCQ.ok) return; NCQ.busy = true; const L = new T.GLTFLoader(); let n = 0;
+  NCQ_LIST.forEach(k => L.load('assets/q/' + k + '.gltf', g => { g.scene.traverse(o => { if(o.isMesh){ o.castShadow = true; o.receiveShadow = true; } }); NCQ.m[k] = g; if(++n === NCQ_LIST.length) NCQ.ok = true; }, undefined, () => { if(++n === NCQ_LIST.length) NCQ.ok = Object.keys(NCQ.m).length > 15; })); }
+setTimeout(ncqLoad, 1200);
+const ncqC = k => { const g = NCQ.m[k]; return g ? g.scene.clone(true) : new T.Group(); };
+const NCQ_ST = [
+  {wall:'Wall_Plaster_WoodGrid', door:'Wall_Plaster_Door_Round', win:'Wall_Plaster_Window_Wide_Round', corner:'Corner_Exterior_Wood', dm:'Door_1_Round', fl:2},
+  {wall:'Wall_UnevenBrick_Straight', door:'Wall_UnevenBrick_Door_Round', win:'Wall_UnevenBrick_Window_Wide_Round', corner:'Corner_Exterior_Brick', dm:'Door_1_Round', fl:1, chim:'Prop_Chimney2'},
+  {wall:'Wall_Plaster_Straight', door:'Wall_Plaster_Door_Flat', win:'Wall_Plaster_Window_Wide_Flat', corner:'Corner_Exterior_Wood', dm:'Door_1_Flat', fl:1, chim:'Prop_Chimney'}];
+/* junta as peças de mesmo material num objeto só: uma casa fica com ~10 desenhos em vez de ~70 (celular agradece) */
+function ncqMerge(root){ root.updateMatrixWorld(true); const inv = root.matrixWorld.clone().invert(), by = new Map(), kill = [];
+  root.traverse(o => { if(!o.isMesh || o.isSkinnedMesh) return; const k = o.material.uuid; if(!by.has(k)) by.set(k, {m:o.material, l:[]}); by.get(k).l.push(o); });
+  by.forEach(({m, l}) => { if(l.length < 2) return; const parts = l.map(o => { const g = o.geometry.index ? o.geometry.toNonIndexed() : o.geometry.clone(); g.applyMatrix4(new T.Matrix4().multiplyMatrices(inv, o.matrixWorld)); return g; });
+    const out = new T.BufferGeometry(); ['position', 'normal', 'uv'].forEach(a => { if(!parts.every(g => g.attributes[a])) return; const sz = parts[0].attributes[a].itemSize; let n = 0; parts.forEach(g => n += g.attributes[a].array.length);
+      const arr = new Float32Array(n); let off = 0; parts.forEach(g => { arr.set(g.attributes[a].array, off); off += g.attributes[a].array.length; }); out.setAttribute(a, new T.BufferAttribute(arr, sz)); });
+    out.computeBoundingSphere(); const mm = new T.Mesh(out, m); mm.castShadow = mm.receiveShadow = true; root.add(mm); l.forEach(o => kill.push(o)); parts.forEach(g => g.dispose()); });
+  kill.forEach(o => o.parent && o.parent.remove(o)); }
+function buildHouseQ(p, st, spawn, hi){
+  const R = rng(Math.round(Math.abs(p.x*13 + p.z*7)) + st.id*31 + 5), S = NCQ_ST[(hi || 0) % 3], W = 6, D = 6, H = 3.12;
+  const g = new T.Group(); g.position.set(p.x, heightAt(p.x, p.z), p.z); g.rotation.y = p.face || 0; scene.add(g);
+  const roof = new T.Group(); g.add(roof); const mats = [];
+  const put = (k, x, y, z, ry, par) => { const o = ncqC(k); o.position.set(x, y, z); o.rotation.y = ry || 0; (par || g).add(o); return o; };
+  for(let f = 0; f < S.fl; f++){ const y = f*H, par = f ? roof : g;
+    for(let i = 0; i < 3; i++){ const t = -2 + 2*i;
+      put(f === 0 && i === 1 ? S.door : (i === 1 ? S.win : S.wall), t, y, D/2, 0, par);
+      put(i === 1 ? S.win : S.wall, -t, y, -D/2, Math.PI, par);
+      put(i === 1 ? S.win : S.wall, -W/2, y, -t, -Math.PI/2, par);
+      put(i === 1 ? S.win : S.wall, W/2, y, t, Math.PI/2, par); }
+    for(const [x, z] of [[-W/2, D/2], [W/2, D/2], [-W/2, -D/2], [W/2, -D/2]]) put(S.corner, x, y, z, 0, par);
+    for(let i = 0; i < 3; i++) for(let j = 0; j < 3; j++) put('Floor_WoodDark', -2 + 2*i, y + .02, -2 + 2*j, 0, par); }
+  const top = S.fl*H; put('Roof_RoundTiles_6x6', 0, top, 0, 0, roof); put('Roof_Front_Brick6', 0, top, D/2, 0, roof); put('Roof_Front_Brick6', 0, top, -D/2, Math.PI, roof);
+  if(S.chim) put(S.chim, W/2 - 1.2, top - .4, -1.5, 0, roof);
+  ncqMerge(roof); { const tmp = new T.Group(); g.children.filter(c => c !== roof).forEach(c => tmp.add(c)); g.add(tmp); ncqMerge(tmp); }
+  // paredes do térreo ficam transparentes quando você entra (como nas casas antigas)
+  g.traverse(o => { if(o.isMesh && !roof.getObjectById(o.id)){ o.material = o.material.clone(); o.material.transparent = true; mats.push(o.material); } });
+  const piv = new T.Group(); piv.position.set(-.55, 0, D/2 - .12); g.add(piv); const dm = ncqC(S.dm); piv.add(dm);
+  // móveis simples por dentro
+  const pm = RMED ? medMat('old_planks_02', 0xd0b088, {s:.9}) : pmat(0x8a6a4a);
+  box(1.2, .7, .7, pm, -W/2 + 1.1, .35, -D/2 + .8, g); box(1, .45, 2, RMED ? medMat('rough_linen', 0xa04a3a, {s:.6, desat:1}) : pmat(0xa04a3a), W/2 - .9, .23, -D/2 + 1.3, g);
+  const ch = bLocal(p, .2, -D/2 + 1.2); makeChest(ch.x, ch.z, R() < .18);
+  bWallCol(p, -W/2, -D/2, W/2, -D/2, .35); bWallCol(p, -W/2, -D/2, -W/2, D/2, .35); bWallCol(p, W/2, -D/2, W/2, D/2, .35);
+  bWallCol(p, -W/2, D/2, -.8, D/2, .35); bWallCol(p, .8, D/2, W/2, D/2, .35);
+  { const q = bLocal(p, -W/2 + 1.1, -D/2 + .8); addCollider(q.x, q.z, .55); const q2 = bLocal(p, W/2 - .9, -D/2 + 1.3); addCollider(q2.x, q2.z, .6); }
+  // poucos enfeites só na vila (Arnold escolheu B): um barril e um caixote ao lado da casa
+  { const a = bLocal(p, -W/2 - 1, 1.5), b2 = bLocal(p, W/2 + 1, 1); const ba = ncqC('Barrel'); ba.position.set(a.x, heightAt(a.x, a.z), a.z); scene.add(ba); addCollider(a.x, a.z, .45);
+    const cr = ncqC('Crate_Wooden'); cr.position.set(b2.x, heightAt(b2.x, b2.z), b2.z); cr.rotation.y = R()*3; scene.add(cr); addCollider(b2.x, b2.z, .5); }
+  if(spawn && R() < .45){ const q = bLocal(p, -1, .4); spawnMinion(st, q.x, q.z, false, false, pickType(st)); }
+  BLD.push({kind:'house', p, hw:W/2, hd:D/2, roof, mats, doors:[{piv, dir:-1}], open:0, fade:1, reach:2.8});
+}
 function buildHouse(p, st, spawn){
+  if(NCQ.ok){ const hi = LAY.pois.filter(q => q.type === 'house').indexOf(p); return buildHouseQ(p, st, spawn, hi < 0 ? 0 : hi); }
   if(!RMED) return buildHouse0(p, st, spawn);
   const S = medStyle(st), R = rng(Math.round(Math.abs(p.x*13 + p.z*7)) + st.id*31 + 5);
   const W = 6 + R()*1.4, D = 5 + R()*1, H = 2.9, t = .3, dw = 1.5, dh = 2.2;
@@ -10109,6 +10164,7 @@ function postFreed(r){
 }
 const NC_CHEST_MS = 12*3600*1000;
 function makeChest(x, z, gold){
+  if(NCQ.ok && NCQ.m.Chest_Wood) return makeChestQ(x, z, gold);
   const g = new T.Group(); g.position.set(x, heightAt(x, z), z); g.rotation.y = Math.random()*6; scene.add(g);
   const bm = gold ? pmat(0xd8a830,{metalness:.8,roughness:.25,envMap:ENV,emissive:0x3a2600}) : RMED ? medMat('old_planks_02', 0xa88458, {s:.7}) : pmat(0x6b4a2b), trim = pmat(0xd8b050,{metalness:.8,roughness:.3,envMap:ENV});
   const s = gold ? 1.25 : 1;
@@ -10121,6 +10177,20 @@ function makeChest(x, z, gold){
   /* 22/11 (Arnold): baú aberto fica aberto (vazio) por 12 horas; baú com prêmio brilha para você saber que tem. */
   const key = (curStage ? curStage.id : 0) + ':' + Math.round(x) + ':' + Math.round(z), oT = (save.chestT || {})[key], empty = !!oT && Date.now() - oT < NC_CHEST_MS;
   let glow = null; if(!empty){ glow = new T.Mesh(new T.RingGeometry(.75*s, 1.05*s, 24), bmat(gold ? 0xffe08a : 0xffc860, Object.assign({opacity:.5}, ADD))); glow.rotation.x = -Math.PI/2; glow.position.y = .04; g.add(glow); }
+  if(empty){ lid.rotation.x = -1.9; if(sparkle) sparkle.visible = false; }
+  chests.push({g, lid, x, z, open:empty, t:empty ? 1 : 0, gold, sparkle, seen:false, key, glow, empty});
+}
+function makeChestQ(x, z, gold){
+  const g = new T.Group(); g.position.set(x, heightAt(x, z), z); g.rotation.y = Math.random()*6; scene.add(g);
+  const s = gold ? 1.5 : 1.25, m = monClone(NCQ.m.Chest_Wood.scene); m.scale.setScalar(s); g.add(m);
+  if(gold) m.traverse(o => { if(o.isMesh){ o.material = o.material.clone(); o.material.color = new T.Color(0xffd36a); o.material.metalness = .7; o.material.roughness = .35; if(ENV) o.material.envMap = ENV; } });
+  else m.traverse(o => { if(o.isMesh && /Furniture/.test(o.material.name || '')){ o.material = o.material.clone(); o.material.color = new T.Color(0xc89468); } });
+  let bone = null; m.traverse(o => { if(o.name === 'Chest_Top') bone = o; }); const bx = bone ? bone.rotation.x : 0;
+  const lid = {rotation:{set x(v){ if(bone) bone.rotation.x = bx + v*.95; }, get x(){ return bone ? bone.rotation.x - bx : 0; }}};
+  let sparkle = null; if(gold){ sparkle = new T.Mesh(new T.CylinderGeometry(.12,.12,6,8,1,true), bmat(0xffe08a, Object.assign({opacity:.3}, ADD))); sparkle.position.y = 3; g.add(sparkle); }
+  addCollider(x, z, .75*s);
+  const key = (curStage ? curStage.id : 0) + ':' + Math.round(x) + ':' + Math.round(z), oT = (save.chestT || {})[key], empty = !!oT && Date.now() - oT < NC_CHEST_MS;
+  let glow = null; if(!empty){ glow = new T.Mesh(new T.RingGeometry(.8*s, 1.1*s, 24), bmat(gold ? 0xffe08a : 0xffc860, Object.assign({opacity:.5}, ADD))); glow.rotation.x = -Math.PI/2; glow.position.y = .04; g.add(glow); }
   if(empty){ lid.rotation.x = -1.9; if(sparkle) sparkle.visible = false; }
   chests.push({g, lid, x, z, open:empty, t:empty ? 1 : 0, gold, sparkle, seen:false, key, glow, empty});
 }
@@ -10482,7 +10552,7 @@ function spawnMinion(st, x, z, awake, elite, type){
   const e = {kind:'minion', type, ET, cr, pos:cr.root.position, hp, maxHp:hp, dmg:c.dmg*NC_ERAMP(st.id)*(elite ? NC_BAL.eliteDmg : 1)*(ET ? ET.dmg : 1)*D.dmg*ESCALE.dmg, spd:c.spd*(.85 + Math.random()*.3)*(elite ? .9 : 1)*(ET ? ET.spd : 1)*D.spd, r:.42*sc + .15,
              ranged:isRanged, elite:!!elite, fuse:0, healT:2 + Math.random()*2, awake, atkT:.4 + Math.random(), windT:0, kb:new T.Vector3(), flashT:0, walk:Math.random()*6,
              bar:makeBar(elite ? 1.4 : .9), barY:sc*1.9 + .35, stunT:0, frozenT:0, burnT:0, burnDps:0, burnAcc:0};
-  e.nid = ++ncNid; enemies.push(e); try{ ncCoop.onSpawn(e); }catch(_){} return e;
+  e.nid = ++ncNid; e.home = {x, z, elite:!!elite, type:type || null}; enemies.push(e); try{ ncCoop.onSpawn(e); }catch(_){} return e;
 }
 /* ===== Variantes, partes quebráveis e cansaço dos chefes (GDD de monstros) ===== */
 const BMODS = {
@@ -11629,7 +11699,16 @@ function updateAllies(dt){
     if(a.life < 2) cr.root.visible = Math.floor(a.life*10) % 2 === 0;
   }
 }
+/* 22/11 (Arnold escolheu A): monstro comum ou elite nasce de novo no MESMO acampamento 5 minutos depois (se você não estiver em cima).
+   O que já caiu e você pegou não volta; baús só depois de 12 h. Guardas de posto, masmorra e monstros de evento não voltam. */
+const NC_RESPAWN = 300;
+let ncStageTok = 0;
+function ncRespawn(e){ if(!e.home || e.post || e.xmas || e.rem || ncDG || !curStage) return; const tok = ncStageTok, st = curStage, h = e.home;
+  const tryIt = () => { if(tok !== ncStageTok || mode !== 'stage' || !curStage || curStage !== st) return; if(P && Math.hypot(P.pos.x - h.x, P.pos.z - h.z) < 16){ setTimeout(tryIt, 10000); return; }
+    try{ const n = spawnMinion(st, h.x, h.z, false, h.elite, h.type); if(n) burst(n.pos, 0x9a7aff, 8, 3, 4, .6); }catch(_){} };
+  setTimeout(tryIt, NC_RESPAWN*1000); }
 function killMinion(e){
+  try{ ncRespawn(e); }catch(_){}
   if(e.xmas){ try{ ncSnowDie(e); }catch(_){} }
   try{ if(!e.rem) ncCoop.sendKill(e); }catch(_){}
   e.dead = true; removeObj(e.cr.root); removeObj(e.bar.g);
@@ -11708,7 +11787,7 @@ function itemCard(it){
   const T0 = TIERS[it.tier], ic = itemImg(it, 'ps-card');
   const wrong = !itemOk(it);
   pickCard(`${ic}<div><div class="eyebrow">Você pegou · ${SLOT_INFO[it.slot].n}</div><b class="${it.tier === 9 ? 'prism' : ''}">${itemName(it)}</b><div class="pc-st">${T0.s} ${T0.n}</div>
-    <div class="istat">${statText(itemStats(it))}</div>${wrong ? '<div class="cmpl">Peça de ${CLASSES[itemCls(it)].name}: dá para vender</div>' : cmpText(it)}</div>`, T0.css);
+    <div class="istat">${statText(itemStats(it))}</div>${wrong ? `<div class="cmpl">Peça de ${CLASSES[itemCls(it)].name}: dá para vender</div>` : cmpText(it)}</div>`, T0.css);
 }
 function gemCard(k, r){
   pickCard(`${stoneImg(k, 30)}<div><div class="eyebrow">Você pegou · Pedra</div><b>${stoneName(k, r)}</b><div class="pc-st" style="color:${RAR[r - 1].css}">${RAR[r - 1].n}</div>
@@ -12841,6 +12920,7 @@ function renderTravel(){
 document.addEventListener('click', e => { const b = e.target.closest('[data-travel]'); if(!b) return; const id = +b.dataset.travel;
   if(mode === 'stage'){ togglePause(false); travelTo(id, 'F'); } else startStage(id); });
 function startStage(id, onlyBoss, world, o){
+  ncStageTok++;
   try{ ncSetTgt(null); }catch(_){}
   try{ if(ncCoop.ch && ncCoop.isLead()) setTimeout(() => ncCoop.send('go', {st:id, at:ncCoop.at, lead:ncCoop.id}), 400); }catch(_){}
   const st = STAGES[id]; if(st && !unlocked(st) && save.level < st.lvl - 1){ try{ banner('Nível baixo', 'Esta área pede nível ' + (st.lvl - 1) + '. Você está no ' + save.level + '.'); }catch(_){} return; }
