@@ -18,6 +18,7 @@
 .it small{display:block;font-size:13px;color:var(--gr)}.it small.v{color:var(--ru);font-weight:600}.it small.ok{color:var(--ok);font-weight:600}
 .u{font:800 10px system-ui;color:var(--ru);background:var(--rul);padding:2px 7px;border-radius:6px;margin-right:6px;vertical-align:2px}
 .it.busy{opacity:.55;pointer-events:none}
+.tabs{display:flex;gap:8px;margin:4px 0 14px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}.tabs button{flex:0 0 auto;border:1px solid var(--ln);background:#fff;border-radius:999px;padding:9px 16px;font:700 14px system-ui;color:var(--gr);min-height:46px;line-height:1.2;cursor:pointer}.tabs button small{display:block;font:600 11px system-ui;opacity:.75}.tabs button[aria-pressed=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
 .aviso{background:#fff4ea;border-radius:12px;padding:12px 14px;font-size:13.5px;color:#7a4a12;margin:6px 0 14px}
 .rod{color:var(--gr);font-size:12px;margin-top:24px;text-align:center}.erro{padding:30px 10px;text-align:center;color:var(--gr)}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translate(-50%,30px);opacity:0;background:var(--ink);color:#fff;padding:12px 18px;border-radius:12px;font-weight:600;transition:.3s;z-index:9;max-width:92vw;text-align:center}.toast.on{opacity:1;transform:translate(-50%,0)}
@@ -33,20 +34,25 @@ const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&g
 const dm=iso=>iso?iso.slice(8,10)+'/'+iso.slice(5,7):'';const hoje=new Date().toLocaleDateString('en-CA',{timeZone:'America/Sao_Paulo'});
 const dias=(a,b)=>Math.max(0,Math.round((Date.parse(b)-Date.parse(a))/864e5));
 const rpc=(f,b)=>fetch(URL_DB+'/rest/v1/rpc/'+f,{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify(b)}).then(r=>{if(!r.ok)throw 0;return r.json()});
-let D=null;
+let D=null,aba='mes';
 function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.h);toast.h=setTimeout(()=>e.classList.remove('on'),2200)}
 async function carregar(){if(!id){$('#app').innerHTML='<p class="erro">Link incompleto. Peça o link de novo ao Arnold.</p>';return}
  try{const j=await rpc('sv_ler',{p_id:id});if(!j||j.tipo!=='ely')throw 0;D=j;desenhar()}catch(e){$('#app').innerHTML='<p class="erro">Não foi possível abrir a lista agora. Tente de novo em instantes.</p>'}}
-function desenhar(){const L=D.dados.lojas||[],R=D.resolvidos||{};const total=L.reduce((a,l)=>a+l.itens.length,0),feitos=L.reduce((a,l)=>a+l.itens.filter(i=>R[i.id]).length,0);
+function desenhar(){const S=D.dados.semanas||[],R=D.resolvidos||{};
+ // abas Semana 1..N (pelo dia em que o problema foi visto) e Mês (tudo em aberto)
+ const W=aba==='mes'?null:S[+aba.slice(1)];const L=(D.dados.lojas||[]).map(l=>({...l,itens:l.itens.filter(i=>!W||(i.desde>=W.ini&&i.desde<=W.fim))})).filter(l=>l.itens.length);
+ const conta=w=>(D.dados.lojas||[]).reduce((a,l)=>a+l.itens.filter(i=>!R[i.id]&&(!w||(i.desde>=w.ini&&i.desde<=w.fim))).length,0);const total=L.reduce((a,l)=>a+l.itens.length,0),feitos=L.reduce((a,l)=>a+l.itens.filter(i=>R[i.id]).length,0);
  $('#app').innerHTML=`<p class="eb">INDUS.CORP · REPAROS DAS LOJAS</p><h1>Checklist de reparos</h1><p class="sub">Para: Ely · lista atualizada pelo Arnold</p>
+ <div class="tabs" role="group" aria-label="Período">${S.map((w,k)=>`<button data-a="s${k}" aria-pressed="${aba==='s'+k}">Semana ${w.n}<small>${w.ini.slice(8)}–${w.fim.slice(8)} · ${conta(w)}</small></button>`).join('')}<button data-a="mes" aria-pressed="${aba==='mes'}">Mês<small>tudo · ${conta(null)}</small></button></div>
  <div class="prog"><b id="pf">${feitos} de ${total}</b> <small>resolvidos</small><div class="bar"><i id="pb"></i></div></div>
  <div class="aviso">Toque no quadradinho quando o conserto ficar pronto. O Arnold recebe na hora em que abrir o app. Marcou errado? Toque de novo para desmarcar.</div>
  ${L.map(l=>{const nu=l.itens.filter(i=>i.urg&&!R[i.id]).length,ab=l.itens.filter(i=>!R[i.id]).length;return `<section class="loja"><div class="lh"><span class="dot ${!ab?'v':nu?'r':''}"></span><b>${esc(l.loja)}</b><small>${ab?ab+(ab===1?' em aberto':' em aberto'):'tudo pronto ✓'}</small></div>
   ${l.itens.map(i=>{const at=i.prazo&&i.prazo<hoje;const on=!!R[i.id];return `<div class="it ${on?'on':''}" data-id="${esc(i.id)}" role="checkbox" aria-checked="${on}" tabindex="0"><span class="ck"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span><span><b>${i.urg?'<span class="u">URGENTE</span>':''}${esc(i.txt)}</b>${i.com?`<small>${esc(i.com)}</small>`:''}
    ${on?`<small class="ok">Resolvido em ${dm(String(R[i.id]).slice(0,10))}</small>`:`<small class="${at?'v':''}">${i.prazo?(at?`Prazo era ${dm(i.prazo)} · atrasado ${dias(i.prazo,hoje)} ${dias(i.prazo,hoje)===1?'dia':'dias'}`:`Prazo ${dm(i.prazo)}`):''} · aberto desde ${dm(i.desde)}</small>`}</span></div>`}).join('')}</section>`}).join('')}
- ${!L.length?'<p class="erro">Nenhum reparo em aberto. Tudo certo nas lojas!</p>':''}
+ ${!L.length?`<p class="erro">${W?'Nenhum reparo aberto nesta semana.':'Nenhum reparo em aberto. Tudo certo nas lojas!'}</p>`:''}
  <p class="rod">Lista enviada em ${new Date(D.atualizado).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})} · Indus.corp · Uso interno</p>`;
  requestAnimationFrame(()=>{$('#pb').style.width=(total?feitos/total*100:100)+'%'});
+ document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{aba=b.dataset.a;desenhar()});const ab=document.querySelector('.tabs [aria-pressed=true]');if(ab)ab.scrollIntoView({inline:'center',block:'nearest'});
  document.querySelectorAll('.it').forEach(el=>{const f=()=>marcar(el);el.onclick=f;el.onkeydown=e=>{if(e.key===' '||e.key==='Enter'){e.preventDefault();f()}}})}
 async function marcar(el){const item=el.dataset.id,on=!el.classList.contains('on');el.classList.add('busy');
  try{const ok=await rpc('sv_marcar',{p_id:id,p_item:item,p_on:on});if(!ok)throw 0;
