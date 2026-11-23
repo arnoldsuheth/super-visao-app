@@ -811,7 +811,7 @@ canvas.ncgrabok{cursor:grab}canvas.ncgrab,canvas.ncgrabok.ncgrab{cursor:grabbing
 <div id="hud" hidden>
   <div id="fpDot" hidden></div>
   <div class="hud-l">
-    <div class="hud-lv">Nível <b id="hLvl">1</b></div>
+    <div class="hud-lv">Nível <b id="hLvl">1</b></div><img id="hCls" class="hcls" alt="">
     <div class="bar hp"><i id="hHp"></i><span id="hHpT">100/100</span></div>
     <div class="bar mp" id="hMpB"><i id="hMp"></i><span id="hMpT"></span></div>
     <div class="bar xp"><i id="hXp"></i><span id="hXpT"></span></div>
@@ -7819,7 +7819,7 @@ function pulseMats(ms){ const k = .65 + Math.sin(clock*3)*.35; for(const m of ms
 function renderHub(){
   try{ if(window.ncStableDraw) window.ncStableDraw(); }catch(_){}
   const S = stats(), c = CLS();
-  $('#classGrid').innerHTML = CLASS_ORDER.map(k => `<button class="cbtn" data-cls="${k}" aria-pressed="${save.cls === k}"><b>${CLASSES[k].name}</b><small>${ncClassTag(k)}</small></button>`).join('');
+  $('#classGrid').innerHTML = CLASS_ORDER.map(k => `<button class="cbtn" data-cls="${k}" aria-pressed="${save.cls === k}"><img class="cb-ic" src="assets/icons/cls/${k}.png" alt=""><b>${CLASSES[k].name}</b><small>${ncClassTag(k)}</small></button>`).join('');
   renderSpec(); try{ ncTreeDraw(); }catch(e){} try{ ncCloud.draw(); }catch(e){}
   const D = DF();
   $('#diffGrid').innerHTML = DIFF_ORDER.map(k => `<button class="dbtn" data-diff="${k}" style="--dc:${DIFFS[k].css}" aria-pressed="${save.diff === k}">${DIFFS[k].name}</button>`).join('');
@@ -10691,24 +10691,25 @@ document.addEventListener('click', e => { const b = e.target.closest('[data-rebi
    No Grade (nível 1-14): só ataque básico. Do nível 15 em diante cada nível dá 1 ponto.
    Cada habilidade vai do nível 1 ao 10: começa fraca e cada ponto aumenta o dano e diminui a recarga e o gasto.
    Parte 1: as 2 habilidades que já existem. As outras 4 de cada classe entram nas próximas partes. */
-const NC_SK_REQ = [15, 20, 30, 40, 50, 65], NC_SK_MAX = 10;
+/* 22/11 (Arnold aprovou): cada habilidade vai até o nível 5. No 3 ganha uma melhoria, no 5 vira SUPER (contorno dourado). 1 ponto a cada 3 níveis. */
+const NC_SK_REQ = [15, 20, 30, 40, 50, 65], NC_SK_MAX = 5;
 const ncSkTree = () => { save.skt = save.skt || {}; const t = save.skt[save.cls] || (save.skt[save.cls] = []); return t; };
-const ncSkLv = i => ncSkTree()[i] || 0;
-const ncSkPts = () => Math.max(0, ncLvOf(save.cls) - 14) - ncSkTree().reduce((a, b) => a + (b || 0), 0);
-const ncSkMul = i => .6 + (Math.max(1, ncSkLv(i)) - 1)*.11;        // nível 1 = 60% do dano de hoje, nível 10 = 160%
-const ncSkFast = i => 1 - (Math.max(1, ncSkLv(i)) - 1)*.03;        // recarga e gasto: até 27% menores no nível 10
+const ncSkLv = i => Math.min(NC_SK_MAX, ncSkTree()[i] || 0);
+const ncSkPts = () => Math.max(0, Math.floor(Math.max(0, ncLvOf(save.cls) - 12)/3) - ncSkTree().reduce((a, b) => a + Math.min(NC_SK_MAX, b || 0), 0));
+const ncSkMul = i => .6 + (Math.max(1, ncSkLv(i)) - 1)*.25;        // nível 1 = 60%, nível 5 = 160%
+const ncSkFast = i => 1 - (Math.max(1, ncSkLv(i)) - 1)*.065;       // recarga e gasto: até 26% menores no nível 5
 const ncSkResetCost = () => Math.round(500*NC_ECON*Math.max(1, ncLvOf(save.cls) - 14));
-let ncInSkill = 0;
+let ncInSkill = 0, ncEcho = false;
 const ncName = () => (save.name || '').trim() || CLASSES[save.cls].name;
 /* Botões E e R: cada um leva a habilidade que o jogador escolher na árvore */
 const ncSkSlots = () => { save.sks = save.sks || {}; const c = CLS(), sl = save.sks[save.cls] || [0, 1]; return sl.map((v, j) => c.skills[v] ? v : j); };
 const ncSlot = j => ncSkSlots()[j];
 function ncTreeHTML(){ const c = CLS(), u = window.ncIconUrl || (() => 'none'), pts = ncSkPts(), lv = ncLvOf(save.cls);
-  let h = '<div class="eyebrow">Árvore de habilidades · ' + c.name + '</div><div class="tree-top"><span>Pontos para usar: <b>' + pts + '</b></span>' + (lv < 15 ? '<small>No Grade: só ataque básico. O 1º ponto vem no nível 15.</small>' : '<small>1 ponto por nível a partir do 15</small>') + '</div><div class="tree">';
+  let h = '<div class="eyebrow">Árvore de habilidades · ' + c.name + '</div><div class="tree-top"><span>Pontos para usar: <b>' + pts + '</b></span>' + (lv < 15 ? '<small>No Grade: só ataque básico. O 1º ponto vem no nível 15.</small>' : '<small>1 ponto a cada 3 níveis (a partir do 15) · máximo nível 5 · no 3 ganha melhoria, no 5 vira SUPER</small>') + '</div><div class="tree">';
   for(let i = 0; i < NC_SK_REQ.length; i++){ const sk = c.skills[i], l = ncSkLv(i), req = NC_SK_REQ[i], open = lv >= req;
     if(!sk){ h += '<div class="tnode soon"><i></i><div><b>Habilidade ' + (i + 1) + (i === 5 ? ' · Suprema' : '') + '</b><small>Nível ' + req + ' · chega na próxima atualização</small></div></div>'; continue; }
     const can = open && pts > 0 && l < NC_SK_MAX;
-    h += '<div class="tnode' + (l ? ' on' : '') + (open ? '' : ' lock') + '"><i style=\'background-image:' + u(sk.id) + '\'>' + (l ? '<em>' + l + '</em>' : '') + '</i><div><b>' + sk.full + '</b><small>' + (open ? (l ? 'Nível ' + l + ' de ' + NC_SK_MAX + ' · dano ' + Math.round(ncSkMul(i)*100) + '% · recarga ' + (sk.cd*ncSkFast(i)).toFixed(1) + ' s' : 'Ainda não aprendida') : 'Libera no nível ' + req) + '</small><span>' + sk.desc + '</span></div>'
+    h += '<div class="tnode' + (l ? ' on' : '') + (l >= NC_SK_MAX ? ' super' : '') + (open ? '' : ' lock') + '"><i style=\'background-image:' + u(sk.id) + '\'>' + (l ? '<em>' + l + '</em>' : '') + '</i><div><b>' + sk.full + '</b><small>' + (open ? (l ? 'Nível ' + l + ' de ' + NC_SK_MAX + ' · dano ' + Math.round(ncSkMul(i)*100) + '% · recarga ' + (sk.cd*ncSkFast(i)).toFixed(1) + ' s' : 'Ainda não aprendida') : 'Libera no nível ' + req) + '</small><span>' + sk.desc + '</span></div>'
       + '<div class="tbtn"><button class="btn sm' + (can ? ' primary' : '') + '" data-skup="' + i + '" ' + (can ? '' : 'disabled') + '>' + (l ? (l >= NC_SK_MAX ? 'Máx.' : '+1') : 'Aprender') + '</button>'
       + (l ? '<span class="tslot">' + [0, 1].map(j => '<button class="' + (ncSlot(j) === i ? 'on' : '') + '" data-skslot="' + j + ':' + i + '" title="Colocar no botão ' + keyLabel(bindOf(j ? 's2' : 's1')) + '">' + keyLabel(bindOf(j ? 's2' : 's1')) + '</button>').join('') + '</span>' : '') + '</div></div>'; }
   const used = ncSkTree().some(v => v);
@@ -11367,7 +11368,7 @@ function hitEnemy(e, mult, o){
   if(e.dead || e.dying) return false;
   if(e.kind !== 'boss' && !o.anyY && !yOk(e.pos.y, o.y !== undefined ? o.y : P.pos.y, o.ytol)) return false;
   const S = P.S, crit = o.crit || Math.random() < S.crit;
-  if(o.skm) mult *= o.skm; else if(ncInSkill || P.skill) mult *= ncSkMul(P.skLvI || 0);
+  if(o.skm) mult *= o.skm; else if(ncInSkill || P.skill) mult *= ncSkMul(P.skLvI || 0)*(ncSkLv(P.skLvI || 0) >= 3 ? 1.15 : 1)*(ncEcho ? .6 : 1);
   if(P.cryT > 0) mult *= 1.2;
   const dmg = Math.max(1, Math.round(S.atk * mult * (.9 + Math.random()*.2) * (crit ? S.critMult : 1) * (e.kind === 'boss' || e.elite ? 1 + (S.pen || 0) : 1)));
   let heal = 0;
@@ -11476,23 +11477,36 @@ const NC_SKFX = {pheal:{t:"buff", heal:0.25, c:0xfff2a0}, pshield:{t:"buff", wal
  icelance:{t:"line", L:12, W:1.2, m:2.2, c:0x8fe6ff, stun:1}, meteor:{t:"tgt", R:4, m:3.2, c:0xff7a1a, d:0.7, fall:1}, arcshield:{t:"buff", wall:6, heal:0.1, c:0xa0a8ff}, storm:{t:"tgt", R:6, m:1.2, c:0xb070ff, waves:6, gap:0.3, bolt:1}, trap:{t:"self", R:3.2, m:1.8, c:0xc8a060, stun:2, d:0.8}, backstep:{t:"dash", D:-6, R:3, m:1.2, c:0xa8ffb0}, explarrow:{t:"tgt", R:3.5, m:2.4, c:0xff9a3a, d:0.3}, eagle:{t:"line", L:18, W:1.6, m:4, c:0xffe070, cry:10, crit:1}, healight:{t:"buff", heal:0.35, c:0xfff2a0}, charge:{t:"dash", D:7, R:2.2, m:2, c:0xffe28a, stun:1, line:1}, judgment:{t:"tgt", R:3, m:3, c:0xfff0a0, d:0.4, bolt:1, stun:1.5}, kingaura:{t:"self", R:6, m:2.5, c:0xffd24a, wall:8, cry:8}, poison:{t:"tgt", R:2.8, m:0.6, c:0x7aff5a, waves:6, gap:0.5}, smoke:{t:"self", R:4, m:0.8, c:0x8a8a9a, stun:2, inv:1.5}, deathmark:{t:"tgt", R:1.6, m:4.5, c:0xff3a5a, d:1, crit:1}, bladedance:{t:"self", R:4.2, m:1.1, c:0xd8dee8, waves:7, gap:0.18, inv:1.4}, hundred:{t:"line", L:3.4, W:1.6, m:0.55, c:0xffe0a0, waves:8, gap:0.08}, meditate:{t:"buff", heal:0.3, res:1, cry:6, c:0x9affe0}, flykick:{t:"dash", D:6, R:2.6, m:2.2, c:0xffb070, stun:1.2}, dragon:{t:"line", L:16, W:2.2, m:5, c:0xff4a1a, crit:1}, curse:{t:"tgt", R:4, m:0.7, c:0x9a3ad8, waves:5, gap:0.6}, corpse:{t:"tgt", R:4, m:2.6, c:0x4aff7a, d:0.25}, scythe:{t:"self", R:4.5, m:2.2, c:0x7a2ad8, heal:0.1}, reaper:{t:"line", L:14, W:2.5, m:5.5, c:0x6a1ab8, heal:0.2, crit:1}};
 /* Executa as habilidades novas a partir da ficha acima (t = tipo):
    line = golpe em linha · tgt = cai no alvo · self = em volta de você · dash = avança/recua · buff = cura e reforços */
-function ncSkFx(f, i){ const skm = ncSkMul(i), ox = P.pos.x, oz = P.pos.z, oy = P.pos.y, o = {skm, stun:f.stun || 0, kb:8, crit:!!f.crit};
+function ncSkUp(f, l){ if(l < 3) return f; f = Object.assign({}, f); const s5 = l >= 5;
+  if(f.t === 'tgt'){ f.R *= 1.3; if(s5) f.multi = 4; }
+  else if(f.t === 'line'){ f.L *= 1.3; if(s5) f.fan = 1; }
+  else if(f.t === 'self'){ f.R *= 1.3; if(s5){ f.waves = (f.waves || 1) + 1; f.gap = f.gap || .5; } }
+  else if(f.t === 'dash'){ f.D *= 1.3; if(s5) f.R = (f.R || 2.5)*1.6; }
+  ['heal','hot','cry','rage','wall'].forEach(k => { if(f[k]) f[k] *= s5 ? 1.6 : 1.3; }); if(s5 && (f.heal || f.hot || f.cry || f.wall)) f.party = 1;
+  return f; }
+function ncSkFx(f, i){ f = ncSkUp(f, ncSkLv(i)); const skm = ncSkMul(i), ox = P.pos.x, oz = P.pos.z, oy = P.pos.y, o = {skm, stun:f.stun || 0, kb:8, crit:!!f.crit};
   const ring = (x, z, R) => { fxRing(x, z, R, f.c, .45); for(let q = 0; q < 10; q++){ const a2 = q/10*Math.PI*2; burst({x:x + Math.sin(a2)*R*.8, z:z + Math.cos(a2)*R*.8, y:oy}, f.c, 3, 2, 5, .35); } };
   const area = (x, z, R) => { aoe(x, z, R, f.m, Object.assign({}, o, {y:oy})); ring(x, z, R); if(f.bolt) bolt(x, oy + 9, z, x, oy, z, f.c); };
   const rep = fn => { const n = f.waves || 1; for(let k = 0; k < n; k++) setTimeout(() => { if(mode === 'stage') fn(k); }, ((f.d || 0) + k*(f.gap || 0))*1000); };
+  if(f.t === 'line' && f.fan){ const a0 = aimAngle(f.L) ?? P.face; [-.32, .32].forEach(da => setTimeout(() => { if(mode !== 'stage') return; const fx = Math.sin(a0 + da), fz = Math.cos(a0 + da);
+      for(const e of enemies.slice()){ if(e.dead || e.dying) continue; const dx = e.pos.x - P.pos.x, dz = e.pos.z - P.pos.z, al = dx*fx + dz*fz, sd = Math.abs(dx*fz - dz*fx); if(al > -.6 && al < f.L + e.r && sd < f.W + e.r) hitEnemy(e, f.m*.7, Object.assign({}, o, {nx:fx, nz:fz})); }
+      for(let k = 0; k <= f.L; k += 1.2) burst({x:P.pos.x + fx*k, z:P.pos.z + fz*k, y:P.pos.y + .8}, 0xffe08a, 2, 2, 5, .3); }, 180)); }
   if(f.t === 'line'){ const a = aimAngle(f.L); if(a !== null) P.face = P.targetFace = a; const fx = Math.sin(P.face), fz = Math.cos(P.face);
     rep(() => { for(const e of enemies.slice()){ if(e.dead || e.dying) continue; const dx = e.pos.x - P.pos.x, dz = e.pos.z - P.pos.z, al = dx*fx + dz*fz, sd = Math.abs(dx*fz - dz*fx);
         if(al > -.6 && al < f.L + e.r && sd < f.W + e.r) hitEnemy(e, f.m, Object.assign({}, o, {nx:fx, nz:fz})); }
       for(let k = 0; k <= f.L; k += 1.2) burst({x:P.pos.x + fx*k, z:P.pos.z + fz*k, y:P.pos.y + .8}, f.c, 2, 2, 5, .3); }); }
   if(f.t === 'tgt'){ const tg = nearestEnemy(14); const x = tg ? tg.pos.x : ox + Math.sin(P.face)*6, z = tg ? tg.pos.z : oz + Math.cos(P.face)*6;
     if(f.fall) for(let k = 0; k < 6; k++) setTimeout(() => burst({x, z, y:oy + 8 - k*1.3}, f.c, 4, 1, 3, .25), k*100);
-    fxRing(x, z, f.R, f.c, .3); rep(k => { const jx = f.waves > 1 ? (Math.random() - .5)*f.R : 0, jz = f.waves > 1 ? (Math.random() - .5)*f.R : 0; area(x + jx, z + jz, f.waves > 1 ? f.R*.6 : f.R); }); }
+    fxRing(x, z, f.R, f.c, .3); rep(k => { const jx = f.waves > 1 ? (Math.random() - .5)*f.R : 0, jz = f.waves > 1 ? (Math.random() - .5)*f.R : 0; area(x + jx, z + jz, f.waves > 1 ? f.R*.6 : f.R); });
+    if(f.multi){ const others = enemies.filter(e => !e.dead && !e.dying && e !== tg && Math.hypot(e.pos.x - ox, e.pos.z - oz) < 16).sort((a, b) => Math.hypot(a.pos.x - ox, a.pos.z - oz) - Math.hypot(b.pos.x - ox, b.pos.z - oz)).slice(0, f.multi);
+      others.forEach((e, k) => setTimeout(() => { if(mode === 'stage' && !e.dead) area(e.pos.x, e.pos.z, f.R*.75); }, 150 + k*120)); } }
   if(f.t === 'self') rep(() => area(P.pos.x, P.pos.z, f.R));
   if(f.t === 'dash'){ const a = f.D > 0 ? (aimAngle(10) ?? P.face) : P.face; P.face = P.targetFace = a; const d = f.D, fx = Math.sin(a), fz = Math.cos(a);
     if(f.line){ for(const e of enemies.slice()){ if(e.dead || e.dying) continue; const dx = e.pos.x - ox, dz = e.pos.z - oz, al = dx*fx + dz*fz, sd = Math.abs(dx*fz - dz*fx); if(al > 0 && al < d + 1 && sd < 1.6 + e.r) hitEnemy(e, f.m, Object.assign({}, o, {nx:fx, nz:fz})); } }
     for(let k = 0; k < 8; k++) setTimeout(() => { if(mode !== 'stage') return; const nx = P.pos.x + fx*d/8, nz = P.pos.z + fz*d/8; try{ if(!blocked(nx, nz)){ P.pos.x = nx; P.pos.z = nz; } }catch(_){ P.pos.x = nx; P.pos.z = nz; } burst(P.pos, f.c, 2, 2, 4, .25); if(k === 7 && !f.line) area(P.pos.x, P.pos.z, f.R); }, k*25);
     P.inv = Math.max(P.inv, .4); }
   if(f.heal){ P.hp = Math.min(P.S.hp, P.hp + P.S.hp*f.heal); floatText(P.pos, '+' + Math.round(P.S.hp*f.heal), 'heal'); }
+  if(f.party) try{ ncCoop.send('pbuf', {lead:ncCoop.pty.lead, from:ncCoop.id, heal:f.heal || .15, cry:f.cry || 0, wall:f.wall || 0}); }catch(_){}
   if(f.res) try{ P.res = ncResMax(); }catch(_){}
   if(f.wall) P.wallT = Math.max(P.wallT || 0, f.wall);
   if(f.cry) P.cryT = Math.max(P.cryT || 0, f.cry);
@@ -11510,9 +11524,11 @@ function useSkill(j){
   if(mode !== 'stage' || !running || inputLocked || !P || P.dead || P.cd[i] > 0 || P.skill) return;
   if(P.mounted) toggleMount(false);
   if(!ncSkLv(i)){ if(clock - (P.lockMsgT || 0) > 1.2){ P.lockMsgT = clock; floatText(P.pos, ncLvOf(save.cls) < NC_SK_REQ[i] ? 'Libera no nível ' + NC_SK_REQ[i] : 'Aprenda na árvore (H)', 'hurt'); } return; }
-  const sk = CLS().skills[i]; if(!ncSpend(Math.round(ncSkCost(sk)*ncSkFast(i)))) return; P.cd[i] = sk.cd*ncSkFast(i); P.skLvI = i; ncInSkill = 1; setTimeout(() => { ncInSkill = 0; }, 0);
+  const sk = CLS().skills[i]; if(!ncEcho && !ncSpend(Math.round(ncSkCost(sk)*ncSkFast(i)))) return; if(!ncEcho) P.cd[i] = sk.cd*ncSkFast(i); P.skLvI = i; ncInSkill = 1; setTimeout(() => { ncInSkill = 0; }, 0);
+  if(ncEcho){ floatText(P.pos, 'SUPER!', 'heal'); burst(P.pos, 0xffe08a, 14, 4, 6, .8); }
   const dirOf = a => new T.Vector3(Math.sin(a), 0, Math.cos(a));
   if(NC_SKFX[sk.id]){ ncSkFx(NC_SKFX[sk.id], i); return; }
+  { const lv = ncSkLv(i); if(lv >= 5 && !ncEcho && sk.id !== 'drain') setTimeout(() => { if(mode !== 'stage' || !P || P.dead) return; const c = P.cd[i]; ncEcho = true; P.cd[i] = 0; const sk0 = P.skill; if(!sk0) try{ useSkill(j); }catch(_){} P.cd[i] = Math.max(P.cd[i], c); ncEcho = false; }, 650); }
   switch(sk.id){
     case 'bash': { const a = aimAngle(9); if(a !== null) P.face = P.targetFace = a;
       P.skill = {id:'bash', t:0, dur:.3, dir:dirOf(P.face), hit:new Set()}; P.inv = Math.max(P.inv, .4); P.blockT = .3; SFX.dash(); break; }
@@ -11581,7 +11597,8 @@ function useSkill(j){
       fxRing(P.pos.x + fx*3, P.pos.z + fz*3, 3, 0xffd88a, .3); SFX.slam(); addShake(.3); break; }
     case 'cyclone': P.skill = {id:'cyclone', t:0, dur:.9, ticks:0}; SFX.heavy(); break;
     case 'drain': { const tg = nearestEnemy(13);   // raio fixo: fica preso no monstro sugando vida por 2,4 s
-      if(tg){ P.face = P.targetFace = Math.atan2(tg.pos.x - P.pos.x, tg.pos.z - P.pos.z); P.skill = {id:'drain', t:0, dur:2.4, tg, ticks:0}; burst(P.pos, 0x8a2cff, 10, 3, 3, 1); }
+      if(tg){ P.face = P.targetFace = Math.atan2(tg.pos.x - P.pos.x, tg.pos.z - P.pos.z); P.skill = {id:'drain', t:0, dur:2.4, tg, ticks:0}; burst(P.pos, 0x8a2cff, 10, 3, 3, 1);
+        { const n = ncSkLv(i) >= 5 ? 5 : ncSkLv(i) >= 3 ? 2 : 1; P.skill.extra = enemies.filter(e => e !== tg && !e.dead && !e.dying && Math.hypot(e.pos.x - P.pos.x, e.pos.z - P.pos.z) < 13).sort((a, b) => Math.hypot(a.pos.x - P.pos.x, a.pos.z - P.pos.z) - Math.hypot(b.pos.x - P.pos.x, b.pos.z - P.pos.z)).slice(0, n - 1); } }   // 22/11: nível 3 pega 2 monstros, nível 5 pega 5
       SFX.zap(); break; }
     case 'army': burst(P.pos, 0x8a2cff, 18, 4, 5, .2); burst(P.pos, 0x14002a, 12, 3, 4, .2); for(let k=0;k<3;k++) spawnAlly(P.pos.x + Math.sin(P.face + k*2.1)*2, P.pos.z + Math.cos(P.face + k*2.1)*2); SFX.boss(); floatText(P.pos, 'Levantem-se!', 'heal'); break;
     case 'fan': { const a = aimAngle(14); if(a !== null) P.face = P.targetFace = a; P.castT = .2;
@@ -12206,6 +12223,7 @@ function updatePlayer(dt){
           bolt(ax, ay, az, e.pos.x, by, e.pos.z, 0x3dff7a); bolt(ax, ay + .08, az, e.pos.x, by + .1, e.pos.z, 0x9a3cff); bolt(ax, ay - .08, az, e.pos.x, by - .1, e.pos.z, 0x2a0048);
           const k = Math.random(), px = e.pos.x + (ax - e.pos.x)*k, pz = e.pos.z + (az - e.pos.z)*k;   // energia correndo do monstro para o herói
           burst({x:px, y:by + (ay - by)*k - 1, z:pz}, Math.random() < .5 ? 0x3dff7a : 0x9a3cff, 1, .4, .6, 1); }
+        if(sk.t >= sk.ticks*.3 && sk.ticks < 8 && sk.extra) sk.extra.forEach(x => { if(x.dead || x.dying || Math.hypot(x.pos.x - P.pos.x, x.pos.z - P.pos.z) > 16) return; bolt(ax, ay, az, x.pos.x, x.pos.y + 1.1, x.pos.z, 0x3dff7a); const h0 = x.hp; hitEnemy(x, .3, {kb:0}); const g2 = Math.round(Math.max(0, h0 - Math.max(0, x.hp))*.5); if(g2) P.hp = Math.min(S.hp, P.hp + g2); });
         if(sk.t >= sk.ticks*.3 && sk.ticks < 8){ sk.ticks++; const hp0 = e.hp; hitEnemy(e, .3, {kb:0});
           const got = Math.max(0, hp0 - Math.max(0, e.hp)), h = Math.round(got*.5); if(h){ P.hp = Math.min(S.hp, P.hp + h); floatText(P.pos, '+' + h, 'heal'); }
           burst(e.pos, 0x3dff7a, 4, 2, 2, 1); burst(e.pos, 0x7a1cff, 4, 2, 2, 1); burst(P.pos, 0x3dff7a, 3, 1.5, 2, 1); } }
@@ -12609,7 +12627,7 @@ function renderSkillbar(){
 }
 function updateHUD(){
   const S = P.S, c = CLS();
-  $('#hLvl').textContent = save.level;
+  $('#hLvl').textContent = save.level; { const im = $('#hCls'), src = 'assets/icons/cls/' + save.cls + '.png'; if(im && im.getAttribute('src') !== src) im.src = src; }
   $('#hHp').style.width = (P.hp/S.hp*100) + '%';
   $('#hHpT').textContent = Math.ceil(P.hp) + '/' + S.hp;
   { ncResInit(); const m = ncResMax(), b = $('#hMpB'); b.classList.toggle('sp', ncRes() === 'sp'); $('#hMp').style.width = (P.res/m*100) + '%'; const t = Math.floor(P.res) + '/' + m; if($('#hMpT').textContent !== t) $('#hMpT').textContent = t; }
@@ -12628,6 +12646,7 @@ function updateHUD(){
   const s2 = document.getElementById('sk2'); if(s2) s2.classList.toggle('on', P.rageT > 0 || P.aegisT > 0);
   const s4 = document.getElementById('sk4'); if(s4) s4.classList.toggle('on', P.mounted);
   $('#tSk1').style.setProperty('--cd', fr[1]); $('#tSk2').style.setProperty('--cd', fr[2]); $('#tDash').style.setProperty('--cd', fr[3]);
+  $('#tSk1').classList.toggle('tbtn-super', ncSkLv(ncSlot(0)) >= NC_SK_MAX); $('#tSk2').classList.toggle('tbtn-super', ncSkLv(ncSlot(1)) >= NC_SK_MAX);
   { const left = [0, P.cd[ncSlot(0)], P.cd[ncSlot(1)], 0]; const txt = v => v > 0 ? (v < 1 ? v.toFixed(1) : String(Math.ceil(v))) : '';
     for(let i = 1; i < 3; i++){ const si = ncSlot(i - 1), lk = !ncSkLv(si), t = lk ? (ncLvOf(save.cls) < NC_SK_REQ[si] ? 'Nv' + NC_SK_REQ[si] : '🔒') : txt(left[i]), el = document.getElementById('sk' + i); if(el){ let n = el.querySelector('.cdn'); if(!n){ n = document.createElement('em'); n.className = 'cdn'; el.appendChild(n); } if(n.textContent !== t) n.textContent = t; el.classList.toggle('cding', !!t); }
       const tb = document.getElementById(i === 1 ? 'tSk1' : 'tSk2'); if(tb){ if(t) tb.setAttribute('data-cd', t); else if(tb.hasAttribute('data-cd')){ tb.removeAttribute('data-cd'); tb.classList.remove('nc-ready'); void tb.offsetWidth; tb.classList.add('nc-ready'); } } } }
@@ -13733,6 +13752,7 @@ var ncCoop = {
       .on('broadcast', {event:'chat'}, m => { const p = m.payload; if(p && p.tx) this.chatAdd(p.nm || 'Amigo', p.tx); })
       .on('broadcast', {event:'hi'}, () => { if(this.isLead() && mode === 'stage' && curStage) this.send('go', {st:curStage.id, at:this.at, lead:this.id}); })
       .on('broadcast', {event:'pinv'}, m => this.onPinv(m.payload)).on('broadcast', {event:'pacc'}, m => this.onPacc(m.payload))
+      .on('broadcast', {event:'pbuf'}, m => { const q = m.payload; if(!q || q.from === this.id || !this.pty.lead || q.lead !== this.pty.lead || mode !== 'stage' || !P) return; if(q.heal){ P.hp = Math.min(P.S.hp, P.hp + P.S.hp*q.heal); floatText(P.pos, '+' + Math.round(P.S.hp*q.heal), 'heal'); } if(q.cry) P.cryT = Math.max(P.cryT || 0, q.cry*.6); if(q.wall) P.wallT = Math.max(P.wallT || 0, q.wall*.6); })
       .on('broadcast', {event:'pst'}, m => this.onPst(m.payload)).on('broadcast', {event:'plv'}, m => this.onPlv(m.payload))
       .on('presence', {event:'sync'}, () => this.onSync())
       .on('presence', {event:'leave'}, m => { (m.leftPresences || []).forEach(p => { this.drop(p.id); if(this.isLead() && this.pty.mem.includes(p.id)){ this.pty.mem = this.pty.mem.filter(x => x !== p.id); this.send('pst', {lead:this.id, mem:this.pty.mem}); } if(this.pty.lead === p.id) this.pty = {lead:null, mem:[]}; }); this.onSync(); });
@@ -13776,9 +13796,9 @@ var ncCoop = {
   onState(p){ if(!p || !p.id || p.id === this.id) return; const q = this.peers[p.id] || (this.peers[p.id] = {id:p.id});
     if(q.d && q.h && p.hv != null && q.d.hv != null && p.hv !== q.d.hv && p.st === q.d.st){ const dv = p.hv - q.d.hv; try{ floatText(q.h.root.position, (dv > 0 ? '+' : '') + dv, dv > 0 ? 'heal' : 'hurt'); }catch(_){} }   /* dano/cura que o amigo recebeu */
     q.d = p; q.t = performance.now(); },
-  partyN(){ if(!this.ch || mode !== 'stage' || !curStage) return 1; const now = performance.now(); let n = 1; for(const k in this.peers){ const d = this.peers[k].d; if(d && d.st === curStage.id && now - this.peers[k].t < 6000 && this.near(d)) n++; } return n; },
+  partyN(){ if(!this.ch || mode !== 'stage' || !curStage) return 1; const now = performance.now(); let n = 1; for(const k in this.peers){ const d = this.peers[k].d; if(d && d.st === curStage.id && now - this.peers[k].t < 6000 && this.near(d) && this.pty.mem.includes(k)) n++; } return n; },
   near(d){ return P && d && d.x != null && Math.hypot(d.x - P.pos.x, d.z - P.pos.z) < 30; },
-  partyDraw(){ let el = document.getElementById('ncParty'); const list = Object.values(this.peers).filter(q => q.d && performance.now() - q.t < 6000);
+  partyDraw(){ let el = document.getElementById('ncParty'); const list = Object.values(this.peers).filter(q => q.d && performance.now() - q.t < 6000 && this.pty.mem.includes(q.id));   // 22/11: só quem está no seu grupo
     if(!this.ch || !list.length || mode !== 'stage'){ if(el) el.hidden = true; return; }
     if(!el){ el = document.createElement('div'); el.id = 'ncParty'; document.body.appendChild(el); }
     el.hidden = false; const n = this.partyN();
@@ -13820,8 +13840,9 @@ var ncCoop = {
       const moving = d.mv || dist > .15;
       if(q.h.mx){ if(d.a !== q.a){ q.a = d.a; mxPlay(q.h, 'atk1', {once:true, restart:true, fade:.06, at:.2, speed:2.2}); q.lock = .45; }
         q.lock = Math.max(0, (q.lock || 0) - dt); if(q.lock <= 0) mxPlay(q.h, moving ? 'run' : 'idle', {fade:.15}); q.h.mx.mixer.update(dt); }
-      if(!q.tag){ q.tag = document.createElement('div'); q.tag.className = 'ltag nc-ptag'; q.tag.innerHTML = '<b></b><i class="pb hp"><s></s></i><i class="pb rs"><s></s></i>'; q.tag.dataset.ncpeer = k; document.body.appendChild(q.tag); }
-      const nm = (d.nm || (CLASSES[d.cls] || CLASSES.warrior).name) + ' · nv ' + (d.lv || 1); const tb = q.tag.firstChild; if(tb.textContent !== nm) tb.textContent = nm;
+      if(!q.tag){ q.tag = document.createElement('div'); q.tag.className = 'ltag nc-ptag'; q.tag.innerHTML = '<span class="pt-n"><img class="pt-cls" alt=""><b></b></span><i class="pb hp"><s></s></i><i class="pb rs"><s></s></i>'; q.tag.dataset.ncpeer = k; document.body.appendChild(q.tag); }
+      const nm = (d.nm || (CLASSES[d.cls] || CLASSES.warrior).name) + ' · nv ' + (d.lv || 1); const tb = q.tag.querySelector('b'); if(tb.textContent !== nm) tb.textContent = nm;
+      { const im = q.tag.querySelector('img'), src = 'assets/icons/cls/' + (d.cls in CLASSES ? d.cls : 'warrior') + '.png'; if(im.getAttribute('src') !== src) im.src = src; q.tag.classList.toggle('pty', this.pty.mem.includes(k)); }   // 22/11: símbolo da classe; grupo em verde com vida
       q.tag.children[1].firstChild.style.width = (d.hp == null ? 100 : d.hp) + '%'; q.tag.children[2].firstChild.style.width = (d.rs == null ? 100 : d.rs) + '%'; q.tag.children[2].classList.toggle('sp', d.rt === 'sp');
       placeTag(q.tag, r.x, r.y + 2.6, r.z, true); }
     if(!inStage){ this.shared = false; this.rems = {}; }
@@ -14415,6 +14436,14 @@ body:not(.nc-play-ok) #ncBell{}
 .bp-box{width:min(360px,92vw);height:100%;overflow:auto;background:#141832;border-left:2px solid #3a3070;padding:12px 14px}
 .bp-r{display:flex;gap:10px;align-items:flex-start;padding:9px 10px;margin-bottom:6px;border-radius:10px;background:#1b2035;border:1px solid #2e3452}.bp-r.new{border-color:var(--gold)}
 .bp-r span{font-size:18px}.bp-r p{flex:1;margin:0;font-size:14px}.bp-r small{color:var(--mute);white-space:nowrap}
+#hud .hcls{position:absolute;left:30px;top:30px;width:26px;height:26px;z-index:3;filter:drop-shadow(0 2px 3px #000a);pointer-events:none}
+.nc-ptag .pt-n{display:flex;align-items:center;gap:4px;justify-content:center}.nc-ptag .pt-cls{width:20px;height:20px;flex:none}
+.nc-ptag:not(.pty) .pb{display:none}.nc-ptag.pty b{color:#7dff8a}
+.cbtn .cb-ic{width:34px;height:34px;float:left;margin:0 8px 0 0;filter:drop-shadow(0 2px 3px #0009)}
+body.nc-l #ncBell,body.nc-r #ncBell{display:none}
+@keyframes ncSuper{0%{box-shadow:0 0 0 2px #ffe08a,0 0 8px 2px #ffb83a}50%{box-shadow:0 0 0 3px #fff2b0,0 0 16px 5px #ffd23a}100%{box-shadow:0 0 0 2px #ffe08a,0 0 8px 2px #ffb83a}}
+.tnode.super>i{animation:ncSuper 1.4s ease-in-out infinite;border-radius:10px}.tnode.super b::after{content:" · SUPER";color:#ffd23a;font-size:11px}
+.tbtn-super{animation:ncSuper 1.4s ease-in-out infinite!important}
 @keyframes ncFlame{0%{transform:scaleY(.78) skewX(-5deg);opacity:.7}50%{transform:scaleY(1.06) skewX(3deg);opacity:1}100%{transform:scaleY(.9) skewX(6deg);opacity:.85}}
 #hud #mm.big{opacity:1!important;width:min(92vw,70vh)!important;z-index:40;clip-path:var(--cut);box-shadow:none;border:0}
 .mico{width:15px;height:15px;vertical-align:-3px;margin-right:4px;fill:currentColor;stroke:#05050c;stroke-width:1;stroke-linejoin:round}
