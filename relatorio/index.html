@@ -59,7 +59,7 @@ let D=null,aba=null,filtro=null;
 async function carregar(){if(!id){$('#app').innerHTML='<p class="erro">Link incompleto. Peça o link de novo ao Arnold.</p>';return}
  try{const r=await fetch(URL_DB+'/rest/v1/rpc/sv_ler',{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({p_id:id})});const j=await r.json();
   if(!j||j.tipo!=='adm')throw 0;D=j;aba=(j.dados.semanas&&j.dados.semanas.length)?'s'+(j.dados.atual??0):'mes';desenhar(true)}catch(e){$('#app').innerHTML='<p class="erro">Não foi possível abrir o relatório agora. Tente de novo em instantes.</p>'}}
-function desenhar(primeira){const S=D.dados.semanas||[],eS=aba!=='mes',P=eS?S[+aba.slice(1)]:D.dados.mes,top=P.ranking[0],max=10;
+function desenhar(primeira){const S=D.dados.semanas||[],eS=aba!=='mes',P0=eS?S[+aba.slice(1)]:D.dados.mes,P={...P0,visitas:P0.visitas||(D.dados.mes.visitas||[]).filter(v=>v.data>=P0.ini&&v.data<=P0.fim)},top=P.ranking[0],max=10;
  const frase=!P.visitadas?'Sem vistorias registradas neste período.':(P.atencao+P.urgente===0?'Tudo em ordem nas lojas visitadas.':`${P.bem} de ${P.visitadas} lojas visitadas estão bem e ${P.atencao+P.urgente} ${P.atencao+P.urgente===1?'precisa':'precisam'} de ação.`);
  $('#app').innerHTML=`<p class="eb">INDUS.CORP · SUPERVISÃO DE LOJAS</p><h1>${eS?'Relatório da Semana '+P.n:'Relatório do mês'}</h1>
  <p class="sub">${per(P.ini,P.fim)} · ${esc(D.dados.por||'')}</p>
