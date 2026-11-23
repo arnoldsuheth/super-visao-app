@@ -12823,7 +12823,7 @@ document.addEventListener('click', e => { const b = e.target.closest('[data-trav
   if(mode === 'stage'){ togglePause(false); travelTo(id, 'F'); } else startStage(id); });
 function startStage(id, onlyBoss, world, o){
   try{ ncSetTgt(null); }catch(_){}
-  try{ if(ncCoop.ch && ncCoop.host) setTimeout(() => ncCoop.send('go', {st:id, at:ncCoop.at}), 400); }catch(_){}
+  try{ if(ncCoop.ch && ncCoop.isLead()) setTimeout(() => ncCoop.send('go', {st:id, at:ncCoop.at, lead:ncCoop.id}), 400); }catch(_){}
   const st = STAGES[id]; if(st && !unlocked(st) && save.level < st.lvl - 1){ try{ banner('Nível baixo', 'Esta área pede nível ' + (st.lvl - 1) + '. Você está no ' + save.level + '.'); }catch(_){} return; }
   if(!st || !unlocked(st)) return; o = o || {};
   monPreload(st); setTimeout(ncPetSpawn, 1500);
@@ -13673,6 +13673,39 @@ requestAnimationFrame(loop);
 /* ===== JOGAR JUNTO (fase 1): até 4 pessoas na mesma sala, cada uma no seu aparelho.
    Usa o canal de tempo real do Supabase (projeto nine-crowns). O anfitrião escolhe a fase e os outros entram junto.
    Nesta primeira versão cada um vê os outros heróis andando e atacando, mas os monstros ainda são de cada aparelho. ===== */
+
+/* ===== SININHO DE NOTIFICAÇÕES (22/11, Arnold escolheu "tudo da lista") =====
+   Convite de grupo, amigo que entrou, missão pronta, prêmio do dia, evento das 22h e da semana, baús/masmorras liberados,
+   pontos de habilidade, mascote caído e mochila quase cheia. Cada aviso tem uma "chave" para não repetir no mesmo dia. */
+const ncNt = {list:[], seen:{}};
+function ncNotify(tx, kind, key){ const day = new Date().toDateString(); key = key ? key + '|' + day : null;
+  if(key){ save.ntK = save.ntK || {}; if(save.ntK[key]) return; save.ntK[key] = 1; try{ persist(); }catch(_){} }
+  ncNt.list.unshift({tx, kind:kind || 'info', t:Date.now(), rd:false}); if(ncNt.list.length > 30) ncNt.list.pop(); ncBellDraw(); }
+window.ncNotify = ncNotify;
+const NT_IC = {party:'👥', friend:'🟢', miss:'📜', daily:'🎁', event:'🌙', chest:'🧰', skill:'⚡', pet:'🐾', bag:'🎒', info:'🔔'};
+function ncBellDraw(){ let b = document.getElementById('ncBell'); if(!b){ b = document.createElement('button'); b.id = 'ncBell'; b.type = 'button'; b.setAttribute('aria-label', 'Notificações'); b.innerHTML = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><i></i>'; document.body.appendChild(b); b.addEventListener('click', () => ncBellPop(true)); }
+  const n = ncNt.list.filter(x => !x.rd).length; b.querySelector('i').textContent = n > 9 ? '9+' : n || ''; b.classList.toggle('has', n > 0);
+  const el = document.getElementById('ncBellPop'); if(el && !el.hidden) ncBellPop(true, true); }
+function ncBellPop(open, keep){ let el = document.getElementById('ncBellPop'); if(!el){ el = document.createElement('div'); el.id = 'ncBellPop'; el.hidden = true; document.body.appendChild(el);
+    el.addEventListener('click', e => { if(e.target === el || e.target.closest('[data-btx]')){ el.hidden = true; return; } if(e.target.closest('[data-bclr]')){ ncNt.list = []; ncBellDraw(); ncBellPop(true); } }); }
+  el.hidden = !open; if(!open) return; if(!keep){ ncNt.list.forEach(x => x.rd = true); setTimeout(ncBellDraw, 50); }
+  const ago = t => { const m = Math.round((Date.now() - t)/60000); return m < 1 ? 'agora' : m < 60 ? m + ' min' : Math.round(m/60) + ' h'; };
+  el.innerHTML = '<div class="bp-box"><div class="nc-head"><b>Notificações</b><button class="nc-x" type="button" data-btx aria-label="Fechar">×</button></div>'
+    + (ncNt.list.length ? ncNt.list.map(x => '<div class="bp-r' + (x.rd ? '' : ' new') + '"><span>' + (NT_IC[x.kind] || '🔔') + '</span><p>' + x.tx + '</p><small>' + ago(x.t) + '</small></div>').join('') + '<button class="btn sm" data-bclr style="width:100%;margin-top:8px">Limpar</button>'
+      : '<p class="istat">Nada novo por enquanto.</p>') + '</div>'; }
+function ncBellCheck(){ try{
+  const day = new Date().toDateString();
+  try{ if(ncDailyState().can) ncNotify('Seu prêmio do dia está esperando.', 'daily', 'daily'); }catch(_){}
+  try{ const ready = MISSIONS.filter(m => { const p = mProg(m); return p.cur >= p.goal; }); const sq = seqState(); if(ready.length || sq.cur >= sq.goal) ncNotify('Missão pronta para receber' + (ready.length ? ': ' + ready.map(m => m.n).join(', ') : '') + '.', 'miss', 'miss' + ready.map(m => m.id).join() + (sq.cur >= sq.goal ? 's' + sq.q.step : '')); }catch(_){}
+  try{ const h = new Date().getHours(); if(h === 21 && new Date().getMinutes() >= 50) ncNotify('O Evento das 22h começa em poucos minutos.', 'event', 'ev22a'); if(ncNight()) ncNotify('Evento das 22h começou: mais Adena, XP e drops até a meia-noite.', 'event', 'ev22'); }catch(_){}
+  try{ const E = curEvent(); if(E) ncNotify('Evento da semana: ' + E.n + '.', 'event', 'evw' + E.id); }catch(_){}
+  try{ const T = save.chestT || {}; const back = Object.keys(T).filter(k => Date.now() - T[k] >= NC_CHEST_MS); if(back.length){ back.forEach(k => delete T[k]); try{ persist(); }catch(_){} ncNotify(back.length + ' baú' + (back.length > 1 ? 's foram liberados' : ' foi liberado') + ' de novo.', 'chest', 'chest' + Date.now()); } }catch(_){}
+  try{ const n = ncSkPts(); if(n > 0) ncNotify('Você tem ' + n + ' ponto' + (n > 1 ? 's' : '') + ' de habilidade para usar (Herói > Habilidades).', 'skill', 'sk' + n); }catch(_){}
+  try{ if(save.petDead) ncNotify('Seu mascote está caído. Use um Petisco (Mochila) para reviver.', 'pet', 'pet'); }catch(_){}
+  try{ const used = save.inv.length, cap = ncBagMax(); if(cap - used <= 5) ncNotify('Mochila quase cheia: ' + used + ' de ' + cap + '.', 'bag', 'bag' + Math.floor(used/5)); }catch(_){}
+  }catch(_){} }
+setTimeout(() => { ncBellDraw(); ncBellCheck(); setInterval(ncBellCheck, 30000); }, 4000);
+
 var ncCoop = {
   url:'https://xdcsxcopyfdufdtyywhu.supabase.co', key:'sb_publishable_ctr8HbFHDdS6WEyB21E8eg_Iu8VF6uq', MAX:6,   // 22/11 (Arnold): até 6 pessoas por mundo
   sb:null, ch:null, code:'', host:false, id:Math.random().toString(36).slice(2, 8), at:Date.now(), peers:{}, list:[], msg:'', sendT:0, hubT:0, atkN:0, lastSw:0, ok:false,
@@ -13698,9 +13731,11 @@ var ncCoop = {
       .on('broadcast', {event:'dmg'}, m => this.onDmg(m.payload))
       .on('broadcast', {event:'kill'}, m => this.onKill(m.payload))
       .on('broadcast', {event:'chat'}, m => { const p = m.payload; if(p && p.tx) this.chatAdd(p.nm || 'Amigo', p.tx); })
-      .on('broadcast', {event:'hi'}, () => { if(this.host && mode === 'stage' && curStage) this.send('go', {st:curStage.id, at:this.at}); })
+      .on('broadcast', {event:'hi'}, () => { if(this.isLead() && mode === 'stage' && curStage) this.send('go', {st:curStage.id, at:this.at, lead:this.id}); })
+      .on('broadcast', {event:'pinv'}, m => this.onPinv(m.payload)).on('broadcast', {event:'pacc'}, m => this.onPacc(m.payload))
+      .on('broadcast', {event:'pst'}, m => this.onPst(m.payload)).on('broadcast', {event:'plv'}, m => this.onPlv(m.payload))
       .on('presence', {event:'sync'}, () => this.onSync())
-      .on('presence', {event:'leave'}, m => { (m.leftPresences || []).forEach(p => this.drop(p.id)); this.onSync(); });
+      .on('presence', {event:'leave'}, m => { (m.leftPresences || []).forEach(p => { this.drop(p.id); if(this.isLead() && this.pty.mem.includes(p.id)){ this.pty.mem = this.pty.mem.filter(x => x !== p.id); this.send('pst', {lead:this.id, mem:this.pty.mem}); } if(this.pty.lead === p.id) this.pty = {lead:null, mem:[]}; }); this.onSync(); });
     ch.subscribe(async st => {
       if(st === 'SUBSCRIBED'){ this.ok = true; this.msg = this.host ? 'Sala criada. Passe o código para quem vai jogar com você.' : 'Você entrou na sala.'; this.draw(); setTimeout(() => { this.track(); if(!this.host) this.send('hi', {}); }, 300); }
       else if(st === 'CHANNEL_ERROR' || st === 'TIMED_OUT'){ this.msg = 'Não consegui conectar na sala. Tente de novo.'; this.ok = false; this.draw(); } });
@@ -13708,7 +13743,8 @@ var ncCoop = {
   track(){ const ch = this.ch; if(!ch || !this.ok) return; Promise.race([ch.track({id:this.id, cls:save.cls, nm:ncName(), at:this.at}), new Promise(ok => setTimeout(() => ok('timeout'), 4000))]).then(r => { if(r !== 'ok' && this.ch === ch) setTimeout(() => this.track(), 1500); }).catch(() => setTimeout(() => this.track(), 1500)); },
   onSync(){ if(!this.ch) return; const s = this.ch.presenceState(), all = [];
     Object.keys(s).forEach(k => { const p = s[k][0]; if(p) all.push(p); }); all.sort((a, b) => a.at - b.at); this.list = all;
-    const seen = (save.roomSeen = save.roomSeen || {})[this.code] = save.roomSeen[this.code] || []; let chg = false; all.forEach(p => { if(p.nm && !seen.includes(p.nm)){ seen.push(p.nm); chg = true; } }); if(chg) try{ persist(); }catch(_){}   // guarda quem já entrou nesta sala
+    const seen = (save.roomSeen = save.roomSeen || {})[this.code] = save.roomSeen[this.code] || []; let chg = false; all.forEach(p => { if(p.nm && !seen.includes(p.nm)){ seen.push(p.nm); chg = true; } });
+    { const was = this._on || []; all.forEach(p => { if(p.id !== this.id && !was.includes(p.id) && this._on) try{ ncNotify((p.nm || 'Um jogador') + ' entrou no Node Land.', 'friend'); }catch(_){} }); this._on = all.map(p => p.id); } if(chg) try{ persist(); }catch(_){}   // guarda quem já entrou nesta sala
     const me = all.findIndex(p => p.id === this.id);
     if(me >= this.MAX){ this.leave(); this.msg = 'Sala cheia: o máximo é ' + this.MAX + ' jogadores.'; }
     if(all.length) this.host = all[0].id === this.id;   // quem chegou primeiro é o anfitrião (se ele sair, passa para o próximo)
@@ -13717,10 +13753,26 @@ var ncCoop = {
     if(ch){ try{ await ch.untrack(); }catch(_){} try{ await this.sb.removeChannel(ch); }catch(_){} }
     if(!quiet){ this.code = ''; this.host = false; save.room = ''; try{ persist(); }catch(_){} this.msg = 'Você saiu da sala. O código ' + (save.myRoom || '') + ' continua sendo seu.'; this.draw(); } },
   send(ev, payload){ if(this.ch && this.ok) try{ this.ch.send({type:'broadcast', event:ev, payload}); }catch(_){} },
-  onGo(p){ if(!p || p.st == null || (p.at != null && p.at > this.at)) return; if(p.rep && mode !== 'stage') return;   // segue quem entrou na sala primeiro const st = STAGES[p.st]; if(!st) return;
+  pty:{lead:null, mem:[]},
+  inPty(){ return this.pty.mem.length > 1 && this.pty.mem.includes(this.id); },
+  isLead(){ return this.inPty() && this.pty.lead === this.id; },
+  pName(id){ const p = this.list.find(x => x.id === id); return (p && p.nm) || ((this.peers[id] || {}).d || {}).nm || 'Jogador'; },
+  invite(id){ if(!this.ok || id === this.id) return; if(!this.pty.lead){ this.pty = {lead:this.id, mem:[this.id]}; } if(this.pty.lead !== this.id) return;
+    this.send('pinv', {to:id, from:this.id, nm:ncName()}); try{ banner('Convite enviado', 'Esperando ' + this.pName(id) + ' aceitar'); }catch(_){} },
+  onPinv(p){ if(!p || p.to !== this.id) return; let el = document.getElementById('ncPeerPop'); if(!el){ el = document.createElement('div'); el.id = 'ncPeerPop'; document.body.appendChild(el); }
+    el.hidden = false; el.innerHTML = '<div class="pop-bg" data-peerclose></div><div class="pop-box"><button class="pop-x" data-peerclose>✕</button><div class="eyebrow">Convite de grupo</div><p><b>' + (p.nm || 'Um jogador') + '</b> chamou você para o grupo. O líder escolhe a fase e leva todo mundo junto.</p>'
+      + '<div class="peer-row"><button class="btn primary" data-pacc="' + p.from + '">Aceitar</button><button class="btn" data-peerclose>Recusar</button></div></div>';
+    try{ ncNotify('Convite de grupo de ' + (p.nm || 'um jogador') + '.', 'party'); }catch(_){} },
+  accept(lead){ this.pty = {lead, mem:[lead, this.id]}; this.send('pacc', {to:lead, from:this.id}); const el = document.getElementById('ncPeerPop'); if(el) el.hidden = true; try{ banner('Você entrou no grupo', 'Siga o líder: ele escolhe a fase'); }catch(_){} this.draw(); },
+  onPacc(p){ if(!p || p.to !== this.id || this.pty.lead !== this.id) return; if(!this.pty.mem.includes(p.from)) this.pty.mem.push(p.from); this.send('pst', {lead:this.id, mem:this.pty.mem}); try{ banner('Grupo', this.pName(p.from) + ' entrou no grupo'); }catch(_){} this.draw(); },
+  onPst(p){ if(!p) return; if(p.mem.includes(this.id)) this.pty = {lead:p.lead, mem:p.mem.slice()}; else if(this.pty.lead === p.lead) this.pty = {lead:null, mem:[]}; this.draw(); },
+  leaveParty(){ if(!this.pty.lead) return; if(this.isLead()){ this.send('pst', {lead:this.id, mem:[]}); } else { this.send('plv', {lead:this.pty.lead, from:this.id}); } this.pty = {lead:null, mem:[]}; this.draw(); },
+  onPlv(p){ if(!p || this.pty.lead !== this.id || p.lead !== this.id) return; this.pty.mem = this.pty.mem.filter(x => x !== p.from); this.send('pst', {lead:this.id, mem:this.pty.mem}); this.draw(); },
+  onGo(p){ if(!p || p.st == null) return; if(!p.lead || p.lead === this.id || this.pty.lead !== p.lead || !this.pty.mem.includes(this.id)) return;   // 22/11: só segue o líder do SEU grupo
+    if(p.rep && mode !== 'stage') return;   // segue quem entrou na sala primeiro const st = STAGES[p.st]; if(!st) return;
     if(mode === 'stage' && curStage && curStage.id === p.st) return;
     this.goId = p.st; try{ if(mode === 'stage') goHub(); }catch(_){} setTimeout(() => { try{ startStage(p.st); }catch(e){} this.goId = null; }, 300);
-    try{ banner('Jogando junto', 'Entrando na fase do anfitrião'); }catch(_){} },
+    try{ banner('Grupo', 'Indo com o líder para a fase'); }catch(_){} },
   onState(p){ if(!p || !p.id || p.id === this.id) return; const q = this.peers[p.id] || (this.peers[p.id] = {id:p.id});
     if(q.d && q.h && p.hv != null && q.d.hv != null && p.hv !== q.d.hv && p.st === q.d.st){ const dv = p.hv - q.d.hv; try{ floatText(q.h.root.position, (dv > 0 ? '+' : '') + dv, dv > 0 ? 'heal' : 'hurt'); }catch(_){} }   /* dano/cura que o amigo recebeu */
     q.d = p; q.t = performance.now(); },
@@ -13857,16 +13909,18 @@ var ncCoop = {
     // canto: minha sala (quem está online e quem já jogou nela) + amigos
     if(!hub){ el.hidden = true; } else {
       const on = this.list.map(p => p.nm || 'Herói'), seen = this.code ? ((save.roomSeen || {})[this.code] || []).filter(n => !on.includes(n)) : [];
-      const h = (this.code ? '<div class="rh-t"><i class="' + (this.ok ? 'on' : 'off') + '"></i>' + (this.host ? 'Meu mundo' : 'Mundo de ' + ((this.list[0] || {}).nm || '…')) + ' · ' + (this.ok ? on.length + '/' + this.MAX : '…') + '</div><div class="rh-n">'
-          + on.map(n => '<span class="on">' + n + '</span>').join('') + seen.map(n => '<span>' + n + '</span>').join('') + '</div><button data-nccoop="leave">Sair do mundo</button>'
+      const others = this.list.filter(p => p.id !== this.id), pm = this.pty.mem;
+      const h = (this.code ? '<div class="rh-t"><i class="' + (this.ok ? 'on' : 'off') + '"></i>Node Land · ' + (this.ok ? on.length + '/' + this.MAX : 'conectando…') + '</div><div class="rh-n">'
+          + '<span class="on">' + ncName() + ' (você)' + (this.isLead() ? ' ♛' : '') + '</span>'
+          + others.map(p => '<span class="on">' + (p.nm || 'Herói') + (pm.includes(p.id) ? (this.pty.lead === p.id ? ' ♛' : ' ✓') : '') + '</span>' + (!pm.includes(p.id) && (!this.pty.lead || this.isLead() || !this.inPty()) ? '<button class="rh-inv" data-pinv="' + p.id + '">＋ grupo</button>' : '')).join('')
+          + seen.filter(n => n !== ncName()).map(n => '<span>' + n + '</span>').join('') + '</div>' + (this.inPty() ? '<button data-pleave="1">Sair do grupo</button>' : '')
           : '<div class="rh-t"><i class="off"></i>Jogando sozinho</div>')
         + '<button data-ncfr="1">Amigos · ranking</button>';
       el.hidden = false; if(el._h !== h){ el._h = h; el.innerHTML = h; } }
     // em cima do herói: mundos abertos para entrar com um toque (sem código)
     if(!hub){ w.hidden = true; return; }
     const ws = this.lobby.filter(p => p.room && p.host && p.pid !== save.pid && p.room !== this.code);
-    const hw = (this.code ? '' : '<button class="wd me" data-nccoop="new">＋ Abrir meu mundo</button>')
-      + ws.slice(0, 4).map(p => '<button class="wd" data-ncworld="' + p.room + '"><i></i><b>Mundo de ' + p.nm + '</b><small>nv ' + p.lv + ' · ' + (p.n || 1) + '/' + this.MAX + ' · entrar</small></button>').join('');
+    const hw = '' && ws.slice(0, 4).map(p => '<button class="wd" data-ncworld="' + p.room + '"><i></i><b>Mundo de ' + p.nm + '</b><small>nv ' + p.lv + ' · ' + (p.n || 1) + '/' + this.MAX + ' · entrar</small></button>').join('');
     w.hidden = !hw; if(w._h !== hw){ w._h = hw; w.innerHTML = hw; } },
   /* Saguão: todo mundo online fica aqui (nome, nível e mundo aberto). Serve para achar mundos e amigos sem código. */
   lobby:[], lb:null,
@@ -13885,7 +13939,7 @@ var ncCoop = {
     const others = this.lobby.filter(p => p.pid !== save.pid && !fr[p.pid]);
     el.hidden = false; el.innerHTML = '<div class="pop-bg" data-frclose></div><div class="pop-box"><button class="pop-x" data-frclose>✕</button><div class="eyebrow">Ranking dos amigos</div>'
       + '<ol class="fr-rank">' + rank.map((f, i) => '<li class="' + (f.me ? 'me' : '') + '"><b>' + (i + 1) + 'º</b><i class="' + (f.on ? 'on' : '') + '"></i><span>' + f.nm + '</span><em>nv ' + f.lv + '</em>' + (f.room ? '<button class="btn sm" data-ncworld="' + f.room + '">Entrar</button>' : '') + (f.me ? '' : '<button class="btn sm fr-x" data-frdel="' + f.pid + '">✕</button>') + '</li>').join('') + '</ol>'
-      + '<div id="ncCoopBox" style="margin-top:12px"></div><div class="eyebrow" style="margin-top:12px">Jogando agora</div>' + (others.length ? '<div class="fr-on">' + others.map(p => '<div><i class="on"></i><span>' + p.nm + ' <small>nv ' + p.lv + '</small></span><button class="btn sm primary" data-fradd="' + p.pid + '">＋ Amigo</button></div>').join('') + '</div>' : '<small class="istat">Ninguém online fora seus amigos agora.</small>') + '</div>'; },
+      + '<div class="eyebrow" style="margin-top:12px">Jogando agora</div>' + (others.length ? '<div class="fr-on">' + others.map(p => '<div><i class="on"></i><span>' + p.nm + ' <small>nv ' + p.lv + '</small></span><button class="btn sm primary" data-fradd="' + p.pid + '">＋ Amigo</button></div>').join('') + '</div>' : '<small class="istat">Ninguém online fora seus amigos agora.</small>') + '</div>'; },
   /* Chat flutuante: as mensagens somem sozinhas depois de 20 s; fundo transparente. */
   chat:[], chatAdd(nm, tx){ tx = String(tx).slice(0, 120); this.chat.push({nm, tx, t:Date.now()}); if(this.chat.length > 6) this.chat.shift(); this.chatDraw(); },
   chatSend(tx){ tx = (tx || '').trim().slice(0, 120); if(!tx || !this.ok) return; this.send('chat', {nm:ncName(), tx}); this.chatAdd(ncName(), tx); },
@@ -13909,7 +13963,8 @@ var ncCoop = {
         + '<div class="nc-cin"><input id="ncCoopIn" maxlength="4" placeholder="CÓDIGO" autocomplete="off" autocapitalize="characters"><button class="btn sm" data-nccoop="join">Entrar na sala</button></div>';
     h += (this.msg ? '<small class="nc-cmsg">' + this.msg + '</small>' : '') + '</div>'; b.innerHTML = h; }
 };
-{ const _fr = ncCoop.friends; ncCoop.friends = function(){ _fr.apply(this, arguments); try{ this.draw(); }catch(_){} }; }   // 22/11: "Jogar junto" agora fica dentro da Conexão
+document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-pinv],[data-pacc],[data-pleave]'); if(!b) return; e.stopPropagation();
+  if(b.dataset.pinv) ncCoop.invite(b.dataset.pinv); else if(b.dataset.pacc) ncCoop.accept(b.dataset.pacc); else ncCoop.leaveParty(); }, true);
 document.addEventListener('click', e => {
   const pb = e.target.closest('[data-ncpeer],[data-peerclose],[data-peergold],[data-peeritem]');
   if(pb){ const d = pb.dataset, el = document.getElementById('ncPeerPop');
@@ -13936,7 +13991,7 @@ document.addEventListener('click', e => {
     else if(d.ncworld){ if(el) el.hidden = true; ncCoop.join(d.ncworld, false); }
     return; }
   const b = e.target.closest('[data-nccoop]'); if(!b) return; const a = b.dataset.nccoop;
-  if(a === 'new') ncCoop.join(save.myRoom || ncCoop.newCode(), true); else if(a === 'join'){ const i = document.getElementById('ncCoopIn'); ncCoop.join(i && i.value, false); } else if(a === 'leave') ncCoop.leave(); });
+  if(a === 'new') ncCoop.join(NC_WORLD, false); else if(a === 'join'){ const i = document.getElementById('ncCoopIn'); ncCoop.join(i && i.value, false); } else if(a === 'leave') ncCoop.leave(); });
 setInterval(() => { try{ if(ncCoop.ch && mode !== 'stage') ncCoop.send('st', {id:ncCoop.id, cls:save.cls, nm:ncName(), lv:save.level, st:-1}); if(ncCoop.ch && ncCoop.ok && !ncCoop.ch.presenceState()[ncCoop.id]) ncCoop.track(); if(ncCoop.ch && ncCoop.ok) ncCoop.onSync(); if(ncCoop.ch && ncCoop.host && mode === 'stage' && curStage) ncCoop.send('go', {st:curStage.id, at:ncCoop.at, rep:1}); }catch(_){} }, 3000);
 setTimeout(() => ncCoop.draw(), 500);
 setInterval(() => { try{ ncCoop.hud(); ncCoop.chatDraw(); ncCoop.lobbyTrack(); }catch(_){} }, 1000);
@@ -13944,7 +13999,9 @@ setTimeout(() => { try{ ncCoop.lobbyOn(); }catch(_){} }, 2500);
 setInterval(() => { try{ const c = ncCoop, inS = mode === 'stage' && P && curStage; if(c.ch && inS && c.host){ c.shared = c.list.length > 1; if(c.shared) c.enSend(); } }catch(_){} }, 200);   // anfitrião: manda os monstros 5x por segundo
 window.__ncT = {drop:(x, z, t) => dropLoot({x, z}, t), loot:() => loot, en:() => enemies, hero:() => hero, r:() => renderer, s:() => scene};
 window.__ncHub = c => { save.cls = c; fixWeaponForClass(); buildHub(); hubCamera(); renderHub(); };
-setTimeout(() => { try{ if(save.room && !ncCoop.ch) ncCoop.join(save.room, save.room === save.myRoom); }catch(_){} }, 1500);   // volta sozinho para a última sala
+/* 22/11 (Arnold): Node Land é o mundo fixo. Quem abre o link do jogo entra direto, sem código. */
+const NC_WORLD = 'NODE';
+setTimeout(() => { try{ if(!ncCoop.ch) ncCoop.join(NC_WORLD, false); }catch(_){} }, 1500);
 window.ncCoop = ncCoop;
 })();
 
@@ -14350,6 +14407,14 @@ body.nc-l #hub>aside.panel::before,body.nc-r #hub>#rightPanel::before{transform:
 .ncw-c svg{width:16px;height:16px}.ncw-c b{color:var(--tc)}.ncw-c.on{outline:2px solid #ffe36a}
 .dg-prog{display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center;margin:6px 0}.dg-prog span{grid-column:1/-1;color:var(--mute);font-size:13px}
 .st-more summary{font-size:13px}#ncWorldSw{margin:8px 0}
+.rh-inv{display:inline-block;margin:0 6px 4px 0;padding:3px 8px;font-size:12px;border-radius:8px;background:#2a2450;border:1px solid #6a5ae0;color:#e8e0ff}
+#ncBell{position:fixed;z-index:45;left:calc(10px + env(safe-area-inset-left,0px));bottom:calc(env(safe-area-inset-bottom) + 182px);width:42px;height:42px;border-radius:50%;border:1px solid #6a5ae0;background:rgba(20,16,44,.85);color:#ffe08a;display:grid;place-items:center;cursor:pointer}
+#ncBell i{position:absolute;top:-3px;right:-3px;min-width:18px;height:18px;padding:0 4px;border-radius:9px;background:#e2504c;color:#fff;font:700 11px/18px system-ui;font-style:normal;display:none}#ncBell.has i{display:block}
+body:not(.nc-play-ok) #ncBell{}
+#ncBellPop{position:fixed;inset:0;z-index:90;background:rgba(5,6,14,.5);display:flex;justify-content:flex-end}#ncBellPop[hidden]{display:none}
+.bp-box{width:min(360px,92vw);height:100%;overflow:auto;background:#141832;border-left:2px solid #3a3070;padding:12px 14px}
+.bp-r{display:flex;gap:10px;align-items:flex-start;padding:9px 10px;margin-bottom:6px;border-radius:10px;background:#1b2035;border:1px solid #2e3452}.bp-r.new{border-color:var(--gold)}
+.bp-r span{font-size:18px}.bp-r p{flex:1;margin:0;font-size:14px}.bp-r small{color:var(--mute);white-space:nowrap}
 @keyframes ncFlame{0%{transform:scaleY(.78) skewX(-5deg);opacity:.7}50%{transform:scaleY(1.06) skewX(3deg);opacity:1}100%{transform:scaleY(.9) skewX(6deg);opacity:.85}}
 #hud #mm.big{opacity:1!important;width:min(92vw,70vh)!important;z-index:40;clip-path:var(--cut);box-shadow:none;border:0}
 .mico{width:15px;height:15px;vertical-align:-3px;margin-right:4px;fill:currentColor;stroke:#05050c;stroke-width:1;stroke-linejoin:round}
@@ -14409,6 +14474,12 @@ details.nc-more{margin-top:12px;border:1px solid rgba(138,106,255,.3);padding:8p
 /* 22/11: minimapa redondo (Arnold escolheu) */
 #hud #mm{border-radius:50%!important;clip-path:none!important;border:3px solid #a8741f!important;box-shadow:0 4px 14px #0008!important;aspect-ratio:1;height:auto}
 #hud:has(#bossBar:not([hidden])) #mmTag{display:none}
+
+/* 22/11 (Arnold: "o X de fechar tá com defeito"): o cabeçalho com o X fica sempre visível no topo do painel, o X é grande
+   e os botões pequenos (Mundo, Progresso…) somem enquanto um painel está aberto, para não ficarem por cima do X */
+#hub>.panel>.nc-head{position:sticky;top:-1px;z-index:6;background:inherit;padding:8px 0;margin-top:-8px}
+#hub .nc-x{width:44px!important;height:44px!important;font-size:22px!important;flex:none}
+body.nc-l .nc-mini,body.nc-r .nc-mini{visibility:hidden!important;pointer-events:none!important}
 </style>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><linearGradient id="ncMetal" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".45" stop-color="#c9d0e2"/><stop offset="1" stop-color="#6f7892"/></linearGradient></defs></svg>
 
@@ -14599,6 +14670,9 @@ body.nc-st #ncRoomHud,body.nc-st #ncWorlds,body.nc-st .nc-grid,body.nc-st .nc-mi
     else if(w > h) k = h/470;                                       // celular deitado
     else k = w/390;                                                 // celular em pé
     k = Math.max(touch ? .78 : 1, Math.min(touch ? 1.5 : 2, k));
+    /* 22/11 (Arnold: "quando vira a tela descalibra e o toque dos botões não funciona"): no iPhone o zoom de CSS desalinha o toque.
+       Em celular (não tablet) não usamos zoom: o tamanho fica pelo próprio layout. */
+    if(touch && Math.min(w, h) < 700) k = 1;
     return Math.round(k*100)/100; }
   var st = document.createElement('style'); st.id = 'nc-uiscale-css'; document.head.appendChild(st);
   function apply(){ var k = calc(); document.documentElement.style.setProperty('--ui', k); var tab = matchMedia('(pointer: coarse)').matches && Math.min(innerWidth, innerHeight) >= 700; st.textContent = k === 1 ? '' : (SEL + (tab ? ',#touch' : '')).split(',').map(function(s){ return s + '{zoom:' + k + '}'; }).join('\n'); }
