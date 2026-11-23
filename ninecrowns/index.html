@@ -13741,6 +13741,10 @@ function adaptRes(dt){
   if(np !== curPR){ curPR = np; renderer.setPixelRatio(np); renderer.setSize(innerWidth, innerHeight, false); if(composer){ composer.setPixelRatio(np); composer.setSize(innerWidth, innerHeight); } resizeRT(); }
 }
 let last = performance.now();
+let ncErrT = 0; function ncErrShow(err){ try{ console.error(err); const now = performance.now(); if(now - ncErrT < 8000) return; ncErrT = now;
+  let el = document.getElementById('ncErr'); if(!el){ el = document.createElement('div'); el.id = 'ncErr'; el.style.cssText = 'position:fixed;left:8px;bottom:8px;z-index:999;max-width:70vw;font:11px/1.3 monospace;color:#ffd0d0;background:#300a;padding:4px 6px;border-radius:6px;pointer-events:none'; document.body.appendChild(el); }
+  el.textContent = 'Erro (mande print ao Claude): ' + String(err && err.message || err).slice(0, 120) + ' @ ' + String(err && err.stack || '').split('\n').slice(1, 3).join(' | ').replace(/https?:[^ )]*\//g, '').slice(0, 160);
+  clearTimeout(el._t); el._t = setTimeout(() => { el.remove(); }, 12000); }catch(_){} }
 function loop(now){
   requestAnimationFrame(loop);
   if(mLocked() && !lookOn()) unlockMouse();
@@ -13758,7 +13762,7 @@ function loop(now){
   if(ncSAura) ncSAuraTick(dt);
   if(mode === 'hub'){ updateHub(dt); ncHubPetTick(dt); }
   else {
-    if(running) updateStage(dt*timeScale);
+    if(running){ try{ updateStage(dt*timeScale); }catch(err){ ncErrShow(err); } }   /* 23/11: um erro numa parte não congela mais o jogo inteiro */
     updateCamera(dt);
     updateFloats(running ? dt : 0);
   }
@@ -14185,7 +14189,7 @@ damageEnemy = (f => function(e, dmg, crit, nx, nz, kb, quiet){
   return f.call(this, e, dmg, crit, nx, nz, kb, quiet); })(damageEnemy);
 (function(){ let last = performance.now(), acc = 0;
   function tick(){ requestAnimationFrame(tick); const now = performance.now(), dt = Math.min(.1, (now - last)/1000); last = now;
-    try{ if(mode !== 'stage' || !P || !running || P.dead || !P.ncCC) return; const cc = P.ncCC;
+    try{ if(P && P.dead && P.ncCC){ P.ncCC = null; return; } if(mode !== 'stage' || !P || !running || P.dead || !P.ncCC) return; const cc = P.ncCC;
       ['stun','fear','root','slow','sil','imm'].forEach(k => { if(cc[k] > 0) cc[k] = Math.max(0, cc[k] - dt); });
       if(cc.stun > 0 && Math.random() < .3) burst({x:P.pos.x, y:P.pos.y + 2.1, z:P.pos.z}, 0xffd84a, 1, .6, 1, .4);
       if(cc.root > 0 && Math.random() < .3) burst(P.pos, 0x7ad8ff, 1, .5, 1, .2);
