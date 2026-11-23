@@ -14243,6 +14243,27 @@ damageEnemy = (f => function(e, dmg, crit, nx, nz, kb, quiet){
         if(f.t > 1.8 || mode !== 'hub'){ scene.remove(f.pts); f.pts.geometry.dispose(); f.pts.material.dispose(); fw.splice(k, 1); } } }catch(_){} }
   requestAnimationFrame(tick); })();
 
+
+/* 23/11/2026 (Arnold): depois do recomeço, cada jogador escolhe a classe de novo e o nome que quiser */
+(function(){ let escolha = null;
+  function precisa(){ try{ return !!save.ncReset || (!save.ncMade && ncFresh() && !save.name); }catch(_){ return false; } }
+  function desenha(el){ escolha = escolha || save.cls;
+    el.innerHTML = '<div class="cr-box"><h2>Crie seu personagem</h2><p>O mundo recomeçou. Escolha sua classe e o nome que vai aparecer em cima do herói e para os amigos.</p><div class="cr-g">'
+      + CLASS_ORDER.map(k => '<button type="button" class="cr-c' + (k === escolha ? ' on' : '') + '" data-crk="' + k + '"><img src="assets/icons/cls/' + k + '.png" alt=""><b>' + CLASSES[k].name + '</b><small>' + (CLASSES[k].tag || '') + '</small></button>').join('')
+      + '</div><div class="cr-n"><label for="ncCrNome">Nome do personagem (até 14 letras)</label><input id="ncCrNome" maxlength="14" autocomplete="off" placeholder="Seu nome no jogo" value="' + String(save.name || '').replace(/[<>"]/g, '') + '"><button type="button" class="cr-go" data-crgo>Começar</button></div></div>';
+    const inp = el.querySelector('input'); inp.addEventListener('keydown', e => e.stopPropagation()); }
+  function abre(){ let el = document.getElementById('ncCriar'); if(!el){ el = document.createElement('div'); el.id = 'ncCriar'; document.body.appendChild(el);
+      el.addEventListener('click', e => { const c = e.target.closest('[data-crk]'); if(c){ escolha = c.dataset.crk; el.querySelectorAll('[data-crk]').forEach(b => b.classList.toggle('on', b === c)); return; }
+        if(e.target.closest('[data-crgo]')){ const nome = (el.querySelector('input').value || '').replace(/[<>]/g, '').trim().slice(0, 14);
+          if(!nome){ el.querySelector('input').focus(); el.querySelector('input').placeholder = 'Escreva um nome'; return; }
+          try{ save.cls = escolha; save.known = [escolha]; save.main = escolha; fixWeaponForClass(); }catch(_){}
+          save.name = nome; delete save.ncReset; save.ncMade = 1; save.ncDirty = 1; persist();
+          try{ rebuildHubHero(); }catch(_){} try{ renderHub(); }catch(_){} try{ ncCoop.track(); }catch(_){}
+          el.hidden = true; document.body.classList.remove('nc-noauto'); setTimeout(() => { try{ if(mode === 'hub' && ncDailyState().can) window.ncDaily(true); }catch(_){} }, 1500); try{ banner('Bem-vindo, ' + nome, CLASSES[escolha].name + ' · boa jornada!'); }catch(_){} } }); }
+    desenha(el); el.hidden = false; document.body.classList.add('nc-noauto'); try{ window.ncDaily(false); }catch(_){} }
+  const t = setInterval(() => { try{ if(typeof mode === 'undefined' || mode !== 'hub') return; const sp = document.getElementById('ncSplash') || document.querySelector('.ncs');
+      if(sp && sp.getClientRects().length && getComputedStyle(sp).display !== 'none' && !sp.classList.contains('out') && +getComputedStyle(sp).opacity > .2) return;
+      if(precisa()){ const el = document.getElementById('ncCriar'); if(!el || el.hidden) abre(); else { try{ window.ncDaily(false); }catch(_){} } } else clearInterval(t); }catch(_){} }, 700); })();
 /* 23/11/2026: notificação leva até o lugar dela */
 function ncNtGo(kind){ try{
   const clica = nomes => { const els = [...document.querySelectorAll('button,[role=button]')].filter(b => b.getClientRects().length && !b.closest('#ncBellPop'));
@@ -15096,6 +15117,24 @@ body.nc-l #ncGavBg,body.nc-r #ncGavBg{display:block}
 
 /* 23/11/2026: com janela aberta, o nome do herói, o sino e o chat somem (antes ficavam por cima das janelas) */
 body.nc-ov .nc-me,body.nc-ov #ncBell,body.nc-ov #ncChat{display:none!important}
+
+/* 23/11/2026: tela de criar personagem depois do recomeço geral */
+#ncCriar{position:fixed;inset:0;z-index:120;display:flex;align-items:center;justify-content:center;background:rgba(6,6,18,.72);backdrop-filter:blur(3px);padding:12px;box-sizing:border-box}
+#ncCriar[hidden]{display:none}
+#ncCriar .cr-box{width:min(720px,100%);max-height:calc(100dvh - 24px);overflow-y:auto;box-sizing:border-box;padding:16px 16px 18px;border-radius:16px;border-top:2px solid #e8c36a;
+  background:linear-gradient(135deg,#1c1640f8 0 33%,#16203ff8 33% 66%,#231a40f8 66%);box-shadow:0 20px 60px #000c;color:#f4efe2}
+#ncCriar h2{font:400 24px/1.1 Marcellus SC,Cinzel,Georgia,serif;color:#ffd36a;margin:0 0 4px;letter-spacing:.06em}
+#ncCriar p{margin:0 0 12px;opacity:.85;font-size:13px}
+#ncCriar .cr-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:8px}
+#ncCriar .cr-c{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;border-radius:12px;border:1px solid #ffffff22;background:#0f0c26cc;color:#fff;cursor:pointer;font:inherit}
+#ncCriar .cr-c img{width:46px;height:46px}#ncCriar .cr-c b{font-size:14px}#ncCriar .cr-c small{font-size:11px;opacity:.75;text-align:center;line-height:1.2}
+#ncCriar .cr-c.on{border-color:#ffd36a;box-shadow:0 0 0 2px #ffd36a66,0 0 18px #ffb83a44;background:#2a2050}
+#ncCriar .cr-n{display:flex;gap:8px;margin-top:14px;align-items:center;flex-wrap:wrap}
+#ncCriar .cr-n label{font-size:13px;opacity:.85;width:100%}
+#ncCriar .cr-n input{flex:1;min-width:160px;font:600 17px/1 system-ui,sans-serif;padding:11px 12px;border-radius:10px;border:1px solid #8a6aff;background:#0e0a20;color:#fff}
+#ncCriar .cr-go{padding:12px 22px;border:0;border-radius:10px;background:linear-gradient(180deg,#ffd36a,#f2a93a);color:#241a08;font:700 16px/1 system-ui,sans-serif;cursor:pointer}
+#ncCriar .cr-go:disabled{opacity:.45}
+@media (orientation:landscape) and (max-height:500px){#ncCriar .cr-g{grid-template-columns:repeat(5,1fr)}#ncCriar .cr-c{padding:6px 4px}#ncCriar .cr-c img{width:34px;height:34px}#ncCriar .cr-c small{display:none}}
 </style>
 </body>
 </html>
