@@ -5538,6 +5538,7 @@ const $ = s => document.querySelector(s);
 const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const C = h => new T.Color(h).convertSRGBToLinear();
 const fmtGold = n => Math.floor(n || 0).toLocaleString('pt-BR');
+/* 23/11/2026 balanceamento medido (dano por segundo de cada classe contra 1 e 5 alvos): Bárbaro -9% de ataque e habilidades de área mais fracas; Assassina -25% nas habilidades de alvo único; Sacerdote +15% de ataque, Luz e Coro mais fortes; Arqueira Perfurar e Águia mais fortes */
 /* NINE CROWNS: a moeda e a Adena, em ouro, prata e bronze. 100 de bronze = 1 de prata; 100 de prata = 1 de ouro. O numero guardado no jogo e em bronze. */
 const adenaParts = n => { n = Math.max(0, Math.floor(n || 0)); return [Math.floor(n/10000), Math.floor(n/100)%100, n%100]; };
 const adenaTxt = n => { const [o, p, b] = adenaParts(n); return ((o ? o.toLocaleString('pt-BR') + ' de ouro ' : '') + (p ? p + ' de prata ' : '') + (b || (!o && !p) ? b + ' de bronze' : '')).trim(); };
@@ -5647,7 +5648,7 @@ const CLASSES = {
             {id:'cleave', name:'Fendente', full:'Golpe Fendente', cd:7, desc:'corte largo à frente que derruba e atordoa'},
             {id:'wall', name:'Muralha', full:'Muralha de Aço', cd:20, desc:'leva metade do dano por 5 s e puxa os monstros para você'},
             {id:'kingblade', name:'Lâmina', full:'Lâmina do Rei', cd:30, desc:'SUPREMA: corte gigante de luz em linha, muito dano'}]},
-  barbarian:{name:'Bárbaro', tag:'Machado gigante', wtype:'axe', desc:'Muita vida e golpes lentos que acertam vários inimigos de uma vez.', hp:1.35, atk:1.45, def:.95, spd:.96, block:0, crit:0, cd:.62, attack:'cleave', dash:'Esquiva',
+  barbarian:{name:'Bárbaro', tag:'Machado gigante', wtype:'axe', desc:'Muita vida e golpes lentos que acertam vários inimigos de uma vez.', hp:1.35, atk:1.32, def:.95, spd:.96, block:0, crit:0, cd:.62, attack:'cleave', dash:'Esquiva',
     skills:[{id:'leap', name:'Salto', full:'Salto Esmagador', cd:7, desc:'salta e esmaga o chão, atordoando quem estiver perto'},
             {id:'rage', name:'Fúria', full:'Fúria', cd:16, desc:'por 6 s, golpes 60% mais rápidos e cada acerto recupera vida'},
             {id:'axeboom', name:'Bumerangue', full:'Machado Bumerangue', cd:8, desc:'arremessa o machado em linha: acerta na ida e na volta'},
@@ -5675,7 +5676,7 @@ const CLASSES = {
             {id:'charge', name:'Investida', full:'Investida Sagrada', cd:9, desc:'corre para frente com o escudo, atropela e atordoa'},
             {id:'judgment', name:'Julgamento', full:'Julgamento', cd:12, desc:'um raio de luz cai do céu no alvo e atordoa'},
             {id:'kingaura', name:'Aura', full:'Aura do Rei', cd:30, desc:'SUPREMA: por 8 s leva metade do dano e bate 20% mais forte; explode luz em volta'}]},
-  assassin:{name:'Assassina', tag:'Adagas duplas', wtype:'daggers', desc:'Golpes muito rápidos, críticos altos e teleporte pelas costas do inimigo.', hp:.9, atk:.8, def:.85, spd:1.15, block:0, crit:.15, cd:.34, attack:'stab', dash:'Sombra',
+  assassin:{name:'Assassina', tag:'Adagas duplas', wtype:'daggers', desc:'Golpes muito rápidos, críticos altos e teleporte pelas costas do inimigo.', hp:.9, atk:.68, def:.85, spd:1.15, block:0, crit:.15, cd:.34, attack:'stab', dash:'Sombra',
     skills:[{id:'shadow', name:'Sombra', full:'Passo Sombrio', cd:5, desc:'aparece atrás do inimigo mais próximo com um golpe crítico'},
             {id:'fan', name:'Leque', full:'Leque de Lâminas', cd:6, desc:'lança 9 adagas em leque'},
             {id:'poison', name:'Veneno', full:'Veneno', cd:7, desc:'nuvem de veneno no alvo que machuca por 3 s'},
@@ -5698,7 +5699,7 @@ CLASSES.necro = {name:'Necromante', tag:'Foice e mortos-vivos', wtype:'scythe', 
             {id:'scythe', name:'Foice', full:'Foice Sombria', cd:9, desc:'gira a foice em volta: dano e recupera 10% de vida'},
             {id:'reaper', name:'Ceifador', full:'Ceifador', cd:30, desc:'SUPREMA: um corte de morte em linha gigante que devolve 20% de vida'}]};
 /* 22/11: classes novas (Sacerdote e Xamã). Aprovadas pelo Arnold em 22/11. */
-CLASSES.priest = {name:'Sacerdote', tag:'Cura e proteção', wtype:'staff', desc:'Cura e protege o grupo com a luz, e pune os inimigos de longe.', hp:.9, atk:.8, def:.95, spd:1, block:0, crit:0, cd:.48, attack:'holy', dash:'Passo da Luz',
+CLASSES.priest = {name:'Sacerdote', tag:'Cura e proteção', wtype:'staff', desc:'Cura e protege o grupo com a luz, e pune os inimigos de longe.', hp:.9, atk:.92, def:.95, spd:1, block:0, crit:0, cd:.48, attack:'holy', dash:'Passo da Luz',
   skills:[{id:'pheal', name:'Cura', full:'Cura', cd:6, desc:'cura 25% da vida'},
           {id:'pshield', name:'Escudo', full:'Escudo Sagrado', cd:14, desc:'um escudo de luz segura o dano por 6 s'},
             {id:'psmite', name:'Luz', full:'Luz Punitiva', cd:7, desc:'luz cai na área do inimigo e atordoa'},
@@ -6262,7 +6263,7 @@ const ncBak = {
 try{ ncBak.make(); }catch(e){}
 setTimeout(() => { try{ ncCloud.boot(); }catch(e){} }, 2500);
 
-const NC_XP = {need:4, minion:.35, elite:6, boss:3};
+const NC_XP = {need:6,   /* 23/11/2026: 4 -> 6 para o caminho até o 80 ficar perto de 80 h (conta: ~30 h só de caçada com 4) */ minion:.35, elite:6, boss:3};
 const xpNeed = l => Math.round(40 * Math.pow(1 + (l - 1)*NC_LV_K, 1.45) * NC_LV_K * NC_XP.need);   // NINE CROWNS: 80 niveis no mesmo caminho que antes dava 44
 const baseChance = id => Math.max(.06, .12 - id*.0035);
 const chanceFor = id => (save.pity[id] || 0) >= CFG.pity.hard ? 1 : Math.min(1, (baseChance(id) + DF().drop*.3 + (save.pity[id] || 0)*CFG.pity.inc)*LUCK());
@@ -11270,7 +11271,7 @@ function ncTitleHTML(){ ncTitleCheck(); const on = save.titleOn || ''; return '<
 document.addEventListener('click', e => { const b = e.target.closest('[data-ntitle]'); if(!b) return; save.titleOn = b.dataset.ntitle; persist(); const box = document.getElementById('ncTitleBox'); if(box) box.innerHTML = ncTitleHTML(); ncTitleTag(); });
 /* plaquinha com o título em cima da cabeça (no menu e na fase) */
 let ncTagSpr = null;
-function ncTitleTag(){ try{ if(ncTagSpr){ if(ncTagSpr.parent) ncTagSpr.parent.remove(ncTagSpr); ncTagSpr = null; } const t = ncTitleTxt(), who = mode === 'stage' && P ? P : hero; if(!t || !who) return;
+function ncTitleTag(){ try{ if(ncTagSpr){ if(ncTagSpr.parent) ncTagSpr.parent.remove(ncTagSpr); ncTagSpr = null; } const t = ncTitleTxt(), who = mode === 'stage' && P ? P : hero; if(!t || !who || window.ncMeTagOn) return;
   const root = who.root || (who.hero && who.hero.root) || (hero && hero.root); if(!root) return;
   const cv = document.createElement('canvas'); cv.width = 512; cv.height = 96; const g = cv.getContext('2d'); g.font = '600 44px Cinzel, Georgia, serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
   g.lineWidth = 8; g.strokeStyle = 'rgba(20,10,40,.85)'; g.strokeText(t, 256, 50); g.fillStyle = '#ffd36a'; g.fillText(t, 256, 50);
@@ -11542,9 +11543,9 @@ function firePlayer(o){
   scene.add(m);
   pprojs.push(Object.assign({m, vx:Math.sin(o.ang)*o.spd, vz:Math.cos(o.ang)*o.spd, hit:new Set(), y0:oy - 1.3}, o));
 }
-const NC_SKFX = {pheal:{t:"buff", heal:0.25, c:0xfff2a0}, pshield:{t:"buff", wall:6, c:0xfff0c0}, psmite:{t:"tgt", R:3.2, m:2.2, c:0xfff0a0, d:0.3, bolt:1, stun:1.2}, pbless:{t:"buff", cry:10, c:0xffe28a}, prenew:{t:"buff", hot:8, c:0xbfffb0}, pchoir:{t:"self", R:6, m:2.8, c:0xfff6c0, heal:0.4},
+const NC_SKFX = {pheal:{t:"buff", heal:0.25, c:0xfff2a0}, pshield:{t:"buff", wall:6, c:0xfff0c0}, psmite:{t:"tgt", R:3.2, m:3, c:0xfff0a0, d:0.3, bolt:1, stun:1.2}, pbless:{t:"buff", cry:10, c:0xffe28a}, prenew:{t:"buff", hot:8, c:0xbfffb0}, pchoir:{t:"self", R:6, m:3.6, c:0xfff6c0, heal:0.4},
   stotem:{t:"buff", hot:8, totem:1, c:0x7aff9a}, schain:{t:"tgt", R:3.4, m:0.9, c:0x8ad8ff, waves:4, gap:0.12, bolt:1}, sfury:{t:"buff", rage:10, c:0xff8a3a}, squake:{t:"self", R:4.5, m:1.8, c:0xc8a060, stun:1.5}, swolf:{t:"buff", ally:1, c:0x9ad8ff}, sstorm:{t:"tgt", R:6, m:1.3, c:0x8ad8ff, waves:7, gap:0.35, bolt:1},
- icelance:{t:"line", L:12, W:1.2, m:2.2, c:0x8fe6ff, stun:1}, meteor:{t:"tgt", R:4, m:3.2, c:0xff7a1a, d:0.7, fall:1}, arcshield:{t:"buff", wall:6, heal:0.1, c:0xa0a8ff}, storm:{t:"tgt", R:6, m:1.2, c:0xb070ff, waves:6, gap:0.3, bolt:1}, trap:{t:"self", R:3.2, m:1.8, c:0xc8a060, stun:2, d:0.8}, backstep:{t:"dash", D:-6, R:3, m:1.2, c:0xa8ffb0}, explarrow:{t:"tgt", R:3.5, m:2.4, c:0xff9a3a, d:0.3}, eagle:{t:"line", L:18, W:1.6, m:4, c:0xffe070, cry:10, crit:1}, healight:{t:"buff", heal:0.35, c:0xfff2a0}, charge:{t:"dash", D:7, R:2.2, m:2, c:0xffe28a, stun:1, line:1}, judgment:{t:"tgt", R:3, m:3, c:0xfff0a0, d:0.4, bolt:1, stun:1.5}, kingaura:{t:"self", R:6, m:2.5, c:0xffd24a, wall:8, cry:8}, poison:{t:"tgt", R:2.8, m:0.6, c:0x7aff5a, waves:6, gap:0.5}, smoke:{t:"self", R:4, m:0.8, c:0x8a8a9a, stun:2, inv:1.5}, deathmark:{t:"tgt", R:1.6, m:4.5, c:0xff3a5a, d:1, crit:1}, bladedance:{t:"self", R:4.2, m:1.1, c:0xd8dee8, waves:7, gap:0.18, inv:1.4}, hundred:{t:"line", L:3.4, W:1.6, m:0.55, c:0xffe0a0, waves:8, gap:0.08}, meditate:{t:"buff", heal:0.3, res:1, cry:6, c:0x9affe0}, flykick:{t:"dash", D:6, R:2.6, m:2.2, c:0xffb070, stun:1.2}, dragon:{t:"line", L:16, W:2.2, m:5, c:0xff4a1a, crit:1}, curse:{t:"tgt", R:4, m:0.7, c:0x9a3ad8, waves:5, gap:0.6}, corpse:{t:"tgt", R:4, m:2.6, c:0x4aff7a, d:0.25}, scythe:{t:"self", R:4.5, m:2.2, c:0x7a2ad8, heal:0.1}, reaper:{t:"line", L:14, W:2.5, m:5.5, c:0x6a1ab8, heal:0.2, crit:1}};
+ icelance:{t:"line", L:12, W:1.2, m:2.2, c:0x8fe6ff, stun:1}, meteor:{t:"tgt", R:4, m:3.2, c:0xff7a1a, d:0.7, fall:1}, arcshield:{t:"buff", wall:6, heal:0.1, c:0xa0a8ff}, storm:{t:"tgt", R:6, m:1.2, c:0xb070ff, waves:6, gap:0.3, bolt:1}, trap:{t:"self", R:3.2, m:1.8, c:0xc8a060, stun:2, d:0.8}, backstep:{t:"dash", D:-6, R:3, m:1.2, c:0xa8ffb0}, explarrow:{t:"tgt", R:3.5, m:2.4, c:0xff9a3a, d:0.3}, eagle:{t:"line", L:18, W:1.6, m:4.8, c:0xffe070, cry:10, crit:1}, healight:{t:"buff", heal:0.35, c:0xfff2a0}, charge:{t:"dash", D:7, R:2.2, m:2, c:0xffe28a, stun:1, line:1}, judgment:{t:"tgt", R:3, m:3, c:0xfff0a0, d:0.4, bolt:1, stun:1.5}, kingaura:{t:"self", R:6, m:2.5, c:0xffd24a, wall:8, cry:8}, poison:{t:"tgt", R:2.8, m:0.5, c:0x7aff5a, waves:6, gap:0.5}, smoke:{t:"self", R:4, m:0.8, c:0x8a8a9a, stun:2, inv:1.5}, deathmark:{t:"tgt", R:1.6, m:2.4, c:0xff3a5a, d:1, crit:1}, bladedance:{t:"self", R:4.2, m:0.8, c:0xd8dee8, waves:7, gap:0.18, inv:1.4}, hundred:{t:"line", L:3.4, W:1.6, m:0.55, c:0xffe0a0, waves:8, gap:0.08}, meditate:{t:"buff", heal:0.3, res:1, cry:6, c:0x9affe0}, flykick:{t:"dash", D:6, R:2.6, m:2.2, c:0xffb070, stun:1.2}, dragon:{t:"line", L:16, W:2.2, m:5, c:0xff4a1a, crit:1}, curse:{t:"tgt", R:4, m:0.7, c:0x9a3ad8, waves:5, gap:0.6}, corpse:{t:"tgt", R:4, m:2.6, c:0x4aff7a, d:0.25}, scythe:{t:"self", R:4.5, m:2.2, c:0x7a2ad8, heal:0.1}, reaper:{t:"line", L:14, W:2.5, m:5.5, c:0x6a1ab8, heal:0.2, crit:1}};
 /* Executa as habilidades novas a partir da ficha acima (t = tipo):
    line = golpe em linha · tgt = cai no alvo · self = em volta de você · dash = avança/recua · buff = cura e reforços */
 function ncSkUp(f, l){ if(l < 3) return f; f = Object.assign({}, f); const s5 = l >= 5;
@@ -11622,7 +11623,7 @@ function useSkill(j){
           if(al > -.5 && al < 10 + e.r && sd < 1.3 + e.r) hitEnemy(e, 1.6, {skm, kb:back ? -6 : 8, nx:back ? -fx : fx, nz:back ? -fz : fz, y:oy}); }
         for(let k = 0; k <= 10; k += 1.25){ const kk = back ? 10 - k : k; setTimeout(() => burst({x:ox + fx*kk, z:oz + fz*kk, y:oy + 1}, 0xd8dee8, 3, 2, 5, .3), k*28); } };
       line(false); SFX.bow(); setTimeout(() => { if(mode === 'stage'){ line(true); SFX.heavy(); } }, 600); break; }
-    case 'thunder': { const skm = ncSkMul(i); aoe(P.pos.x, P.pos.z, 5, 2, {stun:1.5, kb:8, skm});
+    case 'thunder': { const skm = ncSkMul(i); aoe(P.pos.x, P.pos.z, 5, 1.6, {stun:1.5, kb:8, skm});
       for(let k = 0; k < 6; k++){ const a2 = k/6*Math.PI*2 + Math.random()*.4, rr = 2 + Math.random()*3, x = P.pos.x + Math.sin(a2)*rr, z = P.pos.z + Math.cos(a2)*rr; setTimeout(() => { bolt(x, P.pos.y + 7, z, x, P.pos.y, z, 0x9ad8ff); burst({x, z, y:P.pos.y}, 0x9ad8ff, 6, 3, 5, .3); }, k*60); }
       fxRing(P.pos.x, P.pos.z, 5, 0x7ac8ff, .45); SFX.zap(); SFX.slam(); addShake(.4); break; }
     case 'chain': { const skm = ncSkMul(i); const a = aimAngle(9); if(a !== null) P.face = P.targetFace = a;
@@ -11631,7 +11632,7 @@ function useSkill(j){
           if(e.kind !== 'boss' && d > 1.8){ const k = d - 1.6; e.pos.x -= dx/d*k; e.pos.z -= dz/d*k; } hitEnemy(e, 1.2, {stun:1, kb:0, skm}); } }
       SFX.dash(); addShake(.2); break; }
     case 'cataclysm': { const skm = ncSkMul(i), ox = P.pos.x, oz = P.pos.z, oy = P.pos.y; floatText(P.pos, 'CATACLISMO!', 'hurt'); SFX.boss();
-      [4, 7, 10].forEach((R, k) => setTimeout(() => { if(mode !== 'stage') return; aoe(ox, oz, R, 3, {kb:10, skm, y:oy, burn:1}); fxRing(ox, oz, R, 0xff6a1a, .5);
+      [4, 7, 10].forEach((R, k) => setTimeout(() => { if(mode !== 'stage') return; aoe(ox, oz, R, 2.2, {kb:10, skm, y:oy, burn:1}); fxRing(ox, oz, R, 0xff6a1a, .5);
         for(let q = 0; q < 14; q++){ const a2 = q/14*Math.PI*2; burst({x:ox + Math.sin(a2)*R, z:oz + Math.cos(a2)*R, y:oy}, q % 2 ? 0xff4a0a : 0xffc04a, 4, 3, 6, .4); } SFX.slam(); addShake(.35 + k*.15); }, k*300));
       P.inv = Math.max(P.inv, .6); break; }
     case 'leap': { const tg = nearestEnemy(11); let a = P.face, dist = 7;
@@ -11647,7 +11648,7 @@ function useSkill(j){
       if(tg) P.face = P.targetFace = Math.atan2(x - P.pos.x, z - P.pos.z); P.castT = .25;
       telegraphCircle(x, z, 3.2, 1.25, null, 0x6ac8ff); volleys.push({x, z, t:0, n:0}); SFX.bow(); break; }
     case 'pierce': { const a = aimAngle(22); if(a !== null) P.face = P.targetFace = a; P.castT = .25;
-      firePlayer({kind:'pierce', ang:P.face, spd:34, mult:2.3, life:.75, r:.75, pierce:true}); SFX.bow(); SFX.bolt(); break; }
+      firePlayer({kind:'pierce', ang:P.face, spd:34, mult:3.2, life:.75, r:.75, pierce:true}); SFX.bow(); SFX.bolt(); break; }
     case 'holy': P.swingT = P.swingDur = .3; aoe(P.pos.x, P.pos.z, 4.4, 2.0, {stun:.7, kb:9}); fxRing(P.pos.x, P.pos.z, 5, 0xffe08a, .45);
       burst(P.pos, 0xffe08a, 22, 7, 5, .4); const hh = Math.round(P.S.hp*.15); P.hp = Math.min(P.S.hp, P.hp + hh); floatText(P.pos, '+' + hh, 'heal'); SFX.holy(); addShake(.3); break;
     case 'aegis': P.aegisT = 4; SFX.holy(); floatText(P.pos, 'ESCUDO DIVINO', 'heal'); break;
@@ -11655,7 +11656,7 @@ function useSkill(j){
       burst(P.pos, 0x6a3a9a, 14, 3, 4, 1);
       if(tg){ const dx = tg.pos.x - P.pos.x, dz = tg.pos.z - P.pos.z, d = Math.hypot(dx, dz) || 1;
         P.pos.x = tg.pos.x + dx/d*(tg.r + .8); P.pos.z = tg.pos.z + dz/d*(tg.r + .8); clampPos(P.pos, bossActive);
-        P.face = P.targetFace = Math.atan2(tg.pos.x - P.pos.x, tg.pos.z - P.pos.z); P.swingT = P.swingDur = .16; hitEnemy(tg, 2.8, {crit:true, stun:.8, kb:3}); }
+        P.face = P.targetFace = Math.atan2(tg.pos.x - P.pos.x, tg.pos.z - P.pos.z); P.swingT = P.swingDur = .16; hitEnemy(tg, 1.6, {crit:true, stun:.8, kb:3}); }
       else { P.pos.x += Math.sin(P.face)*7; P.pos.z += Math.cos(P.face)*7; clampPos(P.pos, bossActive); }
       burst(P.pos, 0x6a3a9a, 14, 3, 4, 1); P.inv = Math.max(P.inv, .4); SFX.dash(); break; }
     case 'quake': { const a = aimAngle(8); if(a !== null) P.face = P.targetFace = a; P.swingT = P.swingDur = .2;
@@ -11672,7 +11673,7 @@ function useSkill(j){
       SFX.zap(); break; }
     case 'army': burst(P.pos, 0x8a2cff, 18, 4, 5, .2); burst(P.pos, 0x14002a, 12, 3, 4, .2); for(let k=0;k<3;k++) spawnAlly(P.pos.x + Math.sin(P.face + k*2.1)*2, P.pos.z + Math.cos(P.face + k*2.1)*2); SFX.boss(); floatText(P.pos, 'Levantem-se!', 'heal'); break;
     case 'fan': { const a = aimAngle(14); if(a !== null) P.face = P.targetFace = a; P.castT = .2;
-      for(let k=0;k<9;k++) firePlayer({kind:'dagger', ang:P.face - .6 + k*.15, spd:24, mult:.9, life:.45, r:.45}); SFX.stab(); SFX.bow(); break; }
+      for(let k=0;k<9;k++) firePlayer({kind:'dagger', ang:P.face - .6 + k*.15, spd:24, mult:.6, life:.45, r:.45}); SFX.stab(); SFX.bow(); break; }
   }
   ncTech();
 }
@@ -12312,7 +12313,7 @@ function updatePlayer(dt){
       hero.root.position.y = heightAt(P.pos.x, P.pos.z) + Math.sin(p*Math.PI)*3;
     }
     if(p >= 1){
-      if(sk.id === 'leap'){ aoe(P.pos.x, P.pos.z, 3.8, 2.2, {stun:1, kb:12}); fxRing(P.pos.x, P.pos.z, 4.2, 0xffb070, .4); burst(P.pos, 0xd8c8a8, 24, 9, 4, .3); SFX.slam(); addShake(.45); rumble(.7,.3,200); }
+      if(sk.id === 'leap'){ aoe(P.pos.x, P.pos.z, 3.8, 1.9, {stun:1, kb:12}); fxRing(P.pos.x, P.pos.z, 4.2, 0xffb070, .4); burst(P.pos, 0xd8c8a8, 24, 9, 4, .3); SFX.slam(); addShake(.45); rumble(.7,.3,200); }
       if(sk.id === 'whirl' || sk.id === 'cyclone'){ hero.spin.material.opacity = 0; hero.body.rotation.y = 0; }
       if(sk.beam){ sk.beam.traverse(o => { if(o.isMesh){ o.geometry.dispose(); o.material.dispose(); } }); scene.remove(sk.beam); }
       P.skill = null;
@@ -14104,6 +14105,37 @@ window.__ncHub = c => { save.cls = c; fixWeaponForClass(); buildHub(); hubCamera
 const NC_WORLD = 'NODE';
 setTimeout(() => { try{ if(!ncCoop.ch) ncCoop.join(NC_WORLD, false); }catch(_){} }, 1500);
 window.ncCoop = ncCoop;
+
+/* 23/11/2026 (Arnold): nome, título, vida e mana/energia em cima do próprio herói, acima do chapéu.
+   Antes o título ficava dentro do chapéu do Mago (altura fixa). Agora a altura é medida pelo herói inteiro, com chapéu e elmo. */
+window.ncMeTagOn = true;
+(function(){
+  let tag = null, topY = 2.2, lastH = null, medeT = 0;
+  const box = new T.Box3();
+  function mede(h){ try{ box.makeEmpty(); h.root.updateMatrixWorld(true);
+      h.root.traverse(o => { if(!o.isMesh || o.isSprite || !o.visible || (o.material && o.material.transparent && (o.material.depthWrite === false || o.material.opacity < .1))) return;
+        if(!o.geometry.boundingBox) o.geometry.computeBoundingBox(); box.union(o.geometry.boundingBox.clone().applyMatrix4(o.matrixWorld)); });
+      if(!box.isEmpty()) topY = Math.max(1.4, Math.min(4.5, box.max.y - h.root.position.y)); }catch(e){} }
+  function cria(){ tag = document.createElement('div'); tag.className = 'ltag nc-ptag pty nc-me';
+    tag.innerHTML = '<span class="pt-t"></span><span class="pt-n"><img class="pt-cls" alt=""><b></b></span><i class="pb hp"><s></s></i><i class="pb rs"><s></s></i>'; document.body.appendChild(tag); }
+  function tick(){ requestAnimationFrame(tick);
+    try{
+      const h = hero, vivo = h && h.root && (mode === 'stage' || mode === 'hub') && !(P && P.dead && mode === 'stage');
+      if(!vivo){ if(tag && !tag.hidden) tag.hidden = true; return; }
+      if(!tag) cria();
+      const now = performance.now(); if(h !== lastH || now - medeT > 1500){ lastH = h; medeT = now; mede(h); }
+      const tt = ncTitleTxt() || '', te = tag.children[0]; if(te.textContent !== tt) te.textContent = tt; te.hidden = !tt;
+      const nm = ncName() + ' · nv ' + save.level, tb = tag.querySelector('b'); if(tb.textContent !== nm) tb.textContent = nm;
+      const im = tag.querySelector('img'), src = 'assets/icons/cls/' + (save.cls in CLASSES ? save.cls : 'warrior') + '.png'; if(im.getAttribute('src') !== src) im.src = src;
+      const emFase = mode === 'stage' && P && P.S;
+      tag.children[2].hidden = tag.children[3].hidden = !emFase;
+      if(emFase){ tag.children[2].firstChild.style.width = Math.max(0, Math.min(100, P.hp/P.S.hp*100)) + '%';
+        let rs = 100; try{ rs = (P.res || 0)/ncResMax()*100; }catch(e){} tag.children[3].firstChild.style.width = Math.max(0, Math.min(100, rs)) + '%';
+        try{ tag.children[3].classList.toggle('sp', ncRes() === 'sp'); }catch(e){} }
+      const r = h.root.position; placeTag(tag, r.x, r.y + topY + .25, r.z, true);
+    }catch(e){} }
+  requestAnimationFrame(tick);
+})();
 })();
 
 
@@ -14886,6 +14918,7 @@ window.ncMapGlyph=function(g,k,x,y,size){const m={ch:['bau','#ffd36a'],q:['missa
 #ncBell.has-med{--ms:42px;background:none!important;border:0!important;box-shadow:none!important;padding:0;display:grid;place-items:center}
 .has-med>.nc-med{margin:0 auto}.cname.has-med{display:flex;align-items:center;gap:8px}.cname.has-med>.nc-med{--ms:30px;margin:0}
 @media (max-width:600px){.nc-card.has-med{--ms:32px;height:70px}.nc-b.has-med{--ms:26px}}
+.nc-me .pt-t{font:600 10px/1 Cinzel,Georgia,serif;color:#ffd36a;letter-spacing:.06em;white-space:nowrap}.nc-me .pt-t[hidden]{display:none}.nc-me b{color:#fff!important}.nc-me .pb[hidden]{display:none!important}.nc-me{z-index:5}.nc-me[hidden]{display:none!important}
 </style>
 </body>
 </html>
