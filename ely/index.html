@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow"><title>Reparos das lojas · Indus</title>
+<style>
+:root{--or:#f97316;--ink:#17181c;--gr:#7a7f8a;--ln:#e6e6e9;--bg:#f7f7f8;--ok:#16a34a;--okl:#e8f8ee;--at:#d98a00;--ru:#dc2626;--rul:#fdeaea}
+*{box-sizing:border-box}body{margin:0;background:#efeff2;color:var(--ink);font:15px/1.45 -apple-system,system-ui,"Segoe UI",Roboto,sans-serif;-webkit-text-size-adjust:100%}
+.wrap{max-width:760px;margin:0 auto;background:#fff;min-height:100vh;border-top:5px solid var(--or);padding:22px 16px 40px}
+.eb{font:700 11px system-ui;letter-spacing:.14em;color:var(--or);margin:0}h1{font-size:clamp(25px,6vw,32px);margin:4px 0 2px}.sub{color:var(--gr);margin:0 0 14px;font-size:14px}
+.prog{background:var(--bg);border-radius:14px;padding:14px;margin-bottom:12px}.prog b{font-size:22px;font-variant-numeric:tabular-nums}.prog small{color:var(--gr)}
+.bar{height:9px;border-radius:6px;background:#e4e4e8;margin-top:8px;overflow:hidden}.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#16a34a,#4ade80);transition:width .8s cubic-bezier(.2,.8,.2,1)}
+.loja{border:1px solid var(--ln);border-radius:14px;margin:10px 0;overflow:hidden}
+.lh{display:flex;align-items:center;gap:10px;padding:13px 14px;background:var(--bg)}.lh b{font-size:15.5px}.lh small{margin-left:auto;color:var(--gr);font-size:12.5px;white-space:nowrap}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--or);flex:0 0 auto}.dot.r{background:var(--ru)}.dot.v{background:var(--ok)}
+.it{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border-top:1px solid var(--ln);cursor:pointer;-webkit-tap-highlight-color:transparent;min-height:56px}
+.ck{width:28px;height:28px;border-radius:8px;border:2px solid #9aa0aa;flex:0 0 auto;display:grid;place-items:center;transition:all .2s;margin-top:1px;background:#fff}
+.it.on .ck{background:var(--ok);border-color:var(--ok)}.ck svg{opacity:0;transform:scale(.5);transition:all .2s}.it.on .ck svg{opacity:1;transform:none}
+.it b{display:block;font-size:15px}.it.on b{text-decoration:line-through;color:var(--gr)}
+.it small{display:block;font-size:13px;color:var(--gr)}.it small.v{color:var(--ru);font-weight:600}.it small.ok{color:var(--ok);font-weight:600}
+.u{font:800 10px system-ui;color:var(--ru);background:var(--rul);padding:2px 7px;border-radius:6px;margin-right:6px;vertical-align:2px}
+.it.busy{opacity:.55;pointer-events:none}
+.aviso{background:#fff4ea;border-radius:12px;padding:12px 14px;font-size:13.5px;color:#7a4a12;margin:6px 0 14px}
+.rod{color:var(--gr);font-size:12px;margin-top:24px;text-align:center}.erro{padding:30px 10px;text-align:center;color:var(--gr)}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translate(-50%,30px);opacity:0;background:var(--ink);color:#fff;padding:12px 18px;border-radius:12px;font-weight:600;transition:.3s;z-index:9;max-width:92vw;text-align:center}.toast.on{opacity:1;transform:translate(-50%,0)}
+#fx{position:fixed;inset:0;pointer-events:none;z-index:8}
+</style></head><body>
+<canvas id="fx" aria-hidden="true"></canvas>
+<main class="wrap" id="app"><p class="erro">Carregando os reparos…</p></main><div class="toast" id="toast" role="status"></div>
+<script>
+/* Checklist de reparos para o Ely (23/11/2026). Marcar = resolvido; o SUPER VISÃO do Arnold recebe na próxima vez que abrir. */
+const URL_DB='https://mgqwzaizkllkqqqbbcna.supabase.co',KEY='sb_publishable_nBJrSlD-qcQg26UIhVCWkQ_d9_fZCPc';
+const id=new URLSearchParams(location.search).get('r'),$=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const dm=iso=>iso?iso.slice(8,10)+'/'+iso.slice(5,7):'';const hoje=new Date().toLocaleDateString('en-CA',{timeZone:'America/Sao_Paulo'});
+const dias=(a,b)=>Math.max(0,Math.round((Date.parse(b)-Date.parse(a))/864e5));
+const rpc=(f,b)=>fetch(URL_DB+'/rest/v1/rpc/'+f,{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify(b)}).then(r=>{if(!r.ok)throw 0;return r.json()});
+let D=null;
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.h);toast.h=setTimeout(()=>e.classList.remove('on'),2200)}
+async function carregar(){if(!id){$('#app').innerHTML='<p class="erro">Link incompleto. Peça o link de novo ao Arnold.</p>';return}
+ try{const j=await rpc('sv_ler',{p_id:id});if(!j||j.tipo!=='ely')throw 0;D=j;desenhar()}catch(e){$('#app').innerHTML='<p class="erro">Não foi possível abrir a lista agora. Tente de novo em instantes.</p>'}}
+function desenhar(){const L=D.dados.lojas||[],R=D.resolvidos||{};const total=L.reduce((a,l)=>a+l.itens.length,0),feitos=L.reduce((a,l)=>a+l.itens.filter(i=>R[i.id]).length,0);
+ $('#app').innerHTML=`<p class="eb">INDUS.CORP · REPAROS DAS LOJAS</p><h1>Checklist de reparos</h1><p class="sub">Para: Ely · lista atualizada pelo Arnold</p>
+ <div class="prog"><b id="pf">${feitos} de ${total}</b> <small>resolvidos</small><div class="bar"><i id="pb"></i></div></div>
+ <div class="aviso">Toque no quadradinho quando o conserto ficar pronto. O Arnold recebe na hora em que abrir o app. Marcou errado? Toque de novo para desmarcar.</div>
+ ${L.map(l=>{const nu=l.itens.filter(i=>i.urg&&!R[i.id]).length,ab=l.itens.filter(i=>!R[i.id]).length;return `<section class="loja"><div class="lh"><span class="dot ${!ab?'v':nu?'r':''}"></span><b>${esc(l.loja)}</b><small>${ab?ab+(ab===1?' em aberto':' em aberto'):'tudo pronto ✓'}</small></div>
+  ${l.itens.map(i=>{const at=i.prazo&&i.prazo<hoje;const on=!!R[i.id];return `<div class="it ${on?'on':''}" data-id="${esc(i.id)}" role="checkbox" aria-checked="${on}" tabindex="0"><span class="ck"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span><span><b>${i.urg?'<span class="u">URGENTE</span>':''}${esc(i.txt)}</b>${i.com?`<small>${esc(i.com)}</small>`:''}
+   ${on?`<small class="ok">Resolvido em ${dm(String(R[i.id]).slice(0,10))}</small>`:`<small class="${at?'v':''}">${i.prazo?(at?`Prazo era ${dm(i.prazo)} · atrasado ${dias(i.prazo,hoje)} ${dias(i.prazo,hoje)===1?'dia':'dias'}`:`Prazo ${dm(i.prazo)}`):''} · aberto desde ${dm(i.desde)}</small>`}</span></div>`}).join('')}</section>`}).join('')}
+ ${!L.length?'<p class="erro">Nenhum reparo em aberto. Tudo certo nas lojas!</p>':''}
+ <p class="rod">Lista enviada em ${new Date(D.atualizado).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})} · Indus.corp · Uso interno</p>`;
+ requestAnimationFrame(()=>{$('#pb').style.width=(total?feitos/total*100:100)+'%'});
+ document.querySelectorAll('.it').forEach(el=>{const f=()=>marcar(el);el.onclick=f;el.onkeydown=e=>{if(e.key===' '||e.key==='Enter'){e.preventDefault();f()}}})}
+async function marcar(el){const item=el.dataset.id,on=!el.classList.contains('on');el.classList.add('busy');
+ try{const ok=await rpc('sv_marcar',{p_id:id,p_item:item,p_on:on});if(!ok)throw 0;
+  if(on){D.resolvidos[item]=new Date().toISOString();toast('Resolvido! ✓');confete(el)}else{delete D.resolvidos[item];toast('Desmarcado')}desenhar()}
+ catch(e){el.classList.remove('busy');toast('Sem conexão. Tente de novo.')}}
+function confete(el){if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;const c=$('#fx'),g=c.getContext('2d'),r=devicePixelRatio||1;c.width=innerWidth*r;c.height=innerHeight*r;g.scale(r,r);
+ const b=el.getBoundingClientRect(),x0=b.left+28,y0=b.top+24,cores=['#16a34a','#4ade80','#f97316','#ffd76a'];
+ const P=Array.from({length:36},()=>({x:x0,y:y0,vx:(Math.random()-.5)*7,vy:-Math.random()*6-2,s:3+Math.random()*4,c:cores[Math.random()*4|0],l:50+Math.random()*25}));
+ (function q(){g.clearRect(0,0,innerWidth,innerHeight);let v=0;for(const p of P){if(p.l<=0)continue;v++;p.l--;p.vy+=.25;p.x+=p.vx;p.y+=p.vy;g.globalAlpha=Math.min(1,p.l/20);g.fillStyle=p.c;g.fillRect(p.x,p.y,p.s,p.s)}if(v)requestAnimationFrame(q);else g.clearRect(0,0,innerWidth,innerHeight)})()}
+carregar();
+</script></body></html>
