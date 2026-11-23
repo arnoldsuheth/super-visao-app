@@ -8068,7 +8068,7 @@ function ncPopHTML(){ const pz = mode !== 'hub';
       + '<div class="bag-act"><button class="btn sm" data-bagsell="' + it.id + '">Vender<small>' + adenaTxt(sellValue(it)) + '</small></button><button class="btn sm" data-bagbrk="' + it.id + '">Desmanchar<small>vira material</small></button><button class="btn sm' + (bagConfirm === it.id ? ' danger' : '') + '" data-bagdel="' + it.id + '">' + (bagConfirm === it.id ? 'Toque de novo<small>some para sempre</small>' : 'Excluir<small>joga fora</small>') + '</button></div><div class="bag-brk">Desmanchar dá: <b>' + ncBreakTxt(out) + '</b> (materiais da forja)</div>'; } }
   return det; }
 function ncPopDraw(){ let el = document.getElementById('ncPop'); if(!el){ el = document.createElement('div'); el.id = 'ncPop'; document.body.appendChild(el); }
-  const vis = [...document.querySelectorAll('#invList .bgrid, #pauseGear .bgrid')].some(h => h.offsetParent !== null);
+  const vis = [...document.querySelectorAll('.bgrid')].some(h => h.offsetParent !== null || h.getClientRects().length > 0);   /* 23/11: valia só para 2 listas; na mochila da fase o cartão do item não abria */
   const det = bagSel !== null && vis ? ncPopHTML() : '';
   el.hidden = !det; el.innerHTML = det ? '<div class="pop-bg" data-bagclose></div><div class="pop-box"><button class="pop-x" data-bagclose aria-label="Fechar">✕</button>' + det + '</div>' : ''; }
 function ncBagRefresh(){ try{ if(mode === 'hub'){ applyGear(hero); renderHub(); } else { try{ refreshGearInStage(); }catch(e){} renderPauseGear(); } }catch(e){} }
@@ -14136,6 +14136,21 @@ window.ncMeTagOn = true;
     }catch(e){} }
   requestAnimationFrame(tick);
 })();
+
+
+/* 23/11/2026: posiciona o ranking dos amigos logo abaixo do cartão "Node Land · Amigos" */
+(function(){ const pos = () => { const f = document.getElementById('ncFriends'), w = ['ncRoomHud','ncWorlds'].map(id => document.getElementById(id)).find(x => x && !x.hidden && x.getClientRects().length && x.getBoundingClientRect().width > 40); if(!f || f.hidden) return;
+    const r = w ? w.getBoundingClientRect() : null;
+    f.style.setProperty('--frx', (r ? Math.max(8, r.left) : 10) + 'px'); f.style.setProperty('--fry', (r ? r.bottom + 6 : 110) + 'px'); f.style.setProperty('--frw', (r ? Math.max(280, r.width) : 300) + 'px'); };
+  new MutationObserver(pos).observe(document.body, {childList:true, subtree:false});
+  setInterval(pos, 400); addEventListener('resize', pos); })();
+/* 23/11/2026: tocar num item da mochila sempre abre o cartão (na fase a mochila não redesenhava e o cartão não aparecia) */
+document.addEventListener('click', e => { if(e.target.closest('[data-bsel]')) setTimeout(() => { try{ ncPopDraw(); }catch(_){} }, 40); });
+/* 23/11/2026: fundo escuro atrás da gaveta; tocar nele ou apertar Esc fecha a janela aberta */
+(function(){ const bg = document.createElement('div'); bg.id = 'ncGavBg'; document.body.appendChild(bg);
+  const fecha = () => { document.querySelectorAll('#hub>aside.panel .nc-x,#hub>#rightPanel .nc-x').forEach(x => { const p = x.closest('.panel'); if(p && getComputedStyle(p).visibility !== 'hidden') x.click(); }); document.body.classList.remove('nc-l', 'nc-r'); };
+  bg.addEventListener('click', fecha); bg.addEventListener('touchend', e => { e.preventDefault(); fecha(); }, {passive:false});
+  addEventListener('keydown', e => { if(e.key === 'Escape' && (document.body.classList.contains('nc-l') || document.body.classList.contains('nc-r'))){ if(document.getElementById('ncPop') && !document.getElementById('ncPop').hidden) return; fecha(); } }); })();
 })();
 
 
@@ -14919,6 +14934,36 @@ window.ncMapGlyph=function(g,k,x,y,size){const m={ch:['bau','#ffd36a'],q:['missa
 .has-med>.nc-med{margin:0 auto}.cname.has-med{display:flex;align-items:center;gap:8px}.cname.has-med>.nc-med{--ms:30px;margin:0}
 @media (max-width:600px){.nc-card.has-med{--ms:32px;height:70px}.nc-b.has-med{--ms:26px}}
 .nc-me .pt-t{font:600 10px/1 Cinzel,Georgia,serif;color:#ffd36a;letter-spacing:.06em;white-space:nowrap}.nc-me .pt-t[hidden]{display:none}.nc-me b{color:#fff!important}.nc-me .pb[hidden]{display:none!important}.nc-me{z-index:5}.nc-me[hidden]{display:none!important}
+
+/* ===== 23/11/2026 GAVETA (escolha do Arnold): toda janela abre como gaveta grande que sobe de baixo, com rolagem
+   própria; o jogo continua aparecendo em cima. Tocar fora (no escuro) ou no X fecha. Vale para celular em pé,
+   celular deitado e PC. Fica por último para ganhar de todos os ajustes antigos que brigavam entre si. ===== */
+body.nc-l #hub>aside.panel,body.nc-r #hub>#rightPanel{position:fixed!important;left:50%!important;right:auto!important;top:auto!important;bottom:0!important;
+  width:min(940px,100vw)!important;max-width:100vw!important;height:auto!important;min-height:0!important;max-height:calc(100dvh - 64px - env(safe-area-inset-top,0px))!important;
+  transform:translateX(-50%)!important;margin:0!important;box-sizing:border-box!important;overflow-y:auto!important;overscroll-behavior:contain!important;
+  border:0!important;border-image:none!important;border-top:2px solid #e8c36a!important;border-radius:18px 18px 0 0!important;clip-path:none!important;
+  box-shadow:0 -10px 40px #000a,inset 0 1px 0 #ffffff22!important;padding:6px 16px calc(16px + env(safe-area-inset-bottom,0px))!important;z-index:60!important;
+  animation:ncGavUp .26s cubic-bezier(.2,.8,.2,1)}
+@media (orientation:landscape) and (max-height:500px){body.nc-l #hub>aside.panel,body.nc-r #hub>#rightPanel{max-height:calc(100dvh - 44px)!important;width:min(900px,calc(100vw - 2*env(safe-area-inset-left,0px)))!important}}
+@media (min-width:901px) and (min-height:501px){body.nc-l #hub>aside.panel,body.nc-r #hub>#rightPanel{max-height:78dvh!important}}
+@keyframes ncGavUp{from{transform:translate(-50%,40px);opacity:.4}to{transform:translate(-50%,0);opacity:1}}
+body.nc-l #hub>aside.panel::before,body.nc-r #hub>#rightPanel::before{content:""!important;display:block!important;position:sticky!important;top:0!important;width:44px!important;height:5px!important;margin:2px auto 4px!important;border-radius:3px!important;background:#ffffff55!important;transform:none!important;z-index:7}
+body.nc-l #hub>aside.panel>.nc-head,body.nc-r #hub>#rightPanel>.nc-head{position:sticky!important;top:9px!important;z-index:6!important;display:flex!important;align-items:center;justify-content:space-between;margin:0 -16px!important;padding:6px 16px 8px!important;background:inherit!important;backdrop-filter:blur(6px)}
+body.nc-l #hub>aside.panel .nc-x,body.nc-r #hub>#rightPanel .nc-x{width:44px!important;height:44px!important;min-width:44px;font-size:26px!important;line-height:1!important;border-radius:50%!important;background:#ffffff14!important;border:1px solid #ffffff33!important;color:#fff!important;display:grid!important;place-items:center;position:relative!important;inset:auto!important;z-index:8}
+#ncGavBg{position:fixed;inset:0;z-index:59;background:rgba(5,6,14,.45);display:none}
+body.nc-l #ncGavBg,body.nc-r #ncGavBg{display:block}
+#ncPop{position:fixed;inset:0;z-index:80}#ncPop[hidden]{display:none}
+#ncPop .pop-bg{position:absolute;inset:0;background:rgba(5,6,14,.55)}
+#ncPop .pop-box{position:absolute!important;left:50%!important;top:50%!important;bottom:auto!important;right:auto!important;transform:translate(-50%,-50%)!important;width:min(440px,calc(100vw - 24px))!important;max-height:calc(100dvh - 24px)!important;overflow-y:auto!important;box-sizing:border-box;z-index:2}
+#ncPop .pop-x{width:40px;height:40px;font-size:22px}
+
+/* 23/11/2026 (Arnold): o ranking dos amigos abre colado embaixo do cartão de cima (Node Land · Amigos), não mais como janela embaixo da tela */
+#ncFriends .pop-bg{background:transparent!important}
+#ncFriends .pop-box{position:fixed!important;left:var(--frx,10px)!important;top:var(--fry,120px)!important;bottom:auto!important;right:auto!important;transform:none!important;
+  width:min(var(--frw,300px),calc(100vw - 20px))!important;min-width:260px;max-height:min(55dvh,calc(100dvh - var(--fry,120px) - 12px))!important;overflow-y:auto!important;
+  border:1px solid #e8c36a88!important;border-image:none!important;border-radius:12px!important;clip-path:none!important;padding:10px 12px!important;box-sizing:border-box;
+  background:linear-gradient(180deg,#1c1640f5,#141a36f5)!important;box-shadow:0 10px 30px #000a!important;animation:ncFrDown .2s ease-out}
+@keyframes ncFrDown{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
 </style>
 </body>
 </html>
