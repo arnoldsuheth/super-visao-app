@@ -37,13 +37,12 @@ const rpc=(f,b)=>fetch(URL_DB+'/rest/v1/rpc/'+f,{method:'POST',headers:{apikey:K
 let D=null,aba='mes';
 function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.h);toast.h=setTimeout(()=>e.classList.remove('on'),2200)}
 async function carregar(){if(!id){$('#app').innerHTML='<p class="erro">Link incompleto. Peça o link de novo ao Arnold.</p>';return}
- try{const j=await rpc('sv_ler',{p_id:id});if(!j||j.tipo!=='ely')throw 0;D=j;desenhar()}catch(e){$('#app').innerHTML='<p class="erro">Não foi possível abrir a lista agora. Tente de novo em instantes.</p>'}}
+ try{const j=await rpc('sv_ler',{p_id:id});if(!j||j.tipo!=='ely')throw 0;D=j;desenhar()}catch(e){console.error(e);$('#app').innerHTML='<p class="erro">Não foi possível abrir a lista agora. Tente de novo em instantes.</p>'}}
 function desenhar(){const S=D.dados.semanas||[],R=D.resolvidos||{};
  // abas Semana 1..N (pelo dia em que o problema foi visto) e Mês (tudo em aberto)
- const W=aba==='mes'?null:S[+aba.slice(1)];const L=(D.dados.lojas||[]).map(l=>({...l,itens:l.itens.filter(i=>!W||(i.desde>=W.ini&&i.desde<=W.fim))})).filter(l=>l.itens.length);
+ const W=null; /* 23/11/2026: o Ely vê tudo junto, sem abas */ const L=(D.dados.lojas||[]).map(l=>({...l,itens:l.itens.filter(i=>!W||(i.desde>=W.ini&&i.desde<=W.fim))})).filter(l=>l.itens.length);
  const conta=w=>(D.dados.lojas||[]).reduce((a,l)=>a+l.itens.filter(i=>!R[i.id]&&(!w||(i.desde>=w.ini&&i.desde<=w.fim))).length,0);const total=L.reduce((a,l)=>a+l.itens.length,0),feitos=L.reduce((a,l)=>a+l.itens.filter(i=>R[i.id]).length,0);
- $('#app').innerHTML=`<p class="eb">INDUS.CORP · REPAROS DAS LOJAS</p><h1>Checklist de reparos</h1><p class="sub">Para: Ely · lista atualizada pelo Arnold</p>
- <div class="tabs" role="group" aria-label="Período">${S.map((w,k)=>`<button data-a="s${k}" aria-pressed="${aba==='s'+k}">Semana ${w.n}<small>${w.ini.slice(8)}–${w.fim.slice(8)} · ${conta(w)}</small></button>`).join('')}<button data-a="mes" aria-pressed="${aba==='mes'}">Mês<small>tudo · ${conta(null)}</small></button></div>
+ $('#app').innerHTML=`<p class="eb">INDUS.CORP · REPAROS DAS LOJAS</p><h1>Checklist de reparos</h1><p class="sub">Para: Ely · todas as pendências em aberto, separadas por loja</p>
  <div class="prog"><b id="pf">${feitos} de ${total}</b> <small>resolvidos</small><div class="bar"><i id="pb"></i></div></div>
  <div class="aviso">Toque no quadradinho quando o conserto ficar pronto. O Arnold recebe na hora em que abrir o app. Marcou errado? Toque de novo para desmarcar.</div>
  ${L.map(l=>{const nu=l.itens.filter(i=>i.urg&&!R[i.id]).length,ab=l.itens.filter(i=>!R[i.id]).length;return `<section class="loja"><div class="lh"><span class="dot ${!ab?'v':nu?'r':''}"></span><b>${esc(l.loja)}</b><small>${ab?ab+(ab===1?' em aberto':' em aberto'):'tudo pronto ✓'}</small></div>
@@ -52,7 +51,6 @@ function desenhar(){const S=D.dados.semanas||[],R=D.resolvidos||{};
  ${!L.length?`<p class="erro">${W?'Nenhum reparo aberto nesta semana.':'Nenhum reparo em aberto. Tudo certo nas lojas!'}</p>`:''}
  <p class="rod">Lista enviada em ${new Date(D.atualizado).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})} · Indus.corp · Uso interno</p>`;
  requestAnimationFrame(()=>{$('#pb').style.width=(total?feitos/total*100:100)+'%'});
- document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{aba=b.dataset.a;desenhar()});const ab=document.querySelector('.tabs [aria-pressed=true]');if(ab)ab.scrollIntoView({inline:'center',block:'nearest'});
  document.querySelectorAll('.it').forEach(el=>{const f=()=>marcar(el);el.onclick=f;el.onkeydown=e=>{if(e.key===' '||e.key==='Enter'){e.preventDefault();f()}}})}
 async function marcar(el){const item=el.dataset.id,on=!el.classList.contains('on');el.classList.add('busy');
  try{const ok=await rpc('sv_marcar',{p_id:id,p_item:item,p_on:on});if(!ok)throw 0;
