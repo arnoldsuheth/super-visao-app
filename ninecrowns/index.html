@@ -14147,12 +14147,13 @@ window.ncMeTagOn = true;
       if(!box.isEmpty()) topY = Math.max(1.4, Math.min(4.5, box.max.y - h.root.position.y)); }catch(e){} }
   function cria(){ tag = document.createElement('div'); tag.className = 'ltag nc-ptag pty nc-me';
     tag.innerHTML = '<span class="pt-t"></span><span class="pt-n"><img class="pt-cls" alt=""><b></b></span><i class="pb hp"><s></s></i><i class="pb rs"><s></s></i>'; document.body.appendChild(tag); }
-  function tick(){ requestAnimationFrame(tick);
+  let fr = 0;
+  function tick(){ requestAnimationFrame(tick); if((fr++ & 1) || document.hidden) return;
     try{
       const h = hero, vivo = h && h.root && (mode === 'stage' || mode === 'hub') && !(P && P.dead && mode === 'stage');
       if(!vivo){ if(tag && !tag.hidden) tag.hidden = true; return; }
       if(!tag) cria();
-      const now = performance.now(); if(h !== lastH || now - medeT > 1500){ lastH = h; medeT = now; mede(h); }
+      const now = performance.now(); if(h !== lastH || now - medeT > 3000){ lastH = h; medeT = now; mede(h); }
       const tt = ncTitleTxt() || '', te = tag.children[0]; if(te.textContent !== tt) te.textContent = tt; te.hidden = !tt;
       const nm = ncName() + ' · nv ' + save.level, tb = tag.querySelector('b'); if(tb.textContent !== nm) tb.textContent = nm;
       const im = tag.querySelector('img'), src = 'assets/icons/cls/' + (save.cls in CLASSES ? save.cls : 'warrior') + '.png'; if(im.getAttribute('src') !== src) im.src = src;
@@ -14277,23 +14278,17 @@ function ncNtGo(kind){ try{
 }catch(e){ console.warn('ncNtGo', e); } }
 /* 23/11/2026: marca no corpo da página quando há uma janela aberta (para esconder nome, sino e chat) */
 (function(){ const OUT = new Set(['stage','hub','hud','fx','fade','ncGavBg','ncErr','ncChat','ncBell','pickCards','banner','ncRoomHud','ncWorlds','ncParty']);
-  function aberta(){ const b = document.body.classList; if(b.contains('nc-l') || b.contains('nc-r') || b.contains('nc-st') || b.contains('nc-inst')) return true;
-    if(document.querySelector('dialog[open]')) return true;
-    const W = innerWidth, H = innerHeight;
-    for(const el of [...document.body.children, ...(document.getElementById('hub') ? document.getElementById('hub').children : [])]){
-      if(!el.id && !el.className) continue; if(OUT.has(el.id) || el.classList.contains('nc-ptag') || el.classList.contains('ltag')) continue;
-      if(el.hidden) continue; const cs = getComputedStyle(el); if(cs.display === 'none' || cs.visibility === 'hidden' || +cs.opacity < .1) continue;
-      if(cs.position !== 'fixed' && cs.position !== 'absolute') continue; if(el.tagName === 'CANVAS' || el.tagName === 'ASIDE' || el.tagName === 'NAV' || el.id === 'rightPanel') continue;
-      let r = el.getBoundingClientRect(); if(r.width < W*.5 || r.height < H*.4){ const box = el.firstElementChild; if(!box) continue; r = box.getBoundingClientRect(); if(r.width < W*.5 || r.height < H*.4) continue; }
-      if(el.classList.contains('nc-rail') || el.classList.contains('spacer')) continue; return true; }
+  const IDS = ['ncStable','ncFest','ncFriends','ncPop','ncDaily','ncBellPop','ncSkPop','ncTrade','ncPeerPop','ncCriar','ncWorldsPop','ncDgPop','howto'];
+  function aberta(){ const b = document.body.classList; if(b.contains('nc-l') || b.contains('nc-r') || b.contains('nc-st') || b.contains('nc-inst') || b.contains('nc-cria')) return true;
+    if(document.querySelector('dialog[open],.modal[open],.ncPop:not([hidden])')) return true;
+    for(const id of IDS){ const el = document.getElementById(id); if(el && !el.hidden && el.getClientRects().length && el.offsetWidth > innerWidth*.4 && getComputedStyle(el).display !== 'none') return true; }
     return false; }
-  setInterval(() => { try{ document.body.classList.toggle('nc-ov', aberta()); }catch(_){} }, 250); })();
+  setInterval(() => { try{ if(document.hidden) return; document.body.classList.toggle('nc-ov', aberta()); }catch(_){} }, 500); })();
 /* 23/11/2026: posiciona o ranking dos amigos logo abaixo do cartão "Node Land · Amigos" */
 (function(){ const pos = () => { const f = document.getElementById('ncFriends'), w = ['ncRoomHud','ncWorlds'].map(id => document.getElementById(id)).find(x => x && !x.hidden && x.getClientRects().length && x.getBoundingClientRect().width > 40); if(!f || f.hidden) return;
     const r = w ? w.getBoundingClientRect() : null;
     f.style.setProperty('--frx', (r ? Math.max(8, r.left) : 10) + 'px'); f.style.setProperty('--fry', (r ? r.bottom + 6 : 110) + 'px'); f.style.setProperty('--frw', (r ? Math.max(280, r.width) : 300) + 'px'); };
-  new MutationObserver(pos).observe(document.body, {childList:true, subtree:false});
-  setInterval(pos, 400); addEventListener('resize', pos); })();
+  setInterval(() => { const f = document.getElementById('ncFriends'); if(f && !f.hidden) pos(); }, 700); addEventListener('resize', pos); })();
 /* 23/11/2026: tocar num item da mochila sempre abre o cartão (na fase a mochila não redesenhava e o cartão não aparecia) */
 document.addEventListener('click', e => { if(e.target.closest('[data-bsel]')) setTimeout(() => { try{ ncPopDraw(); }catch(_){} }, 40); });
 /* 23/11/2026: fundo escuro atrás da gaveta; tocar nele ou apertar Esc fecha a janela aberta */
