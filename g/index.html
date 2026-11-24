@@ -1,7 +1,14 @@
 <!DOCTYPE html>
 <html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#f4f5f7">
-<title>Equipe da loja · Indus</title>
+<meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#ffffff">
+<title>Gerentes · Indus</title>
+<meta name="description" content="Equipe da loja em 1 minuto: cadastro de funcionário novo e ocorrências direto pelo celular.">
+<meta property="og:type" content="website"><meta property="og:site_name" content="Gerentes · Indus">
+<meta property="og:title" content="Gerentes · Equipe da loja em 1 minuto">
+<meta property="og:description" content="Cadastro de funcionário novo e ocorrências (advertência, atestado, falta, atraso, desligamento) direto pelo celular.">
+<meta property="og:url" content="https://arnoldsuheth.github.io/super-visao-app/g/"><meta property="og:image" content="https://arnoldsuheth.github.io/super-visao-app/g/og.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Gerentes · Indus — Equipe da loja em 1 minuto"><meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="icone.png"><link rel="apple-touch-icon" href="icone.png"><meta name="apple-mobile-web-app-title" content="Gerentes">
 <style>
 /* Página dos gerentes (SUPER VISÃO, 24/11/2026). Visual B (claro), aprovado pelo Arnold.
    O gerente só ENVIA; quem lê é o app do Arnold, que aprova antes de entrar na Equipe. */
@@ -31,8 +38,27 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--ac)}
 .msg{padding:12px 14px;border-radius:12px;margin:10px 0;font-weight:600}.msg.ok{background:#e7f6ec;color:#1b5e20}.msg.er{background:#fdecea;color:var(--erro)}
 .oculto{display:none!important}.dica{font-size:13px;color:var(--mute);margin-top:6px}
 .feito{text-align:center;padding:30px 10px}.feito b{font-size:22px;display:block;margin:8px 0}
+/* Identidade GERENTES (opção C, 24/11/2026): branca e forte, preto + laranja */
+.marca{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.marca .ic{width:46px;height:46px;border-radius:10px;background:#14171c;display:grid;place-items:center;transform:rotate(-6deg);box-shadow:4px 4px 0 var(--ac);flex:none}
+.marca b{display:block;font:900 26px/1 'Arial Black',system-ui;letter-spacing:.06em;text-transform:uppercase}
+.marca small{display:inline-block;margin-top:5px;font:800 10px system-ui;letter-spacing:.25em;color:#fff;background:var(--ac);padding:2px 7px;border-radius:3px}
+#intro{position:fixed;inset:0;z-index:50;background:#fff;border-top:14px solid var(--ac);overflow:auto;padding:30px 22px calc(26px + env(safe-area-inset-bottom));display:flex;flex-direction:column}
+#intro .in{max-width:520px;width:100%;margin:0 auto;display:flex;flex-direction:column;flex:1}
+#intro .marca{margin-bottom:30px}#intro .marca .ic{width:60px;height:60px;border-radius:13px;box-shadow:5px 5px 0 var(--ac)}#intro .marca b{font-size:34px}
+#intro h2{font:900 30px/1.15 system-ui}#intro .sub{font-size:16px;margin-top:10px;color:#3b3f46}
+#intro ul{list-style:none;padding:0;margin:26px 0;display:grid;gap:12px}
+#intro li{display:flex;gap:12px;align-items:center;padding:14px;background:#f4f5f7;border-left:5px solid #14171c;border-radius:6px;font-size:16px;font-weight:600}
+#intro li i{font-style:normal;font-size:22px;width:44px;height:44px;border-radius:8px;background:#14171c;display:grid;place-items:center;flex:none}
+#intro .comecar{margin-top:auto;width:100%;background:#14171c;color:#fff;border:0;font:800 18px system-ui;padding:18px;border-radius:8px;box-shadow:5px 5px 0 var(--ac)}
+#intro .rod{text-align:center;font-size:12px;color:#8a8f98;margin-top:14px}
 </style></head><body><main>
-<p class="logo">SUPER VISÃO · INDUS</p>
+<div id="intro" role="dialog" aria-label="Apresentação"><div class="in">
+ <div class="marca"><span class="ic"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#ff7a12" stroke-width="2.4" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></span><span><b>Gerentes</b><small>INDUS</small></span></div>
+ <h2>Equipe da loja em 1 minuto</h2><p class="sub">Tudo que o supervisor precisa saber da sua equipe, sem planilha e sem mensagem perdida.</p>
+ <ul><li><i>➕</i>Cadastrar funcionário novo</li><li><i>📝</i>Advertência, atestado, falta, atraso ou desligamento</li><li><i>✅</i>O supervisor confere e já cria os lembretes</li></ul>
+ <button class="comecar" type="button" onclick="document.getElementById('intro').remove();scrollTo(0,0)">Começar</button><p class="rod">Indus · SUPER VISÃO</p></div></div>
+<div class="marca"><span class="ic"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#ff7a12" stroke-width="2.4" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></span><span><b>Gerentes</b><small>INDUS</small></span></div>
 <h1>Equipe da loja</h1>
 <p class="sub">Preencha em menos de 1 minuto. O supervisor confere antes de entrar no sistema.</p>
 <div id="erroLink" class="msg er oculto">Link incompleto. Peça o link certo ao supervisor.</div>
