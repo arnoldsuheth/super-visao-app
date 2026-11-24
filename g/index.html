@@ -55,6 +55,10 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--ac)}
 .ico{display:inline-block;vertical-align:-4px}.seg button{display:flex;align-items:center;justify-content:center;gap:6px;font-size:15px;white-space:nowrap;padding:13px 8px}.chips button .ico{vertical-align:-3px}
 .okc{display:inline-grid;place-items:center;width:72px;height:72px;border-radius:18px;background:#14171c;box-shadow:5px 5px 0 var(--ac)}
 .chips button.trocar{border:0;background:none;color:var(--mute);font-weight:600;font-size:13px;text-decoration:underline;padding:10px 4px;min-height:0}
+#lojas.grade{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+#lojas.grade .lj{display:flex;align-items:center;gap:10px;text-align:left;border-radius:12px;padding:8px 10px;min-height:52px;font-size:14px;line-height:1.2;font-weight:700}
+#lojas.grade .lj b{flex:none;width:34px;height:34px;border-radius:9px;background:#14171c;color:#fff;display:grid;place-items:center;font-size:14px}
+#lojas.grade .lj span{overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 </style></head><body><main>
 <div id="intro" role="dialog" aria-label="Apresentação"><div class="in">
  <div class="marca"><span class="ic"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#ff7a12" stroke-width="2.4" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></span><span><b>Gerentes</b><small>INDUS</small></span></div>
@@ -66,7 +70,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--ac)}
 <p class="sub">Preencha em menos de 1 minuto. O supervisor confere antes de entrar no sistema.</p>
 <div id="erroLink" class="msg er oculto">Link incompleto. Peça o link certo ao supervisor.</div>
 <div id="app">
- <div class="card"><div class="f"><span class="lb">Sua loja</span><div class="chips" id="lojas"><span class="dica">Carregando…</span></div></div></div>
+ <div class="card"><div class="f"><span class="lb">Sua loja · toque uma vez, fica gravada</span><div class="chips" id="lojas"><span class="dica">Carregando…</span></div></div></div>
  <div class="seg"><button id="tNovo" class="on" type="button"><svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg> Novo funcionário</button><button id="tOc" type="button"><svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5"/><path d="M9 13h7"/><path d="M9 17h5"/></svg> Ocorrência</button></div>
 
  <form id="fNovo" autocomplete="off">
@@ -150,11 +154,13 @@ function pessoas(){const box=$('pessoas');box.innerHTML='';pessoa=null;
  if(!loja){box.innerHTML='<span class="dica">Escolha a loja primeiro.</span>';return}
  (loja.pessoas||[]).forEach(p=>{const b=document.createElement('button');b.type='button';b.textContent=p.nome;b.onclick=()=>{box.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));pessoa=p;$('pessoaOutra').classList.add('oculto')};box.appendChild(b)});
  const o=document.createElement('button');o.type='button';o.textContent='Outro nome';o.onclick=()=>{box.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===o));pessoa={id:'',nome:''};$('pessoaOutra').classList.remove('oculto');$('pessoaOutra').focus()};box.appendChild(o)}
-function lojas(){const box=$('lojas');box.innerHTML='';let salva='';try{salva=localStorage.getItem('eq-loja')||''}catch(e){}
+function lojas(){const box=$('lojas');box.innerHTML='';box.classList.remove('grade');let salva='';try{salva=localStorage.getItem('eq-loja')||''}catch(e){}
  const fixa=publico.find(l=>l.id===salva);
  if(fixa){loja=fixa;const b=document.createElement('button');b.type='button';b.className='on';b.textContent=fixa.nome;box.appendChild(b);
   const t=document.createElement('button');t.type='button';t.className='trocar';t.textContent='Não é sua loja?';t.onclick=()=>{if(confirm('Trocar a loja gravada neste celular?')){try{localStorage.removeItem('eq-loja')}catch(e){}loja=null;lojas();pessoas()}};box.appendChild(t);pessoas();return}
- publico.forEach(l=>{const b=document.createElement('button');b.type='button';b.textContent=l.nome;b.onclick=()=>{try{localStorage.setItem('eq-loja',l.id)}catch(e){}lojas()};box.appendChild(b)})}
+ box.classList.add('grade');publico.forEach(l=>{const b=document.createElement('button');b.type='button';b.className='lj';const m=String(l.nome).match(/^Loja\s*(\d+)\s*[—-]\s*(.*)$/);
+ b.innerHTML='<b></b><span></span>';b.querySelector('b').textContent=m?m[1]:'';b.querySelector('span').textContent=(m?m[2]:l.nome).replace(/^Shopping /,'Shop. ');b.setAttribute('aria-label',l.nome);
+ b.onclick=()=>{try{localStorage.setItem('eq-loja',l.id)}catch(e){}lojas()};box.appendChild(b)})}
 rpc('equipe_publico',{p_cfg:CFG}).then(p=>{publico=p||[];
  if(!publico.length){$('lojas').innerHTML='<span class="dica">Link ainda não ativado pelo supervisor.</span>';return}lojas()
 }).catch(()=>{$('lojas').innerHTML='<span class="dica">Sem conexão. Atualize a página.</span>'});
