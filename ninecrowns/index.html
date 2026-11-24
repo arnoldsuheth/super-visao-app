@@ -10268,9 +10268,11 @@ function mmIco(g, t, x, y, s){ if((t === 'ch' || t === 'q') && window.ncMapGlyph
   g.restore(); }
 function mmPeers(g, s){ try{ for(const k in ncCoop.peers){ const q = ncCoop.peers[k], d = q.d; if(!d || !curStage || d.st !== curStage.id || d.x == null) continue;
   g.fillStyle = '#4fd8ff'; g.strokeStyle = '#06243a'; g.lineWidth = .8; g.beginPath(); g.arc(mmX(d.x), mmY(d.z), 2.4*s, 0, 7); g.fill(); g.stroke(); } }catch(_){} }
+const _mmV = new T.Vector3();
 function drawMinimap(){
-  const c = $('#mm'); if(!c || !mmBg) return; const g = c.getContext('2d'), W = c.width, R = W/2, z = W/34;   // ~34 unidades do mapa de lado
-  const yx = mmX(P.pos.x), yy = mmY(P.pos.z), rot = -(Math.PI - P.face);
+  const c = $('#mm'); if(!c || !mmBg) return; const g = c.getContext('2d'), W = c.width, R = W/2, z = W/52;   // 23/11 (Arnold): mais afastado (~52 unidades do mapa de lado, antes 34)
+  /* 23/11 (Arnold): o mapa fica FIXO (não gira mais com o herói): o lado de cima do mapa é o lado de cima da tela. A setinha branca mostra para onde o herói olha. */
+  const yx = mmX(P.pos.x), yy = mmY(P.pos.z); let rot = 0; try{ camera.getWorldDirection(_mmV); rot = -Math.PI/2 - Math.atan2(_mmV.z, _mmV.x); }catch(_){}
   g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, W, W); g.save(); g.beginPath(); g.arc(R, R, R, 0, 7); g.clip(); g.fillStyle = '#0e1222'; g.fillRect(0, 0, W, W);
   g.translate(R, R); g.rotate(rot); g.scale(z, z); g.translate(-yx, -yy); g.imageSmoothingEnabled = true;
   g.drawImage(mmBg, 0, 0); g.globalAlpha = .45; g.drawImage(fogC, 0, 0); g.globalAlpha = 1;
@@ -10280,11 +10282,20 @@ function drawMinimap(){
   if(boss && !boss.dead) mmIco(g, 'boss', mmX(boss.pos.x), mmY(boss.pos.z), .55);
   if(save.tomb && curStage && save.tomb.st === curStage.id) mmIco(g, 'tomb', mmX(save.tomb.x), mmY(save.tomb.z), .5);
   mmPeers(g, .5); g.restore();
-  g.setTransform(1, 0, 0, 1, 0, 0); mmIco(g, 'you', R, R, W/48);
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  { const fa = Math.atan2(Math.cos(P.face), Math.sin(P.face)) + rot; g.save(); g.translate(R, R); g.rotate(fa + Math.PI/2); mmIco(g, 'you', 0, 0, W/48); g.restore(); }
+  /* bússola: anel dourado com N, L, S, O girando junto com a câmera */
+  g.lineWidth = W*.05; g.strokeStyle = 'rgba(20,14,40,.92)'; g.beginPath(); g.arc(R, R, R - g.lineWidth/2, 0, 7); g.stroke();
+  g.lineWidth = W*.012; g.strokeStyle = '#d8b45a'; g.beginPath(); g.arc(R, R, R - W*.05, 0, 7); g.stroke();
+  g.font = '800 ' + Math.round(W*.075) + 'px system-ui,sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  [['N', -Math.PI/2, '#ff5a4a'], ['L', 0, '#f4e6c0'], ['S', Math.PI/2, '#f4e6c0'], ['O', Math.PI, '#f4e6c0']].forEach(([t, a0, cl]) => { const a = a0 + rot, rr = R - W*.025; g.fillStyle = cl; g.fillText(t, R + Math.cos(a)*rr, R + Math.sin(a)*rr + 1); });
   const T = mmTarget(), tag = $('#mmTag');
   if(T.t){ const dx = mmX(T.t.x) - yx, dy = mmY(T.t.z) - yy, dist = Math.hypot(dx, dy)*z;
     const a = Math.atan2(dy, dx) + rot, r = Math.min(dist, R - W*.09); mmIco(g, 'q', R + Math.cos(a)*r, R + Math.sin(a)*r, W/40); }
-  if(tag){ const t = T.t ? T.txt + ' · ' + T.d + ' m' : T.txt; tag.hidden = !t; if(t && tag.textContent !== t) tag.textContent = t; }
+  if(tag){ const t = T.t ? T.txt + ' · ' + T.d + ' m' : T.txt; tag.hidden = !t;
+    if(!tag.querySelector('.mm-seta')){ tag.innerHTML = '<svg class="mm-seta" viewBox="0 0 12 12" width="13" height="13"><path d="M6 0 L11.5 11 L6 8.4 L0.5 11Z" fill="#ffe14a" stroke="#3a2600" stroke-width=".8"/></svg><span></span>'; tag.dataset.t = ''; }
+    if(t && tag.dataset.t !== t){ tag.dataset.t = t; tag.lastChild.textContent = t; } tag.firstChild.style.display = T.t ? '' : 'none';
+    const sa = tag.querySelector('.mm-seta'); if(sa && T.t){ sa.style.transformBox = 'fill-box'; const a = Math.atan2(mmY(T.t.z) - yy, mmX(T.t.x) - yx) + rot; sa.style.transform = 'rotate(' + (a + Math.PI/2).toFixed(2) + 'rad)'; } }   /* setinha que aponta o objetivo */
   if(mmFullOpen()) drawBigMap();
 }
 const mmFullOpen = () => { const f = $('#mmFull'); return !!f && !f.hidden; };
@@ -15305,6 +15316,8 @@ body.nc-ov #ncRoomHud,body.nc-ov #ncWorlds{visibility:hidden!important}
 .nd-c.x2{border-color:#7ae8ff!important;background:linear-gradient(180deg,#1a3a6a,#10204a)!important}.nd-c.x2 span{color:#9af0ff;font-weight:700}
 #ncXp2{position:fixed;left:50%;transform:translateX(-50%);top:calc(6px + env(safe-area-inset-top,0px));z-index:58;padding:4px 12px;border-radius:999px;background:linear-gradient(180deg,#1a3a6a,#10204a);border:1px solid #7ae8ff;color:#bff4ff;font:800 12px system-ui,sans-serif;box-shadow:0 0 12px #3ab0ff66;pointer-events:none}
 body.nc-ov #ncXp2{display:none}
+/* 23/11 (Arnold): setinha de direção ao lado da distância do minimapa */
+#mmTag{display:inline-flex;align-items:center;gap:5px}#mmTag .mm-seta{display:inline-block;flex:0 0 auto;transform-origin:50% 50%;filter:drop-shadow(0 0 3px #ffb000)}
 #ncFriends.fr-d .pop-box{left:50%!important;right:auto!important;top:auto!important;bottom:calc(8px + env(safe-area-inset-bottom,0px))!important;width:min(400px,calc(100vw - 16px))!important;max-height:min(46dvh,400px)!important;overflow-y:auto!important;border-radius:14px!important;border:1px solid #e8c36a99!important;translate:-50% 0;margin:0!important;font-size:13px!important;padding:10px 12px!important}
 #ncFriends.fr-d .fr-h b{font-size:17px}#ncFriends.fr-d .pop-x{width:34px!important;height:34px!important}
 @media (orientation:landscape) and (max-height:500px){#ncFriends.fr-d .pop-box{width:min(380px,calc(100vw - 16px))!important;max-height:calc(100dvh - 24px)!important}}
