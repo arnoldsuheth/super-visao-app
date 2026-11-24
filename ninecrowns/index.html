@@ -10354,7 +10354,7 @@ function monAttach(cr, key, o){
       if(lite){ const mk = n.isSkinnedMesh ? 'ms' : 'mm'; m = MON[mk] || (MON[mk] = new T.MeshLambertMaterial({map:monTex(), skinning:!!n.isSkinnedMesh})); n.material = m; n.castShadow = false; }
       else { m = new T.MeshStandardMaterial({map:monTex(), skinning:!!n.isSkinnedMesh, roughness:.78, metalness:0});
         m.userData.baseE = base ? base.clone() : new T.Color(o.elite ? 0x3a2a04 : 0x000000); m.emissive.copy(m.userData.baseE); n.material = m; mats.push(m); n.castShadow = true; } } });
-    { const dead = []; cr.body.traverse(n => { if(n.isMesh) dead.push(n); }); dead.forEach(n => { n.visible = false; n.castShadow = false; n.matrixAutoUpdate = false; }); }
+    { const dead = []; cr.body.traverse(n => { if(n.isMesh) dead.push(n); }); dead.forEach(n => { n.visible = false; n.castShadow = false; n.matrixAutoUpdate = false; if(n.parent) n.parent.remove(n); }); }   /* 23/11 desempenho: o corpo antigo (escondido) sai da cena; antes o jogo recalculava ~40 peças invisíveis por monstro a cada quadro */
     const sz = g.box.getSize(new T.Vector3()), fly = key[0] === 'f', th = key[0] === 'b' ? 2.15 : fly ? 1.7 : 1.75;
     let k = th/Math.max(.01, sz.y); const wide = Math.max(sz.x, sz.z)*k; if(wide > 2.6) k *= 2.6/wide;
     model.scale.setScalar(k); model.position.y = -g.box.min.y*k + (fly ? .55 : 0); cr.body.add(model);
@@ -12511,8 +12511,8 @@ function updateEnemies(dt){
     ncAiPeer = false; if(e.dead) continue;
     /* JOGO LEVE: monstro a mais de 40 m de todos os jogadores não é desenhado nem animado (volta igual quando alguém chega perto) */
     if(e.kind !== 'boss' && !e.post && !e.rem){ const far = !ncNearAny(e.pos.x, e.pos.z, e.awake ? 48 : 40);
-      if(far){ if(!e.culled){ e.culled = true; e.cr.root.visible = false; if(e.bar) e.bar.g.visible = false; } continue; }
-      if(e.culled){ e.culled = false; e.cr.root.visible = true; } }
+      if(far){ if(!e.culled){ e.culled = true; e.cr.root.visible = false; if(e.cr.root.parent === scene){ scene.remove(e.cr.root); e.ncOut = 1; } if(e.bar) e.bar.g.visible = false; } continue; }   /* 23/11 desempenho: monstro longe sai da cena (não pesa nem escondido) */
+      if(e.culled){ e.culled = false; if(e.ncOut){ scene.add(e.cr.root); e.ncOut = 0; } e.cr.root.visible = true; } }
     monUpdate(e, dt);
     if(e.burnT > 0){ e.burnT -= dt; e.burnAcc += e.burnDps*dt; if(e.burnAcc >= Math.max(1, e.burnDps*.5)){ const d = Math.round(e.burnAcc); e.burnAcc = 0; if(Math.random() < .6) burst(e.pos, e.burnCol || 0xff7a2a, 2, 1, 3, 1); damageEnemy(e, d, false, 0, 0, 0, 'dot'); if(e.dead || e.dying) continue; } }
     if(e.rem){ ncCoop.remUpd(e, dt); unflash(e, e.cr.mats, dt); continue; }   // monstro do anfitrião: só copia o que ele manda
