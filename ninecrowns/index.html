@@ -10771,10 +10771,11 @@ document.addEventListener('click', e => { const b = e.target.closest('[data-rebi
    Cada habilidade vai do nível 1 ao 10: começa fraca e cada ponto aumenta o dano e diminui a recarga e o gasto.
    Parte 1: as 2 habilidades que já existem. As outras 4 de cada classe entram nas próximas partes. */
 /* 22/11 (Arnold aprovou): cada habilidade vai até o nível 5. No 3 ganha uma melhoria, no 5 vira SUPER (contorno dourado). 1 ponto a cada 3 níveis. */
-const NC_SK_REQ = [15, 20, 30, 40, 50, 65], NC_SK_MAX = 5;
+/* 23/11 (Arnold escolheu): 1ª habilidade no nível 2; depois 5, 10, 18, 28 e a Suprema no 40. 1 ponto a cada 2 níveis. */
+const NC_SK_REQ = [2, 5, 10, 18, 28, 40], NC_SK_MAX = 5;
 const ncSkTree = () => { save.skt = save.skt || {}; const t = save.skt[save.cls] || (save.skt[save.cls] = []); return t; };
 const ncSkLv = i => Math.min(NC_SK_MAX, ncSkTree()[i] || 0);
-const ncSkPts = () => Math.max(0, Math.floor(Math.max(0, ncLvOf(save.cls) - 12)/3) - ncSkTree().reduce((a, b) => a + Math.min(NC_SK_MAX, b || 0), 0));
+const ncSkPts = () => Math.max(0, Math.floor(ncLvOf(save.cls)/2) - ncSkTree().reduce((a, b) => a + Math.min(NC_SK_MAX, b || 0), 0));
 const ncSkMul = i => .6 + (Math.max(1, ncSkLv(i)) - 1)*.25;        // nível 1 = 60%, nível 5 = 160%
 const ncSkFast = i => 1 - (Math.max(1, ncSkLv(i)) - 1)*.065;       // recarga e gasto: até 26% menores no nível 5
 const ncSkResetCost = () => Math.round(500*NC_ECON*Math.max(1, ncLvOf(save.cls) - 14));
@@ -10784,7 +10785,7 @@ const ncName = () => (save.name || '').trim() || CLASSES[save.cls].name;
 const ncSkSlots = () => { save.sks = save.sks || {}; const c = CLS(), sl = save.sks[save.cls] || [0, 1]; return sl.map((v, j) => c.skills[v] ? v : j); };
 const ncSlot = j => ncSkSlots()[j];
 function ncTreeHTML(){ const c = CLS(), u = window.ncIconUrl || (() => 'none'), pts = ncSkPts(), lv = ncLvOf(save.cls);
-  let h = '<div class="eyebrow">Árvore de habilidades · ' + c.name + '</div><div class="tree-top"><span>Pontos para usar: <b>' + pts + '</b></span>' + (lv < 15 ? '<small>No Grade: só ataque básico. O 1º ponto vem no nível 15.</small>' : '<small>1 ponto a cada 3 níveis (a partir do 15) · máximo nível 5 · no 3 ganha melhoria, no 5 vira SUPER</small>') + '</div><div class="tree">';
+  let h = '<div class="eyebrow">Árvore de habilidades · ' + c.name + '</div><div class="tree-top"><span>Pontos para usar: <b>' + pts + '</b></span>' + (lv < 2 ? '<small>O 1º ponto vem no nível 2.</small>' : '<small>1 ponto a cada 2 níveis · máximo nível 5 · no 3 ganha melhoria, no 5 vira SUPER</small>') + '</div><div class="tree">';
   for(let i = 0; i < NC_SK_REQ.length; i++){ const sk = c.skills[i], l = ncSkLv(i), req = NC_SK_REQ[i], open = lv >= req;
     if(!sk){ h += '<div class="tnode soon"><i></i><div><b>Habilidade ' + (i + 1) + (i === 5 ? ' · Suprema' : '') + '</b><small>Nível ' + req + ' · chega na próxima atualização</small></div></div>'; continue; }
     const can = open && pts > 0 && l < NC_SK_MAX;
@@ -11897,7 +11898,7 @@ function gainXP(n, fromParty){
   n = Math.round(n*DF().reward*(evFx().xp || 1)*(ncXp2Left() ? 2 : 1));   /* XP em dobro do prêmio do dia */
   save.xp += n;
   let up = false;
-  while(save.level < NC_MAX_LV && save.xp >= xpNeed(save.level)){ save.xp -= xpNeed(save.level); save.level++; up = true; if(save.level >= 15 && save.level !== NC_SPEC_LV) setTimeout(() => { try{ banner('Novo ponto de habilidade', (NC_SK_REQ.includes(save.level) ? 'Habilidade nova liberada! ' : '') + 'Abra a árvore (Herói ou tecla H).'); }catch(_){} }, 600); if(save.level === NC_SPEC_LV) setTimeout(() => { try{ banner('Nível ' + NC_SPEC_LV + ': especialização liberada', 'Abra o menu Herói e escolha o seu caminho'); }catch(e){} }, 1800); }
+  while(save.level < NC_MAX_LV && save.xp >= xpNeed(save.level)){ save.xp -= xpNeed(save.level); save.level++; up = true; if(save.level % 2 === 0 && save.level !== NC_SPEC_LV) setTimeout(() => { try{ banner('Novo ponto de habilidade', (NC_SK_REQ.includes(save.level) ? 'Habilidade nova liberada! ' : '') + 'Abra a árvore (Herói ou tecla H).'); }catch(_){} }, 600); if(save.level === NC_SPEC_LV) setTimeout(() => { try{ banner('Nível ' + NC_SPEC_LV + ': especialização liberada', 'Abra o menu Herói e escolha o seu caminho'); }catch(e){} }, 1800); }
   if(save.level >= NC_MAX_LV){ save.level = NC_MAX_LV; save.xp = 0; }
   if(up && P){
     P.S = stats(); P.hp = P.S.hp;
