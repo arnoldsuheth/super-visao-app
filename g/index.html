@@ -54,6 +54,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--ac)}
 #intro .rod{text-align:center;font-size:12px;color:#8a8f98;margin-top:14px}
 .ico{display:inline-block;vertical-align:-4px}.seg button{display:flex;align-items:center;justify-content:center;gap:6px;font-size:15px;white-space:nowrap;padding:13px 8px}.chips button .ico{vertical-align:-3px}
 .okc{display:inline-grid;place-items:center;width:72px;height:72px;border-radius:18px;background:#14171c;box-shadow:5px 5px 0 var(--ac)}
+.chips button.trocar{border:0;background:none;color:var(--mute);font-weight:600;font-size:13px;text-decoration:underline;padding:10px 4px;min-height:0}
 </style></head><body><main>
 <div id="intro" role="dialog" aria-label="Apresentação"><div class="in">
  <div class="marca"><span class="ic"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#ff7a12" stroke-width="2.4" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></span><span><b>Gerentes</b><small>INDUS</small></span></div>
@@ -89,12 +90,13 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--ac)}
   <div class="card">
    <div class="f"><span class="lb">Funcionário</span><div class="chips" id="pessoas"><span class="dica">Escolha a loja primeiro.</span></div>
     <input id="pessoaOutra" class="oculto" style="margin-top:8px" maxlength="80" placeholder="Nome do funcionário"></div>
-   <div class="f"><span class="lb">O que aconteceu</span><div class="chips" data-campo="oc"><button type="button" class="on">Advertência</button><button type="button">Atestado</button><button type="button">Falta</button><button type="button">Atraso</button><button type="button">Desligamento</button></div></div>
+   <div class="f"><span class="lb">O que aconteceu</span><div class="chips" data-campo="oc"><button type="button" class="on">Advertência</button><button type="button">Atestado</button><button type="button">Falta</button><button type="button">Atraso</button><button type="button">Desligamento</button><button type="button">Saiu da empresa</button></div></div>
    <div class="f" id="blAdv"><span class="lb">Tipo de advertência</span><div class="chips" data-campo="adv"><button type="button" class="on">Verbal</button><button type="button">Escrita</button><button type="button">Suspensão</button></div>
     <span class="lb" style="margin-top:12px">Motivo</span><div class="chips" data-campo="motivo"><button type="button" class="on">Falta sem justificativa</button><button type="button">Atraso</button><button type="button">Conduta</button><button type="button">Uniforme</button><button type="button">Outro</button></div></div>
    <div class="f oculto" id="blAt"><span class="lb">Quantos dias de atestado</span><div class="chips" data-campo="dias"><button type="button" class="on">1</button><button type="button">2</button><button type="button">3</button><button type="button">5</button><button type="button">7</button><button type="button">15</button></div></div>
    <div class="f oculto" id="blAtr"><span class="lb">Quanto tempo de atraso</span><div class="chips" data-campo="atraso"><button type="button" class="on">Até 15 min</button><button type="button">15 a 30 min</button><button type="button">Mais de 30 min</button></div></div>
-   <div class="f oculto" id="blDes"><span class="lb">Motivo do desligamento</span><div class="chips" data-campo="deslig"><button type="button" class="on">Pedido do funcionário</button><button type="button">Dispensa</button><button type="button">Fim da experiência</button><button type="button">Justa causa</button></div></div>
+   <div class="f oculto" id="blDes"><span class="lb">Motivo do desligamento</span><div class="chips" data-campo="deslig"><button type="button" class="on">Dispensa</button><button type="button">Fim da experiência</button><button type="button">Justa causa</button></div></div>
+   <div class="f oculto" id="blSai"><span class="lb">Como saiu</span><div class="chips" data-campo="saiu"><button type="button" class="on">Pediu demissão</button><button type="button">Abandono de emprego</button><button type="button">Acordo</button></div></div>
    <div class="f"><span class="lb">Quando</span><div class="chips" id="quandoChips"></div><input id="quando" type="date" class="oculto" style="margin-top:8px"></div>
    <div class="f"><span class="lb">Foto do documento (opcional)</span><label class="foto" id="fotoBox"><input id="foto" type="file" accept="image/*" class="oculto"><span id="fotoTxt"><svg class="ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><path d="M12 16.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"/></svg> Tirar foto do documento</span></label></div>
    <div class="f"><label for="obsO">Observação (opcional)</label><input id="obsO" maxlength="200" placeholder="Escreva só se precisar"></div>
@@ -124,7 +126,7 @@ document.querySelectorAll('.chips[data-campo]').forEach(g=>{escolha[g.dataset.ca
 function mudou(c){
  if(c==='cargo')$('cargoOutro').classList.toggle('oculto',escolha.cargo!=='Outro');
  if(c==='exp'){$('expOutro').classList.toggle('oculto',escolha.exp!=='outro');periodos()}
- if(c==='oc'){$('blAdv').classList.toggle('oculto',escolha.oc!=='Advertência');$('blAt').classList.toggle('oculto',escolha.oc!=='Atestado');$('blAtr').classList.toggle('oculto',escolha.oc!=='Atraso');$('blDes').classList.toggle('oculto',escolha.oc!=='Desligamento');$('fotoTxt').innerHTML='<svg class="ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><path d="M12 16.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"/></svg> Tirar foto '+(escolha.oc==='Atestado'?'do atestado':'do documento')}
+ if(c==='oc'){$('blAdv').classList.toggle('oculto',escolha.oc!=='Advertência');$('blAt').classList.toggle('oculto',escolha.oc!=='Atestado');$('blAtr').classList.toggle('oculto',escolha.oc!=='Atraso');$('blDes').classList.toggle('oculto',escolha.oc!=='Desligamento');$('blSai').classList.toggle('oculto',escolha.oc!=='Saiu da empresa');$('fotoTxt').innerHTML='<svg class="ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><path d="M12 16.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"/></svg> Tirar foto '+(escolha.oc==='Atestado'?'do atestado':'do documento')}
 }
 // datas com botões: Hoje / próximos dias / outra data
 function datas(boxId,inputId,opcoes){const box=$(boxId),inp=$(inputId);box.innerHTML='';
@@ -148,10 +150,13 @@ function pessoas(){const box=$('pessoas');box.innerHTML='';pessoa=null;
  if(!loja){box.innerHTML='<span class="dica">Escolha a loja primeiro.</span>';return}
  (loja.pessoas||[]).forEach(p=>{const b=document.createElement('button');b.type='button';b.textContent=p.nome;b.onclick=()=>{box.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));pessoa=p;$('pessoaOutra').classList.add('oculto')};box.appendChild(b)});
  const o=document.createElement('button');o.type='button';o.textContent='Outro nome';o.onclick=()=>{box.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===o));pessoa={id:'',nome:''};$('pessoaOutra').classList.remove('oculto');$('pessoaOutra').focus()};box.appendChild(o)}
-rpc('equipe_publico',{p_cfg:CFG}).then(p=>{publico=p||[];const box=$('lojas');box.innerHTML='';
- if(!publico.length){box.innerHTML='<span class="dica">Link ainda não ativado pelo supervisor.</span>';return}
- const salva=localStorage.getItem('eq-loja');
- publico.forEach(l=>{const b=document.createElement('button');b.type='button';b.textContent=l.nome;b.onclick=()=>{box.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));loja=l;try{localStorage.setItem('eq-loja',l.id)}catch(e){}pessoas()};box.appendChild(b);if(l.id===salva)b.click()})
+function lojas(){const box=$('lojas');box.innerHTML='';let salva='';try{salva=localStorage.getItem('eq-loja')||''}catch(e){}
+ const fixa=publico.find(l=>l.id===salva);
+ if(fixa){loja=fixa;const b=document.createElement('button');b.type='button';b.className='on';b.textContent=fixa.nome;box.appendChild(b);
+  const t=document.createElement('button');t.type='button';t.className='trocar';t.textContent='Não é sua loja?';t.onclick=()=>{if(confirm('Trocar a loja gravada neste celular?')){try{localStorage.removeItem('eq-loja')}catch(e){}loja=null;lojas();pessoas()}};box.appendChild(t);pessoas();return}
+ publico.forEach(l=>{const b=document.createElement('button');b.type='button';b.textContent=l.nome;b.onclick=()=>{try{localStorage.setItem('eq-loja',l.id)}catch(e){}lojas()};box.appendChild(b)})}
+rpc('equipe_publico',{p_cfg:CFG}).then(p=>{publico=p||[];
+ if(!publico.length){$('lojas').innerHTML='<span class="dica">Link ainda não ativado pelo supervisor.</span>';return}lojas()
 }).catch(()=>{$('lojas').innerHTML='<span class="dica">Sem conexão. Atualize a página.</span>'});
 // foto do documento, reduzida para ficar leve
 let fotoDados='';
@@ -173,6 +178,7 @@ $('fOc').onsubmit=e=>{e.preventDefault();if(!pessoa||(!pessoa.id&&!$('pessoaOutr
  if(escolha.oc==='Atestado')d.dias=Number(escolha.dias);
  if(escolha.oc==='Atraso')d.atraso=escolha.atraso;
  if(escolha.oc==='Desligamento')d.motivo=escolha.deslig;
+ if(escolha.oc==='Saiu da empresa')d.motivo=escolha.saiu;
  if(fotoDados)d.foto=fotoDados;
  enviar('ocorrencia',d,e.submitter||$('fOc').querySelector('.enviar'))};
 })();
