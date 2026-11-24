@@ -14068,7 +14068,7 @@ var ncCoop = {
     const fr = save.friends || {}, onl = {}; this.lobby.forEach(p => onl[p.pid] = p);
     const rank = Object.keys(fr).map(k => ({pid:k, nm:fr[k].nm, lv:(onl[k] || fr[k]).lv, on:!!onl[k], room:onl[k] && onl[k].host ? onl[k].room : ''})).concat([{pid:save.pid, nm:ncName() + ' (você)', lv:save.level, on:true, me:1}]).sort((a, b) => b.lv - a.lv);
     const others = this.lobby.filter(p => p.pid !== save.pid && !fr[p.pid]);
-    el.hidden = false; el.innerHTML = '<div class="pop-bg" data-frclose></div><div class="pop-box"><button class="pop-x" data-frclose>✕</button><div class="eyebrow">Ranking dos amigos</div>'
+    el.hidden = false; el.className = 'fr-' + (window.ncFrLay || save.frLay || 'a'); el.innerHTML = '<div class="pop-bg" data-frclose></div><div class="pop-box"><div class="fr-h"><b>Conexão</b><button class="pop-x" data-frclose aria-label="Fechar">✕</button></div><div class="eyebrow">Amigos</div>'
       + '<ol class="fr-rank">' + rank.map((f, i) => '<li class="' + (f.me ? 'me' : '') + '"><b>' + (i + 1) + 'º</b><i class="' + (f.on ? 'on' : '') + '"></i><span>' + f.nm + '</span><em>nv ' + f.lv + '</em>' + (f.room ? '<button class="btn sm" data-ncworld="' + f.room + '">Entrar</button>' : '') + (f.me ? '' : '<button class="btn sm fr-x" data-frdel="' + f.pid + '">✕</button>') + '</li>').join('') + '</ol>'
       + '<div class="eyebrow" style="margin-top:12px">Jogando agora</div>' + (others.length ? '<div class="fr-on">' + others.map(p => '<div><i class="on"></i><span>' + p.nm + ' <small>nv ' + p.lv + '</small></span><button class="btn sm primary" data-fradd="' + p.pid + '">＋ Amigo</button></div>').join('') + '</div>' : '<small class="istat">Ninguém online fora seus amigos agora.</small>') + '</div>'; },
   /* Chat flutuante: as mensagens somem sozinhas depois de 20 s; fundo transparente. */
@@ -14288,7 +14288,7 @@ function ncNtGo(kind){ try{
 (function(){ const pos = () => { const f = document.getElementById('ncFriends'), w = ['ncRoomHud','ncWorlds'].map(id => document.getElementById(id)).find(x => x && !x.hidden && x.getClientRects().length && x.getBoundingClientRect().width > 40); if(!f || f.hidden) return;
     const r = w ? w.getBoundingClientRect() : null;
     f.style.setProperty('--frx', (r ? Math.max(8, r.left) : 10) + 'px'); f.style.setProperty('--fry', (r ? r.bottom + 6 : 110) + 'px'); f.style.setProperty('--frw', (r ? Math.max(280, r.width) : 300) + 'px'); };
-  setInterval(() => { const f = document.getElementById('ncFriends'); if(f && !f.hidden) pos(); }, 700); addEventListener('resize', pos); })();
+  })();
 /* 23/11/2026: tocar num item da mochila sempre abre o cartão (na fase a mochila não redesenhava e o cartão não aparecia) */
 document.addEventListener('click', e => { if(e.target.closest('[data-bsel]')) setTimeout(() => { try{ ncPopDraw(); }catch(_){} }, 40); });
 /* 23/11/2026: fundo escuro atrás da gaveta; tocar nele ou apertar Esc fecha a janela aberta */
@@ -15163,12 +15163,22 @@ body.nc-ov .nc-me,body.nc-ov #ncBell,body.nc-ov #ncChat{display:none!important}
 
 body.nc-cria #hub>*:not(canvas),body.nc-cria #ncRoomHud,body.nc-cria #ncBell,body.nc-cria #ncWorlds,body.nc-cria .nc-me{visibility:hidden!important}
 
-/* 23/11/2026 (Arnold): o ranking dos amigos sai de vez (o cartão de cima já mostra quem está no mundo) */
-#ncFriends{display:none!important}
+/* 23/11/2026 (Arnold): o botão de ranking do cartão de cima sai (a janela abre só pelo botão Conexão) */
 [data-ncfr]{display:none!important}
 /* criar personagem não bloqueia mais os menus: só a gaveta recebe o toque */
 #ncCriar{pointer-events:none!important}#ncCriar .cr-box{pointer-events:auto!important}
 body.nc-cria #hub>*:not(canvas){visibility:visible!important}
+
+/* 23/11/2026: janela Conexão em 3 estilos para o Arnold escolher (a = gaveta de baixo, b = painel do lado, c = janela no meio) */
+#ncFriends .fr-h{display:flex;align-items:center;justify-content:space-between;margin:-2px 0 8px}#ncFriends .fr-h b{font:400 22px/1 'Marcellus SC',Cinzel,serif;color:#ffd36a;letter-spacing:.06em}
+#ncFriends .fr-h .pop-x{position:static!important;width:42px;height:42px;font-size:20px;border-radius:50%;background:#ffffff14;border:1px solid #ffffff33;color:#fff}
+#ncFriends .pop-box{position:fixed!important;transform:none!important;overflow-y:auto!important;box-sizing:border-box;padding:12px 16px 16px!important;border:0!important;border-image:none!important;clip-path:none!important;
+  background:linear-gradient(135deg,#1c1640f8 0 33%,#16203ff8 33% 66%,#231a40f8 66%)!important;box-shadow:0 0 40px #000b!important;animation:ncFrIn .22s ease-out}
+#ncFriends .pop-bg{background:rgba(5,6,14,.45)!important}
+#ncFriends.fr-a .pop-box{left:50%!important;right:auto!important;top:auto!important;bottom:0!important;width:min(760px,100vw)!important;max-height:min(70dvh,calc(100dvh - 60px))!important;border-radius:18px 18px 0 0!important;border-top:2px solid #e8c36a!important;margin-left:calc(min(760px,100vw)/-2)!important}
+#ncFriends.fr-b .pop-box{right:0!important;left:auto!important;top:0!important;bottom:0!important;width:min(380px,88vw)!important;max-height:none!important;border-radius:18px 0 0 18px!important;border-left:2px solid #e8c36a!important}
+#ncFriends.fr-c .pop-box{left:50%!important;top:50%!important;right:auto!important;bottom:auto!important;width:min(460px,calc(100vw - 24px))!important;max-height:calc(100dvh - 40px)!important;border-radius:16px!important;border:2px solid #e8c36a88!important;margin:0!important;translate:-50% -50%}
+@keyframes ncFrIn{from{opacity:0}to{opacity:1}}
 </style>
 </body>
 </html>
