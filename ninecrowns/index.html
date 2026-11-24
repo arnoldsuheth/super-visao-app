@@ -15116,6 +15116,8 @@ body.nc-l #hub>aside.panel>.nc-head,body.nc-r #hub>#rightPanel>.nc-head{position
 body.nc-l #hub>aside.panel .nc-x,body.nc-r #hub>#rightPanel .nc-x{width:44px!important;height:44px!important;min-width:44px;font-size:26px!important;line-height:1!important;border-radius:50%!important;background:#ffffff14!important;border:1px solid #ffffff33!important;color:#fff!important;display:grid!important;place-items:center;position:relative!important;inset:auto!important;z-index:8}
 #ncGavBg{position:fixed;inset:0;z-index:59;background:rgba(5,6,14,.45);display:none;pointer-events:auto}
 body.nc-l #ncGavBg,body.nc-r #ncGavBg{display:block}
+/* revisão 23/11: o título da gaveta cola no topo sem deixar fresta (antes aparecia conteúdo por cima dele ao rolar) */
+body.nc-l #hub>aside.panel>.nc-head,body.nc-r #hub>#rightPanel>.nc-head{top:-6px!important;padding-top:12px!important;background:#1d1640!important}
 #ncPop{position:fixed;inset:0;z-index:80}#ncPop[hidden]{display:none}
 #ncPop .pop-bg{position:absolute;inset:0;background:rgba(5,6,14,.55)}
 #ncPop .pop-box{position:absolute!important;left:50%!important;top:50%!important;bottom:auto!important;right:auto!important;transform:translate(-50%,-50%)!important;width:min(440px,calc(100vw - 24px))!important;max-height:calc(100dvh - 24px)!important;overflow-y:auto!important;box-sizing:border-box;z-index:2}
@@ -15199,6 +15201,14 @@ body.nc-cria #hub>*:not(canvas){visibility:visible!important}
 #ncFriends.fr-c .pop-box{left:50%!important;top:50%!important;right:auto!important;bottom:auto!important;width:min(460px,calc(100vw - 24px))!important;max-height:calc(100dvh - 40px)!important;border-radius:16px!important;border:2px solid #e8c36a88!important;margin:0!important;translate:-50% -50%}
 
 /* 23/11 (Arnold): Conexão pequena, embaixo, no mesmo lugar das outras janelas */
+/* 23/11/2026 revisão geral: botões pequenos ficam do tamanho de um dedo; gavetas não mudam de altura ao trocar de aba */
+#pauseBtn,#fsBtn{min-width:40px!important;min-height:40px!important;display:inline-grid!important;place-items:center}
+#camBtn,#hCamBtn{min-height:40px!important;min-width:40px!important}
+.chipb{min-height:36px!important;min-width:44px!important}
+body.nc-l #hub>aside.panel,body.nc-r #hub>#rightPanel{height:min(76dvh,calc(100dvh - 64px - env(safe-area-inset-top,0px)))!important}
+@media (orientation:landscape) and (max-height:500px){body.nc-l #hub>aside.panel,body.nc-r #hub>#rightPanel{height:calc(100dvh - 44px)!important}}
+@media (min-width:901px) and (min-height:501px){body.nc-l #hub>aside.panel,body.nc-r #hub>#rightPanel{height:78dvh!important}}
+body.nc-ov #ncRoomHud,body.nc-ov #ncWorlds{visibility:hidden!important}
 #ncFriends.fr-d .pop-box{left:50%!important;right:auto!important;top:auto!important;bottom:calc(8px + env(safe-area-inset-bottom,0px))!important;width:min(400px,calc(100vw - 16px))!important;max-height:min(46dvh,400px)!important;overflow-y:auto!important;border-radius:14px!important;border:1px solid #e8c36a99!important;translate:-50% 0;margin:0!important;font-size:13px!important;padding:10px 12px!important}
 #ncFriends.fr-d .fr-h b{font-size:17px}#ncFriends.fr-d .pop-x{width:34px!important;height:34px!important}
 @media (orientation:landscape) and (max-height:500px){#ncFriends.fr-d .pop-box{width:min(380px,calc(100vw - 16px))!important;max-height:calc(100dvh - 24px)!important}}
