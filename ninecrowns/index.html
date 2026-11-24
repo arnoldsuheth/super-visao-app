@@ -8148,9 +8148,10 @@ function ncArtUrl(slot, wtype, g, tc){ const k = slot + '|' + wtype + '|' + g + 
 const ncArt = (slot, wtype, g) => '<svg viewBox="0 0 64 64" aria-hidden="true">' + ((NC_ART_G[slot] && g != null && NC_ART_G[slot][g]) || NC_ART[slot === 'weapon' ? (wtype || CLS().wtype) : slot] || NC_ART.sword) + '</svg>';
 function pieceImg(t, slot, cls, wtype, up, sa){ const U = ncUp(Math.min(NC_UP_MAX, (up || 0) + (sa ? 3 : 0)));   /* 22/11: SA também acende o ícone, e o brilho sobe com a evolução */
   const g = GR_OF[t] || 0, wi = slot === 'weapon' ? ncWIco(t, wtype || (CLASSES[save.cls] || {}).wtype) : null;   /* 22/11 (Arnold): moldura enfeitada (1 pedrinha por grade, brilho no A e no S) e foto da arma de verdade */
-  return `<span class="pimg nci g${g} ${cls || ''} ${U ? 'up' : ''} ${U && U.f ? 'fire' : ''}" ${up ? 'data-up="+' + up + '"' : ''} style="--tc:${TIERS[t].css}${U ? ';--uc:' + U.c + ';--ug:' + U.g + 'px;--fh:' + U.f + '%' : ''}" role="img" aria-label="${SLOT_INFO[slot].n}">${wi ? '<img class="wico" src="assets/icons/w/' + wi.replace('/', '_') + '.png" alt="">' : '<img class="nca" src="' + ncArtUrl(slot, wtype, g, TIERS[t].css) + '" alt="">'}${g ? '<b class="ngm">' + '<i></i>'.repeat(g) + '</b>' : ''}</span>`; }
+  return `<span class="pimg nci g${g} ${cls || ''} ${U ? 'up' : ''} ${U && U.f ? 'fire' : ''}" ${up ? 'data-up="+' + up + '"' : ''} style="--tc:${TIERS[t].css}${U ? ';--uc:' + U.c + ';--ug:' + U.g + 'px;--fh:' + U.f + '%' : ''}" role="img" aria-label="${SLOT_INFO[slot].n}">${wi ? '<img class="wico" src="assets/icons/w/' + wi.replace('/', '_') + '.png" alt="">' : '<img class="nca" src="assets/icons/a/' + (slot === 'weapon' ? 'w_' + (wtype || (CLASSES[save.cls] || {}).wtype) : slot) + '_' + t + '.png" alt="">'   /* 24/11: ícones prontos em PNG (o iPhone mostra sempre) */}${g ? '<b class="ngm">' + '<i></i>'.repeat(g) + '</b>' : ''}</span>`; }
 const NC_WICO = {sword:0, hammer:0, axe:2, staff:3, daggers:4};
-function ncWIco(t, wt){ try{ if(wt === 'fists') return NC_FIST[t]; if(wt === 'bow') return GR_OF[t] < 2 ? 'kk_1H_Crossbow' : 'kk_2H_Crossbow'; if(wt === 'scythe') return 'scythe_' + GR_OF[t]; const i = NC_WICO[wt]; return i == null ? null : NC_WPN_SET[i].f[t]; }catch(e){ return null; } }
+function ncWIco(t, wt){ try{ if((save.cls === 'shaman' || save.cls === 'priest') && wt === 'staff'){ const y = ncWSty(save.cls); if(y) return 'pw_' + (save.cls === 'shaman' ? 'sha' : 'pri') + y + '_' + t; if(save.cls === 'shaman') return 'rg_DruidStaff_1_1_B'; }   /* 24/11: o ícone é a mesma arma que está na mão */
+  if(wt === 'fists') return NC_FIST[t]; if(wt === 'bow') return GR_OF[t] < 2 ? 'kk_1H_Crossbow' : 'kk_2H_Crossbow'; if(wt === 'scythe') return 'scythe_' + GR_OF[t]; const i = NC_WICO[wt]; return i == null ? null : NC_WPN_SET[i].f[t]; }catch(e){ return null; } }
 function pieceImgOld(t, slot, cls, wtype){
   const src = pieceSrc(t, slot, wtype, true);
   const ic = slotIcon(slot, wtype);
@@ -8683,9 +8684,10 @@ function ncWpnDeco(o, w){ (o.userData.ncDeco || []).forEach(d => o.remove(d)); o
    A peça nova fica no mesmo lugar e do mesmo tamanho da original (que é escondida). 10 faixas: No Grade(2), D(2), C(2), B, A(2), S. */
 const NC_WPN_SET = [
   {re:/^(1H|2H)_Sword$/, f:['kk_sword_A','kk_sword_A','swords/28-Asymmetrical','swords/28-Asymmetrical','swords/27-Pattern','swords/27-Pattern','swords/19-Heirloom','swords/24-Coral','swords/4-Elemental','swords/1-Crystal']},
-  {re:/^2H_Axe$/, cls:'shaman', f:Array(10).fill('rg_DruidStaff_1_1_B')},
+  {re:/^2H_Axe$/, cls:'shaman', get f(){ const y = ncWSty('shaman'); return y ? Array.from({length:10}, (_, t) => 'pw:sha' + y + ':' + t) : Array(10).fill('rg_DruidStaff_1_1_B'); }},   /* 24/11: arma própria do Xamã que evolui por grade */
+  {re:/^2H_Staff$/, cls:'priest', get f(){ const y = ncWSty('priest'); return y ? Array.from({length:10}, (_, t) => 'pw:pri' + y + ':' + t) : ['kk_staff_A','kk_staff_A','rg_DruidStaff_1_1_A','rg_DruidStaff_1_1_A','rg_DruidStaff_2_1_A','rg_DruidStaff_2_1_A','rg_DruidStaff_1_1_B','kk_staff_B','kk_staff_B','kk_staff_B']; }},
   {re:/^2H_Axe$/, not:'shaman', f:['bb_Axe_02','bb_Axe_02','bb_Axe_04','bb_Axe_07','kk_axe_A','kk_axe_A','kk_axe_B','kk_axe_C','kk_axe_C','kk_halberd']},
-  {re:/^2H_Staff$/, f:['kk_staff_A','kk_staff_A','rg_DruidStaff_1_1_A','rg_DruidStaff_1_1_A','rg_DruidStaff_2_1_A','rg_DruidStaff_2_1_A','rg_DruidStaff_1_1_B','kk_staff_B','kk_staff_B','kk_staff_B']},
+  {re:/^2H_Staff$/, not:'priest', f:['kk_staff_A','kk_staff_A','rg_DruidStaff_1_1_A','rg_DruidStaff_1_1_A','rg_DruidStaff_2_1_A','rg_DruidStaff_2_1_A','rg_DruidStaff_1_1_B','kk_staff_B','kk_staff_B','kk_staff_B']},
   {re:/^Knife(_Offhand)?$/, f:['bb_Dagger_01','bb_Dagger_01','bb_Dagger_03','bb_Dagger_03','bb_Dagger_05','bb_Dagger_05','bb_Dagger_07','kk_dagger_A','kk_dagger_A','kk_dagger_B']},
   {re:/^(Round|Badge|Rectangle|Spike)_Shield$/, slot:'shield', f:['kk_shield_A','kk_shield_A',null,null,null,null,'kk_shield_B','kk_shield_C','kk_shield_C',null]}];
 
@@ -8728,7 +8730,8 @@ function ncProcWeapon(kind, t){ const g = new T.Group(), G = Math.min(5, GR_OF ?
   g.traverse(o => { if(o.isMesh) o.name = 'NC_Staff'; }); return {scene:g}; }
 window.ncProcWeapon = ncProcWeapon;
 const ncSwCache = {};
-function ncSwLoad(n){ return ncSwCache[n] || (ncSwCache[n] = new Promise(ok => new T.GLTFLoader().load('assets/weapons/' + n + '.glb', g => ok(g), undefined, () => ok(null)))); }
+const ncWSty = c => (window.ncWSty && window.ncWSty[c]) || (save.wSty && save.wSty[c]) || '';
+function ncSwLoad(n){ if(/^pw:/.test(n)){ const [, k, t] = n.split(':'); return ncSwCache[n] || (ncSwCache[n] = Promise.resolve(ncProcWeapon(k, +t))); } return ncSwCache[n] || (ncSwCache[n] = new Promise(ok => new T.GLTFLoader().load('assets/weapons/' + n + '.glb', g => ok(g), undefined, () => ok(null)))); }
 function ncSwordSwap(h){ const x = h && h.mx; if(!x) return; x.swds = x.swds || {};
   NC_WPN_SET.forEach(S => { if((S.cls && S.cls !== h.cls) || (S.not && S.not === h.cls)) return; const it = equipped(S.slot || 'weapon'), name = it ? S.f[it.tier] : S.f[0];
     const origs = []; x.m.traverse(o => { if(o.isMesh && S.re.test(o.name)) origs.push(o); });   // kkPaint já decidiu quais aparecem (visible)
@@ -8742,6 +8745,7 @@ function ncSwordSwap(h){ const x = h && h.mx; if(!x) return; x.swds = x.swds || 
         if(!o.geometry.boundingBox) o.geometry.computeBoundingBox(); const ob = o.geometry.boundingBox, nb = new T.Box3().setFromObject(src);
         const k = (ob.max.y - ob.min.y)/Math.max(.001, nb.max.y - nb.min.y); src.scale.setScalar(k); src.position.y = (ob.min.y - nb.min.y*k);
         src.position.x = -((nb.min.x + nb.max.x)/2)*k + (ob.min.x + ob.max.x)/2; src.position.z = -((nb.min.z + nb.max.z)/2)*k + (ob.min.z + ob.max.z)/2;
+        if(/^pw:/.test(name)){ src.scale.multiplyScalar(1.35); src.position.y -= (nb.max.y - nb.min.y)*k*.35*.5; }   /* 24/11: armas novas do Xamã e Sacerdote um pouco maiores para aparecer na mão */
         hold.position.copy(o.position); hold.rotation.copy(o.rotation); hold.scale.copy(o.scale); o.parent.add(hold); o.visible = false; x.swds[key] = hold;
         try{ ncWeaponFx(x.m); }catch(e){} }); }); }); }
 function ncWeaponFx(root){
