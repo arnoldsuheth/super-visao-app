@@ -832,6 +832,7 @@ canvas.ncgrabok{cursor:grab}canvas.ncgrab,canvas.ncgrabok.ncgrab{cursor:grabbing
     </div>
     <canvas id="mm" width="360" height="360" aria-label="Minimapa. Toque para ampliar"></canvas><div id="mmTag" class="mm-tag" hidden></div>
     <nav class="nc-hb" aria-label="Atalhos">
+      <button type="button" data-hb="menu" aria-expanded="false"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg><span>Menu</span></button>
       <button type="button" data-hb="party"><svg viewBox="0 0 24 24"><circle cx="7" cy="8" r="3"/><circle cx="17" cy="8" r="3"/><path d="M2 20c0-3 2-5 5-5s5 2 5 5M12 20c0-3 2-5 5-5s5 2 5 5"/></svg><span>Grupo</span></button>
       <button type="button" data-hb="bag"><svg viewBox="0 0 24 24"><path d="M6 8h12l-1 13H7Z"/><path d="M9 8a3 3 0 0 1 6 0"/></svg><span>Mochila</span></button>
       <button type="button" data-hb="hero"><svg viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg><span>Herói</span></button>
@@ -9316,7 +9317,7 @@ function buildStage(st, onlyBoss){
   weatherP = WX_DEF[st.id] ? makeAmbient(WX_DEF[st.id].p) : null;
   stormT = 3 + Math.random()*4;
 
-  allies = []; hazards = []; enemies = []; projs = []; pprojs = []; tels = []; parts = []; pickups = []; waves = []; rings = []; volleys = []; bolts = []; loot = []; runes = []; chests = []; BLD = []; PUDS = []; WATERS = []; dropFx = null; runLoot = []; runMats = {}; runGems = {}; runFrags = {}; runCoins = 0;
+  allies = []; hazards = []; enemies = []; projs = []; pprojs = []; tels = []; parts = []; pickups = []; waves = []; rings = []; volleys = []; bolts = []; try{ while(ncFx.length){ const f = ncFx.pop(); f.end && f.end(); } }catch(_){} loot = []; runes = []; chests = []; BLD = []; PUDS = []; WATERS = []; dropFx = null; runLoot = []; runMats = {}; runGems = {}; runFrags = {}; runCoins = 0;
   hero = makeHero(); scene.add(hero.root);
   const S = stats();
   P = {pos:hero.root.position, hp:S.hp, S, face:Math.PI, targetFace:Math.PI, atkCd:0, swingT:0, swingDur:.24, dashT:0, dashCd:0, inv:1, dashDir:new T.Vector3(),
@@ -11265,14 +11266,15 @@ function ncDailyPrize(n){ if(n === 28) return {t:'5 Moedas Reais', f:() => save.
 function ncDailyState(){ const D = save.daily = save.daily || {last:'', day:0}, today = ncDayKey(new Date()), y = new Date(); y.setDate(y.getDate() - 1);
   const can = D.last !== today, next = can ? (D.last === ncDayKey(y) ? (D.day % 28) + 1 : 1) : D.day; return {D, today, can, next}; }
 window.ncDaily = open => { let el = document.getElementById('ncDaily'); if(!el){ el = document.createElement('div'); el.id = 'ncDaily'; el.className = 'ncPop'; el.hidden = true; document.body.appendChild(el);
-    el.addEventListener('click', e => { const b = e.target.closest('button'); if(!b){ if(e.target === el) window.ncDaily(false); return; }
+    el.addEventListener('click', e => { const b = e.target.closest('button'); if(!b){ if(e.target === el && performance.now() - (el._t || 0) > 900) window.ncDaily(false); return; }   /* 23/11: o toque que fecha a abertura não fecha mais o prêmio junto */
       if(b.dataset.ndx !== undefined){ window.ncDaily(false); return; }
       if(b.dataset.ndget !== undefined){ const S = ncDailyState(); if(!S.can) return; const pz = ncDailyPrize(S.next); pz.f(); S.D.last = S.today; S.D.day = S.next; persist();
         try{ SFX.drop(); banner('Prêmio do dia ' + S.next, pz.t, 'gold'); }catch(_){} ncTitleCheck(); try{ renderHub(); }catch(_){} draw(); } }); }
   const draw = () => { const S = ncDailyState(); let h = '<div class="nf-box"><div class="nf-hd"><h2>PRÊMIO DO DIA</h2><button class="nf-x" data-ndx aria-label="Fechar">×</button></div><p class="nf-lede">Entre todo dia seguido: o prêmio cresce. Se pular um dia, volta para o dia 1.</p><div class="nd-grid">';
     for(let n = 1; n <= 28; n++){ const st = n < S.next || (!S.can && n === S.next) ? 'ok' : n === S.next ? 'hoje' : ''; h += '<div class="nd-c ' + st + '"><b>' + n + '</b><span>' + ncDailyPrize(n).t + '</span></div>'; }
     h += '</div>' + (S.can ? '<button class="btn primary nd-get" data-ndget>Pegar o prêmio do dia ' + S.next + '</button>' : '<p class="nf-lede" style="text-align:center">Volte amanhã para o dia ' + ((S.next % 28) + 1) + '.</p>') + '</div>'; el.innerHTML = h; };
-  el.hidden = !open; if(open) draw(); };
+  el.hidden = !open; if(open){ el._t = performance.now(); draw(); } try{ ncGiftDot(); }catch(_){} };
+function ncGiftDot(){ const b = document.querySelector('.nc-minib[data-mb=gift]'); if(b) b.classList.toggle('dot', !!ncDailyState().can); }
 /* ---- 4) TÍTULOS: conquistas viram título em cima do nome ---- */
 const NC_TITLES = [
   {id:'cacador', n:'Caçador', d:'Derrote 500 monstros', v:() => save.cnt.kills || 0, need:500},
@@ -11299,7 +11301,8 @@ function ncTitleTag(){ try{ if(ncTagSpr){ if(ncTagSpr.parent) ncTagSpr.parent.re
   g.lineWidth = 8; g.strokeStyle = 'rgba(20,10,40,.85)'; g.strokeText(t, 256, 50); g.fillStyle = '#ffd36a'; g.fillText(t, 256, 50);
   const sp = new T.Sprite(new T.SpriteMaterial({map:new T.CanvasTexture(cv), transparent:true, depthWrite:false})); let hh = 1.9; try{ hh = ncHeroH(hero); }catch(e){}
   sp.scale.set(1.9, .36, 1); sp.position.set(0, hh + .12, 0); sp.renderOrder = 10; ncTagSpr = sp; (hero && hero.root || root).add(sp); }catch(e){} }
-buildHub = (f => function(){ const r = f.apply(this, arguments); setTimeout(() => { ncTitleTag(); try{ const S = ncDailyState(); if(S.can && !document.body.classList.contains('nc-noauto')) setTimeout(() => { if(mode === 'hub' && ncDailyState().can) window.ncDaily(true); }, 1200); }catch(e){} }, 400); return r; })(buildHub);
+buildHub = (f => function(){ const r = f.apply(this, arguments); setTimeout(() => { ncTitleTag(); try{ const S = ncDailyState(); if(S.can && !document.body.classList.contains('nc-noauto')) { let n = 0; const tq = setInterval(() => { n++; const sp = document.getElementById('ncSplash') || document.querySelector('.ncs'); const splash = sp && sp.getClientRects().length && getComputedStyle(sp).display !== 'none' && !sp.classList.contains('out') && +getComputedStyle(sp).opacity > .2;   /* espera a tela de abertura sumir */
+      if(splash && n < 120) return; clearInterval(tq); if(mode === 'hub' && ncDailyState().can && !document.body.classList.contains('nc-noauto')) window.ncDaily(true); }, 500); } }catch(e){} }, 400); return r; })(buildHub);
 buildWorldBits = (f => function(st){ const r = f.apply(this, arguments); try{ window.ncDaily(false); window.ncFest(false); }catch(_){} try{ ncGiftSpawn(st); ncSnowBoss(st); }catch(e){ console.warn('natal', e); } setTimeout(ncTitleTag, 600); return r; })(buildWorldBits);
 /* ================= ARMADURA 3D POR GRADE (22/11, protótipo para o Arnold aprovar) =================
    Peças de verdade presas nos ossos do herói: ombreira, braçadeira+luva, joelheira, bota, cinto e placa do peito.
@@ -11419,6 +11422,48 @@ function nearestEnemy(range, from){
 }
 function aimAngle(range){ const t = ncTgtOk(); if(t && !t.e) return Math.atan2(t.x - P.pos.x, t.z - P.pos.z); const e = nearestEnemy(range); return e ? Math.atan2(e.pos.x - P.pos.x, e.pos.z - P.pos.z) : null; }
 function atkCooldown(){ return CLS().cd/(1 + P.S.aspd + (P.rageT > 0 ? .6 : 0)); }
+/* 23/11/2026 (Arnold): o ataque do Xamã estava igual ao do Necromante (bola mágica). 3 opções novas, todas guiadas (acertam o alvo):
+   terra = espinhos de pedra saem do chão embaixo do inimigo · vento = redemoinho que atravessa a fila de inimigos · cipo = chicote de cipó que puxa o inimigo.
+   Melhora quando alguma habilidade do Xamã chega no nível 3 (pega mais inimigos) e no nível 5 (SUPER: também atordoa rapidinho). */
+const ncFx = []; function ncFxTick(dt){ for(let i = ncFx.length - 1; i >= 0; i--){ const f = ncFx[i]; f.t += dt; if(f.up(f.t, dt) === false){ f.end && f.end(); ncFx.splice(i, 1); } } }
+function ncShaLv(){ let m = 0; for(let i = 0; i < 6; i++) m = Math.max(m, ncSkLv(i)); return m; }
+function ncShamanAtk(tipo){ const t = ncTgtOk(); let e = t && t.e && !t.e.dead && !t.e.dying && Math.hypot(t.e.pos.x - P.pos.x, t.e.pos.z - P.pos.z) < 15 ? t.e : nearestEnemy(13);
+  if(e) P.face = P.targetFace = Math.atan2(e.pos.x - P.pos.x, e.pos.z - P.pos.z); P.castT = .18; playAttackSfx();
+  const lv = ncShaLv(), mz = mxMuzzle(P.face), ax = mz ? mz.x : P.pos.x + Math.sin(P.face)*.8, az = mz ? mz.z : P.pos.z + Math.cos(P.face)*.8, ay = mz ? Math.max(P.pos.y + .9, Math.min(P.pos.y + 1.8, mz.y)) : P.pos.y + 1.4;
+  const vivos = () => enemies.filter(o => !o.dead && !o.dying && !(o.kind === 'boss' && !o.awake));
+  const fere = (o, m, kb, fx, fz) => { const dx = o.pos.x - fx, dz = o.pos.z - fz, d = Math.hypot(dx, dz) || 1; hitEnemy(o, m, {nx:dx/d, nz:dz/d, kb, y:o.pos.y, ytol:3}); if(lv >= 5 && o.kind !== 'boss') o.stunT = Math.max(o.stunT || 0, .4); };
+  if(tipo === 'terra'){   // espinhos de pedra embaixo do alvo; nível 3: pega quem está em volta; nível 5: prende (atordoa)
+    const cx = e ? e.pos.x : P.pos.x + Math.sin(P.face)*5, cz = e ? e.pos.z : P.pos.z + Math.cos(P.face)*5; let cy = P.pos.y; try{ cy = heightAt(cx, cz); }catch(_){}
+    const R = lv >= 3 ? 2.4 : 1.2, g = new T.Group(), mat = new T.MeshStandardMaterial({color:0x7a5a3a, emissive:0x1a6a2a, emissiveIntensity:.25, flatShading:true, roughness:.9}), n = lv >= 3 ? 10 : 6;
+    for(let i = 0; i < n; i++){ const a = i/n*6.28 + Math.random()*.4, r = i === 0 ? 0 : R*(.35 + Math.random()*.55), h = 1.3 + Math.random()*.9;
+      const k = new T.Mesh(new T.ConeGeometry(.28 + Math.random()*.12, h, 5), mat); k.position.set(Math.cos(a)*r, -h, Math.sin(a)*r); k.rotation.set((Math.random() - .5)*.5, Math.random()*3, (Math.random() - .5)*.5); k.userData.h = h; g.add(k); }
+    g.position.set(cx, cy, cz); scene.add(g); burst({x:cx, y:cy + .2, z:cz}, 0x9a7a50, 10, 3, 4, .3);
+    if(e){ fere(e, 1, 2, P.pos.x, P.pos.z); if(lv >= 3) for(const o of vivos()) if(o !== e && Math.hypot(o.pos.x - cx, o.pos.z - cz) < R + o.r) fere(o, .65, 2, cx, cz); }
+    ncFx.push({t:0, up:tt => { g.children.forEach(k => { const h = k.userData.h, s = tt < .1 ? tt/.1 : tt < .45 ? 1 : 1 - (tt - .45)/.25; k.position.y = -h/2 + (h*.9)*Math.max(0, s) - h*.4; }); return tt < .7; }, end:() => { scene.remove(g); g.children.forEach(k => k.geometry.dispose()); mat.dispose(); }});
+    return; }
+  if(tipo === 'vento'){   // redemoinho verde que anda reto e atravessa todos na frente; nível 3: maior; nível 5: atordoa
+    const sz = lv >= 3 ? 1.35 : 1, g = new T.Group(), mats = [];
+    for(let i = 0; i < 3; i++){ const m = new T.MeshBasicMaterial({color:i ? 0x2fae6a : 0x7ae8a8, transparent:true, opacity:i ? .35 : .5, depthWrite:false, side:T.DoubleSide, toneMapped:false}); mats.push(m);
+      const c = new T.Mesh(new T.CylinderGeometry(.55*sz*(1 + i*.25), .12*sz, 1.6*sz, 10, 1, true), m); c.position.y = .8*sz; c.scale.set(1 - i*.15, 1, 1 - i*.15); g.add(c); }
+    g.position.set(ax, P.pos.y, az); scene.add(g); const vx = Math.sin(P.face)*15, vz = Math.cos(P.face)*15, ja = new Set();
+    ncFx.push({t:0, up:(tt, dt) => { g.position.x += vx*dt; g.position.z += vz*dt; g.children.forEach((c, i) => c.rotation.y += dt*(14 + i*5)); mats.forEach(m => m.opacity *= tt > .55 ? .9 : 1);
+      for(const o of vivos()) if(!ja.has(o) && Math.hypot(o.pos.x - g.position.x, o.pos.z - g.position.z) < o.r + .7*sz){ ja.add(o); fere(o, ja.size === 1 ? 1 : .8, 5, g.position.x - vx*.05, g.position.z - vz*.05); }
+      return tt < .75; }, end:() => { scene.remove(g); g.children.forEach(c => c.geometry.dispose()); mats.forEach(m => m.dispose()); }});
+    return; }
+  // cipo: chicote de cipó que sai do cajado, acerta e puxa o inimigo um pouco; nível 3: chicoteia 2 inimigos; nível 5: prende
+  const alvos = e ? [e] : []; if(e && lv >= 3){ let b = null, bd = 6; for(const o of vivos()) if(o !== e){ const d = Math.hypot(o.pos.x - e.pos.x, o.pos.z - e.pos.z); if(d < bd){ bd = d; b = o; } } if(b) alvos.push(b); }
+  const pts = []; const ends = alvos.length ? alvos.map(o => ({x:o.pos.x, y:o.pos.y + 1, z:o.pos.z})) : [{x:P.pos.x + Math.sin(P.face)*5, y:P.pos.y + .6, z:P.pos.z + Math.cos(P.face)*5}];
+  const folhaMat = new T.MeshLambertMaterial({color:0x6ad04a}), cipMat = new T.MeshStandardMaterial({color:0x2f7a22, emissive:0x1a5a12, emissiveIntensity:.25, roughness:.8});
+  const linhas = ends.map((q, k) => { const folhas = []; for(let i = 0; i < 5; i++){ const f = new T.Mesh(new T.SphereGeometry(.13, 6, 4), folhaMat); f.scale.set(1.8, .45, 1); scene.add(f); folhas.push(f); } return {q, folhas, side:k ? -1 : 1, tubo:null}; });
+  alvos.forEach((o, k) => fere(o, k ? .7 : 1, -6, P.pos.x, P.pos.z));
+  ncFx.push({t:0, up:tt => { const s = Math.min(1, tt/.09), fade = tt > .3 ? 1 - (tt - .3)/.2 : 1;
+    linhas.forEach(Lh => { const q = Lh.q, mx = (ax + q.x)/2 + Math.cos(P.face)*1.2*Lh.side, mzz = (az + q.z)/2 - Math.sin(P.face)*1.2*Lh.side, my = Math.max(ay, q.y) + 1, pts = [];
+      for(let i = 0; i < 12; i++){ const u = i/11*s, w = 1 - u; pts.push(new T.Vector3(w*w*ax + 2*w*u*mx + u*u*q.x, w*w*ay + 2*w*u*my + u*u*q.y + Math.sin(u*14 + tt*30)*.08, w*w*az + 2*w*u*mzz + u*u*q.z)); }
+      if(Lh.tubo){ scene.remove(Lh.tubo); Lh.tubo.geometry.dispose(); }
+      Lh.tubo = new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3(pts), 16, .085*Math.max(.2, fade), 5, false), cipMat); scene.add(Lh.tubo);
+      Lh.folhas.forEach((f, i) => { const p = pts[2 + i*2]; f.position.copy(p); f.rotation.y = tt*8 + i; f.visible = fade > .1; }); }); return tt < .5; },
+    end:() => { linhas.forEach(Lh => { if(Lh.tubo){ scene.remove(Lh.tubo); Lh.tubo.geometry.dispose(); } Lh.folhas.forEach(f => { scene.remove(f); f.geometry.dispose(); }); }); folhaMat.dispose(); cipMat.dispose(); }});
+}
 function doAttack(){
   if(P && P.ncCC && (P.ncCC.stun > 0 || P.ncCC.fear > 0)) return;
   const S = P.S, c = CLS();
@@ -11426,6 +11471,7 @@ function doAttack(){
   if(P.mounted) toggleMount(false);
   { const t = ncTgtOk(); if(t){ const tx = t.e ? t.e.pos.x : t.x, tz = t.e ? t.e.pos.z : t.z; if(Math.hypot(tx - P.pos.x, tz - P.pos.z) < 18) P.face = P.targetFace = Math.atan2(tx - P.pos.x, tz - P.pos.z); } }
   P.atkCd = atkCooldown();
+  if(c.attack === 'nature' && (window.ncShaAtk || save.shaAtk)){ ncShamanAtk(window.ncShaAtk || save.shaAtk); return; }   // 23/11: novo ataque do Xamã (3 opções para o Arnold escolher)
   if(c.attack === 'holy' || c.attack === 'nature'){ const a = aimAngle(15); if(a !== null) P.face = P.targetFace = a; P.castT = .18;   // Sacerdote (luz) e Xamã (natureza): magia de longe
     firePlayer({kind:'dark', col:c.attack === 'holy' ? 0xfff0a0 : 0x7aff9a, ang:P.face, spd:19, mult:1, life:.9, r:.5}); playAttackSfx(); return; }
   if(c.attack === 'bolt' || c.attack === 'arrow' || c.attack === 'dark'){
@@ -12582,6 +12628,7 @@ function updateWorld(dt){
     r.m.scale.setScalar(.5 + r.R*p); r.m.material.opacity = .9*(1 - p);
     if(p >= 1){ removeObj(r.m); rings.splice(i, 1); }
   }
+  try{ ncFxTick(dt); }catch(_){}
   for(let i = bolts.length-1; i >= 0; i--){
     const b = bolts[i]; b.t += dt; b.l.material.opacity = 1 - b.t/.2;
     if(b.t > .2){ scene.remove(b.l); b.l.geometry.dispose(); b.l.material.dispose(); bolts.splice(i, 1); }
@@ -13452,6 +13499,7 @@ function ncStagePanel(k){ if(mode !== 'stage' || !P || P.dead || !running) retur
   try{ const M = {smith:['r','forge'], merch:['r','shop'], bag:['r','gear'], hero:['l','hero'], set:['l','set']}[k] || ['r','gear']; window.ncMenu.toggle(M[0], M[1]); if(k === 'smith' || k === 'merch') window.ncMenu.npc(k); }catch(_){} }
 new MutationObserver(() => { if(ncInst && !document.body.classList.contains('nc-r') && !document.body.classList.contains('nc-l')){ ncInst = false; document.body.classList.remove('nc-inst'); $('#hub').hidden = true; if(mode === 'stage' && $('#pause').hidden && !P.dead) running = true; } }).observe(document.body, {attributes:true, attributeFilter:['class']});
 document.querySelector('.nc-hb').addEventListener('click', e => { const b = e.target.closest('[data-hb]'); if(!b) return; const k = b.dataset.hb;
+  { const nv = document.querySelector('.nc-hb'); if(k === 'menu'){ const o = nv.classList.toggle('open'); b.setAttribute('aria-expanded', String(o)); return; } nv.classList.remove('open'); nv.querySelector('[data-hb=menu]').setAttribute('aria-expanded', 'false'); }   /* 23/11 (Arnold aprovou): atalhos dentro do botão Menu */
   if(k === 'party'){ try{ ncCoop.friends(); }catch(_){} return; }
   if(k === 'fest'){ try{ window.ncFest(true); }catch(_){} return; }
   if(!$('#pause').hidden) togglePause(false);
@@ -14552,7 +14600,8 @@ body.nc-l #hub>aside.panel::before,body.nc-r #hub>#rightPanel::before{transform:
   function fitCards(){[].forEach.call(document.querySelectorAll('.nc-card span,.nc-minib span'),function(sp){sp.style.fontSize='';var f=parseFloat(getComputedStyle(sp).fontSize)||12,n=0;while(sp.scrollWidth>sp.clientWidth+1&&f>7&&n<12){f-=.5;n++;sp.style.fontSize=f+'px'}})}
   setTimeout(fitCards,60);addEventListener('resize',function(){clearTimeout(fitCards.t);fitCards.t=setTimeout(fitCards,120)});try{document.fonts&&document.fonts.ready.then(fitCards)}catch(e){}
   var mini=document.createElement('nav');mini.className='nc-mini';
-  [['stages','Mundo','r'],['play','Progresso','l'],['set','Ajustes','l'],['music','Música','r']].forEach(function(c){var b=document.createElement('button');b.type='button';b.className='nc-minib';b.title=c[1];b.setAttribute('aria-label',c[1]);b.innerHTML='<svg viewBox="0 0 24 24">'+I[c[0]]+'</svg><span>'+c[1]+'</span>';b.onclick=function(){toggle(c[2],c[0])};mini.appendChild(b)});
+  I.gift='<path d="M4 11h16v10H4zM2 7h20v4H2zM12 7v14"/><path d="M12 7c-1.5-3.5-6-3.5-5.5-.5S12 7 12 7s5 .5 5.5-.5S13.5 3.5 12 7"/>';
+  [['gift','Prêmio','x'],['stages','Mundo','r'],['play','Progresso','l'],['set','Ajustes','l'],['music','Música','r']].forEach(function(c){var b=document.createElement('button');b.type='button';b.className='nc-minib';b.dataset.mb=c[0];b.title=c[1];b.setAttribute('aria-label',c[1]);b.innerHTML='<svg viewBox="0 0 24 24">'+I[c[0]]+'</svg><span>'+c[1]+'</span>';b.onclick=c[2]==='x'?function(){try{close('l');close('r');window.ncDaily(true)}catch(e){}}:function(){toggle(c[2],c[0])};mini.appendChild(b)});setTimeout(function(){try{ncGiftDot()}catch(e){}},1500);
   hub.appendChild(mini);
   /* NPC no topo do painel: retrato + fala curta (troca conforme o painel) */
   var NPCS={smith:{n:'Brom, o Ferreiro',f:'Traga pedras e eu forjo, evoluo ou desmancho suas peças.',img:'assets/npc/ferreiro.png'},merch:{n:'Lira, a Mercadora',f:'Compro o que você não usa e vendo o que você precisa.',img:'assets/npc/mercadora.png'}};
@@ -15209,6 +15258,15 @@ body.nc-l #hub>aside.panel,body.nc-r #hub>#rightPanel{height:min(76dvh,calc(100d
 @media (orientation:landscape) and (max-height:500px){body.nc-l #hub>aside.panel,body.nc-r #hub>#rightPanel{height:calc(100dvh - 44px)!important}}
 @media (min-width:901px) and (min-height:501px){body.nc-l #hub>aside.panel,body.nc-r #hub>#rightPanel{height:78dvh!important}}
 body.nc-ov #ncRoomHud,body.nc-ov #ncWorlds{visibility:hidden!important}
+/* 23/11 (Arnold aprovou): botão Prêmio com bolinha vermelha quando tem prêmio para pegar */
+.nc-minib[data-mb=gift]{position:relative}.nc-minib[data-mb=gift].dot::after{content:"";position:absolute;top:3px;right:5px;width:11px;height:11px;border-radius:50%;background:#ff3b3b;box-shadow:0 0 8px #ff3b3b}
+/* 23/11 (Arnold aprovou, sugestão 1): celular deitado e computador = menus do lado direito, de cima a baixo, com o herói aparecendo à esquerda */
+@media (orientation:landscape){html body.nc-l div#hub>aside.panel,html body.nc-r div#hub>#rightPanel{left:auto!important;right:0!important;bottom:0!important;top:0!important;transform:none!important;width:min(54vw,560px)!important;height:100dvh!important;max-height:none!important;border-radius:18px 0 0 18px!important;border-top:0!important;border-left:2px solid #e8c36a!important;padding-right:calc(16px + env(safe-area-inset-right,0px))!important;animation:ncGavSide .26s cubic-bezier(.2,.8,.2,1)}
+  html body #ncGavBg{background:linear-gradient(90deg,transparent 30%,rgba(5,6,14,.5))!important}}
+@keyframes ncGavSide{from{transform:translateX(40px);opacity:.4}to{transform:none;opacity:1}}
+/* 23/11 (Arnold aprovou, sugestão 2): na luta os 6 atalhos da direita ficam dentro de um botão Menu */
+.nc-hb>button:not([data-hb=menu]){display:none!important}.nc-hb.open>button{display:flex!important}
+.nc-hb>button[data-hb=menu]{display:flex!important}
 #ncFriends.fr-d .pop-box{left:50%!important;right:auto!important;top:auto!important;bottom:calc(8px + env(safe-area-inset-bottom,0px))!important;width:min(400px,calc(100vw - 16px))!important;max-height:min(46dvh,400px)!important;overflow-y:auto!important;border-radius:14px!important;border:1px solid #e8c36a99!important;translate:-50% 0;margin:0!important;font-size:13px!important;padding:10px 12px!important}
 #ncFriends.fr-d .fr-h b{font-size:17px}#ncFriends.fr-d .pop-x{width:34px!important;height:34px!important}
 @media (orientation:landscape) and (max-height:500px){#ncFriends.fr-d .pop-box{width:min(380px,calc(100vw - 16px))!important;max-height:calc(100dvh - 24px)!important}}
