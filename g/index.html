@@ -52,7 +52,6 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--ac)}
    <div id="expOutro" class="row2 oculto" style="margin-top:8px"><input id="exp1" type="number" inputmode="numeric" min="1" max="90" placeholder="1º período (dias)"><input id="exp2" type="number" inputmode="numeric" min="0" max="90" placeholder="2º período (dias)"></div>
    <div id="periodos"></div></div></div>
   <div class="card">
-   <div class="f"><label for="tel">Telefone (opcional)</label><input id="tel" type="tel" inputmode="tel" maxlength="20" placeholder="(27) 9 0000-0000"></div>
    <div class="f"><label for="obsN">Observação (opcional)</label><input id="obsN" maxlength="200" placeholder="Ex.: contratação no portal dia 18"></div>
   </div>
   <button class="enviar" type="submit">Enviar cadastro</button>
@@ -81,7 +80,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--ac)}
 <script>
 (function(){
 const DB='https://mgqwzaizkllkqqqbbcna.supabase.co',KEY='sb_publishable_nBJrSlD-qcQg26UIhVCWkQ_d9_fZCPc';
-const CFG=new URLSearchParams(location.search).get('k')||'';
+const CFG=new URLSearchParams(location.search).get('k')||'6f4d9def-670c-470b-893d-e1d8da46a971';
 const $=id=>document.getElementById(id);
 const rpc=(f,b)=>fetch(DB+'/rest/v1/rpc/'+f,{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify(b)}).then(async r=>{const t=await r.text();if(!r.ok){let m='';try{m=JSON.parse(t).message}catch(e){}throw Error(m||'Falha '+r.status)}return t?JSON.parse(t):null});
 const hoje=()=>{const d=new Date(Date.now()-3*3600e3);return d.toISOString().slice(0,10)};
@@ -138,7 +137,7 @@ async function enviar(tipo,dados,btn){if(!loja){aviso('Escolha a sua loja lá em
 $('fNovo').onsubmit=e=>{e.preventDefault();const nome=$('nome').value.trim();if(nome.split(/\s+/).length<2){aviso('Escreva o nome completo (nome e sobrenome).');$('nome').focus();return}
  if(!$('inicio').value){aviso('Escolha o primeiro dia de trabalho.');return}
  const [a,b]=exp();if(!a){aviso('Informe os dias do 1º período da experiência.');return}
- enviar('novo',{nome,cargo:escolha.cargo==='Outro'?($('cargoOutro').value.trim()||'Outro'):escolha.cargo,inicio:$('inicio').value,aniversario:$('anivMes').value&&$('anivDia').value?$('anivMes').value+'-'+$('anivDia').value:'',exp1:a,exp2:b,telefone:$('tel').value.trim(),obs:$('obsN').value.trim()},e.submitter||$('fNovo').querySelector('.enviar'))};
+ enviar('novo',{nome,cargo:escolha.cargo==='Outro'?($('cargoOutro').value.trim()||'Outro'):escolha.cargo,inicio:$('inicio').value,aniversario:$('anivMes').value&&$('anivDia').value?$('anivMes').value+'-'+$('anivDia').value:'',exp1:a,exp2:b,obs:$('obsN').value.trim()},e.submitter||$('fNovo').querySelector('.enviar'))};
 $('fOc').onsubmit=e=>{e.preventDefault();if(!pessoa||(!pessoa.id&&!$('pessoaOutra').value.trim())){aviso('Escolha o funcionário.');return}
  if(!$('quando').value){aviso('Escolha a data.');return}
  const d={pessoaId:pessoa.id||'',pessoaNome:pessoa.id?pessoa.nome:$('pessoaOutra').value.trim(),ocorrencia:escolha.oc,data:$('quando').value,obs:$('obsO').value.trim()};
