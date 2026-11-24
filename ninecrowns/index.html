@@ -14248,19 +14248,19 @@ damageEnemy = (f => function(e, dmg, crit, nx, nz, kb, quiet){
 (function(){ let escolha = null;
   function precisa(){ try{ return !!save.ncReset || (!save.ncMade && ncFresh() && !save.name); }catch(_){ return false; } }
   function desenha(el){ escolha = escolha || save.cls;
-    el.innerHTML = '<div class="cr-box"><h2>Crie seu personagem</h2><p>O mundo recomeçou. Escolha sua classe e o nome que vai aparecer em cima do herói e para os amigos.</p><div class="cr-g">'
+    el.className = 'lay-' + (window.ncCriarLay || 'b');   /* 23/11: o Arnold escolheu a B na página de aprovação */ el.innerHTML = '<div class="cr-box"><h2>Crie seu personagem</h2><p>O mundo recomeçou. Escolha sua classe e o nome que vai aparecer em cima do herói e para os amigos.</p><div class="cr-g">'
       + CLASS_ORDER.map(k => '<button type="button" class="cr-c' + (k === escolha ? ' on' : '') + '" data-crk="' + k + '"><img src="assets/icons/cls/' + k + '.png" alt=""><b>' + CLASSES[k].name + '</b><small>' + (CLASSES[k].tag || '') + '</small></button>').join('')
-      + '</div><div class="cr-n"><label for="ncCrNome">Nome do personagem (até 14 letras)</label><input id="ncCrNome" maxlength="14" autocomplete="off" placeholder="Seu nome no jogo" value="' + String(save.name || '').replace(/[<>"]/g, '') + '"><button type="button" class="cr-go" data-crgo>Começar</button></div></div>';
+      + '</div><div class="cr-nav"><button type="button" data-crstep="-1" aria-label="Classe anterior">‹</button><span class="cr-cur"><img alt="" src="assets/icons/cls/' + escolha + '.png"><b>' + CLASSES[escolha].name + '</b></span><button type="button" data-crstep="1" aria-label="Próxima classe">›</button></div><p class="cr-desc">' + (CLASSES[escolha].desc || '') + '</p><div class="cr-n"><label for="ncCrNome">Nome do personagem (até 14 letras)</label><input id="ncCrNome" maxlength="14" autocomplete="off" placeholder="Seu nome no jogo" value="' + String(save.name || '').replace(/[<>"]/g, '') + '"><button type="button" class="cr-go" data-crgo>Começar</button></div></div>';
     const inp = el.querySelector('input'); inp.addEventListener('keydown', e => e.stopPropagation()); }
   function abre(){ let el = document.getElementById('ncCriar'); if(!el){ el = document.createElement('div'); el.id = 'ncCriar'; document.body.appendChild(el);
-      el.addEventListener('click', e => { const c = e.target.closest('[data-crk]'); if(c){ escolha = c.dataset.crk; el.querySelectorAll('[data-crk]').forEach(b => b.classList.toggle('on', b === c)); return; }
+      el.addEventListener('click', e => { const st = e.target.closest('[data-crstep]'); if(st){ const i = CLASS_ORDER.indexOf(escolha), n = CLASS_ORDER.length, k = CLASS_ORDER[(i + (+st.dataset.crstep) + n) % n]; const b = el.querySelector('[data-crk="' + k + '"]'); if(b) b.click(); const cu = el.querySelector('.cr-cur'); if(cu) cu.innerHTML = '<img alt="" src="assets/icons/cls/' + k + '.png"><b>' + CLASSES[k].name + '</b>'; return; } const c = e.target.closest('[data-crk]'); if(c){ escolha = c.dataset.crk; el.querySelectorAll('[data-crk]').forEach(b => b.classList.toggle('on', b === c)); try{ save.cls = escolha; save.known = [escolha]; save.main = escolha; fixWeaponForClass(); rebuildHubHero(); }catch(_){} const d = el.querySelector('.cr-desc'); if(d) d.textContent = CLASSES[escolha].desc || ''; const cu = el.querySelector('.cr-cur'); if(cu) cu.innerHTML = '<img alt="" src="assets/icons/cls/' + escolha + '.png"><b>' + CLASSES[escolha].name + '</b>'; return; }
         if(e.target.closest('[data-crgo]')){ const nome = (el.querySelector('input').value || '').replace(/[<>]/g, '').trim().slice(0, 14);
           if(!nome){ el.querySelector('input').focus(); el.querySelector('input').placeholder = 'Escreva um nome'; return; }
           try{ save.cls = escolha; save.known = [escolha]; save.main = escolha; fixWeaponForClass(); }catch(_){}
           save.name = nome; delete save.ncReset; save.ncMade = 1; save.ncDirty = 1; persist();
           try{ rebuildHubHero(); }catch(_){} try{ renderHub(); }catch(_){} try{ ncCoop.track(); }catch(_){}
-          el.hidden = true; document.body.classList.remove('nc-noauto'); setTimeout(() => { try{ if(mode === 'hub' && ncDailyState().can) window.ncDaily(true); }catch(_){} }, 1500); try{ banner('Bem-vindo, ' + nome, CLASSES[escolha].name + ' · boa jornada!'); }catch(_){} } }); }
-    desenha(el); el.hidden = false; document.body.classList.add('nc-noauto'); try{ window.ncDaily(false); }catch(_){} }
+          el.hidden = true; document.body.classList.remove('nc-noauto', 'nc-cria'); setTimeout(() => { try{ if(mode === 'hub' && ncDailyState().can) window.ncDaily(true); }catch(_){} }, 1500); try{ banner('Bem-vindo, ' + nome, CLASSES[escolha].name + ' · boa jornada!'); }catch(_){} } }); }
+    desenha(el); el.hidden = false; document.body.classList.add('nc-noauto', 'nc-cria'); try{ window.ncDaily(false); }catch(_){} }
   const t = setInterval(() => { try{ if(typeof mode === 'undefined' || mode !== 'hub') return; const sp = document.getElementById('ncSplash') || document.querySelector('.ncs');
       if(sp && sp.getClientRects().length && getComputedStyle(sp).display !== 'none' && !sp.classList.contains('out') && +getComputedStyle(sp).opacity > .2) return;
       if(precisa()){ const el = document.getElementById('ncCriar'); if(!el || el.hidden) abre(); else { try{ window.ncDaily(false); }catch(_){} } } else clearInterval(t); }catch(_){} }, 700); })();
@@ -15135,6 +15135,38 @@ body.nc-ov .nc-me,body.nc-ov #ncBell,body.nc-ov #ncChat{display:none!important}
 #ncCriar .cr-go{padding:12px 22px;border:0;border-radius:10px;background:linear-gradient(180deg,#ffd36a,#f2a93a);color:#241a08;font:700 16px/1 system-ui,sans-serif;cursor:pointer}
 #ncCriar .cr-go:disabled{opacity:.45}
 @media (orientation:landscape) and (max-height:500px){#ncCriar .cr-g{grid-template-columns:repeat(5,1fr)}#ncCriar .cr-c{padding:6px 4px}#ncCriar .cr-c img{width:34px;height:34px}#ncCriar .cr-c small{display:none}}
+
+/* 23/11/2026: o herói aparece enquanto escolhe (A = gaveta embaixo com medalhões rolando de lado; B = grade compacta 5x2 embaixo) */
+#ncCriar .cr-desc{display:none}
+#ncCriar.lay-a,#ncCriar.lay-b{align-items:flex-end;background:linear-gradient(180deg,transparent 0 35%,rgba(6,6,18,.55));backdrop-filter:none;padding:0}
+#ncCriar.lay-a .cr-box,#ncCriar.lay-b .cr-box{width:min(760px,100%);border-radius:18px 18px 0 0;padding:12px 14px calc(14px + env(safe-area-inset-bottom,0px));max-height:56dvh}
+#ncCriar.lay-a h2,#ncCriar.lay-b h2{font-size:19px}#ncCriar.lay-a .cr-box>p:first-of-type,#ncCriar.lay-b .cr-box>p:first-of-type{display:none}
+#ncCriar.lay-a .cr-desc,#ncCriar.lay-b .cr-desc{display:block;margin:8px 0 0;font-size:13px;opacity:.85;min-height:2.4em}
+#ncCriar.lay-a .cr-g{display:flex;overflow-x:auto;gap:8px;padding-bottom:4px;scroll-snap-type:x mandatory;scrollbar-width:none}
+#ncCriar.lay-a .cr-c{flex:0 0 92px;scroll-snap-align:start;padding:8px 4px}#ncCriar.lay-a .cr-c img{width:42px;height:42px}#ncCriar.lay-a .cr-c small{display:none}#ncCriar.lay-a .cr-c b{font-size:12px}
+#ncCriar.lay-b .cr-g{grid-template-columns:repeat(5,1fr);gap:6px}#ncCriar.lay-b .cr-c{padding:6px 2px}#ncCriar.lay-b .cr-c img{width:34px;height:34px}#ncCriar.lay-b .cr-c small{display:none}#ncCriar.lay-b .cr-c b{font-size:11px}
+#ncCriar.lay-a .cr-n,#ncCriar.lay-b .cr-n{margin-top:8px}@media (orientation:landscape) and (max-height:500px){#ncCriar.lay-a .cr-box,#ncCriar.lay-b .cr-box{max-height:calc(100dvh - 70px);padding-top:8px}#ncCriar.lay-a h2,#ncCriar.lay-b h2{display:none}#ncCriar.lay-b .cr-c{padding:4px 2px}#ncCriar.lay-b .cr-c img{width:28px;height:28px}#ncCriar.lay-a .cr-desc,#ncCriar.lay-b .cr-desc{min-height:0;margin-top:4px}}#ncCriar.lay-a .cr-n label,#ncCriar.lay-b .cr-n label{display:none}
+
+#ncCriar .cr-nav{display:none}
+/* C: lista com descrição (de lado no celular deitado) */
+#ncCriar.lay-c{align-items:flex-end;background:linear-gradient(180deg,transparent 0 35%,rgba(6,6,18,.55));backdrop-filter:none;padding:0}
+#ncCriar.lay-c .cr-box{width:min(760px,100%);border-radius:18px 18px 0 0;padding:12px 14px calc(14px + env(safe-area-inset-bottom,0px));max-height:52dvh;display:flex;flex-direction:column}
+#ncCriar.lay-c h2{font-size:19px}#ncCriar.lay-c .cr-box>p:first-of-type{display:none}
+#ncCriar.lay-c .cr-g{display:flex;flex-direction:column;gap:6px;overflow-y:auto;flex:1;min-height:0}
+#ncCriar.lay-c .cr-c{flex-direction:row;justify-content:flex-start;text-align:left;padding:6px 10px;gap:10px}#ncCriar.lay-c .cr-c img{width:34px;height:34px}#ncCriar.lay-c .cr-c small{text-align:left}
+#ncCriar.lay-c .cr-n label{display:none}#ncCriar.lay-c .cr-n{margin-top:8px}
+@media (orientation:landscape){#ncCriar.lay-c{justify-content:flex-end;align-items:stretch;background:linear-gradient(90deg,transparent 0 45%,rgba(6,6,18,.55))}#ncCriar.lay-c .cr-box{width:min(420px,48vw);max-height:none;height:100%;border-radius:18px 0 0 18px}}
+/* D: uma classe por vez, com setas, herói grande */
+#ncCriar.lay-d{align-items:flex-end;background:linear-gradient(180deg,transparent 0 50%,rgba(6,6,18,.55));backdrop-filter:none;padding:0}
+#ncCriar.lay-d .cr-box{width:min(640px,100%);border-radius:18px 18px 0 0;padding:10px 14px calc(14px + env(safe-area-inset-bottom,0px))}
+#ncCriar.lay-d h2{font-size:19px;text-align:center}#ncCriar.lay-d .cr-box>p:first-of-type,#ncCriar.lay-d .cr-g,#ncCriar.lay-d .cr-n label{display:none}
+#ncCriar.lay-d .cr-nav{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:6px}
+#ncCriar.lay-d .cr-nav button{width:54px;height:54px;border-radius:50%;border:1px solid #ffd36a88;background:#0f0c26;color:#ffd36a;font:700 30px/1 system-ui;cursor:pointer}
+#ncCriar.lay-d .cr-cur{display:flex;align-items:center;gap:10px;font-size:20px}#ncCriar.lay-d .cr-cur img{width:48px;height:48px}
+#ncCriar.lay-d .cr-desc{display:block;text-align:center;margin:6px 0 0;font-size:13px;opacity:.85}
+#ncCriar.lay-d .cr-n{margin-top:10px}
+
+body.nc-cria #hub>*:not(canvas),body.nc-cria #ncRoomHud,body.nc-cria #ncBell,body.nc-cria #ncWorlds,body.nc-cria .nc-me{visibility:hidden!important}
 </style>
 </body>
 </html>
