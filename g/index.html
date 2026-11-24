@@ -91,6 +91,13 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--ac)}
 .e2letra{opacity:0;animation:e2l 4.5s ease-out infinite}@keyframes e2l{0%{opacity:0;transform:translateY(14px)}12%,85%{opacity:1;transform:none}100%{opacity:0}}
 .e2linha{transform-box:fill-box;transform-origin:left;animation:e2x 4.5s ease-in-out infinite}@keyframes e2x{0%,10%{transform:scaleX(0)}35%,85%{transform:scaleX(1)}100%{transform:scaleX(0)}}
 @media(prefers-reduced-motion:reduce){[class^=e2]{animation:none!important;opacity:1!important}}
+#codigo{position:absolute;opacity:0;pointer-events:none;width:1px;height:1px}
+.cx{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;cursor:text}
+.cx span{height:64px;border-radius:14px;border:2px solid var(--line);background:var(--chip);display:grid;place-items:center;font:800 30px system-ui}
+.cx span.f{border-color:var(--ac);box-shadow:0 0 0 4px #ff8a2a22}
+.okl{display:flex;align-items:center;gap:12px}.okl .ck{width:44px;height:44px;border-radius:12px;background:#14171c;display:grid;place-items:center;flex:none}
+.okl b{display:block;font-size:17px}.okl small{color:var(--mute)}
+button.trocar{border:0;background:none;color:var(--mute);font-weight:600;font-size:13px;text-decoration:underline;padding:10px 0 0}
 </style></head><body><main>
 <div id="intro" role="dialog" aria-label="Apresentação"><div class="aneis-f" aria-hidden="true"></div><div class="in">
  <div class="emb-d" id="embD" aria-label="GERENTES · Indus"></div>
@@ -102,7 +109,13 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--ac)}
 <p class="sub">Preencha em menos de 1 minuto. O supervisor confere antes de entrar no sistema.</p>
 <div id="erroLink" class="msg er oculto">Link incompleto. Peça o link certo ao supervisor.</div>
 <div id="app">
- <div class="card"><div class="f"><span class="lb">Sua loja · toque uma vez, fica gravada</span><div class="chips" id="lojas"><span class="dica">Carregando…</span></div></div></div>
+ <div class="card" id="cartaoLoja"><div class="f" id="blCodigo"><label class="lb" for="codigo">Código da sua loja</label>
+  <div class="cx" id="cx" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+  <input id="codigo" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="one-time-code" aria-label="Código da loja, 4 números">
+  <p class="dica">São 4 números que o supervisor mandou para você. Só precisa digitar uma vez.</p>
+  <button type="button" class="enviar" id="entrar" style="margin-top:12px">Entrar</button></div>
+ <div id="lojaOk" class="oculto"><div class="okl"><span class="ck"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ff8a2a" stroke-width="2.4" stroke-linecap="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span><b id="lojaNome"></b><small>Código confirmado. Fica gravado neste celular.</small></span></div>
+  <button type="button" class="trocar" id="trocarLoja">Não é sua loja?</button></div></div>
  <div class="seg"><button id="tNovo" class="on" type="button"><svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg> Novo funcionário</button><button id="tOc" type="button"><svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5"/><path d="M9 13h7"/><path d="M9 17h5"/></svg> Ocorrência</button></div>
 
  <form id="fNovo" autocomplete="off">
@@ -186,24 +199,27 @@ function pessoas(){const box=$('pessoas');box.innerHTML='';pessoa=null;
  if(!loja){box.innerHTML='<span class="dica">Escolha a loja primeiro.</span>';return}
  (loja.pessoas||[]).forEach(p=>{const b=document.createElement('button');b.type='button';b.textContent=p.nome;b.onclick=()=>{box.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));pessoa=p;$('pessoaOutra').classList.add('oculto')};box.appendChild(b)});
  const o=document.createElement('button');o.type='button';o.textContent='Outro nome';o.onclick=()=>{box.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===o));pessoa={id:'',nome:''};$('pessoaOutra').classList.remove('oculto');$('pessoaOutra').focus()};box.appendChild(o)}
-function lojas(){const box=$('lojas');box.innerHTML='';box.classList.remove('grade');let salva='';try{salva=localStorage.getItem('eq-loja')||''}catch(e){}
- const fixa=publico.find(l=>l.id===salva);
- if(fixa){loja=fixa;const b=document.createElement('button');b.type='button';b.className='on';b.textContent=fixa.nome;box.appendChild(b);
-  const t=document.createElement('button');t.type='button';t.className='trocar';t.textContent='Não é sua loja?';t.onclick=()=>{if(confirm('Trocar a loja gravada neste celular?')){try{localStorage.removeItem('eq-loja')}catch(e){}loja=null;lojas();pessoas()}};box.appendChild(t);pessoas();return}
- box.classList.add('grade');publico.forEach(l=>{const b=document.createElement('button');b.type='button';b.className='lj';const m=String(l.nome).match(/^Loja\s*(\d+)\s*[—-]\s*(.*)$/);
- b.innerHTML='<b></b><span></span>';b.querySelector('b').textContent=m?m[1]:'';b.querySelector('span').textContent=(m?m[2]:l.nome).replace(/^Shopping /,'Shop. ');b.setAttribute('aria-label',l.nome);
- b.onclick=()=>{try{localStorage.setItem('eq-loja',l.id)}catch(e){}lojas()};box.appendChild(b)})}
-rpc('equipe_publico',{p_cfg:CFG}).then(p=>{publico=p||[];
- if(!publico.length){$('lojas').innerHTML='<span class="dica">Link ainda não ativado pelo supervisor.</span>';return}lojas()
-}).catch(()=>{$('lojas').innerHTML='<span class="dica">Sem conexão. Atualize a página.</span>'});
+let codigo='';try{codigo=localStorage.getItem('eq-codigo')||''}catch(e){}
+function mostrarLoja(){const ok=!!loja;$('blCodigo').classList.toggle('oculto',ok);$('lojaOk').classList.toggle('oculto',!ok);if(ok)$('lojaNome').textContent=String(loja.nome).replace(' — ',' · ');pessoas()}
+function desenharCx(){const v=$('codigo').value;[...$('cx').children].forEach((c,i)=>{c.textContent=v[i]||'';c.classList.toggle('f',i===v.length)})}
+async function entrar(c,silencioso){if(!/^\d{4}$/.test(c)){if(!silencioso)aviso('Digite os 4 números do código.');return}
+ $('entrar').disabled=true;$('entrar').textContent='Conferindo…';
+ try{const l=await rpc('equipe_entrar',{p_cfg:CFG,p_codigo:c});loja=l;codigo=c;try{localStorage.setItem('eq-codigo',c)}catch(e){}$('msg').className='msg oculto';mostrarLoja()}
+ catch(e){loja=null;if(!silencioso){aviso('Código não encontrado. Confira com o supervisor.');$('codigo').value='';desenharCx()}else{try{localStorage.removeItem('eq-codigo')}catch(_){}codigo='';mostrarLoja()}}
+ $('entrar').disabled=false;$('entrar').textContent='Entrar'}
+$('codigo').addEventListener('input',()=>{$('codigo').value=$('codigo').value.replace(/\D/g,'').slice(0,4);desenharCx();if($('codigo').value.length===4)entrar($('codigo').value)});
+$('cx').onclick=()=>$('codigo').focus();
+$('entrar').onclick=()=>entrar($('codigo').value);
+$('trocarLoja').onclick=()=>{if(confirm('Trocar a loja gravada neste celular?')){try{localStorage.removeItem('eq-codigo')}catch(e){}loja=null;codigo='';$('codigo').value='';desenharCx();mostrarLoja()}};
+if(codigo)entrar(codigo,true);else mostrarLoja();
 // foto do documento, reduzida para ficar leve
 let fotoDados='';
 $('foto').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const bmp=await createImageBitmap(f);const k=Math.min(1,1100/Math.max(bmp.width,bmp.height));const c=document.createElement('canvas');c.width=bmp.width*k;c.height=bmp.height*k;c.getContext('2d').drawImage(bmp,0,0,c.width,c.height);fotoDados=c.toDataURL('image/jpeg',.7);
  $('fotoTxt').innerHTML='<img alt="Foto do documento" src="'+fotoDados+'">Toque para trocar'}catch(_){fotoDados=''}};
 function aviso(t,ok){const m=$('msg');m.textContent=t;m.className='msg '+(ok?'ok':'er');m.scrollIntoView({block:'center',behavior:'smooth'})}
-async function enviar(tipo,dados,btn){if(!loja){aviso('Escolha a sua loja lá em cima.');$('lojas').scrollIntoView({block:'center'});return}
+async function enviar(tipo,dados,btn){if(!loja||!codigo){aviso('Digite o código da sua loja lá em cima.');$('cartaoLoja').scrollIntoView({block:'center'});return}
  btn.disabled=true;btn.textContent='Enviando…';
- try{await rpc('equipe_enviar',{p_cfg:CFG,p_loja:loja.id,p_tipo:tipo,p_dados:{...dados,lojaNome:loja.nome,enviadoEm:new Date().toISOString()}});$('app').classList.add('oculto');$('feito').classList.remove('oculto');scrollTo(0,0)}
+ try{await rpc('equipe_enviar',{p_cfg:CFG,p_codigo:codigo,p_tipo:tipo,p_dados:{...dados,lojaNome:loja.nome,enviadoEm:new Date().toISOString()}});$('app').classList.add('oculto');$('feito').classList.remove('oculto');scrollTo(0,0)}
  catch(e){aviso('Não enviou: '+e.message+'. Tente de novo.');btn.disabled=false;btn.textContent=tipo==='novo'?'Enviar cadastro':'Enviar ocorrência'}}
 $('fNovo').onsubmit=e=>{e.preventDefault();const nome=$('nome').value.trim();if(nome.split(/\s+/).length<2){aviso('Escreva o nome completo (nome e sobrenome).');$('nome').focus();return}
  if(!$('inicio').value){aviso('Escolha o primeiro dia de trabalho.');return}
@@ -245,7 +261,7 @@ let AC=null;function som(t){try{AC=AC||new (window.AudioContext||window.webkitAu
  if(t==='A'){tom(2400,.05,'square',.05);tom(1200,.09,'triangle',.08,.012)}else{tom(660,.12,'sine',.12,0,520)}}catch(e){}}
 document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;som(b.matches('.comecar,.enviar')?'A':'B')},true);
 // todos os botões de escolha ficam cromados
-function cromar(){document.querySelectorAll('.chips button:not(.trocar),.seg button,.enviar,#lojas .lj').forEach(b=>b.classList.add('cromo'))}
+function cromar(){document.querySelectorAll('.chips button:not(.trocar),.seg button,.enviar').forEach(b=>b.classList.add('cromo'))}
 new MutationObserver(cromar).observe(document.body,{subtree:true,childList:true});cromar();
 document.getElementById('comecar').onclick=()=>{document.getElementById('intro').remove();scrollTo(0,0)};
 })();
