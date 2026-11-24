@@ -15166,7 +15166,16 @@ body.nc-ov .nc-me,body.nc-ov #ncBell,body.nc-ov #ncChat{display:none!important}
 #ncCriar.lay-d .cr-desc{display:block;text-align:center;margin:6px 0 0;font-size:13px;opacity:.85}
 #ncCriar.lay-d .cr-n{margin-top:10px}
 
-body.nc-cria #hub>*:not(canvas),body.nc-cria #ncRoomHud,body.nc-cria #ncBell,body.nc-cria #ncWorlds,body.nc-cria .nc-me{visibility:hidden!important}
+/* 23/11/2026 (Arnold: "cadê os menus?"): na tela de criar personagem o cabeçalho (Node Land · Amigos, Mundo, Progresso, sino) continua aparecendo; só a fileira de baixo fica atrás do painel */
+body.nc-cria #ncRoomHud,body.nc-cria #ncWorlds,body.nc-cria #ncBell{visibility:visible!important}
+/* 23/11/2026 (Arnold): fundo mais transparente no painel de criar personagem (classes) e nos botões dos menus, para ver o cenário atrás */
+#ncCriar,#ncCriar.lay-a,#ncCriar.lay-b,#ncCriar.lay-c,#ncCriar.lay-d{background:linear-gradient(180deg,transparent 0 55%,rgba(6,6,18,.28))!important;backdrop-filter:none!important}
+#ncCriar .cr-box{background:linear-gradient(180deg,rgba(28,22,64,.52),rgba(22,26,60,.6))!important;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);box-shadow:0 -6px 30px rgba(0,0,0,.35)!important}
+#ncCriar .cr-c{background:rgba(15,12,38,.42)!important;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+#ncCriar .cr-c.on{background:rgba(42,32,80,.62)!important}
+#ncCriar .cr-n input{background:rgba(14,10,32,.55)!important}
+.nc-card,.nc-minib,.nc-hb button{background:linear-gradient(180deg,rgba(58,47,110,.5),rgba(35,27,72,.5))!important;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.nc-card:hover{background:linear-gradient(180deg,rgba(70,57,138,.62),rgba(42,32,88,.62))!important}
 </style>
 </body>
 </html>
