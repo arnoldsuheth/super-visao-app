@@ -6560,6 +6560,7 @@ const CHIP = detectChip();
 if(save.gfx === 'economia') save.gfx = 'minimo';
 if(!save.gfxV4){ save.gfxAuto = true; save.gfxV4 = true; }
 if(save.gfxAuto || !GFX_NAMES.includes(save.gfx)){ save.gfx = CHIP.preset; save.gfxAuto = true; }
+if(COARSE && (save.gfx === 'alto' || save.gfx === 'ultra')) save.gfx = 'medio';   /* 23/11 pacote leve: Alto e Ultra só no computador */
 persist();
 const GFX = {
   minimo:{pr:.75, minPr:.6,  bloom:false, grade:false, shadow:0,    area:28, grass:350,   wind:false, detail:false, water:false, amb:0,   fill:false, cap:30},
@@ -6570,7 +6571,7 @@ const GFX = {
 };
 /* ajustes manuais por cima do nível escolhido (save.gfxo): limite de quadros, resolução, sombras, brilho, cores, reflexos, grama, distância, vento, detalhes */
 let _qk = '', _qv = null;
-const Q = () => { const base = GFX[save.gfx] || GFX.alto, o = save.gfxo; if(!o) return base;
+const Q = () => { const base0 = GFX[save.gfx] || GFX.alto, base = COARSE ? (base0.__cel || (base0.__cel = Object.assign({}, base0, {grass:Math.round(base0.grass/2)}))) : base0, o = save.gfxo; if(!o) return base;   /* celular: grama pela metade */
   const k = save.gfx + JSON.stringify(o); if(k === _qk) return _qv; const q = Object.assign({}, base), dpr = window.devicePixelRatio || 1;
   if(o.cap != null) q.cap = o.cap === 'v' ? 0 : o.cap;
   if(o.res != null){ q.pr = Math.max(.5, dpr*o.res); q.minPr = Math.min(q.pr, Math.max(.5, dpr*o.res*.7)); }
@@ -11238,7 +11239,13 @@ function ncXmasStage(){ if(!ncXmasOn() || !scene) return; const g = new T.Group(
   [[-5, 0], [5, 0]].forEach(([dx]) => put(xmTree(1.2), GATE_N.x + dx, GATE_N.z + 3));
   put(xmGnome(1.2), FIRE_POS.x + 1.6, FIRE_POS.z - 3.4, -.4); scene.add(g); }
 buildHub = (f => function(){ const r = f.apply(this, arguments); try{ ncXmasHub(); }catch(e){ console.warn('natal', e); } return r; })(buildHub);
-buildWorldBits = (f => function(){ const r = f.apply(this, arguments); try{ ncXmasStage(); }catch(e){ console.warn('natal', e); } return r; })(buildWorldBits);
+/* 23/11 (Arnold escolheu A, pacote leve): no celular muros, caixas, árvores e chão não fazem sombra; só herói, monstros, chefe e aliados.
+   A decoração de Natal fica exatamente como está (pedido dele). */
+function ncSombraLeve(){ if(!COARSE) return; const keep = new Set([hero && hero.root, ...enemies.map(e => e.cr.root), scene.getObjectByName('ncXmas')].filter(Boolean));
+  try{ (allies || []).forEach(a => { const r = a.root || (a.cr && a.cr.root); if(r) keep.add(r); }); }catch(_){}
+  scene.children.forEach(c => { if(keep.has(c) || c.isLight) return; c.traverse(o => { if(o.castShadow) o.castShadow = false; }); }); }
+setInterval(() => { try{ if(typeof mode !== 'undefined' && mode === 'stage') ncSombraLeve(); }catch(_){} }, 4000);
+buildWorldBits = (f => function(){ const r = f.apply(this, arguments); try{ ncSombraLeve(); }catch(_){} try{ ncXmasStage(); }catch(e){ console.warn('natal', e); } return r; })(buildWorldBits);
 /* ================= NOVIDADES 22/11 (Arnold aprovou na página de ideias) ================= */
 /* ---- 1) CAÇA AOS PRESENTES: 1 presente escondido em cada área, só no Natal ---- */
 const NC_GIFTS = 18;
@@ -13543,7 +13550,8 @@ const toggleMute = () => { save.muted = !save.muted; persist(); audio(); applyVo
 $('#muteBtn').onclick = toggleMute;
 $('#camBtn').onclick = () => setZoom(((save.zoom ?? 4) + 1) % ZOOMS.length);
 $('#hCamBtn').onclick = () => setZoom(((save.zoom ?? 4) + 1) % ZOOMS.length, true);
-function setGfx(k){ save.gfxo = null; save.ncAuto = null; if(k === 'auto'){ save.gfxAuto = true; save.gfx = CHIP.preset; } else { save.gfxAuto = false; save.gfx = k; } persist(); setupFX(); resize(); realLoad(); if(mode === 'hub') goHub(); else renderGfxUI(); }
+function setGfx(k){ if(COARSE && (k === 'alto' || k === 'ultra')) k = 'medio';   /* 23/11 (Arnold escolheu A): no celular o máximo é o Médio */
+  save.gfxo = null; save.ncAuto = null; if(k === 'auto'){ save.gfxAuto = true; save.gfx = CHIP.preset; } else { save.gfxAuto = false; save.gfx = k; } persist(); setupFX(); resize(); realLoad(); if(mode === 'hub') goHub(); else renderGfxUI(); }
 /* ================= ABAS (mapa e pausa) =================
    Cada .stabs troca os .sec irmãos (mesmo pai). Lembra a última aba escolhida de cada grupo. */
 const TABMEM = {};
@@ -13564,7 +13572,7 @@ function renderGfxUI(){
   const on = (v, a, b) => v ? a : b, med = GFX_NAMES.indexOf(save.gfx) >= 2;
   const html = `<div class="gq">
       <div class="gqhead"><span class="eyebrow">Qualidade</span><b class="gqv">${save.gfxAuto ? 'Automático → ' + GFX_LABEL[save.gfx] : GFX_LABEL[save.gfx]}${save.gfxo ? ' + manual' : ''}</b></div>
-      <input type="range" class="qslider" min="0" max="5" step="1" value="${lv}" data-gq aria-label="Qualidade dos gráficos">
+      <input type="range" class="qslider" min="0" max="${COARSE ? 3 : 5}" step="1" value="${lv}" data-gq aria-label="Qualidade dos gráficos">
       <div class="qticks">${names.map((n, i) => `<span class="${i === lv ? 'on' : ''}">${n}</span>`).join('')}</div>
       <div class="istat gqd">${save.gfxAuto ? 'O jogo escolheu pelo seu aparelho (' + (CHIP.soc || CHIP.name) + ') e baixa sozinho se ficar lento. ' : ''}${GFX_DESC[save.gfx]}</div>
     </div>
