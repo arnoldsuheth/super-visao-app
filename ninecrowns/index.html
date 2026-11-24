@@ -8766,7 +8766,7 @@ function ncProcWeapon(kind, t){ const g = new T.Group(), G = Math.min(5, GR_OF ?
   g.traverse(o => { if(o.isMesh){ o.name = 'NC_Staff'; o.castShadow = true; } }); return {scene:g}; }
 window.ncProcWeapon = ncProcWeapon;
 const ncSwCache = {};
-const ncWSty = c => (window.ncWSty && window.ncWSty[c]) || (save.wSty && save.wSty[c]) || '';
+const ncWSty = c => (window.ncWSty && window.ncWSty[c]) || (save.wSty && save.wSty[c]) || ({shaman:'B', priest:'A'})[c] || '';   /* 24/11 (Arnold escolheu): Xamã = Cajado de Raízes, Sacerdote = Cetro Solar */
 function ncSwLoad(n){ if(/^pw:/.test(n)){ const [, k, t] = n.split(':'); return ncSwCache[n] || (ncSwCache[n] = Promise.resolve(ncProcWeapon(k, +t))); } return ncSwCache[n] || (ncSwCache[n] = new Promise(ok => new T.GLTFLoader().load('assets/weapons/' + n + '.glb', g => ok(g), undefined, () => ok(null)))); }
 function ncSwordSwap(h){ const x = h && h.mx; if(!x) return; x.swds = x.swds || {};
   NC_WPN_SET.forEach(S => { if((S.cls && S.cls !== h.cls) || (S.not && S.not === h.cls)) return; const it = equipped(S.slot || 'weapon'), name = it ? S.f[it.tier] : S.f[0];
