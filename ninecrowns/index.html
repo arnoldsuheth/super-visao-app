@@ -14226,7 +14226,7 @@ damageEnemy = (f => function(e, dmg, crit, nx, nz, kb, quiet){
 /* ===== 23/11/2026 (Arnold): FOGOS DE ARTIFÍCIO coloridos no céu da cidade nas festividades
    Natal (22/11 a 26/12), Réveillon (31/12 e 1/1) e todo dia no evento das 22h à meia-noite. Leves: no máximo 3 explosões ao mesmo tempo. */
 (function(){ const fw = []; let nextT = 0, last = performance.now();
-  const festa = () => { try{ const d = new Date(), h = d.getHours(), m = d.getMonth(), dd = d.getDate(); return ncXmasOn() || h >= 22 || (m === 11 && dd === 31) || (m === 0 && dd === 1); }catch(_){ return false; } };
+  const festa = () => { try{ const d = new Date(), h = d.getHours(), m = d.getMonth(), dd = d.getDate(); return h >= 22 || (m === 11 && dd === 31) || (m === 0 && dd === 1); }catch(_){ return false; } };
   function solta(){ const n = (typeof COARSE !== 'undefined' && COARSE) ? 40 : 70, pos = new Float32Array(n*3), vel = [], col = new Float32Array(n*3);
     const cx = (Math.random() - .5)*36, cy = 7 + Math.random()*7, cz = -22 - Math.random()*14, hue = Math.random(), c2 = (hue + .33 + Math.random()*.3) % 1;
     for(let i = 0; i < n; i++){ pos[i*3] = cx; pos[i*3 + 1] = cy; pos[i*3 + 2] = cz; const th = Math.random()*Math.PI*2, ph = Math.acos(2*Math.random() - 1), sp = 7 + Math.random()*4;
@@ -15161,16 +15161,14 @@ body.nc-ov .nc-me,body.nc-ov #ncBell,body.nc-ov #ncChat{display:none!important}
 #ncCriar.lay-d .cr-desc{display:block;text-align:center;margin:6px 0 0;font-size:13px;opacity:.85}
 #ncCriar.lay-d .cr-n{margin-top:10px}
 
-/* 23/11/2026 (Arnold: "cadê os menus?"): na tela de criar personagem o cabeçalho (Node Land · Amigos, Mundo, Progresso, sino) continua aparecendo; só a fileira de baixo fica atrás do painel */
-body.nc-cria #ncRoomHud,body.nc-cria #ncWorlds,body.nc-cria #ncBell{visibility:visible!important}
-/* 23/11/2026 (Arnold): fundo mais transparente no painel de criar personagem (classes) e nos botões dos menus, para ver o cenário atrás */
-#ncCriar,#ncCriar.lay-a,#ncCriar.lay-b,#ncCriar.lay-c,#ncCriar.lay-d{background:linear-gradient(180deg,transparent 0 55%,rgba(6,6,18,.28))!important;backdrop-filter:none!important}
-#ncCriar .cr-box{background:linear-gradient(180deg,rgba(28,22,64,.52),rgba(22,26,60,.6))!important;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);box-shadow:0 -6px 30px rgba(0,0,0,.35)!important}
-#ncCriar .cr-c{background:rgba(15,12,38,.42)!important;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
-#ncCriar .cr-c.on{background:rgba(42,32,80,.62)!important}
-#ncCriar .cr-n input{background:rgba(14,10,32,.55)!important}
-.nc-card,.nc-minib,.nc-hb button{background:linear-gradient(180deg,rgba(58,47,110,.5),rgba(35,27,72,.5))!important;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
-.nc-card:hover{background:linear-gradient(180deg,rgba(70,57,138,.62),rgba(42,32,88,.62))!important}
+body.nc-cria #hub>*:not(canvas),body.nc-cria #ncRoomHud,body.nc-cria #ncBell,body.nc-cria #ncWorlds,body.nc-cria .nc-me{visibility:hidden!important}
+
+/* 23/11/2026 (Arnold): o ranking dos amigos sai de vez (o cartão de cima já mostra quem está no mundo) */
+#ncFriends{display:none!important}
+[data-ncfr]{display:none!important}
+/* criar personagem não bloqueia mais os menus: só a gaveta recebe o toque */
+#ncCriar{pointer-events:none!important}#ncCriar .cr-box{pointer-events:auto!important}
+body.nc-cria #hub>*:not(canvas){visibility:visible!important}
 </style>
 </body>
 </html>
