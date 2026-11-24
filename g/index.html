@@ -6,7 +6,7 @@
 <meta property="og:type" content="website"><meta property="og:site_name" content="Gerentes · Indus">
 <meta property="og:title" content="Gerentes · Equipe da loja em 1 minuto">
 <meta property="og:description" content="Cadastro de funcionário novo e ocorrências (advertência, atestado, falta, atraso, desligamento) direto pelo celular.">
-<meta property="og:url" content="https://arnoldsuheth.github.io/super-visao-app/g/"><meta property="og:image" content="https://arnoldsuheth.github.io/super-visao-app/g/og.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta property="og:url" content="https://arnoldsuheth.github.io/super-visao-app/g/"><meta property="og:image" content="https://arnoldsuheth.github.io/super-visao-app/g/og2.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Gerentes · Indus — Equipe da loja em 1 minuto"><meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="icone.png"><link rel="apple-touch-icon" href="icone.png"><meta name="apple-mobile-web-app-title" content="Gerentes">
 <style>
@@ -52,11 +52,13 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--ac)}
 #intro li i{font-style:normal;font-size:22px;width:44px;height:44px;border-radius:8px;background:#14171c;display:grid;place-items:center;flex:none}
 #intro .comecar{margin-top:auto;width:100%;background:#14171c;color:#fff;border:0;font:800 18px system-ui;padding:18px;border-radius:8px;box-shadow:5px 5px 0 var(--ac)}
 #intro .rod{text-align:center;font-size:12px;color:#8a8f98;margin-top:14px}
+.ico{display:inline-block;vertical-align:-4px}.seg button{display:flex;align-items:center;justify-content:center;gap:6px;font-size:15px;white-space:nowrap;padding:13px 8px}.chips button .ico{vertical-align:-3px}
+.okc{display:inline-grid;place-items:center;width:72px;height:72px;border-radius:18px;background:#14171c;box-shadow:5px 5px 0 var(--ac)}
 </style></head><body><main>
 <div id="intro" role="dialog" aria-label="Apresentação"><div class="in">
  <div class="marca"><span class="ic"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#ff7a12" stroke-width="2.4" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></span><span><b>Gerentes</b><small>INDUS</small></span></div>
  <h2>Equipe da loja em 1 minuto</h2><p class="sub">Tudo que o supervisor precisa saber da sua equipe, sem planilha e sem mensagem perdida.</p>
- <ul><li><i>➕</i>Cadastrar funcionário novo</li><li><i>📝</i>Advertência, atestado, falta, atraso ou desligamento</li><li><i>✅</i>O supervisor confere e já cria os lembretes</li></ul>
+ <ul><li><i><svg class="ico" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ff7a12" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg></i>Cadastrar funcionário novo</li><li><i><svg class="ico" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ff7a12" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5"/><path d="M9 13h7"/><path d="M9 17h5"/></svg></i>Advertência, atestado, falta, atraso ou desligamento</li><li><i><svg class="ico" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ff7a12" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></i>O supervisor confere e já cria os lembretes</li></ul>
  <button class="comecar" type="button" onclick="document.getElementById('intro').remove();scrollTo(0,0)">Começar</button><p class="rod">Indus · SUPER VISÃO</p></div></div>
 <div class="marca"><span class="ic"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#ff7a12" stroke-width="2.4" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></span><span><b>Gerentes</b><small>INDUS</small></span></div>
 <h1>Equipe da loja</h1>
@@ -64,7 +66,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--ac)}
 <div id="erroLink" class="msg er oculto">Link incompleto. Peça o link certo ao supervisor.</div>
 <div id="app">
  <div class="card"><div class="f"><span class="lb">Sua loja</span><div class="chips" id="lojas"><span class="dica">Carregando…</span></div></div></div>
- <div class="seg"><button id="tNovo" class="on" type="button">➕ Novo funcionário</button><button id="tOc" type="button">📝 Ocorrência</button></div>
+ <div class="seg"><button id="tNovo" class="on" type="button"><svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg> Novo funcionário</button><button id="tOc" type="button"><svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5"/><path d="M9 13h7"/><path d="M9 17h5"/></svg> Ocorrência</button></div>
 
  <form id="fNovo" autocomplete="off">
   <div class="card">
@@ -94,14 +96,14 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--ac)}
    <div class="f oculto" id="blAtr"><span class="lb">Quanto tempo de atraso</span><div class="chips" data-campo="atraso"><button type="button" class="on">Até 15 min</button><button type="button">15 a 30 min</button><button type="button">Mais de 30 min</button></div></div>
    <div class="f oculto" id="blDes"><span class="lb">Motivo do desligamento</span><div class="chips" data-campo="deslig"><button type="button" class="on">Pedido do funcionário</button><button type="button">Dispensa</button><button type="button">Fim da experiência</button><button type="button">Justa causa</button></div></div>
    <div class="f"><span class="lb">Quando</span><div class="chips" id="quandoChips"></div><input id="quando" type="date" class="oculto" style="margin-top:8px"></div>
-   <div class="f"><span class="lb">Foto do documento (opcional)</span><label class="foto" id="fotoBox"><input id="foto" type="file" accept="image/*" class="oculto"><span id="fotoTxt">📷 Tirar foto do documento</span></label></div>
+   <div class="f"><span class="lb">Foto do documento (opcional)</span><label class="foto" id="fotoBox"><input id="foto" type="file" accept="image/*" class="oculto"><span id="fotoTxt"><svg class="ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><path d="M12 16.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"/></svg> Tirar foto do documento</span></label></div>
    <div class="f"><label for="obsO">Observação (opcional)</label><input id="obsO" maxlength="200" placeholder="Escreva só se precisar"></div>
   </div>
   <button class="enviar" type="submit">Enviar ocorrência</button>
  </form>
  <div id="msg" class="msg oculto"></div>
 </div>
-<div id="feito" class="card feito oculto"><span style="font-size:44px">✅</span><b>Enviado!</b><p class="sub">O supervisor vai conferir. Obrigado.</p><button class="enviar" type="button" onclick="location.reload()">Enviar outro</button></div>
+<div id="feito" class="card feito oculto"><span class="okc"><svg class="ico" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><b>Enviado!</b><p class="sub">O supervisor vai conferir. Obrigado.</p><button class="enviar" type="button" onclick="location.reload()">Enviar outro</button></div>
 </main>
 <script>
 (function(){
@@ -122,12 +124,12 @@ document.querySelectorAll('.chips[data-campo]').forEach(g=>{escolha[g.dataset.ca
 function mudou(c){
  if(c==='cargo')$('cargoOutro').classList.toggle('oculto',escolha.cargo!=='Outro');
  if(c==='exp'){$('expOutro').classList.toggle('oculto',escolha.exp!=='outro');periodos()}
- if(c==='oc'){$('blAdv').classList.toggle('oculto',escolha.oc!=='Advertência');$('blAt').classList.toggle('oculto',escolha.oc!=='Atestado');$('blAtr').classList.toggle('oculto',escolha.oc!=='Atraso');$('blDes').classList.toggle('oculto',escolha.oc!=='Desligamento');$('fotoTxt').textContent='📷 Tirar foto '+(escolha.oc==='Atestado'?'do atestado':'do documento')}
+ if(c==='oc'){$('blAdv').classList.toggle('oculto',escolha.oc!=='Advertência');$('blAt').classList.toggle('oculto',escolha.oc!=='Atestado');$('blAtr').classList.toggle('oculto',escolha.oc!=='Atraso');$('blDes').classList.toggle('oculto',escolha.oc!=='Desligamento');$('fotoTxt').innerHTML='<svg class="ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><path d="M12 16.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"/></svg> Tirar foto '+(escolha.oc==='Atestado'?'do atestado':'do documento')}
 }
 // datas com botões: Hoje / próximos dias / outra data
 function datas(boxId,inputId,opcoes){const box=$(boxId),inp=$(inputId);box.innerHTML='';
  opcoes.forEach(([rot,iso],i)=>{const b=document.createElement('button');b.type='button';b.textContent=rot;if(i===0){b.classList.add('on');inp.value=iso}b.onclick=()=>{box.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));if(iso){inp.value=iso;inp.classList.add('oculto')}else{inp.classList.remove('oculto');inp.focus()}periodos()};box.appendChild(b)});
- const o=document.createElement('button');o.type='button';o.textContent='📅 Outra data';o.onclick=()=>{box.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===o));inp.classList.remove('oculto');inp.showPicker?.()};box.appendChild(o);inp.oninput=periodos}
+ const o=document.createElement('button');o.type='button';o.innerHTML='<svg class="ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16v15H4z"/><path d="M4 10h16"/><path d="M8 3v4"/><path d="M16 3v4"/></svg> Outra data';o.onclick=()=>{box.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===o));inp.classList.remove('oculto');inp.showPicker?.()};box.appendChild(o);inp.oninput=periodos}
 const h=hoje(),seg=soma(h,(8-new Date(h+'T12:00:00Z').getUTCDay())%7||7);
 datas('inicioChips','inicio',[['Hoje',h],['Amanhã',soma(h,1)],[sem(seg)+' '+br(seg),seg]]);
 datas('quandoChips','quando',[['Hoje',h],['Ontem',soma(h,-1)]]);
