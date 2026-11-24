@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="versao" content="202611241849"><meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#121316">
+<meta name="versao" content="202611241855"><meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#121316">
 <title>Gerentes · Indus</title>
 <meta name="description" content="Equipe da loja em 1 minuto: cadastro de funcionário novo e ocorrências direto pelo celular.">
 <meta property="og:type" content="website"><meta property="og:site_name" content="Gerentes · Indus">
@@ -132,6 +132,7 @@ html,body{overflow-x:hidden}
 #introLoja .trocar{display:block;margin:6px auto 0;color:#b9bec8}
 
 .topo .e2linha{display:none}.topo-claro .topo-in{max-width:240px}
+.tags{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:12px 0 18px}.tags span{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:999px;background:#ffffff0d;border:1px solid #ffffff22;font-size:13px;font-weight:700;color:#fff}.tags svg{color:#ff8a2a}
 #intro.sai{animation:sai .45s ease forwards}@keyframes sai{to{opacity:0;transform:scale(1.04)}}
 @media(prefers-reduced-motion:reduce){.topo-linha:after,.bal,.pal-aneis,.eu{animation:none!important;opacity:1}}
 html,body{max-width:100%;overflow-x:clip;overscroll-behavior-x:none}body{touch-action:pan-y}
@@ -148,19 +149,18 @@ html,body{max-width:100%;overflow-x:clip;overscroll-behavior-x:none}body{touch-a
   </div>
   <p class="quem">Arnold Suheth · Supervisor</p>
   <h2>Equipe da loja em 1 minuto</h2>
-  <p class="sub">Funcionário novo e ocorrências (advertência, atestado, falta, atraso, desligamento) direto pelo celular. Eu confiro e aprovo.</p>
+  <div class="tags"><span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>Funcionário novo</span><span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5"/></svg>Ocorrência</span><span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Eu aprovo</span></div>
   <div class="acesso" id="acesso"></div>
-  <p class="rod">Indus · SUPER VISÃO</p>
- </div></div>
+  </div></div>
 <header class="topo topo-claro"><div class="topo-in" id="embTopo" aria-label="GERENTES · Indus"></div><i class="topo-linha" aria-hidden="true"></i></header>
 <h1>Equipe da loja</h1>
 <p class="sub">Preencha em menos de 1 minuto. O supervisor confere antes de entrar no sistema.</p>
 <div id="erroLink" class="msg er oculto">Link incompleto. Peça o link certo ao supervisor.</div>
 <div id="app">
- <div class="card" id="cartaoLoja"><div id="introLoja" class="oculto"><p class="lb">Sua loja</p><b id="introLojaNome"></b><button type="button" class="enviar laranja" id="introEntrar">Entrar</button><button type="button" class="trocar" id="introTrocar">Não é sua loja?</button></div><div class="f" id="blCodigo"><label class="lb" for="codigo">Código da sua loja</label>
+ <div class="card" id="cartaoLoja"><div id="introLoja" class="oculto"><p class="lb">Sua loja</p><b id="introLojaNome"></b><button type="button" class="enviar laranja" id="introEntrar">Entrar</button><button type="button" class="trocar" id="introTrocar">Não é sua loja?</button></div><div class="f" id="blCodigo"><label class="lb" for="codigo">Código da sua loja · 4 números</label>
   <div class="cx" id="cx" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
   <input id="codigo" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="one-time-code" aria-label="Código da loja, 4 números">
-  <p class="dica" id="cxErro" style="color:#ff9b8a;min-height:0"></p><p class="dica">São 4 números que o supervisor mandou para você. Só precisa digitar uma vez.</p>
+  <p class="dica" id="cxErro" style="color:#ff9b8a;min-height:0"></p>
   <button type="button" class="enviar" id="entrar" style="margin-top:12px">Entrar</button></div>
  <div id="lojaOk" class="oculto"><div class="okl"><span class="ck"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ff8a2a" stroke-width="2.4" stroke-linecap="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span><b id="lojaNome"></b><small>Código confirmado. Fica gravado neste celular.</small></span></div>
   <button type="button" class="trocar" id="trocarLoja">Não é sua loja?</button></div></div>
