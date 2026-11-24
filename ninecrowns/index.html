@@ -14271,6 +14271,19 @@ damageEnemy = (f => function(e, dmg, crit, nx, nz, kb, quiet){
   const t = setInterval(() => { try{ if(typeof mode === 'undefined' || mode !== 'hub') return; const sp = document.getElementById('ncSplash') || document.querySelector('.ncs');
       if(sp && sp.getClientRects().length && getComputedStyle(sp).display !== 'none' && !sp.classList.contains('out') && +getComputedStyle(sp).opacity > .2) return;
       if(precisa()){ const el = document.getElementById('ncCriar'); if(!el || el.hidden) abre(); else { try{ window.ncDaily(false); }catch(_){} } } else clearInterval(t); }catch(_){} }, 700); })();
+
+/* 23/11/2026 (Arnold: "muito menu abrindo junto"): só UMA janela aberta por vez. Abriu uma nova, as outras fecham. */
+(function(){ const IDS = ['ncStable','ncFest','ncFriends','ncDaily','ncBellPop','ncTrade','ncPeerPop','ncWorldsPop','ncDgPop','howto'];
+  const vis = el => !!el && !el.hidden && el.getClientRects().length > 0 && getComputedStyle(el).display !== 'none' && getComputedStyle(el).visibility !== 'hidden';
+  function abertas(){ const b = document.body.classList, o = []; if(b.contains('nc-l')) o.push('l'); if(b.contains('nc-r')) o.push('r'); for(const id of IDS) if(vis(document.getElementById(id))) o.push(id); return o; }
+  function fecha(k){ try{ if(k === 'l' || k === 'r'){ window.ncMenu.close(k); return; } const el = document.getElementById(k); if(!el) return;
+      const x = el.querySelector('[data-frclose]:not(.pop-bg),[data-peerclose],[data-bagclose],[data-skclose],.pop-x,.nc-x,.nf-x,.lt-x,.mf-x,[aria-label="Fechar"]');
+      if(x) x.click(); if(vis(el)) el.hidden = true; }catch(_){} }
+  let antes = [];
+  setInterval(() => { try{ if(document.hidden) return; const agora = abertas(); const novas = agora.filter(k => !antes.includes(k));
+      if(novas.length && agora.length > novas.length){ agora.filter(k => !novas.includes(k)).forEach(fecha); antes = abertas(); return; }
+      if(novas.length > 1){ novas.slice(0, -1).forEach(fecha); antes = abertas(); return; }
+      antes = agora; }catch(_){} }, 200); })();
 /* 23/11/2026: notificação leva até o lugar dela */
 function ncNtGo(kind){ try{
   const clica = nomes => { const els = [...document.querySelectorAll('button,[role=button]')].filter(b => b.getClientRects().length && !b.closest('#ncBellPop'));
@@ -14522,7 +14535,7 @@ body.nc-l #hub>aside.panel::before,body.nc-r #hub>#rightPanel::before{transform:
     if(cur[s]===k){close(s);return}
     var src=s==='l'?L.querySelector('.stabs.main button[data-sec="'+k+'"]'):R.querySelector('.vtab[data-view="'+k+'"]');if(src)src.click();
     cur[s]=k;(s==='l'?tL:tR).textContent=NAMES[k];document.body.classList.add('nc-'+s);(s==='l'?L:R).scrollTop=0;
-    if(innerWidth<1500)close(s==='l'?'r':'l');mark();cam()}
+    close(s==='l'?'r':'l');mark();cam()}
   document.getElementById('hubSpacer').addEventListener('click',function(){if(innerWidth<=900){close('l');close('r')}});
   /* ===== MENU C (21/11, aprovado pelo Arnold): 8 cartões grandes embaixo, cada um abre UMA coisa só; NPCs Ferreiro e Mercador ===== */
   var IC={skills:'<path d="M13 2 4 14h7l-1 8 9-12h-7Z"/>',bag:'<path d="M6 8h12l-1 13H7Z"/><path d="M9 8a3 3 0 0 1 6 0"/>',smith:'<path d="M4 20h16M7 20v-4h10v4M9 16v-3h6v3"/><path d="M14 4l6 6-2 2-6-6Z"/><path d="M12 8 4 16"/>',
