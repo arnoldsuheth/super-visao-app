@@ -6761,7 +6761,7 @@ function renderAODepth(){
 /* tamanho do mapa de sombras (ray tracing dobra; celular no máximo 4096 para não faltar memória) */
 function shadowSize(){
   const s = Q().shadow; if(!s) return 512;
-  return Math.min(save.rt ? s*2 : s, renderer.capabilities.maxTextureSize, matchMedia('(pointer:coarse)').matches ? 4096 : 8192);
+  return Math.min(save.rt ? s*2 : s, renderer.capabilities.maxTextureSize, matchMedia('(pointer:coarse)').matches ? 512 : 8192);   /* 23/11 (Arnold): no celular a sombra é levinha (mapa 512) */
 }
 function makeEnv(){
   const pm = new T.PMREMGenerator(renderer);
@@ -13851,6 +13851,7 @@ let ncErrT = 0; function ncErrShow(err){ try{ console.error(err); const now = pe
   let el = document.getElementById('ncErr'); if(!el){ el = document.createElement('div'); el.id = 'ncErr'; el.style.cssText = 'position:fixed;left:8px;bottom:8px;z-index:999;max-width:70vw;font:11px/1.3 monospace;color:#ffd0d0;background:#300a;padding:4px 6px;border-radius:6px;pointer-events:none'; document.body.appendChild(el); }
   el.textContent = 'Erro (mande print ao Claude): ' + String(err && err.message || err).slice(0, 120) + ' @ ' + String(err && err.stack || '').split('\n').slice(1, 3).join(' | ').replace(/https?:[^ )]*\//g, '').slice(0, 160);
   clearTimeout(el._t); el._t = setTimeout(() => { el.remove(); }, 12000); }catch(_){} }
+let ncShF = 0;
 function loop(now){
   requestAnimationFrame(loop);
   if(mLocked() && !lookOn()) unlockMouse();
@@ -13873,6 +13874,7 @@ function loop(now){
     updateFloats(running ? dt : 0);
   }
   renderRefl();
+  if(COARSE){ renderer.shadowMap.autoUpdate = false; ncShF = (ncShF + 1) % 2; renderer.shadowMap.needsUpdate = ncShF === 0; }   /* 23/11 celular: a sombra é refeita a cada 2 quadros (não dá para ver a diferença) */
   if(composer){ renderPass.scene = scene; renderPass.camera = camera; renderAODepth(); composer.render(dt); }
   else renderer.render(scene, camera);
   perfFrame(now, performance.now() - cpu0);
