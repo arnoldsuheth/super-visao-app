@@ -98,21 +98,67 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--ac)}
 .okl{display:flex;align-items:center;gap:12px}.okl .ck{width:44px;height:44px;border-radius:12px;background:#14171c;display:grid;place-items:center;flex:none}
 .okl b{display:block;font-size:17px}.okl small{color:var(--mute)}
 button.trocar{border:0;background:none;color:var(--mute);font-weight:600;font-size:13px;text-decoration:underline;padding:10px 0 0}
+
+/* 24/11/2026 · nova abertura: faixa GERENTES de ponta a ponta, foto do Arnold e código na mesma tela */
+html,body{overflow-x:hidden}
+.topo{position:relative;margin:calc(-18px - env(safe-area-inset-top)) calc(50% - 50vw) 16px;width:100vw;padding:calc(16px + env(safe-area-inset-top)) 16px 14px;background:radial-gradient(ellipse at 50% -20%,#3a3d44,#16171b 60%,#0d0e10);box-shadow:0 18px 30px -18px #0009}
+.topo:after{content:'';position:absolute;left:0;right:0;top:100%;height:26px;background:linear-gradient(#0d0e1066,transparent);pointer-events:none}
+.topo-in{max-width:300px;margin:0 auto}.topo-in svg{width:100%;height:auto;display:block;overflow:visible}
+.topo-linha{position:absolute;left:0;right:0;bottom:0;height:3px;background:linear-gradient(90deg,#d9520c55,#ff8a2a,#d9520c55);box-shadow:0 0 12px #ff8a2a;overflow:hidden}
+.topo-linha:after{content:'';position:absolute;top:-2px;bottom:-2px;width:30%;left:-30%;background:linear-gradient(90deg,transparent,#fff,transparent);filter:blur(1px);animation:corre 3.2s ease-in-out infinite}
+@keyframes corre{0%{left:-30%}70%,100%{left:100%}}
+#intro{overflow-x:hidden!important;padding:0 0 calc(22px + env(safe-area-inset-bottom))!important;display:block!important}
+#intro .topo{margin:0 0 6px;width:100%;background:linear-gradient(#121316,#121316ee 60%,transparent)}
+#intro .topo:after{display:none}
+#intro .aneis-f{position:fixed!important;inset:0!important;background:repeating-radial-gradient(circle at 50% 38%,transparent 0 26px,#ffffff0c 26px 27px)!important;animation:none!important}
+#intro .in{padding:0 22px;max-width:480px;margin:0 auto}
+#intro .emb-d{margin:0 auto!important}
+.palco{position:relative;width:min(300px,78vw);aspect-ratio:1;margin:4px auto 0}
+.pal-aneis{position:absolute;inset:0;width:100%;height:100%;animation:anf 50s linear infinite}
+.disco{position:absolute;left:18%;top:16%;width:64%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffb066,#ff7a12 55%,#c2470a);box-shadow:0 0 60px #ff7a1255}
+.eu{position:absolute;left:12%;bottom:0;width:76%;filter:drop-shadow(0 14px 24px #0009);-webkit-mask-image:linear-gradient(#000 84%,transparent);mask-image:linear-gradient(#000 84%,transparent);animation:sobe .9s cubic-bezier(.2,1,.3,1) both}
+@keyframes sobe{from{opacity:0;transform:translateY(24px) scale(.94)}}
+.bal{position:absolute;display:flex;align-items:center;gap:8px;padding:7px 11px;border-radius:12px;background:#1d1f24ee;border:1px solid #ffffff22;box-shadow:0 10px 24px #0008;font-size:12px;line-height:1.2;color:#fff;opacity:0;animation:bal 7s ease-in-out infinite}
+.bal b{display:block;font-size:13px}.bal small{color:#b9bec8}
+.bal .bi{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;background:#ff8a2a;color:#1a1208;flex:none}
+.b1{left:-4%;top:30%}.b2{right:-4%;top:58%;animation-delay:1.2s}
+@keyframes bal{0%{opacity:0;transform:translateY(10px) scale(.92)}10%,80%{opacity:1;transform:none}92%,100%{opacity:0;transform:translateY(-6px)}}
+.quem{text-align:center;font:800 11px Menlo,monospace;letter-spacing:.3em;color:#ff8a2a;text-transform:uppercase;margin:12px 0 4px}
+#intro h2{text-align:center;font-size:26px!important}#intro .sub{text-align:center;font-size:15px!important;margin:8px 0 16px!important}
+.acesso .card{background:#ffffff0d;border:1px solid #ffffff22;color:#fff;margin:0}
+.acesso .lb,.acesso label{color:#c9ccd3}.acesso .dica{color:#9aa0aa}
+.acesso .cx span{background:#0d0e10;border-color:#3a3d44;color:#fff}.acesso .cx span.f{border-color:#ff8a2a}
+#introLoja{text-align:center}#introLoja b{display:block;font-size:20px;margin:2px 0 12px}
+#introLoja .trocar{display:block;margin:6px auto 0;color:#b9bec8}
+
+.topo .e2linha{display:none}.topo-claro .topo-in{max-width:240px}
+#intro.sai{animation:sai .45s ease forwards}@keyframes sai{to{opacity:0;transform:scale(1.04)}}
+@media(prefers-reduced-motion:reduce){.topo-linha:after,.bal,.pal-aneis,.eu{animation:none!important;opacity:1}}
 </style></head><body><main>
-<div id="intro" role="dialog" aria-label="Apresentação"><div class="aneis-f" aria-hidden="true"></div><div class="in">
- <div class="emb-d" id="embD" aria-label="GERENTES · Indus"></div>
- <h2>Equipe da loja em 1 minuto</h2><p class="sub">Tudo que o supervisor precisa saber da sua equipe, sem planilha e sem mensagem perdida.</p>
- <ul><li><i><svg class="ico" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ff8a2a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg></i>Cadastrar funcionário novo</li><li><i><svg class="ico" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ff8a2a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5"/><path d="M9 13h7"/><path d="M9 17h5"/></svg></i>Advertência, atestado, falta, atraso, desligamento ou saída</li><li><i><svg class="ico" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ff8a2a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></i>O supervisor confere e já cria os lembretes</li></ul>
- <button class="comecar cromo laranja" type="button" id="comecar">Começar</button><p class="rod">Indus · SUPER VISÃO</p></div></div>
-<div class="marca2"><b>GERENTES</b><i></i><small>INDUS · LOJAS</small></div>
+<div id="intro" role="dialog" aria-label="Apresentação"><div class="aneis-f" aria-hidden="true"></div>
+ <header class="topo"><div class="topo-in emb-d" id="embD" aria-label="GERENTES · Indus"></div><i class="topo-linha" aria-hidden="true"></i></header>
+ <div class="in">
+  <div class="palco" aria-hidden="true">
+   <svg class="pal-aneis" viewBox="0 0 600 600"><g fill="none" stroke="#fff" stroke-opacity=".1"><circle cx="300" cy="300" r="290"/><circle cx="300" cy="300" r="262" stroke-dasharray="2 6"/><circle cx="300" cy="300" r="236"/></g><path d="M300 10 A290 290 0 0 1 560 170" fill="none" stroke="#ff8a2a" stroke-width="4" stroke-linecap="round"/><path d="M60 430 A290 290 0 0 0 200 573" fill="none" stroke="#ff8a2a" stroke-width="4" stroke-linecap="round" opacity=".6"/></svg>
+   <div class="disco"></div><img class="eu" src="eu.webp" alt="">
+   <div class="bal b1"><span class="bi"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg></span><span><b>Funcionário novo</b><small>enviado em 40 s</small></span></div>
+   <div class="bal b2"><span class="bi"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span><b>Supervisor aprovou</b><small>lembretes criados</small></span></div>
+  </div>
+  <p class="quem">Arnold Suheth · Supervisor</p>
+  <h2>Equipe da loja em 1 minuto</h2>
+  <p class="sub">Funcionário novo e ocorrências (advertência, atestado, falta, atraso, desligamento) direto pelo celular. Eu confiro e aprovo.</p>
+  <div class="acesso" id="acesso"></div>
+  <p class="rod">Indus · SUPER VISÃO</p>
+ </div></div>
+<header class="topo topo-claro"><div class="topo-in" id="embTopo" aria-label="GERENTES · Indus"></div><i class="topo-linha" aria-hidden="true"></i></header>
 <h1>Equipe da loja</h1>
 <p class="sub">Preencha em menos de 1 minuto. O supervisor confere antes de entrar no sistema.</p>
 <div id="erroLink" class="msg er oculto">Link incompleto. Peça o link certo ao supervisor.</div>
 <div id="app">
- <div class="card" id="cartaoLoja"><div class="f" id="blCodigo"><label class="lb" for="codigo">Código da sua loja</label>
+ <div class="card" id="cartaoLoja"><div id="introLoja" class="oculto"><p class="lb">Sua loja</p><b id="introLojaNome"></b><button type="button" class="enviar laranja" id="introEntrar">Entrar</button><button type="button" class="trocar" id="introTrocar">Não é sua loja?</button></div><div class="f" id="blCodigo"><label class="lb" for="codigo">Código da sua loja</label>
   <div class="cx" id="cx" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
   <input id="codigo" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="one-time-code" aria-label="Código da loja, 4 números">
-  <p class="dica">São 4 números que o supervisor mandou para você. Só precisa digitar uma vez.</p>
+  <p class="dica" id="cxErro" style="color:#ff9b8a;min-height:0"></p><p class="dica">São 4 números que o supervisor mandou para você. Só precisa digitar uma vez.</p>
   <button type="button" class="enviar" id="entrar" style="margin-top:12px">Entrar</button></div>
  <div id="lojaOk" class="oculto"><div class="okl"><span class="ck"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ff8a2a" stroke-width="2.4" stroke-linecap="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span><b id="lojaNome"></b><small>Código confirmado. Fica gravado neste celular.</small></span></div>
   <button type="button" class="trocar" id="trocarLoja">Não é sua loja?</button></div></div>
@@ -200,17 +246,25 @@ function pessoas(){const box=$('pessoas');box.innerHTML='';pessoa=null;
  (loja.pessoas||[]).forEach(p=>{const b=document.createElement('button');b.type='button';b.textContent=p.nome;b.onclick=()=>{box.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));pessoa=p;$('pessoaOutra').classList.add('oculto')};box.appendChild(b)});
  const o=document.createElement('button');o.type='button';o.textContent='Outro nome';o.onclick=()=>{box.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===o));pessoa={id:'',nome:''};$('pessoaOutra').classList.remove('oculto');$('pessoaOutra').focus()};box.appendChild(o)}
 let codigo='';try{codigo=localStorage.getItem('eq-codigo')||''}catch(e){}
-function mostrarLoja(){const ok=!!loja;$('blCodigo').classList.toggle('oculto',ok);$('lojaOk').classList.toggle('oculto',!ok);if(ok)$('lojaNome').textContent=String(loja.nome).replace(' — ',' · ');pessoas()}
+// 24/11/2026: o código fica na abertura (junto da explicação). Digitou certo, a abertura some e entra no conteúdo.
+(()=>{const ac=$('acesso'),c=document.createElement('div');c.className='card';c.append($('introLoja'),$('blCodigo'));ac.append(c)})();
+function fecharIntro(){const i=$('intro');if(!i)return;i.classList.add('sai');setTimeout(()=>{i.remove();scrollTo(0,0)},430)}
+function trocarLoja(){try{localStorage.removeItem('eq-codigo')}catch(e){}location.reload()}
+function mostrarLoja(){const ok=!!loja;const n=ok?String(loja.nome).replace(' — ',' · '):'';
+ $('blCodigo').classList.toggle('oculto',ok);$('introLoja').classList.toggle('oculto',!ok);$('introLojaNome').textContent=n;
+ $('lojaOk').classList.toggle('oculto',!ok);if(ok)$('lojaNome').textContent=n;pessoas()}
 function desenharCx(){const v=$('codigo').value;[...$('cx').children].forEach((c,i)=>{c.textContent=v[i]||'';c.classList.toggle('f',i===v.length)})}
-async function entrar(c,silencioso){if(!/^\d{4}$/.test(c)){if(!silencioso)aviso('Digite os 4 números do código.');return}
+async function entrar(c,silencioso){if(!/^\d{4}$/.test(c)){if(!silencioso){if($('intro'))$('cxErro').textContent='Digite os 4 números do código.';else aviso('Digite os 4 números do código.')}return}
  $('entrar').disabled=true;$('entrar').textContent='Conferindo…';
- try{const l=await rpc('equipe_entrar',{p_cfg:CFG,p_codigo:c});loja=l;codigo=c;try{localStorage.setItem('eq-codigo',c)}catch(e){}$('msg').className='msg oculto';mostrarLoja()}
- catch(e){loja=null;if(!silencioso){aviso('Código não encontrado. Confira com o supervisor.');$('codigo').value='';desenharCx()}else{try{localStorage.removeItem('eq-codigo')}catch(_){}codigo='';mostrarLoja()}}
+ try{const l=await rpc('equipe_entrar',{p_cfg:CFG,p_codigo:c});loja=l;codigo=c;try{localStorage.setItem('eq-codigo',c)}catch(e){}$('msg').className='msg oculto';mostrarLoja();if(!silencioso)fecharIntro()}
+ catch(e){loja=null;if(!silencioso){if($('intro')){$('cxErro').textContent='Código não encontrado. Confira com o supervisor.'}else aviso('Código não encontrado. Confira com o supervisor.');$('codigo').value='';desenharCx()}else{try{localStorage.removeItem('eq-codigo')}catch(_){}codigo='';mostrarLoja()}}
  $('entrar').disabled=false;$('entrar').textContent='Entrar'}
-$('codigo').addEventListener('input',()=>{$('codigo').value=$('codigo').value.replace(/\D/g,'').slice(0,4);desenharCx();if($('codigo').value.length===4)entrar($('codigo').value)});
+$('codigo').addEventListener('input',()=>{$('cxErro').textContent='';$('codigo').value=$('codigo').value.replace(/\D/g,'').slice(0,4);desenharCx();if($('codigo').value.length===4)entrar($('codigo').value)});
 $('cx').onclick=()=>$('codigo').focus();
 $('entrar').onclick=()=>entrar($('codigo').value);
-$('trocarLoja').onclick=()=>{if(confirm('Trocar a loja gravada neste celular?')){try{localStorage.removeItem('eq-codigo')}catch(e){}loja=null;codigo='';$('codigo').value='';desenharCx();mostrarLoja()}};
+$('trocarLoja').onclick=()=>{if(confirm('Trocar a loja gravada neste celular?'))trocarLoja()};
+$('introTrocar').onclick=trocarLoja;
+$('introEntrar').onclick=fecharIntro;
 if(codigo)entrar(codigo,true);else mostrarLoja();
 // foto do documento, reduzida para ficar leve
 let fotoDados='';
@@ -255,6 +309,7 @@ function nome(){const L='GERENTES'.split('');return `<g transform="translate(0 0
  <clipPath id="clN"><rect x="20" y="118" width="260" height="64" rx="8"/></clipPath><g clip-path="url(#clN)"><rect class="e2brilho" x="0" y="100" width="50" height="100" fill="url(#b1)" opacity=".7"/></g></g>`}
 
 document.getElementById('embD').innerHTML='<svg viewBox="10 80 280 130">'+D2+nome()+'</svg>';
+document.getElementById('embTopo').innerHTML='<svg viewBox="10 80 280 130">'+D2+nome()+'</svg>';
 // sons: B (toque suave) nas escolhas, A (clique metálico) em Começar e Enviar
 let AC=null;function som(t){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();const a=AC,n=a.currentTime;
  const tom=(f,d,tipo,vol,at=0,f2)=>{const o=a.createOscillator(),g=a.createGain();o.type=tipo;o.frequency.setValueAtTime(f,n+at);if(f2)o.frequency.exponentialRampToValueAtTime(f2,n+at+d);g.gain.setValueAtTime(0,n+at);g.gain.linearRampToValueAtTime(vol,n+at+.004);g.gain.exponentialRampToValueAtTime(.0001,n+at+d);o.connect(g);g.connect(a.destination);o.start(n+at);o.stop(n+at+d+.02)};
@@ -263,6 +318,6 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)r
 // todos os botões de escolha ficam cromados
 function cromar(){document.querySelectorAll('.chips button:not(.trocar),.seg button,.enviar').forEach(b=>b.classList.add('cromo'))}
 new MutationObserver(cromar).observe(document.body,{subtree:true,childList:true});cromar();
-document.getElementById('comecar').onclick=()=>{document.getElementById('intro').remove();scrollTo(0,0)};
+
 })();
 </script></body></html>
