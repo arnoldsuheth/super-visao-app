@@ -15330,6 +15330,10 @@ body.nc-ov #ncRoomHud,body.nc-ov #ncWorlds{visibility:hidden!important}
 body.nc-ov #ncXp2{display:none}
 /* 23/11 (Arnold): setinha de direção ao lado da distância do minimapa */
 #mmTag{display:inline-flex;align-items:center;gap:5px}#mmTag .mm-seta{display:inline-block;flex:0 0 auto;transform-origin:50% 50%;filter:drop-shadow(0 0 3px #ffb000)}
+/* 24/11 (Arnold: ícones sumiram no iPhone): o desenho do ícone ganha tamanho fixo em pixels (o Safari às vezes zera a altura em %) */
+.pimg.nci{width:var(--s)!important;height:var(--s)!important;min-width:var(--s);min-height:var(--s)}
+.pimg.nci>svg{display:block;width:calc(var(--s)*.78)!important;height:calc(var(--s)*.78)!important;min-width:calc(var(--s)*.78);flex:none}
+.pimg.nci>img.wico{display:block;width:calc(var(--s)*.84)!important;height:calc(var(--s)*.84)!important;object-fit:contain}
 #ncFriends.fr-d .pop-box{left:50%!important;right:auto!important;top:auto!important;bottom:calc(8px + env(safe-area-inset-bottom,0px))!important;width:min(400px,calc(100vw - 16px))!important;max-height:min(46dvh,400px)!important;overflow-y:auto!important;border-radius:14px!important;border:1px solid #e8c36a99!important;translate:-50% 0;margin:0!important;font-size:13px!important;padding:10px 12px!important}
 #ncFriends.fr-d .fr-h b{font-size:17px}#ncFriends.fr-d .pop-x{width:34px!important;height:34px!important}
 @media (orientation:landscape) and (max-height:500px){#ncFriends.fr-d .pop-box{width:min(380px,calc(100vw - 16px))!important;max-height:calc(100dvh - 24px)!important}}
