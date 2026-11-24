@@ -10634,16 +10634,18 @@ function hitPart(b, p, dmg){
 function renderBossParts(){ const b = boss; const el = $('#bParts'); if(!el || !b || !b.parts) return;
   el.innerHTML = b.parts.map(p => `<span class="${p.broken ? 'brk' : ''}"><i style="width:${p.broken ? 0 : Math.max(0, p.bhp/p.max*100)}%"></i>${p.n}${p.broken ? ' ✓' : ''}</span>`).join('') +
     (b.exhT > 0 ? '<span class="exh">Exausto</span>' : ''); }
+/* 23/11 (Arnold): chefes maiores para assustar mais (o tamanho final vem da escolha dele) */
+const ncBossK = () => +(window.ncBossK || save.bossK || 1);
 function spawnBoss(st){
   const b = st.bossCfg, cr = makeCreature(b.color, b.scale, b.acc);
   cr.root.position.set(0, 0, ARENA_Z - 3); scene.add(cr.root);
   const D = DF(), mk = worldFight ? 'mundial' : rollBossMod(st), M = BMODS[mk];
   const hp = Math.round(b.hp*D.hp*ESCALE.hp*M.hp*(CFG.bossHp[st.id] || 1)*NC_BAL.bossHp*NC_BHPK(st.id)*ncBossParty());
-  boss = {kind:'boss', cr, pos:cr.root.position, hp, maxHp:hp, dmg:b.dmg*D.dmg*ESCALE.dmg*M.dmg*(CFG.bossDmg[st.id] || 1)*NC_BAL.bossDmg*(NC_BDMGK[st.id] || .5), spd:b.spd*D.spd*M.spd, r:(.42*b.scale + .25)*M.sc, awake:false,
-          state:'idle', t:1.4, st:0, last:null, enraged:false, base:M.sc, hitT:0, roarT:0, frenzy:false, flashT:0, walk:0, cfg:b, dying:0, fired:0, slowT:0, burnT:0, burnDps:0, burnAcc:0,
+  boss = {kind:'boss', cr, pos:cr.root.position, hp, maxHp:hp, dmg:b.dmg*D.dmg*ESCALE.dmg*M.dmg*(CFG.bossDmg[st.id] || 1)*NC_BAL.bossDmg*(NC_BDMGK[st.id] || .5), spd:b.spd*D.spd*M.spd, r:(.42*b.scale + .25)*M.sc*ncBossK(), awake:false,
+          state:'idle', t:1.4, st:0, last:null, enraged:false, base:M.sc*ncBossK(), hitT:0, roarT:0, frenzy:false, flashT:0, walk:0, cfg:b, dying:0, fired:0, slowT:0, burnT:0, burnDps:0, burnAcc:0,
           mod:mk, stam:100, exhT:0, downT:0, broken:[]};
   boss.parts = bossParts(boss);
-  cr.root.scale.setScalar(M.sc);
+  cr.root.scale.setScalar(M.sc*ncBossK());
   if(M.e) cr.mats.forEach(m => { m.userData.baseE = C(M.e); m.emissive.copy(m.userData.baseE); });
   monAttach(cr, monPick(st, 'boss'), {boss:true});
   boss.nid = ++ncNid; enemies.push(boss);
