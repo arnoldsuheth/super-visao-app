@@ -14276,7 +14276,7 @@ damageEnemy = (f => function(e, dmg, crit, nx, nz, kb, quiet){
 (function(){ const IDS = ['ncStable','ncFest','ncFriends','ncDaily','ncBellPop','ncTrade','ncPeerPop','ncWorldsPop','ncDgPop','howto'];
   const vis = el => !!el && !el.hidden && el.getClientRects().length > 0 && getComputedStyle(el).display !== 'none' && getComputedStyle(el).visibility !== 'hidden';
   function abertas(){ const b = document.body.classList, o = []; if(b.contains('nc-l')) o.push('l'); if(b.contains('nc-r')) o.push('r'); for(const id of IDS) if(vis(document.getElementById(id))) o.push(id); return o; }
-  function fecha(k){ try{ if(k === 'l' || k === 'r'){ window.ncMenu.close(k); return; } const el = document.getElementById(k); if(!el) return;
+  function fecha(k){ try{ if(k === 'l' || k === 'r'){ const pn = k === 'l' ? document.querySelector('#hub>aside.panel') : document.getElementById('rightPanel'); const x = pn && pn.querySelector('.nc-x'); if(x) x.click(); else window.ncMenu.close(k); return; } const el = document.getElementById(k); if(!el) return;
       const x = el.querySelector('[data-frclose]:not(.pop-bg),[data-peerclose],[data-bagclose],[data-skclose],.pop-x,.nc-x,.nf-x,.lt-x,.mf-x,[aria-label="Fechar"]');
       if(x) x.click(); if(vis(el)) el.hidden = true; }catch(_){} }
   let antes = [];
@@ -14311,7 +14311,7 @@ function ncNtGo(kind){ try{
 /* 23/11/2026: tocar num item da mochila sempre abre o cartão (na fase a mochila não redesenhava e o cartão não aparecia) */
 document.addEventListener('click', e => { if(e.target.closest('[data-bsel]')) setTimeout(() => { try{ ncPopDraw(); }catch(_){} }, 40); });
 /* 23/11/2026: fundo escuro atrás da gaveta; tocar nele ou apertar Esc fecha a janela aberta */
-(function(){ const bg = document.createElement('div'); bg.id = 'ncGavBg'; document.body.appendChild(bg);
+(function(){ const bg = document.createElement('div'); bg.id = 'ncGavBg'; (document.getElementById('hub') || document.body).appendChild(bg);
   const fecha = () => { document.querySelectorAll('#hub>aside.panel .nc-x,#hub>#rightPanel .nc-x').forEach(x => { const p = x.closest('.panel'); if(p && getComputedStyle(p).visibility !== 'hidden') x.click(); }); document.body.classList.remove('nc-l', 'nc-r'); };
   bg.addEventListener('click', fecha); bg.addEventListener('touchend', e => { e.preventDefault(); fecha(); }, {passive:false});
   addEventListener('keydown', e => { if(e.key === 'Escape' && (document.body.classList.contains('nc-l') || document.body.classList.contains('nc-r'))){ if(document.getElementById('ncPop') && !document.getElementById('ncPop').hidden) return; fecha(); } }); })();
@@ -15114,7 +15114,7 @@ body.nc-l #hub>aside.panel,body.nc-r #hub>#rightPanel{position:fixed!important;l
 body.nc-l #hub>aside.panel::before,body.nc-r #hub>#rightPanel::before{content:""!important;display:block!important;position:sticky!important;top:0!important;width:44px!important;height:5px!important;margin:2px auto 4px!important;border-radius:3px!important;background:#ffffff55!important;transform:none!important;z-index:7}
 body.nc-l #hub>aside.panel>.nc-head,body.nc-r #hub>#rightPanel>.nc-head{position:sticky!important;top:9px!important;z-index:6!important;display:flex!important;align-items:center;justify-content:space-between;margin:0 -16px!important;padding:6px 16px 8px!important;background:inherit!important;backdrop-filter:blur(6px)}
 body.nc-l #hub>aside.panel .nc-x,body.nc-r #hub>#rightPanel .nc-x{width:44px!important;height:44px!important;min-width:44px;font-size:26px!important;line-height:1!important;border-radius:50%!important;background:#ffffff14!important;border:1px solid #ffffff33!important;color:#fff!important;display:grid!important;place-items:center;position:relative!important;inset:auto!important;z-index:8}
-#ncGavBg{position:fixed;inset:0;z-index:59;background:rgba(5,6,14,.45);display:none}
+#ncGavBg{position:fixed;inset:0;z-index:59;background:rgba(5,6,14,.45);display:none;pointer-events:auto}
 body.nc-l #ncGavBg,body.nc-r #ncGavBg{display:block}
 #ncPop{position:fixed;inset:0;z-index:80}#ncPop[hidden]{display:none}
 #ncPop .pop-bg{position:absolute;inset:0;background:rgba(5,6,14,.55)}
