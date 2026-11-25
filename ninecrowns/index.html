@@ -5800,7 +5800,8 @@ function ncClassTag(k){
 const classOfW = w => CLASS_ORDER.find(k => CLASSES[k].wtype === w);
 // Regra do Nine Crowns: cada classe so usa a propria arma e a propria armadura (o amuleto serve para todas).
 const ncLocked = slot => slot !== 'weapon' && slot !== 'amulet';
-const itemCls = it => it.slot === 'weapon' ? classOfW(it.wtype) : it.slot === 'shield' ? 'paladin' : (ncLocked(it.slot) ? it.cls : undefined);
+/* 25/11/2026: Mago, Sacerdote e Xamã usam o mesmo tipo (cajado); antes toda arma de cajado era tratada como do Mago. Agora a arma guarda a classe dona. */
+const itemCls = it => it.slot === 'weapon' ? (it.cls || (CLASSES[save.cls] && CLASSES[save.cls].wtype === it.wtype ? save.cls : classOfW(it.wtype))) : it.slot === 'shield' ? 'paladin' : (ncLocked(it.slot) ? it.cls : undefined);
 const ncSlots = () => SLOTS.filter(sl => sl !== 'shield' || save.cls === 'paladin');   // escudo: so o Paladino
 const itemOk = it => { const c = itemCls(it); return !c || c === save.cls; };
 
@@ -6344,7 +6345,7 @@ function newItem(slot, tier, o){
   o = o || {};
   if(slot === 'shield' && save.cls !== 'paladin') slot = ARMOR[Math.floor(Math.random()*ARMOR.length)];   // escudo so cai/compra para o Paladino
   const it = {id:save.nextId++, slot, tier, q:0, up:0};
-  if(slot === 'weapon'){ it.wtype = o.wtype || (Math.random() < .65 ? CLS().wtype : CLASSES[CLASS_ORDER[Math.floor(Math.random()*CLASS_ORDER.length)]].wtype); it.v = o.v !== undefined ? o.v : Math.floor(Math.random()*3); }
+  if(slot === 'weapon'){ it.wtype = o.wtype || (Math.random() < .65 ? CLS().wtype : CLASSES[CLASS_ORDER[Math.floor(Math.random()*CLASS_ORDER.length)]].wtype); it.v = o.v !== undefined ? o.v : Math.floor(Math.random()*3); it.cls = o.cls || (it.wtype === CLS().wtype ? save.cls : classOfW(it.wtype)); }
   else if(ncLocked(slot)) it.cls = o.cls || ((o.wtype || Math.random() < .7) ? save.cls : CLASS_ORDER[Math.floor(Math.random()*CLASS_ORDER.length)]);
   rollSockets(it, o.boss);
   return it;
@@ -8154,6 +8155,15 @@ const ncArt = (slot, wtype, g) => '<svg viewBox="0 0 64 64" aria-hidden="true">'
 function pieceImg(t, slot, cls, wtype, up, sa){ const U = ncUp(Math.min(NC_UP_MAX, (up || 0) + (sa ? 3 : 0)));   /* 22/11: SA também acende o ícone, e o brilho sobe com a evolução */
   const g = GR_OF[t] || 0, wi = slot === 'weapon' ? ncWIco(t, wtype || (CLASSES[save.cls] || {}).wtype) : null;   /* 22/11 (Arnold): moldura enfeitada (1 pedrinha por grade, brilho no A e no S) e foto da arma de verdade */
   return `<span class="pimg nci g${g} ${cls || ''} ${U ? 'up' : ''} ${U && U.f ? 'fire' : ''}" ${up ? 'data-up="+' + up + '"' : ''} style="--tc:${TIERS[t].css}${U ? ';--uc:' + U.c + ';--ug:' + U.g + 'px;--fh:' + U.f + '%' : ''}" role="img" aria-label="${SLOT_INFO[slot].n}">${wi ? '<img class="wico" src="assets/icons/w/' + wi.replace('/', '_') + '.png" alt="">' : '<img class="nca" src="assets/icons/a/' + (slot === 'weapon' ? 'w_' + (wtype || (CLASSES[save.cls] || {}).wtype) : slot) + '_' + t + '.png" alt="">'   /* 24/11: ícones prontos em PNG (o iPhone mostra sempre) */}${g ? '<b class="ngm">' + '<i></i>'.repeat(g) + '</b>' : ''}</span>`; }
+/* 25/11/2026 (Arnold: "as imagens dos itens demoram um século"): cada ícone era baixado só na hora de aparecer.
+   Agora, logo depois de abrir o jogo, as imagens são baixadas em segundo plano (primeiro as da sua classe) e ficam guardadas no aparelho. */
+(function(){ let done = false; function go(){ if(done) return; done = true;
+  fetch('icons.json', {cache:'no-cache'}).then(r => r.ok ? r.json() : []).then(list => {
+    const c = save.cls, w = (CLASSES[c] || {}).wtype || '', my = f => f.includes('/w_' + w + '_') || f.includes('/a/') && !f.includes('/w_') || (c === 'shaman' && f.includes('pw_sha')) || (c === 'priest' && f.includes('pw_pri')) || f.includes('/cls/');
+    const q = list.filter(my).concat(list.filter(f => !my(f))); let i = 0;
+    const next = () => { if(i >= q.length) return; const u = q[i++]; fetch(u).catch(() => {}).finally(() => setTimeout(next, 30)); };
+    for(let k = 0; k < 4; k++) next(); }).catch(() => {}); }
+  window.addEventListener('load', () => setTimeout(go, 4000)); setTimeout(go, 12000); })();
 const NC_WICO = {sword:0, hammer:0, axe:2, staff:3, daggers:4};
 function ncWIco(t, wt){ try{ if((save.cls === 'shaman' || save.cls === 'priest') && wt === 'staff'){ const y = ncWSty(save.cls); if(y) return 'pw_' + (save.cls === 'shaman' ? 'sha' : 'pri') + y + '_' + t; if(save.cls === 'shaman') return 'rg_DruidStaff_1_1_B'; }   /* 24/11: o ícone é a mesma arma que está na mão */
   if(wt === 'fists') return NC_FIST[t]; if(wt === 'bow') return GR_OF[t] < 2 ? 'kk_1H_Crossbow' : 'kk_2H_Crossbow'; if(wt === 'scythe') return 'scythe_' + GR_OF[t]; const i = NC_WICO[wt]; return i == null ? null : NC_WPN_SET[i].f[t]; }catch(e){ return null; } }
@@ -12052,7 +12062,7 @@ function dropLoot(pos, tier, o){
    o principal atributo e uma seta dizendo se é melhor ou pior que o equipado. Aparece quando chega perto. */
 function itemScore(b){ return (b.hp || 0)*.25 + (b.atk || 0)*2.2 + (b.def || 0)*1.6 + (b.atkPct || 0)*120 + (b.crit || 0)*150 + (b.aspd || 0)*90 + (b.spd || 0)*8 + (b.block || 0)*100; }
 function cmpArrow(it, short){
-  if(it.slot === 'weapon' && it.wtype !== CLS().wtype) return short ? '<span class="lt-x">✕</span>' : '<span class="lt-x">outra classe</span>';
+  if(it.slot === 'weapon' && !itemOk(it)) return short ? '<span class="lt-x">✕</span>' : '<span class="lt-x">outra classe</span>';
   const e = equipped(it.slot); if(!e) return short ? '<span class="lt-up">▲</span>' : '<span class="lt-up">▲ novo</span>';
   const d = itemScore(itemStats(it)) - itemScore(itemStats(e));
   if(short) return Math.abs(d) < .5 ? '<span class="lt-eq">=</span>' : d > 0 ? '<span class="lt-up">▲</span>' : '<span class="lt-dn">▼</span>';
@@ -15300,6 +15310,15 @@ body.nc-st #ncRoomHud,body.nc-st #ncWorlds,body.nc-st .nc-grid,body.nc-st .nc-mi
   apply(); addEventListener('resize', apply); addEventListener('orientationchange', function(){ setTimeout(apply, 300); });
   window.ncUiScale = apply;
 })();
+/* 25/11/2026 (Arnold: "quando vira a tela os botões não clicam"): no iPhone, depois de girar, a página às vezes fica um pouco
+   rolada/deslocada e o toque cai fora do botão. Ao girar, voltamos tudo para o lugar e refazemos o tamanho da tela. */
+(function(){ if(!matchMedia('(pointer: coarse)').matches) return;   /* só celular e tablet */
+  function fix(){ try{ window.scrollTo(0, 0); document.documentElement.scrollTop = 0; document.body.scrollTop = 0; document.documentElement.style.height = innerHeight + 'px'; document.body.style.height = innerHeight + 'px'; window.ncUiScale && window.ncUiScale(); window.dispatchEvent(new Event('nc-rot')); }catch(_){} }
+  function later(){ fix(); setTimeout(fix, 120); setTimeout(fix, 450); setTimeout(fix, 1000); }
+  addEventListener('orientationchange', later); addEventListener('resize', later);
+  if(window.visualViewport){ visualViewport.addEventListener('resize', later); visualViewport.addEventListener('scroll', () => { if(visualViewport.offsetTop || visualViewport.offsetLeft) fix(); }); }
+  addEventListener('scroll', () => { if(window.scrollY || window.scrollX) window.scrollTo(0, 0); }, {passive:true});
+  later(); })();
 </script>
 <style id="nc-uni-css">
 /* ===== Botões: só 2 estilos (pedido do Arnold). Escuro = comum. Dourado liso = principal e selecionado ===== */
