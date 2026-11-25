@@ -783,6 +783,33 @@ html.estilo-c .barra{grid-template-columns:20px 72px 1fr 46px!important;text-ali
  .ci-pts{padding-bottom:84px}
 }
 #pm-intro.c-intro .ab-mov{display:none!important}
+
+/* ===== 25/11 07:30: abertura com o anel do dia (aprovada) ===== */
+#pm-intro.c-intro{background:radial-gradient(80% 50% at 50% 0%,#3a1f8f 0%,#1a1040 45%,#0d0820 100%)!important}
+#pm-intro.c-intro .ci-fundo .v1{background:#e46fa3;opacity:.55;left:-20vw;top:30vh;right:auto;width:70vw;height:40vh}#pm-intro.c-intro .ci-fundo .v2{display:none}#pm-intro.c-intro .ci-fundo .v3{background:#3fb878;opacity:.35}
+#pm-intro.c-intro .ci-fundo .grade{background-size:30px 30px}
+.ci-cv{position:absolute;inset:0;width:100%;height:100%;z-index:0;touch-action:none}
+.ci-meio{position:absolute;z-index:1;transform:translate(-50%,-50%);text-align:center;opacity:0;transition:opacity .8s;pointer-events:none;color:#fff}.ci-meio.on{opacity:1}
+.ci-meio b{display:block;font:800 46px/1 Inter,sans-serif;letter-spacing:-.03em;text-shadow:0 2px 14px #0008}.ci-meio small{font-size:13px;font-weight:700;opacity:.9}
+.ci-dica{position:absolute;z-index:2;left:16px;top:calc(14px + env(safe-area-inset-top));font:700 12px Inter,sans-serif;color:#fff;background:#ffffff12;border:1px solid #ffffff22;padding:6px 10px;border-radius:10px;animation:ciSome 5s 4s forwards;pointer-events:none}@keyframes ciSome{to{opacity:0}}
+#pm-intro.c-intro .ab-cena{position:absolute!important;left:0;right:0;bottom:0;top:auto;height:auto;max-width:460px;margin:0 auto;padding:0 24px calc(92px + env(safe-area-inset-bottom));overflow:visible;z-index:1;pointer-events:none}
+#pm-intro.c-intro .ci{animation:none}#pm-intro.c-intro .ci>*{opacity:0;transform:translateY(16px);transition:opacity .7s,transform .7s cubic-bezier(.2,.9,.3,1)}#pm-intro.c-intro .ci.on>*{opacity:1;transform:none}
+#pm-intro.c-intro .ci.on>*:nth-child(2){transition-delay:.1s}#pm-intro.c-intro .ci.on>*:nth-child(3){transition-delay:.2s}#pm-intro.c-intro .ci.on>*:nth-child(4){transition-delay:.3s}
+#pm-intro.c-intro .ci-data{font-size:14px;font-weight:700;color:#fff;opacity:.92;letter-spacing:0}
+#pm-intro.c-intro .ci-nome{font-size:36px!important;margin:6px 0 8px}
+#pm-intro.c-intro .ci-verso{font:500 16px/1.45 Inter,sans-serif;color:#fff;margin:0 0 16px}.ci-verso em{display:block;font-style:normal;font-size:13px;font-weight:700;opacity:.85;margin-top:6px}
+#pm-intro.c-intro .ci-pt{animation:none;backdrop-filter:blur(10px)}#pm-intro.c-intro .ci-pt i{background:#7a4cf0}#pm-intro.c-intro .ci-pt i svg{width:16px;height:16px}
+#pm-intro.c-intro .ci-pt small{font-size:12.5px;letter-spacing:0;font-weight:700;opacity:.85}#pm-intro.c-intro .ci-pt b{font-size:16px}
+#pm-intro.c-intro .ab-subir{flex-direction:column;gap:2px;font:700 14px Inter,sans-serif!important;color:#fff;bottom:calc(22px + env(safe-area-inset-bottom));z-index:2;pointer-events:auto}
+#pm-intro.c-intro .ab-subir svg{animation:ciSobe 1.6s ease-in-out infinite}@keyframes ciSobe{0%,100%{transform:translateY(4px);opacity:.6}50%{transform:translateY(-6px);opacity:1}}
+@media (max-height:600px) and (orientation:portrait){#pm-intro.c-intro .ci-nome{font-size:30px!important}#pm-intro.c-intro .ci-verso{font-size:14.5px}}
+@media (orientation:landscape) and (max-height:560px){#pm-intro.c-intro .ab-cena{left:auto;right:4vw;bottom:auto;top:50%;transform:translateY(-50%);width:min(48vw,440px);padding:0}#pm-intro.c-intro .ci-verso{display:none}#pm-intro.c-intro .ci-nome{font-size:28px!important}#pm-intro.c-intro .ab-subir{left:auto;right:4vw;width:min(48vw,440px)}}
+@media (orientation:landscape) and (max-height:560px){
+ #pm-intro.c-intro .ab-cena{top:calc(14px + env(safe-area-inset-top))!important;bottom:auto!important;transform:none!important;left:auto!important;right:4vw!important;width:min(46vw,430px)!important;padding:0!important;margin:0!important}
+ #pm-intro.c-intro .ci{display:block!important}#pm-intro.c-intro .ci-data{font-size:13px}#pm-intro.c-intro .ci-nome{font-size:26px!important;margin:2px 0 10px}
+ #pm-intro.c-intro .ci-pt{padding:9px 12px}#pm-intro.c-intro .ci-pt b{font-size:14.5px}
+ #pm-intro.c-intro .ab-subir{bottom:calc(8px + env(safe-area-inset-bottom))!important;right:4vw!important;left:auto!important;width:min(46vw,430px)!important;flex-direction:row;justify-content:center;gap:6px}
+}
 </style>
 </head>
 <body>
@@ -1231,9 +1258,9 @@ setInterval(()=>{if(tela==='inicio'&&!document.hidden){const a=document.querySel
 /* ---------- telas ---------- */
 
 const GUIA=[
- ['Primeiros passos','<p>Abra o link no <b>Safari</b> (iPhone) ou no <b>Chrome</b> (Android). Toque em <b>Compartilhar, Adicionar à Tela de Início</b>: o Life Trail vira um app no seu celular.</p><p><b>Período de teste</b>: o app abre direto, sem senha, e os dados ficam neste aparelho. Use por 3 dias e conte o que achou.</p><p>Depois da aprovação, colocamos a sua <b>senha</b> no mesmo link: você cria a senha no primeiro acesso, deixa marcado <b>Lembrar neste aparelho</b> e o que você já anotou continua lá, agora salvo na nuvem e protegido.</p><p><b>Puxe a tela para baixo</b> no topo para atualizar o app.</p>'],
- ['Abertura do dia','<p>Ao entrar aparece a <b>Palavra de hoje</b>, o seu <b>Bom dia</b> e o seu dia em 3 pontos: a próxima tarefa, quanto vender na loja hoje e os avisos da equipe.</p><p>Toque em <b>Começar o dia</b> ou deslize para cima. A abertura volta sozinha quando você fica mais de 30 minutos fora do app.</p>'],
- ['Início','<p><b>Agora / Próxima</b>: o que vem agora. Toque em <b>Concluir</b> quando terminar.</p><p><b>Hoje na loja</b>: quanto falta vender hoje para seguir no ritmo da meta. Toque no número para ver as metas, ou em <b>Lançar</b> para registrar a venda do dia.</p><p><b>4 anéis</b>: Vendas do mês, Rotina, Água (cada toque = 1 copo) e Fé (abre a Palavra).</p><p>Logo abaixo ficam os seus <b>hábitos</b> (toque para marcar), os <b>próximos horários</b> do dia, o <b>aviso da equipe</b> e <b>Mais do seu dia</b>, com todos os atalhos.</p><p>O botão <b>+</b> cria um checklist, uma anotação ou uma pasta na hora.</p>'],
+ ['Primeiros passos','<p>Abra o link no <b>Safari</b> (iPhone) ou no <b>Chrome</b> (Android). Toque em <b>Compartilhar, Adicionar à Tela de Início</b>: o Life Trail vira um app no seu celular.</p><p><b>Período de teste</b>: o app abre direto, sem senha, e os dados ficam neste aparelho. Use por 3 dias e conte o que achou.</p><p>Depois da aprovação, colocamos a sua <b>senha</b> no mesmo link: você cria a senha no primeiro acesso, deixa marcado <b>Lembrar neste aparelho</b> e o que você já anotou continua lá, agora salvo na nuvem e protegido.</p><p>Com o app instalado, <b>puxe a tela para baixo</b> no topo para atualizar.</p>'],
+ ['Abertura do dia','<p>Ao entrar, quadradinhos de luz formam o <b>anel do seu dia</b>: a parte colorida é o quanto você já cuidou de água, treino, fé e rotina, e o número aparece no meio.</p><p>Arraste o anel para girar ou toque nele para ver os quadradinhos explodirem e voltarem. Logo abaixo ficam o seu <b>Bom dia</b>, a <b>Palavra de hoje</b> e a <b>próxima tarefa</b>.</p><p><b>Arraste para cima</b> para entrar no app. A abertura volta sozinha quando você fica mais de 30 minutos fora.</p>'],
+ ['Início','<p><b>Agora / Próxima</b>: o que vem agora. Toque em <b>Concluir</b> quando terminar.</p><p>O anel mostra a sua <b>nota do dia</b>. Ao lado ficam os <b>hábitos</b> e a <b>Água</b>: toque para marcar (cada toque na água = 1 copo).</p><p><b>Vendas do mês</b>: total, porcentagem da meta e as barras das semanas. Toque nos números para ver quanto vender por dia, o VVPA e os clientes por dia.</p><p>Os cartões <b>Equipe</b> e <b>Fé</b> levam para a sua equipe e para a Palavra. Em <b>Mais do seu dia</b> ficam todos os atalhos.</p><p>O botão <b>+</b> cria um checklist, uma anotação ou uma pasta na hora.</p>'],
  ['Vendas','<p>Em <b>Lançar</b>, digite só a <b>venda do dia</b> e os <b>clientes</b> e toque em <b>Salvar o dia</b>. Pela data dá para lançar ou corrigir dias anteriores.</p><p>Se quiser, toque em <b>Lançar também por vendedor</b> para registrar cada pessoa da equipe.</p><p>O app calcula sozinho: <b>comissão</b> (2%), <b>VVPA</b> (venda dividida pelos clientes), comparação com o <b>ano passado</b>, <b>metas da semana</b> (1S a 4S), quanto vender <b>por dia</b> para bater o mês (sem contar domingo) e o seu <b>melhor dia da semana</b>.</p><p>Todos os números são clicáveis e mostram os dias que formam aquele resultado. Em <b>Ajustes</b> você coloca as metas da semana e o total do mês no ano passado.</p>'],
  ['Anotações','<p>Toque no <b>+</b> (no Início ou em Notas) para criar um <b>checklist</b>, uma <b>anotação rápida</b> ou uma <b>pasta</b>.</p><p>Organize por pastas (ex.: Loja, Equipe, Pessoal, Igreja, Compras). Dentro do checklist, digite o item e toque em <b>Enter</b> ou <b>Pôr</b>.</p><p><b>Repete todo dia</b>: o checklist desmarca sozinho no dia seguinte (bom para abertura e fechamento da loja). <b>Fixar</b> deixa no topo. A <b>busca</b> procura em todas as pastas. <b>Virar tarefa na Rotina</b> leva o assunto para a sua agenda.</p>'],
  ['Minha equipe','<p>Digite uma vez o <b>código da sua loja</b> (o mesmo da página dos gerentes). Aparecem as <b>pessoas</b>, a <b>agenda da equipe</b> (experiência, aniversários, férias) e as <b>pendências da loja</b>, sempre atualizadas pelo seu supervisor.</p><p>Toque numa pessoa para ver a ficha. Os botões <b>Novo funcionário</b> e <b>Ocorrência</b> abrem a página dos gerentes.</p>'],
@@ -1491,67 +1518,110 @@ const NT=(()=>{
 if(window.LT_NOTAS){const ib=NAV.findIndex(n=>n[0]==='biblia');if(ib>=0)NAV.splice(ib,1,['notas','Notas','pasta']);else NAV.splice(NAV.length-1,0,['notas','Notas','pasta']);TELAS.notas=NT.tela;const _rN=render;render=function(){_rN.apply(this,arguments);NT.fab()}} // Bíblia sai da barra e continua no Início
 /* ---------- Estilo C · Cores vivas (só da Wayna, aprovado em 24 e 25/11/2026) ---------- */
 (()=>{const l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap';document.head.append(l);document.documentElement.classList.add('estilo-c')})();
-// fundo vivo (estrelas, brilho e grade) no Início e nas Anotações
+// fundo vivo: desligado nas telas (25/11, pedido do Arnold); fica só na apresentação
 (()=>{const f=document.createElement('div');f.id='c-vivo';f.setAttribute('aria-hidden','true');let e='';for(let k=0;k<46;k++){const s=(1+(k%3)*.7).toFixed(1);e+=`<i style="left:${(k*53+17)%100}%;top:${(k*37+11)%100}%;width:${s}px;height:${s}px;animation-delay:${(k%7)*.6}s"></i>`}
  f.innerHTML='<b class="v1"></b><b class="v2"></b><b class="v3"></b><span class="grade"></span>'+e;document.body.prepend(f)})();
-const _rC=render;render=function(){_rC.apply(this,arguments);document.body.classList.toggle('c-viva',tela==='inicio'||tela==='notas')};
+const _rC=render;render=function(){_rC.apply(this,arguments);document.body.classList.toggle('c-viva',false) /* 25/11: fundo vivo só na apresentação */};
 const anelC=(p,cor,txt)=>{const r=22,C=2*Math.PI*r;return `<span class="c-an"><svg viewBox="0 0 58 58"><circle cx="29" cy="29" r="${r}" fill="none" stroke="#ffffff22" stroke-width="7"/><circle class="c-anel" cx="29" cy="29" r="${r}" fill="none" stroke="${cor}" stroke-width="7" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C*(1-Math.min(100,Math.max(0,p))/100)).toFixed(1)}" style="--c:${C.toFixed(1)}"/></svg><b>${txt}</b></span>`};
 function inicioC(){
  const h=hoje(),dt=new Date(),hr=dt.getHours(),cd=cuidadoDia(h),r=rotinaHoje();const {it,atras,ag}=proximaTarefa();
+ const nota=Math.round(cd.total||0),R=2*Math.PI*42;
+ // AGORA / PRÓXIMA
  let quando='',agoraJa=false;if(it&&it.m!=null){const d=it.m-ag;agoraJa=d<=0;quando=d<=0?(it.fim?'até '+it.fim:'agora'):d<60?'em '+d+' min · '+it.ini:'às '+it.ini}else if(it)quando='sem horário';
  const cAgora=it?`<div class="c-t c-agora"><button class="c-agora-tx" data-ir="rotina"><small>${agoraJa?'AGORA':'PRÓXIMA'}</small><b>${esc(it.t)}</b><span>${quando}${atras.length?' · '+atras.length+' atrasado(s)':''}</span></button><button class="c-ok" data-acao="prox-ok" data-tipo="${it.tipo}" data-id="${it.id}">Concluir</button></div>`
   :`<div class="c-t c-agora"><button class="c-agora-tx" data-ir="rotina"><small>HOJE</small><b>Tudo concluído</b><span>aproveite o seu descanso</span></button></div>`;
- let cLoja='',pV=0;if(window.LT_VENDAS){const v=VD.resumo(VD.mesDe(h));pV=v.metaMes?Math.round(v.tot/v.metaMes*100):0;const lan=VD.base().dias[h];
-  cLoja=`<div class="c-g c-loja"><button class="c-loja-tx" data-vd="abrir" data-sec="vd-metas"><small>HOJE NA LOJA</small><b>${lan?brl(lan.v).replace(',00',''):v.porDia?brl(v.porDia).replace(',00',''):v.metaMes?'Meta batida':'Sem meta'}</b><span>${lan?'vendido hoje · '+lan.c+' clientes':v.porDia?'falta vender hoje':v.metaMes?'parabéns!':'coloque as metas em Vendas'}${v.vvpa?' · VVPA '+brl(v.vvpa).replace(',00',''):''}</span></button><button class="c-lancar" data-ir="vendas">${ic('mais')} ${lan?'Ver':'Lançar'}</button></div>`}
- const ag2=S.agua[h]||0,[vs,ref]=versoHoje();
- const aneis=`<div class="c-aneis">${window.LT_VENDAS?`<button class="c-g" data-ir="vendas">${anelC(pV,'#a98bff',pV+'%')}<small>Vendas</small></button>`:''}<button class="c-g" data-ir="rotina">${anelC(r.total?r.feitos/r.total*100:0,'#5fe0a0',r.feitos+'/'+r.total)}<small>Rotina</small></button><button class="c-g" data-acao="agua-mais">${anelC(ag2/S.meta_agua*100,'#ff9cc6',ag2+'/'+S.meta_agua)}<small>Água +1</small></button><button class="c-g" data-acao="ler">${anelC(cd.fe?100:0,'#ffcf6b',cd.fe?'lida':'ler')}<small>Fé</small></button></div>`;
- const hd=S.habDias[h]||{},HB=S.habitos.filter(x=>!/água|agua/i.test(x.t)).slice(0,3),cores=['c-h1','c-h3','c-h2'];
- const habs=HB.length?`<div class="c-habs2">${HB.map((x,i)=>`<button class="c-h ${cores[i%3]} ${hd[x.id]?'on':''}" data-acao="habito" data-id="${x.id}">${hd[x.id]?ic('check'):ic(i===0?'halter':'livro')}<span>${esc(x.t)}</span></button>`).join('')}</div>`:'';
- const bf=S.blocosFeitos[h]||{},ag0=dt.getHours()*60+dt.getMinutes();const prox=blocosDe(h).filter(b=>!bf[b.id]&&minDe(b.fim)>ag0).slice(0,3);
- const cProx=`<button class="c-g c-prox" data-ir="rotina"><small>PRÓXIMOS DO DIA</small>${prox.length?prox.map((b,k)=>`<span class="c-pl"><em>${b.ini}</em><i class="${k===0&&minDe(b.ini)<=ag0?'on':''}"></i><b>${esc(b.t)}</b></span>`).join(''):'<span class="c-pl"><b>Nenhum bloco pendente hoje</b></span>'}</button>`;
- let cEq='';if(window.LT_EQUIPE){const d=EQ.d,A=d?(d.agenda||[]).filter(a=>a.data>=h):[],PD=d?(d.pendencias||[]):[],tot=A.filter(a=>a.data<=dstr(new Date(Date.now()+7*864e5))).length+PD.length,x=A[0];
-  cEq=`<button class="c-t c-eq c-eqlinha" data-ir="equipe">${ic('equipe')}<span><b>${d?(x?esc(x.titulo):PD.length?esc(PD[0].titulo):'Equipe em dia'):'Minha equipe'}</b><small>${d?(x?(x.data===h?'hoje':fmtData(x.data))+(tot>1?' · e mais '+(tot-1)+' aviso(s)':''):(d.pessoas||[]).length+' pessoas'):'toque para entrar com o código da loja'}</small></span></button>`}
+ // HÁBITOS: 2 hábitos + água
+ const hd=S.habDias[h]||{},HB=S.habitos.filter(x=>!/água|agua/i.test(x.t)).slice(0,2),cores=['c-h1','c-h3'];
+ const ICH=[ic('halter'),ic('livro')];
+ const habs=HB.map((x,i)=>`<button class="c-h ${cores[i]} ${hd[x.id]?'on':''}" data-acao="habito" data-id="${x.id}">${hd[x.id]?ic('check'):ICH[i]}<span>${esc(x.t)}</span></button>`).join('')
+  +`<button class="c-h c-h2 ${(S.agua[h]||0)>=S.meta_agua?'on':''}" data-acao="agua-mais">${ic('gota')}<span>Água ${S.agua[h]||0}/${S.meta_agua}</span></button>`;
+ // VENDAS
+ let cVendas='';if(window.LT_VENDAS){const v=VD.resumo(VD.mesDe(h));const p=v.metaMes?Math.round(v.tot/v.metaMes*100):0;const nm=parse(h).toLocaleDateString('pt-BR',{month:'long'}).toUpperCase();
+  const cs=['#8fe3b4','#c9b5ff','#f3a6c9','#ffd28a'];
+  cVendas=`<div class="c-t c-vendas"><button class="c-vhead" data-ir="vendas"><small>VENDAS DE ${nm}</small><div class="c-row"><div class="c-v">${brl(v.tot).replace(',00','')}</div><div class="c-pc">${v.metaMes?p+'%':'sem meta'}</div></div>
+  <div class="c-barra">${v.metaMes?v.sem.map((x,i)=>`<i style="width:${Math.min(100,x/v.metaMes*100)}%;background:${cs[i]}"></i>`).join(''):''}</div>
+  </button><div class="c-kpis"><button data-vd="abrir" data-sec="vd-metas"><b>${v.porDia?brl(v.porDia).replace(',00',''):'—'}</b><span>por dia p/ bater</span></button><button data-vd="det"><b>${v.vvpa?brl(v.vvpa).replace(',00',''):'—'}</b><span>VVPA</span></button><button data-vd="det"><b>${v.dias?Math.round(v.cli/v.dias):'—'}</b><span>clientes/dia</span></button></div></div>`}
+ // EQUIPE e FÉ
+ let cEq='';if(window.LT_EQUIPE){const d=EQ.d,x=d&&(d.agenda||[]).find(a=>a.data>=h);cEq=`<button class="c-t c-eq" data-ir="equipe">${ic('equipe')}<small>EQUIPE</small><b>${d?(d.pessoas||[]).length+' pessoas':'Entrar'}</b><span>${x?(x.data===h?'hoje':fmtData(x.data))+' · '+esc(x.titulo.split(' · ')[0]):d?((d.pendencias||[]).length?(d.pendencias||[]).length+' pendência(s)':'tudo em dia'):'código da loja'}</span></button>`}
+ const [vs,ref]=versoHoje();
+ const cFe=`<button class="c-t c-fe" data-acao="ler">${ic('livro')}<small>FÉ</small><b>${cd.fe?'Palavra lida':'Palavra de hoje'}</b><span>${esc(ref)}</span></button>`;
+ // MAIS
  const c=ciclo(),tr=treinoHoje(),it2=itensArvore(h),fa=it2.filter(i=>i.ok).length;
  const L=S.fin.filter(f=>f.d.slice(0,7)===h.slice(0,7)),saldo=L.reduce((a,f)=>a+(f.tipo==='e'?f.v:-f.v),0),m0=S.metas[0];
  const agenda=S.agenda.filter(a=>!a.ok&&difDias(h,a.d)>=0).sort((a,b)=>(a.d+(a.h||'')).localeCompare(b.d+(b.h||'')))[0];
- const N=window.LT_NOTAS?NT.base():null,fx=N?N.itens.find(x=>x.fixo&&x.tipo==='check'):null;
  const mini=(attr,i,cor,t,b,s)=>`<button class="c-mini" ${attr} style="--c:${cor}"><span class="c-mi">${ic(i)}</span><span><small>${t}</small><b>${b}</b><em>${s}</em></span></button>`;
  return `<div class="c-home"><div class="c-top"><div><small>${(s=>s[0].toUpperCase()+s.slice(1))(parse(h).toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'}))}</small><h1>${hr<12?'Bom dia':hr<18?'Boa tarde':'Boa noite'}, ${esc(S.nome)}!</h1></div></div>
- ${cAgora}${cLoja}${aneis}${habs}${cProx}${cEq}
+ <div class="c-bento">${cAgora}
+  <button class="c-t c-nota" data-ir="rotina"><span class="c-n"><svg width="94" height="94" viewBox="0 0 94 94"><circle cx="47" cy="47" r="42" fill="none" stroke="#efe9fb" stroke-width="10"/><circle class="c-anel" cx="47" cy="47" r="42" fill="none" stroke="#6a3fd1" stroke-width="10" stroke-linecap="round" stroke-dasharray="${R.toFixed(1)}" stroke-dashoffset="${(R*(1-nota/100)).toFixed(1)}" style="--c:${R.toFixed(1)}"/></svg><b>${nota}</b></span><small>nota do dia</small></button>
+  <div class="c-habs">${habs}</div>
+  ${cVendas}${cEq}${cFe}</div>
  <h3 class="c-sec">Mais do seu dia</h3><div class="c-mais">
-  ${window.LT_NOTAS?mini('data-ir="notas"','pasta','#e46fa3','Anotações',fx?esc(fx.t):N.itens.length+' assunto(s)',fx?(([a,b])=>a+' de '+b+' feitos')(NT.prog(fx)):N.pastas.length+' pasta(s)'):''}
-  ${mini('data-ir="biblia"','livro','#a98bff','Bíblia','Planos de leitura',esc(ref))}
+  ${window.LT_NOTAS?(()=>{const N=NT.base(),fx=N.itens.find(x=>x.fixo&&x.tipo==='check');return mini('data-ir="notas"','pasta','#e46fa3','Anotações',fx?esc(fx.t):N.itens.length+' assunto(s)',fx?(([a,b])=>a+' de '+b+' feitos')(NT.prog(fx)):N.pastas.length+' pasta(s)')})():''}
   ${mini('data-ir="rotina"','rotina','#3fb878','Rotina',fa+' de '+it2.length+' flores',r.feitos+'/'+r.total+' feitos')}
   ${mini('data-ir="treino"','halter','#e46fa3','Treino',esc(tr.n.split(' · ')[0]),S.treino.feitos.includes(h)?'concluído':tr.ex.length?tr.ex.length+' exercícios':'descanso')}
-  ${mini('data-ir="ciclo"','flor','#ff9cc6','Ciclo',c?c.fase:'Configurar',c?'dia '+c.diaCiclo+' · próxima em '+c.faltam+'d':'informe a última')}
-  ${mini('data-ir="rotina"','cal','#a98bff','Agenda',agenda?esc(agenda.t):'Livre',agenda?(agenda.d===h?'hoje':fmtData(agenda.d))+(agenda.h?' · '+agenda.h:''):'sem compromissos')}
-  ${mini('data-ir="financas"','carteira','#5fe0a0','Finanças',brl(saldo),L.length+' lançamento(s)')}
-  ${mini('data-ir="metas"','meta','#ffcf6b','Metas',m0?esc(m0.t):'Criar meta',m0?Math.min(100,Math.round(m0.atual/m0.alvo*100))+'%':'defina um objetivo')}
-  ${mini('data-acao="hist-ir" data-v="agua"','nuvem','#a98bff','Histórico','Seus dias','água, treino, fé e rotina')}
-  ${mini('data-ir="ajuda"','doc','#5fe0a0','Como usar','Guia do app','passo a passo')}
+  ${mini('data-ir="ciclo"','flor','#e46fa3','Ciclo',c?c.fase:'Configurar',c?'dia '+c.diaCiclo+' · próxima em '+c.faltam+'d':'informe a última')}
+  ${mini('data-ir="biblia"','livro','#6a3fd1','Bíblia','Planos de leitura','Salmos, Provérbios e anual')}
+  ${mini('data-ir="rotina"','cal','#6a3fd1','Agenda',agenda?esc(agenda.t):'Livre',agenda?(agenda.d===h?'hoje':fmtData(agenda.d))+(agenda.h?' · '+agenda.h:''):'sem compromissos')}
+  ${mini('data-ir="financas"','carteira','#3fb878','Finanças',brl(saldo),L.length+' lançamento(s)')}
+  ${mini('data-ir="metas"','meta','#e46fa3','Metas',m0?esc(m0.t):'Criar meta',m0?Math.min(100,Math.round(m0.atual/m0.alvo*100))+'%':'defina um objetivo')}
+  ${mini('data-acao="hist-ir" data-v="agua"','nuvem','#6a3fd1','Histórico','Seus dias','água, treino, fé e rotina')}
+  ${mini('data-ir="ajuda"','doc','#3fb878','Como usar','Guia do app','passo a passo')}
  </div></div>`}
 TELAS.inicio=inicioC;
 // Apresentação viva nas cores dela (troca o visual da abertura; o arrastar para cima continua o mesmo)
 new MutationObserver(ms=>{for(const m of ms)for(const n of m.addedNodes)if(n.id==='pm-intro'&&!n.dataset.c){n.dataset.c=1;try{introC(n)}catch(e){}}}).observe(document.body,{childList:true});
 function introC(el){const h=hoje(),hr=new Date().getHours(),[vs,ref]=versoHoje();
  const bl=blocosDe(h),bf=S.blocosFeitos[h]||{},ag=new Date().getHours()*60+new Date().getMinutes(),pb=bl.find(b=>!bf[b.id]&&minDe(b.fim)>ag);
- let loja='Lance as vendas do dia';if(window.LT_VENDAS){const v=VD.resumo(VD.mesDe(h)),lan=VD.base().dias[h];loja=lan?'Hoje: '+brl(lan.v).replace(',00',''):v.porDia?'Vender '+brl(v.porDia).replace(',00',''):v.metaMes?'Meta do mês batida':'Coloque a meta do mês'}
- let eq='Veja sua equipe';if(window.LT_EQUIPE&&EQ.d){const n=(EQ.d.agenda||[]).filter(a=>a.data>=h&&a.data<=dstr(new Date(Date.now()+7*864e5))).length+(EQ.d.pendencias||[]).length;eq=n?n+' aviso(s) para ver':'Tudo em dia'}
+ const PCT=Math.max(0,Math.min(100,Math.round(cuidadoDia(h).total||0)));
  const sau=hr<12?'Bom dia':hr<18?'Boa tarde':'Boa noite';
  const cena=el.querySelector('.ab-cena');if(!cena)return;
  el.classList.add('c-intro');
- el.insertAdjacentHTML('afterbegin','<div class="ci-fundo"><b class="v1"></b><b class="v2"></b><b class="v3"></b><span class="grade"></span><span class="ci-anel"></span><span class="ci-anel a2"></span></div>');
- cena.innerHTML=`<div class="ci">
-  <div class="ci-pal"><span class="ci-ic">${ic('livro')}</span><div><small>PALAVRA DE HOJE</small><span>${esc(ref)}</span></div></div>
-  <p class="ci-verso">“${esc(vs)}”</p>
-  <small class="ci-data">${parse(h).toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'}).toUpperCase()}</small>
-  <h1 class="ci-nome">${sau},<br>${esc(S.nome)}!</h1>
-  <div class="ci-pts">
-   <div class="ci-pt"><i>1</i><div><small>${pb?(minDe(pb.ini)<=ag?'AGORA':'PRÓXIMA TAREFA'):'ROTINA'}</small><b>${pb?esc(pb.t)+' · '+pb.ini:'Tudo feito por hoje'}</b></div></div>
-   <div class="ci-pt"><i class="e">2</i><div><small>LOJA HOJE</small><b>${loja}</b></div></div>
-   <div class="ci-pt"><i class="g">3</i><div><small>EQUIPE</small><b>${eq}</b></div></div>
-  </div></div>`;
- const sb=el.querySelector('.ab-subir');if(sb)sb.innerHTML='<span class="ci-btn">Começar o dia</span><span class="ci-dica">ou deslize para cima</span>'}
+ el.insertAdjacentHTML('afterbegin','<div class="ci-fundo"><b class="v1"></b><b class="v2"></b><b class="v3"></b><span class="grade"></span></div><canvas class="ci-cv"></canvas><div class="ci-meio"><b>0%</b><small>do seu dia</small></div><div class="ci-dica">arraste ou toque no anel</div>');
+ const data=parse(h).toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
+ cena.innerHTML=`<div class="ci"><div class="ci-data">${data[0].toUpperCase()+data.slice(1)}</div><h1 class="ci-nome">${sau}, ${esc(S.nome)}!</h1>
+  <p class="ci-verso">“${esc(vs)}”<em>${esc(ref)}</em></p>
+  <div class="ci-pt"><i>${ic('seta')}</i><div><small>${pb?(minDe(pb.ini)<=ag?'Agora':'Próxima tarefa'):'Rotina'}</small><b>${pb?esc(pb.t)+' · '+pb.ini:'Tudo feito por hoje'}</b></div></div></div>`;
+ const sb=el.querySelector('.ab-subir');if(sb)sb.innerHTML='<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg><span>arraste para cima</span>';
+ anelIntro(el,PCT)}
+// Anel do dia feito de quadradinhos de luz (aprovado em 25/11/2026)
+function anelIntro(el,PCT){const cv=el.querySelector('.ci-cv'),cx=cv.getContext('2d'),meio=el.querySelector('.ci-meio'),ci=el.querySelector('.ci');let W,H,D,CX,CY,R;
+ const CORES=['#8b5cf6','#a98bff','#e46fa3','#ff9cc6','#3fb878','#5fe0a0'],quieto=matchMedia('(prefers-reduced-motion: reduce)').matches;
+ function tam(){D=Math.min(2,devicePixelRatio||1);W=innerWidth;H=innerHeight;cv.width=W*D;cv.height=H*D;cx.setTransform(D,0,0,D,0,0);
+  const deitado=W>H&&H<560;if(deitado){R=Math.min(H*.32,130);CX=W*.27;CY=H/2}else{const topo=ci.getBoundingClientRect().top-12,sup=56,livre=Math.max(130,topo-sup);R=Math.max(52,Math.min(W*.32,150,livre/2-14));CX=W/2;CY=sup+livre/2}
+  const f=Math.max(.6,Math.min(1,R/120));meio.style.left=CX+'px';meio.style.top=CY+'px';meio.querySelector('b').style.fontSize=Math.round(46*f)+'px'}
+ tam();addEventListener('resize',tam);setTimeout(tam,60);
+ const N=Math.round(Math.min(900,innerWidth*2.2)),P=[];
+ for(let i=0;i<N;i++){const t=i/N,cheio=t<PCT/100;P.push({t,a:-Math.PI/2+t*Math.PI*2,e:(Math.random()-.5)*16,cheio,cor:cheio?CORES[Math.min(5,Math.floor(t/Math.max(.01,PCT/100)*6))]:'#ffffff',x:Math.random()*innerWidth,y:Math.random()*innerHeight,vx:0,vy:0,s:cheio?2.4+Math.random()*1.6:1.5+Math.random(),al:cheio?.95:.18,d:Math.random()*.9,ph:Math.random()*6.28})}
+ const F=[],O=Array.from({length:14},(_,i)=>({r:1.32+Math.random()*.35,v:(.25+Math.random()*.4)*(i%2?1:-1),a:Math.random()*6.28,c:CORES[i%6],s:2+Math.random()*2})),E=Array.from({length:80},()=>({x:Math.random(),y:Math.random(),s:Math.random()*1.4+.4,f:Math.random()*6.28,z:Math.random()*.8+.2}));
+ let cad=null,proxCad=2.5,rot=0,vrot=0,arr=null,ondas=[],t0=performance.now(),saindo=0,feito=0;const ptr={x:-999,y:-999,on:false};
+ const noAnel=(x,y)=>Math.abs(Math.hypot(x-CX,y-CY)-R)<R*.45;
+ function explode(){ondas.push({x:CX,y:CY,t:performance.now(),c:'#ffffff',g:1});for(const p of P){const dx=p.x-CX,dy=p.y-CY,dd=Math.hypot(dx,dy)||1,f=p.cheio?9:5;p.vx+=dx/dd*f*(Math.random()+.5);p.vy+=dy/dd*f*(Math.random()+.5)}meio.animate([{transform:'translate(-50%,-50%) scale(1)'},{transform:'translate(-50%,-50%) scale(1.25)'},{transform:'translate(-50%,-50%) scale(1)'}],{duration:600,easing:'cubic-bezier(.3,1.6,.5,1)'});if(navigator.vibrate)navigator.vibrate(12)}
+ // no anel: gira/explode (sem arrastar a abertura); fora dele: arrastar para cima continua abrindo o app
+ cv.addEventListener('pointerdown',e=>{const x=e.clientX,y=e.clientY;ptr.x=x;ptr.y=y;ptr.on=true;if(noAnel(x,y)){e.stopPropagation();arr={a:Math.atan2(y-CY,x-CX),r:rot,t:performance.now()}}else{ondas.push({x,y,t:performance.now(),c:CORES[Math.floor(Math.random()*6)]});for(let k=0;k<12;k++)F.push({x,y,vx:(Math.random()-.5)*5,vy:(Math.random()-.5)*5,v:1,c:CORES[k%6]})}});
+ el.addEventListener('pointermove',e=>{ptr.x=e.clientX;ptr.y=e.clientY;if(e.pointerType==='mouse')ptr.on=true;if(arr){const a=Math.atan2(e.clientY-CY,e.clientX-CX);let d=a-arr.a;if(d>Math.PI)d-=6.283;if(d<-Math.PI)d+=6.283;vrot=d*.5;rot+=d;arr.a=a}});
+ el.addEventListener('pointerup',e=>{if(arr&&performance.now()-arr.t<250&&Math.abs(rot-arr.r)<.05)explode();arr=null;if(e.pointerType!=='mouse'){ptr.on=false;ptr.x=-999}});
+ function quadro(t){if(!el.isConnected){removeEventListener('resize',tam);return}const k=(t-t0)/1000;if(!saindo&&el.classList.contains('sobe')){saindo=t;meio.style.opacity=0}
+  cx.clearRect(0,0,W,H);const ox=ptr.on?(ptr.x-W/2)/W:Math.sin(k*.2)*.15,oy=ptr.on?(ptr.y-H/2)/H:Math.cos(k*.17)*.1;
+  for(const e of E){cx.globalAlpha=.2+.45*Math.sin(k*1.3+e.f)**2;cx.fillStyle='#fff';cx.fillRect(e.x*W-ox*20*e.z,e.y*H-oy*20*e.z,e.s,e.s)}
+  if(!cad&&k>proxCad&&!saindo&&!quieto){cad={x:Math.random()*W*.8+W*.3,y:Math.random()*H*.3,v:8+Math.random()*4,l:0};proxCad=k+3+Math.random()*4}
+  if(cad){cad.x-=cad.v;cad.y+=cad.v*.45;cad.l++;const g=cx.createLinearGradient(cad.x,cad.y,cad.x+70,cad.y-32);g.addColorStop(0,'#fff');g.addColorStop(1,'rgba(255,255,255,0)');cx.globalAlpha=Math.max(0,1-cad.l/60);cx.strokeStyle=g;cx.lineWidth=1.6;cx.beginPath();cx.moveTo(cad.x,cad.y);cx.lineTo(cad.x+70,cad.y-32);cx.stroke();if(cad.l>60)cad=null}
+  if(!arr){rot+=vrot+(quieto?0:.0015);vrot*=.94}
+  ondas=ondas.filter(o=>{const f=(t-o.t)/(o.g?900:700);if(f>1)return false;cx.globalAlpha=(1-f)*.8;cx.strokeStyle=o.c;cx.lineWidth=o.g?3:2;cx.beginPath();cx.arc(o.x,o.y,(o.g?R*1.6:60)*f+(o.g?R:4),0,6.283);cx.stroke();return true});
+  for(const p of P){if(saindo){const f=(t-saindo)/1000;p.vx+=(p.x-CX)*.004*f;p.vy+=(p.y-CY)*.004*f-.05;p.vx*=.99;p.vy*=.99}
+   else{const ang=p.a+rot,rr=R+p.e+Math.sin(k*2+p.ph+p.t*12)*2.6,tx=CX+Math.cos(ang)*rr,ty=CY+Math.sin(ang)*rr,q=quieto?1:Math.max(0,Math.min(1,(k-p.d)/1.2)),mola=.008+.03*q;
+    if(quieto){p.x=tx;p.y=ty}else{p.vx+=(tx-p.x)*mola;p.vy+=(ty-p.y)*mola}
+    if(ptr.on){const dx=p.x-ptr.x,dy=p.y-ptr.y,d2=dx*dx+dy*dy;if(d2<5200){const f=(5200-d2)/5200*1.6,dd=Math.sqrt(d2)||1;p.vx+=dx/dd*f;p.vy+=dy/dd*f}}p.vx*=.86;p.vy*=.86}
+   p.x+=p.vx;p.y+=p.vy;cx.globalAlpha=saindo?Math.max(0,p.al*(1-(t-saindo)/700)):p.al*(p.cheio?(.7+.3*Math.sin(k*3+p.ph)):1);cx.fillStyle=p.cor;if(p.cheio){cx.shadowColor=p.cor;cx.shadowBlur=8}else cx.shadowBlur=0;cx.fillRect(p.x-p.s/2,p.y-p.s/2,p.s,p.s)}
+  cx.shadowBlur=0;
+  if(!saindo&&k>1.8&&PCT>0){const ap=-Math.PI/2+PCT/100*6.283+rot,hx=CX+Math.cos(ap)*R,hy=CY+Math.sin(ap)*R,gl=cx.createRadialGradient(hx,hy,0,hx,hy,22);gl.addColorStop(0,'rgba(255,255,255,.95)');gl.addColorStop(.3,'rgba(95,224,160,.6)');gl.addColorStop(1,'rgba(95,224,160,0)');cx.globalAlpha=.8+.2*Math.sin(k*6);cx.fillStyle=gl;cx.beginPath();cx.arc(hx,hy,22,0,6.283);cx.fill();
+   if(!quieto&&Math.random()<.6)F.push({x:hx,y:hy,vx:-Math.sin(ap)*1.2+(Math.random()-.5),vy:Math.cos(ap)*1.2+(Math.random()-.5),v:1,c:Math.random()<.5?'#5fe0a0':'#ffffff'})}
+  if(!saindo&&k>1.8)for(const o of O){o.a+=o.v*.016;const x=CX+Math.cos(o.a)*R*o.r,y=CY+Math.sin(o.a)*R*o.r*.92;cx.globalAlpha=.55+.4*Math.sin(k*2+o.a);cx.fillStyle=o.c;cx.shadowColor=o.c;cx.shadowBlur=10;cx.fillRect(x-o.s/2,y-o.s/2,o.s,o.s)}
+  cx.shadowBlur=0;for(let i=F.length-1;i>=0;i--){const f=F[i];f.x+=f.vx;f.y+=f.vy;f.vy+=.02;f.v-=.02;if(f.v<=0){F.splice(i,1);continue}cx.globalAlpha=f.v;cx.fillStyle=f.c;cx.fillRect(f.x-1.2,f.y-1.2,2.4,2.4)}
+  cx.globalAlpha=1;
+  if(k>1.6&&!saindo){meio.classList.add('on');const v=Math.min(PCT,Math.round((k-1.6)/1.0*PCT));meio.querySelector('b').textContent=v+'%';if(v===PCT&&!feito){feito=1;ondas.push({x:CX,y:CY,t,c:'#c9b5ff',g:1})}}
+  if(k>2.2)ci.classList.add('on');
+  requestAnimationFrame(quadro)}
+ requestAnimationFrame(quadro)}
 
 
 

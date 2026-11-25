@@ -22,7 +22,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%}
 
 .rep{position:fixed;top:calc(10px + env(safe-area-inset-top));right:12px;border:1.5px solid #ffffff44;background:#ffffff14;color:#fff;border-radius:12px;padding:8px 12px;font:700 12px Inter}
 @media (orientation:landscape) and (max-height:560px){.cont{left:auto;right:4vw;bottom:auto;top:50%;transform:translateY(-50%);width:min(48vw,440px);padding:0}.verso{display:none}.nome{font-size:28px}}
-.toque{position:fixed;left:16px;top:calc(14px + env(safe-area-inset-top));font-size:12px;font-weight:700;color:#fff;background:#ffffff12;border:1px solid #ffffff22;padding:6px 10px;border-radius:10px;white-space:nowrap;animation:some 6s 4s forwards}@keyframes some{to{opacity:0}}canvas{touch-action:none}@media (max-height:600px) and (orientation:portrait){.verso{font-size:14.5px}.nome{font-size:30px}}</style>
+.toque{position:fixed;left:16px;top:calc(14px + env(safe-area-inset-top));font-size:12px;font-weight:700;color:#fff;background:#ffffff12;border:1px solid #ffffff22;padding:6px 10px;border-radius:10px;white-space:nowrap;animation:some 6s 4s forwards}@keyframes some{to{opacity:0}}canvas{touch-action:none}@media (max-height:600px) and (orientation:portrait){.verso{font-size:14.5px}.nome{font-size:30px}}.sobe{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0 2px;color:#fff;font-size:14px;font-weight:700;cursor:pointer;user-select:none}.sobe svg{animation:sobe 1.6s ease-in-out infinite}@keyframes sobe{0%,100%{transform:translateY(4px);opacity:.6}50%{transform:translateY(-6px);opacity:1}}.cont{touch-action:none}body.indo .cont{transition:transform .5s cubic-bezier(.4,0,.2,1),opacity .5s!important}</style>
 <div class="fundo"><b class="g1"></b><b class="g2"></b></div><div class="grade"></div><canvas id="c"></canvas>
 <div class="meio" id="meio"><b id="pc">0%</b><small>do seu dia</small></div>
 <div class="cont" id="cont">
@@ -30,7 +30,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%}
  <div class="nome">Bom dia, Wayna!</div>
  <p class="verso">“Este é o dia que fez o Senhor; regozijemo-nos e alegremo-nos nele.”<em>Salmos 118:24</em></p>
  <div class="pt"><i style="background:#7a4cf0">→</i><div><small>Próxima tarefa</small><b>Trabalho · loja · 08:30</b></div></div>
- <div><button class="btn" id="ir">Começar o dia</button></div>
+ <div class="sobe" id="ir"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg><span>arraste para cima</span></div>
 </div>
 <button class="rep" onclick="location.reload()">ver de novo</button><div class="toque" id="toque">arraste ou toque no anel</div>
 <script>
@@ -103,5 +103,11 @@ function quadro(t){const k=(t-t0)/1000;cx.clearRect(0,0,W,H);
  if(k>2.4)document.getElementById('cont').classList.add('on');
  requestAnimationFrame(quadro)}
 requestAnimationFrame(quadro);
-document.getElementById('ir').onclick=()=>{saindo=performance.now();document.getElementById('meio').classList.remove('on');document.getElementById('cont').style.transition='opacity .5s';document.getElementById('cont').style.opacity=0;setTimeout(()=>location.reload(),2200)};
+function sair(){if(saindo)return;saindo=performance.now();document.body.classList.add('indo');document.getElementById('meio').classList.remove('on');const c=document.getElementById('cont');c.style.transform='translateY(-60vh)';c.style.opacity=0;setTimeout(()=>location.reload(),2200)}
+document.getElementById('ir').onclick=sair;
+// arrastar para cima no texto (fora do anel) abre o app
+let y0=null;const ct=document.getElementById('cont');
+addEventListener('pointerdown',e=>{if(e.clientY>CY+R*.9||e.target.closest('#cont'))y0=e.clientY},true);
+addEventListener('pointermove',e=>{if(y0==null||saindo)return;const d=Math.min(0,e.clientY-y0);ct.style.transition='none';ct.style.transform='translateY('+d*.6+'px)';ct.style.opacity=1+d/400});
+addEventListener('pointerup',e=>{if(y0==null)return;const d=e.clientY-y0;y0=null;ct.style.transition='transform .3s,opacity .3s';if(d<-70)sair();else{ct.style.transform='';ct.style.opacity=''}});
 </script>
