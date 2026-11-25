@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icon-180.png"><link rel="icon" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700;6..12,800&display=swap">
-<script>try{var t=localStorage.getItem('lifetrail_wayna_tema');if(t&&["lavanda", "estrelada", "mar", "rose", "sol"].includes(t))document.documentElement.dataset.tema=t}catch(e){}</script>
+<script>try{var t=localStorage.getItem('lifetrail_wayna_tema');if(t&&["lavanda"].includes(t))document.documentElement.dataset.tema=t}catch(e){}</script>
 <style>
 :root{--serif:'Fraunces',Georgia,'Times New Roman',serif;--sans:'Nunito Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
  --bg:#e9f3fc;--bg-top:#9fcaf3;--txt:#13243f;--sub:#41587a;--glass:rgba(255,255,255,.72);--glass2:rgba(255,255,255,.88);--borda:rgba(255,255,255,.85);--sombra:0 10px 30px -14px rgba(20,50,90,.35);
@@ -610,26 +610,53 @@ dialog.dlg-pet{width:min(94vw,460px);max-height:92vh;overflow:auto}
 .vd-av{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:12px;color:#fff;background:#6a3fd1}.vd-v1:nth-child(3n+2) .vd-av{background:#e46fa3}.vd-v1:nth-child(3n) .vd-av{background:#3fb878}
 .vd-v1 small{display:block;font-size:11px;color:var(--sub)}.vd-r{margin-left:auto;font-size:14px}
 .vd-aj .sub{margin:10px 0 6px}.vd-g4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.vd-g2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px}.vd-aj label small{display:block;font-size:11px;font-weight:700;margin-bottom:3px}.vd-aj input{width:100%;min-width:0}
-html[data-tema=estrelada]{--acc:#7ee0a8;--acc2:#ffffff;--acc-txt:#0b2a1c;--trilho:rgba(126,224,168,.22);--ok:#9df5c4;--nav:rgba(12,30,48,.88)}html[data-tema=estrelada] body{background-image:radial-gradient(ellipse 90% 45% at 50% 105%,rgba(63,212,138,.28),transparent 70%)}
-/* Estilo C · Cores vivas (aprovado pelo Arnold em 24/11/2026) */
-html[data-tema=lavanda]{--bg:#f3effa;--bg-top:#f3effa;--txt:#1f1640;--sub:#7d6fa6;--glass:#ffffff;--glass2:#ffffff;--borda:transparent;--sombra:0 8px 22px -14px rgba(106,63,209,.35);--acc:#6a3fd1;--acc2:#e46fa3;--acc-txt:#ffffff;--trilho:#6a3fd1;--nav:#1f1640;--ok:#1e9a5a}
-html[data-tema=lavanda] body{background:#f3effa}html[data-tema=lavanda] .ambiente{opacity:0!important}
-html[data-tema=lavanda] .vidro{background:#fff!important;border:0;backdrop-filter:none;-webkit-backdrop-filter:none;border-radius:24px}
-html[data-tema=lavanda] .tit{font-family:Inter,system-ui,sans-serif;font-weight:800;letter-spacing:-.02em}
-html[data-tema=lavanda] .nav{background:#1f1640;border:0;border-radius:32px}html[data-tema=lavanda] .nav button{color:#8f80c4}html[data-tema=lavanda] .nav button.on{color:#fff;background:#6a3fd1}html[data-tema=lavanda] .nav button.on svg{color:#fff}
-html[data-tema=lavanda] .top{background:transparent}
-html[data-tema=lavanda] .vd-hoje{background:#6a3fd1;box-shadow:0 14px 30px -18px #6a3fd1}
-html[data-tema=lavanda] .vd-salvar{color:#6a3fd1}
-html[data-tema=lavanda] .vd-res .vd-c:nth-child(1){background:#fff!important}
-html[data-tema=lavanda] .vd-res .vd-c:nth-child(2){background:#d9f3e4!important;color:#1e7a4a}html[data-tema=lavanda] .vd-res .vd-c:nth-child(2) span,html[data-tema=lavanda] .vd-res .vd-c:nth-child(2) em{color:#1e7a4a}
-html[data-tema=lavanda] .vd-res .vd-c:nth-child(3){background:#e7defd!important;color:#5a34b8}html[data-tema=lavanda] .vd-res .vd-c:nth-child(3) span,html[data-tema=lavanda] .vd-res .vd-c:nth-child(3) em{color:#5a34b8}
-html[data-tema=lavanda] .vd-res .vd-c:nth-child(4){background:#ffe1ee!important;color:#b03d74}html[data-tema=lavanda] .vd-res .vd-c:nth-child(4) span{color:#b03d74}
-html[data-tema=lavanda] .vd-metas{background:#1f1640}html[data-tema=lavanda] .vd-mes .vd-s{background:#6a3fd1;color:#fff}
-html[data-tema=lavanda] .vd-dias i{background:#e7defd}html[data-tema=lavanda] .vd-dias .vd-top i{background:#3fb878}
-html[data-tema=lavanda] .vd-dn{color:#d2456b!important}
-html[data-tema=lavanda] .hero-foto{display:none!important}html[data-tema=lavanda] body.home-foto .col-a{--sobe:0px!important}html[data-tema=lavanda] body.home-foto{background:#f3effa!important}
-html[data-tema=lavanda] .saud h1,html[data-tema=lavanda] h1,html[data-tema=lavanda] h2{font-family:Inter,system-ui,sans-serif!important;font-weight:800;letter-spacing:-.02em}
-html[data-tema=lavanda] body.home-foto .banner.foto-int{margin-top:16px!important}
+/* Estilo C · Cores vivas (Wayna) */
+html.estilo-c{--serif:'Inter',system-ui,sans-serif;--sans:'Inter',system-ui,sans-serif;--bg:#f3effa;--bg-top:#f3effa;--txt:#1f1640;--sub:#7d6fa6;--glass:#fff;--glass2:#fff;--borda:transparent;--sombra:0 8px 22px -14px rgba(106,63,209,.35);--acc:#6a3fd1;--acc2:#e46fa3;--acc-txt:#fff;--trilho:#efe9fb;--nav:#1f1640;--ok:#1e9a5a}
+html.estilo-c body{background:#f3effa!important;font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+html.estilo-c body::after,html.estilo-c .ambiente{display:none!important}
+html.estilo-c .vidro{background:#fff!important;border:0!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;border-radius:22px;box-shadow:0 8px 22px -16px rgba(106,63,209,.45)}
+html.estilo-c .vidro .brilho,html.estilo-c .vidro:before,html.estilo-c .vidro:after{display:none!important}
+html.estilo-c h1,html.estilo-c h2,html.estilo-c h3,html.estilo-c .tit,html.estilo-c blockquote,html.estilo-c b{font-family:Inter,system-ui,sans-serif!important}
+html.estilo-c .tit{font-weight:800;letter-spacing:-.02em}
+html.estilo-c .btn.p{background:#6a3fd1!important;color:#fff!important;border:0;box-shadow:none}
+html.estilo-c .btn{border-radius:14px}
+html.estilo-c .nav{background:#1f1640!important;border:0!important;border-radius:32px}html.estilo-c .nav button{color:#8f80c4}html.estilo-c .nav button.on{color:#fff!important;background:#6a3fd1!important}html.estilo-c .nav button.on svg{color:#fff!important}
+html.estilo-c .top{background:transparent!important}html.estilo-c .top>b{opacity:0}
+html.estilo-c .gnav{background:#fff!important;border:0!important;box-shadow:0 6px 16px -10px #6a3fd155}html.estilo-c .gnav button.on{background:#6a3fd1!important;color:#fff}
+html.estilo-c dialog{background:#fff!important;color:#1f1640;border-radius:24px}
+html.estilo-c input,html.estilo-c select,html.estilo-c textarea{font-family:Inter,system-ui,sans-serif}
+/* Início em blocos */
+.c-home{max-width:560px;margin:0 auto;padding-bottom:10px}
+.c-top{display:flex;align-items:center;gap:12px;margin:4px 2px 12px}
+.c-mono{width:50px;height:50px;border-radius:50%;padding:3px;background:conic-gradient(#6a3fd1,#e46fa3,#3fb878,#6a3fd1);flex:none}.c-mono span{width:100%;height:100%;border-radius:50%;background:#6a3fd1;display:grid;place-items:center;color:#fff;font:800 21px Inter,sans-serif}
+.c-top small{font-size:12.5px;color:#7d6fa6;font-weight:600}.c-top h1{font:800 25px/1.1 Inter,sans-serif!important;letter-spacing:-.02em;margin:2px 0 0;color:#1f1640}
+.c-bento{display:grid;grid-template-columns:1.25fr 1fr;gap:10px}
+.c-t{border:0;border-radius:24px;padding:16px;position:relative;overflow:hidden;text-align:left;font:inherit;color:inherit;cursor:pointer;display:block;width:100%}
+.c-t small{display:block;font-size:11px;font-weight:800;letter-spacing:.12em}
+.c-agora{grid-column:1/-1;background:#6a3fd1;color:#fff;display:flex;align-items:center;gap:12px;cursor:default}.c-agora:after{content:"";position:absolute;right:-30px;bottom:-50px;width:150px;height:150px;border-radius:50%;background:#ffffff1a;pointer-events:none}
+.c-agora-tx{flex:1;min-width:0;background:none;border:0;color:#fff;text-align:left;font:inherit;padding:0;cursor:pointer}.c-agora small{color:#d9ccff}.c-agora b{display:block;font-size:18px;margin:2px 0}.c-agora span{font-size:12.5px;color:#d9ccff}
+.c-ok{position:relative;z-index:1;border:0;padding:11px 15px;border-radius:14px;background:#fff;color:#6a3fd1;font:800 13px Inter,sans-serif;cursor:pointer;flex:none}
+.c-nota{background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 8px 22px -16px rgba(106,63,209,.45)}.c-n{position:relative;display:grid;place-items:center}.c-n svg{transform:rotate(-90deg)}.c-n b{position:absolute;font:800 26px Inter,sans-serif;color:#1f1640}.c-nota small{margin-top:6px;letter-spacing:0;font-size:11.5px;font-weight:700;color:#7d6fa6}
+.c-anel{animation:c-enche 1.6s cubic-bezier(.2,.9,.3,1) both}@keyframes c-enche{from{stroke-dashoffset:var(--c)}}
+.c-habs{display:grid;gap:8px}.c-h{border:0;border-radius:18px;padding:11px 12px;display:flex;align-items:center;gap:9px;font:700 13.5px Inter,sans-serif;cursor:pointer;text-align:left;min-width:0}.c-h span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.c-h svg{width:18px;height:18px;flex:none}
+.c-h1{background:#d9f3e4;color:#1e7a4a}.c-h2{background:#ffe1ee;color:#b03d74}.c-h3{background:#e7defd;color:#5a34b8}.c-h.on{box-shadow:inset 0 0 0 2px currentColor}
+.c-vendas{grid-column:1/-1;background:#1f1640;color:#fff}.c-vendas small{color:#b9a9ec}.c-row{display:flex;justify-content:space-between;align-items:flex-end}.c-v{font:800 28px Inter,sans-serif;letter-spacing:-.02em}.c-pc{font:800 15px Inter,sans-serif;color:#8fe3b4}
+.c-barra{height:12px;border-radius:6px;background:#ffffff1f;margin:10px 0 12px;overflow:hidden;display:flex}.c-barra i{height:100%;animation:c-cresce 1.3s ease both}@keyframes c-cresce{from{width:0}}
+.c-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.c-kpis div{background:#ffffff14;border-radius:14px;padding:8px 10px;min-width:0}.c-kpis b{display:block;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.c-kpis span{font-size:10.5px;color:#b9a9ec}
+.c-eq{background:#3fb878;color:#fff}.c-fe{background:#e46fa3;color:#fff}.c-eq small,.c-fe small{opacity:.85;letter-spacing:.1em;margin-top:6px}.c-eq b,.c-fe b{display:block;font-size:17px;margin-top:4px}.c-eq span,.c-fe span{font-size:12px;opacity:.92}.c-eq svg,.c-fe svg{width:24px;height:24px}
+
+.c-sec{margin:18px 4px 8px;font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#7d6fa6}
+.c-mais{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.c-mini{border:0;background:#fff;border-radius:20px;padding:12px;display:flex;gap:10px;align-items:flex-start;text-align:left;font:inherit;color:#1f1640;cursor:pointer;min-width:0;box-shadow:0 8px 22px -16px rgba(106,63,209,.45)}
+.c-mi{width:34px;height:34px;border-radius:12px;display:grid;place-items:center;flex:none;color:var(--c);background:color-mix(in srgb,var(--c) 16%,#fff)}.c-mi svg{width:18px;height:18px}
+.c-mini>span:last-child{min-width:0}.c-mini small{display:block;font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#7d6fa6}.c-mini b{display:block;font-size:14px;margin:2px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.c-mini em{font-style:normal;font-size:11.5px;color:#7d6fa6;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media (min-width:900px){.c-home{max-width:780px}.c-bento{grid-template-columns:1fr 1fr 1fr;grid-template-areas:"agora agora nota" "vendas vendas habs" "eq fe fe"}.c-agora{grid-area:agora}.c-nota{grid-area:nota}.c-habs{grid-area:habs;align-content:center}.c-vendas{grid-area:vendas}.c-eq{grid-area:eq}.c-fe{grid-area:fe}.c-mais{grid-template-columns:repeat(3,1fr)}}
+/* Vendas no estilo C */
+html.estilo-c .vd-hoje{background:#6a3fd1;box-shadow:0 14px 30px -18px #6a3fd1}html.estilo-c .vd-salvar{color:#6a3fd1}
+html.estilo-c .vd-res .vd-c:nth-child(2){background:#d9f3e4!important;color:#1e7a4a}html.estilo-c .vd-res .vd-c:nth-child(2) span,html.estilo-c .vd-res .vd-c:nth-child(2) em{color:#1e7a4a}
+html.estilo-c .vd-res .vd-c:nth-child(3){background:#e7defd!important;color:#5a34b8}html.estilo-c .vd-res .vd-c:nth-child(3) span,html.estilo-c .vd-res .vd-c:nth-child(3) em{color:#5a34b8}
+html.estilo-c .vd-res .vd-c:nth-child(4){background:#ffe1ee!important;color:#b03d74}html.estilo-c .vd-res .vd-c:nth-child(4) span{color:#b03d74}
+html.estilo-c .vd-dias i{background:#e7defd}html.estilo-c .vd-dias .vd-top i{background:#3fb878}html.estilo-c .vd-dn{color:#d2456b!important}
 </style>
 </head>
 <body>
@@ -1228,6 +1255,53 @@ const VD=(()=>{
    v.dias[dia]={v:vv||0,c:Math.round(cc||0)};if(Object.keys(vd).length)v.dias[dia].vd=vd;salvar();render();toast('Vendas salvas')}});
  return {tela,resumo,base,mesDe}})();
 if(window.LT_VENDAS){const it=NAV.findIndex(n=>n[0]==='treino');if(it>=0)NAV.splice(it,1);NAV.splice(1,0,['vendas','Vendas','grafico']);TELAS.vendas=VD.tela} // Treino sai da barra (continua no cartão do Início) para caber Vendas
+/* ---------- Estilo C · Cores vivas (só da Wayna, aprovado em 24/11/2026) ---------- */
+(()=>{const l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap';document.head.append(l);document.documentElement.classList.add('estilo-c')})();
+function inicioC(){
+ const h=hoje(),dt=new Date(),hr=dt.getHours(),cd=cuidadoDia(h),r=rotinaHoje();const {it,atras,ag}=proximaTarefa();
+ const nota=Math.round(cd.total||0),R=2*Math.PI*42;
+ // AGORA / PRÓXIMA
+ let quando='',agoraJa=false;if(it&&it.m!=null){const d=it.m-ag;agoraJa=d<=0;quando=d<=0?(it.fim?'até '+it.fim:'agora'):d<60?'em '+d+' min · '+it.ini:'às '+it.ini}else if(it)quando='sem horário';
+ const cAgora=it?`<div class="c-t c-agora"><button class="c-agora-tx" data-ir="rotina"><small>${agoraJa?'AGORA':'PRÓXIMA'}</small><b>${esc(it.t)}</b><span>${quando}${atras.length?' · '+atras.length+' atrasado(s)':''}</span></button><button class="c-ok" data-acao="prox-ok" data-tipo="${it.tipo}" data-id="${it.id}">Concluir</button></div>`
+  :`<div class="c-t c-agora"><button class="c-agora-tx" data-ir="rotina"><small>HOJE</small><b>Tudo concluído</b><span>aproveite o seu descanso</span></button></div>`;
+ // HÁBITOS: 2 hábitos + água
+ const hd=S.habDias[h]||{},HB=S.habitos.filter(x=>!/água|agua/i.test(x.t)).slice(0,2),cores=['c-h1','c-h3'];
+ const ICH=[ic('halter'),ic('livro')];
+ const habs=HB.map((x,i)=>`<button class="c-h ${cores[i]} ${hd[x.id]?'on':''}" data-acao="habito" data-id="${x.id}">${hd[x.id]?ic('check'):ICH[i]}<span>${esc(x.t)}</span></button>`).join('')
+  +`<button class="c-h c-h2 ${(S.agua[h]||0)>=S.meta_agua?'on':''}" data-acao="agua-mais">${ic('gota')}<span>Água ${S.agua[h]||0}/${S.meta_agua}</span></button>`;
+ // VENDAS
+ let cVendas='';if(window.LT_VENDAS){const v=VD.resumo(VD.mesDe(h));const p=v.metaMes?Math.round(v.tot/v.metaMes*100):0;const nm=parse(h).toLocaleDateString('pt-BR',{month:'long'}).toUpperCase();
+  const cs=['#8fe3b4','#c9b5ff','#f3a6c9','#ffd28a'];
+  cVendas=`<button class="c-t c-vendas" data-ir="vendas"><small>VENDAS DE ${nm}</small><div class="c-row"><div class="c-v">${brl(v.tot).replace(',00','')}</div><div class="c-pc">${v.metaMes?p+'%':'sem meta'}</div></div>
+  <div class="c-barra">${v.metaMes?v.sem.map((x,i)=>`<i style="width:${Math.min(100,x/v.metaMes*100)}%;background:${cs[i]}"></i>`).join(''):''}</div>
+  <div class="c-kpis"><div><b>${v.porDia?brl(v.porDia).replace(',00',''):'—'}</b><span>por dia p/ bater</span></div><div><b>${v.vvpa?brl(v.vvpa).replace(',00',''):'—'}</b><span>VVPA</span></div><div><b>${v.dias?Math.round(v.cli/v.dias):'—'}</b><span>clientes/dia</span></div></div></button>`}
+ // EQUIPE e FÉ
+ let cEq='';if(window.LT_EQUIPE){const d=EQ.d,x=d&&(d.agenda||[]).find(a=>a.data>=h);cEq=`<button class="c-t c-eq" data-ir="equipe">${ic('equipe')}<small>EQUIPE</small><b>${d?(d.pessoas||[]).length+' pessoas':'Entrar'}</b><span>${x?(x.data===h?'hoje':fmtData(x.data))+' · '+esc(x.titulo.split(' · ')[0]):d?((d.pendencias||[]).length?(d.pendencias||[]).length+' pendência(s)':'tudo em dia'):'código da loja'}</span></button>`}
+ const [vs,ref]=versoHoje();
+ const cFe=`<button class="c-t c-fe" data-acao="ler">${ic('livro')}<small>FÉ</small><b>${cd.fe?'Palavra lida':'Palavra de hoje'}</b><span>${esc(ref)}</span></button>`;
+ // MAIS
+ const c=ciclo(),tr=treinoHoje(),it2=itensArvore(h),fa=it2.filter(i=>i.ok).length;
+ const L=S.fin.filter(f=>f.d.slice(0,7)===h.slice(0,7)),saldo=L.reduce((a,f)=>a+(f.tipo==='e'?f.v:-f.v),0),m0=S.metas[0];
+ const agenda=S.agenda.filter(a=>!a.ok&&difDias(h,a.d)>=0).sort((a,b)=>(a.d+(a.h||'')).localeCompare(b.d+(b.h||'')))[0];
+ const mini=(attr,i,cor,t,b,s)=>`<button class="c-mini" ${attr} style="--c:${cor}"><span class="c-mi">${ic(i)}</span><span><small>${t}</small><b>${b}</b><em>${s}</em></span></button>`;
+ return `<div class="c-home"><div class="c-top"><div class="c-mono"><span>${esc((S.nome||'W')[0].toUpperCase())}</span></div><div><small>${(s=>s[0].toUpperCase()+s.slice(1))(parse(h).toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'}))}</small><h1>${hr<12?'Bom dia':hr<18?'Boa tarde':'Boa noite'}, ${esc(S.nome)}!</h1></div></div>
+ <div class="c-bento">${cAgora}
+  <button class="c-t c-nota" data-ir="rotina"><span class="c-n"><svg width="94" height="94" viewBox="0 0 94 94"><circle cx="47" cy="47" r="42" fill="none" stroke="#efe9fb" stroke-width="10"/><circle class="c-anel" cx="47" cy="47" r="42" fill="none" stroke="#6a3fd1" stroke-width="10" stroke-linecap="round" stroke-dasharray="${R.toFixed(1)}" stroke-dashoffset="${(R*(1-nota/100)).toFixed(1)}" style="--c:${R.toFixed(1)}"/></svg><b>${nota}</b></span><small>nota do dia</small></button>
+  <div class="c-habs">${habs}</div>
+  ${cVendas}${cEq}${cFe}</div>
+ <h3 class="c-sec">Mais do seu dia</h3><div class="c-mais">
+  ${mini('data-ir="rotina"','rotina','#3fb878','Rotina',fa+' de '+it2.length+' flores',r.feitos+'/'+r.total+' feitos')}
+  ${mini('data-ir="treino"','halter','#e46fa3','Treino',esc(tr.n.split(' · ')[0]),S.treino.feitos.includes(h)?'concluído':tr.ex.length?tr.ex.length+' exercícios':'descanso')}
+  ${mini('data-ir="ciclo"','flor','#e46fa3','Ciclo',c?c.fase:'Configurar',c?'dia '+c.diaCiclo+' · próxima em '+c.faltam+'d':'informe a última')}
+  ${mini('data-ir="biblia"','livro','#6a3fd1','Bíblia','Planos de leitura','Salmos, Provérbios e anual')}
+  ${mini('data-ir="rotina"','cal','#6a3fd1','Agenda',agenda?esc(agenda.t):'Livre',agenda?(agenda.d===h?'hoje':fmtData(agenda.d))+(agenda.h?' · '+agenda.h:''):'sem compromissos')}
+  ${mini('data-ir="financas"','carteira','#3fb878','Finanças',brl(saldo),L.length+' lançamento(s)')}
+  ${mini('data-ir="metas"','meta','#e46fa3','Metas',m0?esc(m0.t):'Criar meta',m0?Math.min(100,Math.round(m0.atual/m0.alvo*100))+'%':'defina um objetivo')}
+  ${mini('data-acao="hist-ir" data-v="agua"','nuvem','#6a3fd1','Histórico','Seus dias','água, treino, fé e rotina')}
+  ${mini('data-ir="ajuda"','doc','#3fb878','Como usar','Guia do app','passo a passo')}
+ </div></div>`}
+TELAS.inicio=inicioC;
+
 
 const HIST={b:[],f:[]};let porHist=false;
 let tela='inicio';
@@ -1340,7 +1414,7 @@ function metas(){return `${voltar}<h2 class="tit">Minhas metas</h2><p class="sub
   <div class="row"><small style="flex:1;color:var(--sub)">${fmt(m.atual)} de ${fmt(m.alvo)} · ${p}%</small><button class="btn peq" data-acao="meta-menos" data-id="${m.id}" aria-label="Diminuir">${ic('menos')}</button><button class="btn peq" data-acao="meta-mais" data-id="${m.id}" aria-label="Aumentar">${ic('mais')}</button><button class="btn peq" data-acao="meta-valor" data-id="${m.id}">Atualizar</button></div></div>`}).join('')}</div>
  <form class="vidro cartao sec" data-form="meta" style="display:grid;gap:8px"><input name="t" placeholder="Nova meta. Ex.: ler 2 livros" maxlength="60" required><div class="grade2"><input name="alvo" inputmode="decimal" placeholder="Alvo. Ex.: 2" required aria-label="Alvo"><input name="un" placeholder="Unidade. Ex.: livros ou R$" maxlength="15" aria-label="Unidade"></div><button class="btn p cheio">Criar meta</button></form>`}
 
-function perfil(){const T=[['ceu','Céu','linear-gradient(180deg,#8ec5f5,#e9f3fc)'],['sol','Pôr do sol','linear-gradient(180deg,#4a3a8e,#c77aa6 60%,#f0b88a)'],['lavanda','Lavanda','linear-gradient(180deg,#efe3fa,#fff)'],['mar','Mar','linear-gradient(180deg,#5cc8c2,#e4f6f4 70%,#f0d9a8)'],['rose','Rosé dourado','linear-gradient(180deg,#e8b9ab,#fbf0ec 65%,#e6c68e)'],['rubi','Rubi (vermelho e preto)','linear-gradient(180deg,#e5243b,#140b0d 70%)'],['ouro','Dourado e preto','linear-gradient(180deg,#e6c47a,#0d0b08 70%)'],['estrelada','Noite estrelada','radial-gradient(circle at 70% 25%,#fff 0 2px,transparent 3px),radial-gradient(circle at 30% 55%,#fff 0 1.5px,transparent 2.5px),linear-gradient(180deg,#1a2461,#0b1130)']].filter(x=>["lavanda", "estrelada", "mar", "rose", "sol"].includes(x[0]));const t=document.documentElement.dataset.tema;
+function perfil(){const T=[['ceu','Céu','linear-gradient(180deg,#8ec5f5,#e9f3fc)'],['sol','Pôr do sol','linear-gradient(180deg,#4a3a8e,#c77aa6 60%,#f0b88a)'],['lavanda','Cores vivas','conic-gradient(from 200deg,#6a3fd1,#e46fa3,#3fb878,#6a3fd1)'],['mar','Mar','linear-gradient(180deg,#5cc8c2,#e4f6f4 70%,#f0d9a8)'],['rose','Rosé dourado','linear-gradient(180deg,#e8b9ab,#fbf0ec 65%,#e6c68e)'],['rubi','Rubi (vermelho e preto)','linear-gradient(180deg,#e5243b,#140b0d 70%)'],['ouro','Dourado e preto','linear-gradient(180deg,#e6c47a,#0d0b08 70%)'],['estrelada','Noite estrelada','radial-gradient(circle at 70% 25%,#fff 0 2px,transparent 3px),radial-gradient(circle at 30% 55%,#fff 0 1.5px,transparent 2.5px),linear-gradient(180deg,#1a2461,#0b1130)']].filter(x=>["lavanda"].includes(x[0]));const t=document.documentElement.dataset.tema;
  return `<h2 class="tit">Perfil</h2><button class="btn p cheio btn-guia" data-ir="ajuda" style="margin:4px 0 14px">${ic('livro')}<span>Como usar o app</span></button><div class="vidro cartao sec perfil-foto"><img src="${avatar()}" alt=""><div style="flex:1;display:grid;gap:8px"><input id="nome" value="${esc(S.nome)}" maxlength="30" aria-label="Seu nome"><button class="btn peq" data-acao="foto">Trocar foto</button></div></div>
  <div class="sec"><h3>Tema</h3><div class="temas">${T.map(([id,n,g])=>`<button class="tema ${t===id?'on':''}" data-acao="tema" data-v="${id}"><i style="background:${g}"></i><span>${n}</span></button>`).join('')}</div></div>
  <div class="sec"><h3>Cópia de segurança</h3><div class="vidro cartao"><p class="sub" style="font-size:14px">Seus dados ficam só neste aparelho. Guarde uma cópia no Arquivos ou no WhatsApp. ${S.ultimaCopia?'Última cópia: '+new Date(S.ultimaCopia).toLocaleDateString('pt-BR')+'.':'Você ainda não fez nenhuma cópia.'}</p>
