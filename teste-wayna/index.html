@@ -610,6 +610,11 @@ dialog.dlg-pet{width:min(94vw,460px);max-height:92vh;overflow:auto}
 .vd-av{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:12px;color:#fff;background:#6a3fd1}.vd-v1:nth-child(3n+2) .vd-av{background:#e46fa3}.vd-v1:nth-child(3n) .vd-av{background:#3fb878}
 .vd-v1 small{display:block;font-size:11px;color:var(--sub)}.vd-r{margin-left:auto;font-size:14px}
 .vd-aj .sub{margin:10px 0 6px}.vd-g4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.vd-g2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px}.vd-aj label small{display:block;font-size:11px;font-weight:700;margin-bottom:3px}.vd-aj input{width:100%;min-width:0}
+
+.vd-c,.vd-m,.vd-v1{font:inherit;color:inherit;text-align:left;width:100%;cursor:pointer}.vd-c{border:0}.vd-m{background:none;border:0;border-bottom:1px solid #ffffff14}.vd-v1{background:none;border:0;border-bottom:1px solid color-mix(in srgb,var(--sub) 18%,transparent)}.vd-dias div{cursor:pointer}
+.vd-c:active,.vd-m:active,.vd-v1:active{transform:scale(.98)}
+.vd-tab{display:grid;gap:2px;margin:8px 0;max-height:55vh;overflow:auto}.vd-tr{display:grid;grid-template-columns:1.3fr 1.2fr .6fr 1fr 1fr;gap:6px;padding:9px 6px;border:0;border-radius:10px;background:none;font:inherit;color:inherit;text-align:left;font-size:13px;cursor:pointer}.vd-tr.v3{grid-template-columns:1.4fr 1fr .6fr}
+button.vd-tr:nth-child(even){background:color-mix(in srgb,var(--acc) 7%,transparent)}.vd-th{font-size:11px;font-weight:800;color:var(--sub);cursor:default}.vd-tt{font-weight:800;border-top:2px solid color-mix(in srgb,var(--acc) 30%,transparent);border-radius:0;cursor:default}
 /* Estilo C · Cores vivas (Wayna) */
 html.estilo-c{--serif:'Inter',system-ui,sans-serif;--sans:'Inter',system-ui,sans-serif;--bg:#f3effa;--bg-top:#f3effa;--txt:#1f1640;--sub:#7d6fa6;--glass:#fff;--glass2:#fff;--borda:transparent;--sombra:0 8px 22px -14px rgba(106,63,209,.35);--acc:#6a3fd1;--acc2:#e46fa3;--acc-txt:#fff;--trilho:#efe9fb;--nav:#1f1640;--ok:#1e9a5a}
 html.estilo-c body{background:#f3effa!important;font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
@@ -657,6 +662,23 @@ html.estilo-c .vd-res .vd-c:nth-child(2){background:#d9f3e4!important;color:#1e7
 html.estilo-c .vd-res .vd-c:nth-child(3){background:#e7defd!important;color:#5a34b8}html.estilo-c .vd-res .vd-c:nth-child(3) span,html.estilo-c .vd-res .vd-c:nth-child(3) em{color:#5a34b8}
 html.estilo-c .vd-res .vd-c:nth-child(4){background:#ffe1ee!important;color:#b03d74}html.estilo-c .vd-res .vd-c:nth-child(4) span{color:#b03d74}
 html.estilo-c .vd-dias i{background:#e7defd}html.estilo-c .vd-dias .vd-top i{background:#3fb878}html.estilo-c .vd-dn{color:#d2456b!important}
+
+/* 24/11 23:40: botões mais vivos, com borda e de vidro; números clicáveis */
+.c-vhead{display:block;width:100%;background:none;border:0;padding:0;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.c-kpis button{border:1px solid #ffffff2e;background:linear-gradient(135deg,#ffffff24,#ffffff0a);border-radius:14px;padding:8px 10px;min-width:0;color:#fff;font:inherit;text-align:left;cursor:pointer;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);box-shadow:inset 0 1px 0 #ffffff30}
+.c-kpis button b{display:block;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.c-kpis button span{font-size:10.5px;color:#c9bdf0}
+.c-t{border:1.5px solid #ffffff59!important;box-shadow:inset 0 1px 0 #ffffff66,0 14px 28px -18px rgba(31,22,64,.55)}
+.c-agora{background:linear-gradient(135deg,#7a4cf0,#5a2fc4)}.c-vendas{background:linear-gradient(140deg,#2a1d58,#1a1238)}
+.c-eq{background:linear-gradient(135deg,#4fd08c,#2fa866)}.c-fe{background:linear-gradient(135deg,#f27fb3,#d9558f)}
+.c-nota{border:1.5px solid #e4dafb!important}
+.c-ok{box-shadow:0 6px 16px -8px #1f164099,inset 0 -2px 0 #e7defd}
+.c-h{border:1.5px solid #ffffffb3;box-shadow:inset 0 1px 0 #fff,0 8px 18px -12px currentColor;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);transition:transform .15s}
+.c-h:active,.c-mini:active,.c-kpis button:active,.c-t:active{transform:scale(.97)}
+.c-h1{background:linear-gradient(135deg,#c8f5db,#8fe6b6);color:#0e6a3a}.c-h3{background:linear-gradient(135deg,#e4d8ff,#c1abff);color:#4a24a8}.c-h2{background:linear-gradient(135deg,#ffd6e8,#ffa9cc);color:#a1255c}
+.c-h.on{box-shadow:inset 0 0 0 2px currentColor,0 8px 18px -12px currentColor}
+.c-mini{border:1.5px solid color-mix(in srgb,var(--c) 35%,#fff);background:linear-gradient(135deg,#ffffffee,color-mix(in srgb,var(--c) 12%,#fff));backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);box-shadow:inset 0 1px 0 #fff,0 10px 22px -16px var(--c)}
+.c-mi{background:linear-gradient(135deg,color-mix(in srgb,var(--c) 85%,#fff),var(--c));color:#fff;box-shadow:0 6px 12px -6px var(--c)}
+html.estilo-c .vd-c{border:1.5px solid #ffffffb3!important;box-shadow:inset 0 1px 0 #fff,0 10px 22px -16px rgba(106,63,209,.5)!important}
 </style>
 </head>
 <body>
@@ -1211,9 +1233,9 @@ const VD=(()=>{
   const PS=pessoas();
   const md=melhorDia(),mx=Math.max(...md),ordem=[1,2,3,4,5,6,0],NOMES=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'],top=mx?md.indexOf(mx):-1;
   const VS=vendedores(m);
-  const linhaMeta=(rot,meta,feito,cls)=>{const p=meta?Math.min(100,Math.round(feito/meta*100)):0;const dif=feito-meta;
+  const linhaMeta=(rot,meta,feito,cls,sem)=>{const p=meta?Math.min(100,Math.round(feito/meta*100)):0;const dif=feito-meta;
    const comecou=feito>0;const dir=!meta?'<small>sem meta</small>':dif>=0?`<b class="vd-up">+${fmtN(dif)}</b>`:comecou?`<b class="vd-dn">-${fmtN(-dif)}</b>`:'<b>—</b>';
-   return `<div class="vd-m ${cls||''}"><span class="vd-s">${rot}</span><div><small>meta ${meta?brl(meta).replace(',00',''):'—'} · feito ${brl(feito).replace(',00','')}</small><div class="vd-bar"><i style="width:${p}%"></i></div></div>${dir}</div>`};
+   return `<button class="vd-m ${cls||''}" data-vd="det" data-s="${sem||0}"><span class="vd-s">${rot}</span><div><small>meta ${meta?brl(meta).replace(',00',''):'—'} · feito ${brl(feito).replace(',00','')}</small><div class="vd-bar"><i style="width:${p}%"></i></div></div>${dir}</button>`};
   return `<h2 class="tit">Vendas</h2><p class="sub" style="text-transform:capitalize">${nomeMes} · semana ${semana(dia)}</p>
   <div class="vd-hoje sec"><div class="vd-hl"><small>LANÇAR</small><input type="date" id="vd-dia" value="${dia}" max="${h}" aria-label="Dia"></div>
    <div class="vd-campos"><label class="vd-campo"><span>Venda do dia (R$)</span><input id="vd-v" inputmode="decimal" placeholder="0,00" value="${x.v!=null?String(x.v).replace('.',','):''}"></label>
@@ -1222,19 +1244,35 @@ const VD=(()=>{
    <div class="vd-pv" ${abertoVd?'':'hidden'}>${PS.map(p=>{const y=(x.vd||{})[p.id]||{};return `<div class="vd-pl"><span>${esc(p.nome.split(' ')[0])}</span><input data-pv="${esc(p.id)}" data-n="${esc(p.nome)}" data-k="v" inputmode="decimal" placeholder="R$" value="${y.v!=null?String(y.v).replace('.',','):''}"><input data-pv="${esc(p.id)}" data-k="c" inputmode="numeric" placeholder="cli." value="${y.c!=null?y.c:''}"></div>`}).join('')}</div>`:''}
    <button class="vd-salvar" data-vd="salvar">${v.dias[dia]?'Atualizar o dia':'Salvar o dia'}</button></div>
   <div class="sec"><h3>Resumo do mês</h3><div class="vd-res">
-   <div class="vidro vd-c"><span>Vendido</span><b>${brl(r.tot).replace(',00','')}</b>${cmp(r.cmpV,r.ap?'':'digite '+anoAnt+' em Ajustes')}</div>
-   <div class="vidro vd-c"><span>Minha comissão (${String(v.com).replace('.',',')}%)</span><b>${brl(r.com)}</b><em class="vd-mu">${x.v?'hoje '+brl(x.v*v.com/100):r.dias+' dia(s) lançado(s)'}</em></div>
-   <div class="vidro vd-c"><span>VVPA</span><b>${r.vvpa?brl(r.vvpa):'—'}</b><em class="vd-mu">venda ÷ clientes</em></div>
-   <div class="vidro vd-c"><span>Clientes</span><b>${fmtN(r.cli)}</b>${cmp(r.cmpC,r.dias?'média '+fmtN(r.cli/r.dias)+'/dia':'')}</div></div></div>
-  <div class="sec"><h3>Metas da semana</h3><div class="vd-metas">
-   ${[1,2,3,4].map(s=>linhaMeta(s+'S',r.metas[s-1],r.sem[s-1])).join('')}
-   ${linhaMeta('MÊS',r.metaMes,r.tot,'vd-mes')}
+   <button class="vidro vd-c" data-vd="det"><span>Vendido</span><b>${brl(r.tot).replace(',00','')}</b>${cmp(r.cmpV,r.ap?'':'digite '+anoAnt+' em Ajustes')}</button>
+   <button class="vidro vd-c" data-vd="det"><span>Minha comissão (${String(v.com).replace('.',',')}%)</span><b>${brl(r.com)}</b><em class="vd-mu">${x.v?'hoje '+brl(x.v*v.com/100):r.dias+' dia(s) lançado(s)'}</em></button>
+   <button class="vidro vd-c" data-vd="det"><span>VVPA</span><b>${r.vvpa?brl(r.vvpa):'—'}</b><em class="vd-mu">venda ÷ clientes</em></button>
+   <button class="vidro vd-c" data-vd="det"><span>Clientes</span><b>${fmtN(r.cli)}</b>${cmp(r.cmpC,r.dias?'média '+fmtN(r.cli/r.dias)+'/dia':'')}</button></div></div>
+  <div class="sec" id="vd-metas"><h3>Metas da semana</h3><div class="vd-metas">
+   ${[1,2,3,4].map(s=>linhaMeta(s+'S',r.metas[s-1],r.sem[s-1],'',s)).join('')}
+   ${linhaMeta('MÊS',r.metaMes,r.tot,'vd-mes',0)}
    <p class="vd-pd">${!r.metaMes?'Coloque as metas da semana em Ajustes.':r.falta<=0?'Meta do mês batida. Parabéns!':r.porDia?`Para bater o mês: <b>${brl(r.porDia).replace(',00','')} por dia</b> nos ${r.resta} dia(s) que faltam`:`Faltaram ${brl(r.falta).replace(',00','')}`}</p></div></div>
-  <div class="sec"><h3>Melhor dia da semana</h3><div class="vidro vd-dias">${ordem.map(i=>`<div class="${i===top?'vd-top':''}"><i style="height:${mx?Math.max(6,Math.round(md[i]/mx*64)):6}px"></i><span>${NOMES[i]}</span></div>`).join('')}</div>
+  <div class="sec"><h3>Melhor dia da semana</h3><div class="vidro vd-dias">${ordem.map(i=>`<div class="${i===top?'vd-top':''}" data-vd="det" data-w="${i}" role="button"><i style="height:${mx?Math.max(6,Math.round(md[i]/mx*64)):6}px"></i><span>${NOMES[i]}</span></div>`).join('')}</div>
    <p class="sub" style="margin-top:6px">${top>=0?'Média de venda por dia. O seu melhor dia é '+['domingo','segunda','terça','quarta','quinta','sexta','sábado'][top]+'.':'Aparece depois dos primeiros lançamentos.'}</p></div>
-  <div class="sec"><h3>Vendedores</h3><div class="vidro vd-vds">${VS.length?VS.map((p,k)=>`<div class="vd-v1"><span class="vd-av" style="--k:${k}">${iniciais(p.n)}</span><span><b>${esc(p.n)}</b><small>${p.c?'VVPA '+brl(p.v/p.c):''}</small></span><b class="vd-r">${brl(p.v).replace(',00','')}</b></div>`).join('')
+  <div class="sec" id="vd-vendedores"><h3>Vendedores</h3><div class="vidro vd-vds">${VS.length?VS.map((p,k)=>`<button class="vd-v1" data-vd="vend" data-id="${esc(p.id)}"><span class="vd-av" style="--k:${k}">${iniciais(p.n)}</span><span><b>${esc(p.n)}</b><small>${p.c?'VVPA '+brl(p.v/p.c):''}</small></span><b class="vd-r">${brl(p.v).replace(',00','')}</b></button>`).join('')
    :`<p class="sub">${PS.length?'Use "Lançar também por vendedor" para ver o ranking da equipe.':'Entre em Minha equipe para lançar por vendedor.'}</p>`}</div></div>
   <div class="eq-rodape"><button class="btn peq" data-vd="ajustes">${ic('lapis')} Ajustes: metas e ${anoAnt}</button></div>`}
+ function detalhe(f){const v=base(),m=mesDe(dia||hoje());let D=Object.entries(v.dias).filter(([d])=>mesDe(d)===m).sort((a,b)=>b[0].localeCompare(a[0]));
+  let tit='Dias de '+parse(m+'-01').toLocaleDateString('pt-BR',{month:'long'});
+  if(f.s){D=D.filter(([d])=>semana(d)===+f.s);tit='Semana '+f.s+'S'}
+  if(f.w!=null){D=Object.entries(v.dias).filter(([d])=>parse(d).getDay()===+f.w).sort((a,b)=>b[0].localeCompare(a[0])).slice(0,12);tit=['Todos os domingos','Todas as segundas','Todas as terças','Todas as quartas','Todas as quintas','Todas as sextas','Todos os sábados'][+f.w]}
+  const t=D.reduce((a,[,x])=>a+(+x.v||0),0),c=D.reduce((a,[,x])=>a+(+x.c||0),0);
+  dlg(`<h3 style="text-transform:capitalize">${tit}</h3><p class="sub">Toque num dia para ver ou corrigir o lançamento.</p>
+   <div class="vd-tab"><div class="vd-tr vd-th"><span>Dia</span><span>Venda</span><span>Cli.</span><span>VVPA</span><span>Comis.</span></div>
+   ${D.length?D.map(([d,x])=>`<button class="vd-tr" data-vd="ir-dia" data-d="${d}"><span>${parse(d).toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'2-digit'})}</span><span>${brl(x.v).replace(',00','')}</span><span>${x.c||0}</span><span>${x.c?brl(x.v/x.c).replace(',00',''):'—'}</span><span>${brl(x.v*v.com/100)}</span></button>`).join(''):'<p class="sub" style="padding:10px 0">Nenhum dia lançado aqui ainda.</p>'}
+   ${D.length?`<div class="vd-tr vd-tt"><span>Total</span><span>${brl(t).replace(',00','')}</span><span>${c}</span><span>${c?brl(t/c).replace(',00',''):'—'}</span><span>${brl(t*v.com/100)}</span></div>`:''}</div>
+   <div class="dlg-acoes"><button class="btn" data-fechar>Fechar</button></div>`,()=>{})}
+ function vendedor(id){const v=base(),m=mesDe(dia||hoje());const D=Object.entries(v.dias).filter(([d,x])=>mesDe(d)===m&&x.vd&&x.vd[id]).sort((a,b)=>b[0].localeCompare(a[0]));const n=D.length?D[0][1].vd[id].n:'';
+  const t=D.reduce((a,[,x])=>a+(+x.vd[id].v||0),0),c=D.reduce((a,[,x])=>a+(+x.vd[id].c||0),0);
+  dlg(`<h3>${esc(n)}</h3><p class="sub">Vendas no mês: <b>${brl(t)}</b> · ${c} clientes${c?' · VVPA '+brl(t/c):''}</p>
+   <div class="vd-tab"><div class="vd-tr vd-th v3"><span>Dia</span><span>Venda</span><span>Cli.</span></div>${D.map(([d,x])=>`<button class="vd-tr v3" data-vd="ir-dia" data-d="${d}"><span>${parse(d).toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'2-digit'})}</span><span>${brl(x.vd[id].v).replace(',00','')}</span><span>${x.vd[id].c||0}</span></button>`).join('')}</div>
+   <div class="dlg-acoes"><button class="btn" data-fechar>Fechar</button></div>`,()=>{})}
+ function abrir(sec){ir('vendas');setTimeout(()=>{const e=document.getElementById(sec);if(e)e.scrollIntoView({behavior:'smooth',block:'start'})},120)}
  function ajustes(){const v=base(),m=mesDe(dia||hoje()),M=v.metas[m]||['','','',''],A=v.ano[m]||{},anoAnt=+m.slice(0,4)-1,nm=parse(m+'-01').toLocaleDateString('pt-BR',{month:'long'});
   const f=n=>n?String(n).replace('.',','):'';
   dlg(`<h3>Ajustes de ${nm}</h3><form class="vd-aj">
@@ -1248,12 +1286,16 @@ const VD=(()=>{
  document.addEventListener('click',e=>{const a=e.target.closest('[data-vd]');if(!a)return;e.preventDefault();const t=a.dataset.vd,v=base();
   if(t==='vd-toggle'){abertoVd=!abertoVd;const pv=document.querySelector('.vd-pv');if(pv)pv.hidden=!abertoVd;a.textContent=(abertoVd?'Esconder':'Lançar também')+' por vendedor (opcional)'}
   else if(t==='ajustes')ajustes();
+  else if(t==='det')detalhe({s:a.dataset.s&&a.dataset.s!=='0'?a.dataset.s:null,w:a.dataset.w!=null?a.dataset.w:null});
+  else if(t==='vend')vendedor(a.dataset.id);
+  else if(t==='ir-dia'){dia=a.dataset.d;const dd=a.closest('dialog');if(dd)dd.close();if(tela!=='vendas')ir('vendas');else{render();scrollTo({top:0,behavior:'smooth'})}}
+  else if(t==='abrir')abrir(a.dataset.sec);
   else if(t==='salvar'){const vv=num($('#vd-v').value),cc=num($('#vd-c').value);const vd={};
    document.querySelectorAll('[data-pv]').forEach(i=>{const id=i.dataset.pv,n=num(i.value);if(n==null)return;const o=vd[id]||(vd[id]={});o[i.dataset.k]=n;if(i.dataset.n)o.n=i.dataset.n});
    Object.keys(vd).forEach(id=>{if(!vd[id].n){const p=pessoas().find(p=>p.id===id);vd[id].n=p?p.nome:''}});
    if(vv==null&&cc==null&&!Object.keys(vd).length){if(v.dias[dia]&&confirm('Apagar o lançamento deste dia?')){delete v.dias[dia];salvar();render();toast('Dia apagado')}else toast('Digite a venda do dia');return}
    v.dias[dia]={v:vv||0,c:Math.round(cc||0)};if(Object.keys(vd).length)v.dias[dia].vd=vd;salvar();render();toast('Vendas salvas')}});
- return {tela,resumo,base,mesDe}})();
+ return {tela,resumo,base,mesDe,abrir}})();
 if(window.LT_VENDAS){const it=NAV.findIndex(n=>n[0]==='treino');if(it>=0)NAV.splice(it,1);NAV.splice(1,0,['vendas','Vendas','grafico']);TELAS.vendas=VD.tela} // Treino sai da barra (continua no cartão do Início) para caber Vendas
 /* ---------- Estilo C · Cores vivas (só da Wayna, aprovado em 24/11/2026) ---------- */
 (()=>{const l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap';document.head.append(l);document.documentElement.classList.add('estilo-c')})();
@@ -1272,9 +1314,9 @@ function inicioC(){
  // VENDAS
  let cVendas='';if(window.LT_VENDAS){const v=VD.resumo(VD.mesDe(h));const p=v.metaMes?Math.round(v.tot/v.metaMes*100):0;const nm=parse(h).toLocaleDateString('pt-BR',{month:'long'}).toUpperCase();
   const cs=['#8fe3b4','#c9b5ff','#f3a6c9','#ffd28a'];
-  cVendas=`<button class="c-t c-vendas" data-ir="vendas"><small>VENDAS DE ${nm}</small><div class="c-row"><div class="c-v">${brl(v.tot).replace(',00','')}</div><div class="c-pc">${v.metaMes?p+'%':'sem meta'}</div></div>
+  cVendas=`<div class="c-t c-vendas"><button class="c-vhead" data-ir="vendas"><small>VENDAS DE ${nm}</small><div class="c-row"><div class="c-v">${brl(v.tot).replace(',00','')}</div><div class="c-pc">${v.metaMes?p+'%':'sem meta'}</div></div>
   <div class="c-barra">${v.metaMes?v.sem.map((x,i)=>`<i style="width:${Math.min(100,x/v.metaMes*100)}%;background:${cs[i]}"></i>`).join(''):''}</div>
-  <div class="c-kpis"><div><b>${v.porDia?brl(v.porDia).replace(',00',''):'—'}</b><span>por dia p/ bater</span></div><div><b>${v.vvpa?brl(v.vvpa).replace(',00',''):'—'}</b><span>VVPA</span></div><div><b>${v.dias?Math.round(v.cli/v.dias):'—'}</b><span>clientes/dia</span></div></div></button>`}
+  </button><div class="c-kpis"><button data-vd="abrir" data-sec="vd-metas"><b>${v.porDia?brl(v.porDia).replace(',00',''):'—'}</b><span>por dia p/ bater</span></button><button data-vd="det"><b>${v.vvpa?brl(v.vvpa).replace(',00',''):'—'}</b><span>VVPA</span></button><button data-vd="det"><b>${v.dias?Math.round(v.cli/v.dias):'—'}</b><span>clientes/dia</span></button></div></div>`}
  // EQUIPE e FÉ
  let cEq='';if(window.LT_EQUIPE){const d=EQ.d,x=d&&(d.agenda||[]).find(a=>a.data>=h);cEq=`<button class="c-t c-eq" data-ir="equipe">${ic('equipe')}<small>EQUIPE</small><b>${d?(d.pessoas||[]).length+' pessoas':'Entrar'}</b><span>${x?(x.data===h?'hoje':fmtData(x.data))+' · '+esc(x.titulo.split(' · ')[0]):d?((d.pendencias||[]).length?(d.pendencias||[]).length+' pendência(s)':'tudo em dia'):'código da loja'}</span></button>`}
  const [vs,ref]=versoHoje();
@@ -1284,7 +1326,7 @@ function inicioC(){
  const L=S.fin.filter(f=>f.d.slice(0,7)===h.slice(0,7)),saldo=L.reduce((a,f)=>a+(f.tipo==='e'?f.v:-f.v),0),m0=S.metas[0];
  const agenda=S.agenda.filter(a=>!a.ok&&difDias(h,a.d)>=0).sort((a,b)=>(a.d+(a.h||'')).localeCompare(b.d+(b.h||'')))[0];
  const mini=(attr,i,cor,t,b,s)=>`<button class="c-mini" ${attr} style="--c:${cor}"><span class="c-mi">${ic(i)}</span><span><small>${t}</small><b>${b}</b><em>${s}</em></span></button>`;
- return `<div class="c-home"><div class="c-top"><div class="c-mono"><span>${esc((S.nome||'W')[0].toUpperCase())}</span></div><div><small>${(s=>s[0].toUpperCase()+s.slice(1))(parse(h).toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'}))}</small><h1>${hr<12?'Bom dia':hr<18?'Boa tarde':'Boa noite'}, ${esc(S.nome)}!</h1></div></div>
+ return `<div class="c-home"><div class="c-top"><div><small>${(s=>s[0].toUpperCase()+s.slice(1))(parse(h).toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'}))}</small><h1>${hr<12?'Bom dia':hr<18?'Boa tarde':'Boa noite'}, ${esc(S.nome)}!</h1></div></div>
  <div class="c-bento">${cAgora}
   <button class="c-t c-nota" data-ir="rotina"><span class="c-n"><svg width="94" height="94" viewBox="0 0 94 94"><circle cx="47" cy="47" r="42" fill="none" stroke="#efe9fb" stroke-width="10"/><circle class="c-anel" cx="47" cy="47" r="42" fill="none" stroke="#6a3fd1" stroke-width="10" stroke-linecap="round" stroke-dasharray="${R.toFixed(1)}" stroke-dashoffset="${(R*(1-nota/100)).toFixed(1)}" style="--c:${R.toFixed(1)}"/></svg><b>${nota}</b></span><small>nota do dia</small></button>
   <div class="c-habs">${habs}</div>
