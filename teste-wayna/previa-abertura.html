@@ -1,0 +1,66 @@
+<!doctype html><html lang="pt-BR"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex">
+<title>Prévia · Abertura Wayna (Anel do dia)</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap">
+<style>
+*{box-sizing:border-box;margin:0}html,body{height:100%;overflow:hidden;overscroll-behavior:none;background:#120a2a;color:#fff;font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.fundo{position:fixed;inset:0;background:radial-gradient(80% 50% at 50% 0%,#3a1f8f 0%,#1a1040 45%,#0d0820 100%)}
+.fundo b{position:absolute;border-radius:50%;filter:blur(50px);opacity:.55;animation:mexe 14s ease-in-out infinite alternate}
+.fundo .g1{width:70vw;height:40vh;left:-20vw;top:30vh;background:#e46fa3}.fundo .g2{width:70vw;height:40vh;right:-25vw;bottom:-10vh;background:#3fb878;opacity:.35;animation-duration:19s}
+@keyframes mexe{to{transform:translate(8vw,-4vh) scale(1.15)}}
+.grade{position:fixed;inset:0;background:linear-gradient(#ffffff0a 1px,transparent 1px),linear-gradient(90deg,#ffffff0a 1px,transparent 1px);background-size:30px 30px;-webkit-mask-image:linear-gradient(180deg,#000 10%,transparent 85%);mask-image:linear-gradient(180deg,#000 10%,transparent 85%)}
+canvas{position:fixed;inset:0;width:100%;height:100%}
+.meio{position:fixed;left:50%;transform:translate(-50%,-50%);text-align:center;opacity:0;transition:opacity .8s}.meio.on{opacity:1}
+.meio b{display:block;font:800 46px/1 Inter;letter-spacing:-.03em}.meio small{font-size:12px;font-weight:700;letter-spacing:.14em;color:#d9ccff}
+.cont{position:fixed;left:0;right:0;bottom:0;padding:0 24px calc(28px + env(safe-area-inset-bottom));max-width:460px;margin:0 auto}
+.cont>*{opacity:0;transform:translateY(16px);transition:opacity .7s,transform .7s cubic-bezier(.2,.9,.3,1)}.cont.on>*{opacity:1;transform:none}
+.cont.on>*:nth-child(2){transition-delay:.1s}.cont.on>*:nth-child(3){transition-delay:.2s}.cont.on>*:nth-child(4){transition-delay:.3s}.cont.on>*:nth-child(5){transition-delay:.45s}
+.data{font-size:11px;font-weight:800;letter-spacing:.14em;color:#c9bdf0}.nome{font:800 36px/1.05 Inter;letter-spacing:-.03em;margin:6px 0 8px}
+.verso{font-size:14.5px;line-height:1.45;color:#ece5ff;margin-bottom:14px}.verso em{display:block;font-style:normal;font-size:11px;font-weight:800;letter-spacing:.1em;color:#c9b5ff;margin-top:4px}
+.pts{display:grid;gap:8px;margin-bottom:16px}.pt{display:flex;gap:12px;align-items:center;padding:11px 14px;border-radius:18px;background:linear-gradient(135deg,#ffffff1f,#ffffff08);border:1.5px solid #ffffff33;box-shadow:inset 0 1px 0 #ffffff40;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.pt i{width:28px;height:28px;border-radius:9px;display:grid;place-items:center;font:800 12px Inter;font-style:normal;flex:none}.pt small{display:block;font-size:10px;font-weight:800;letter-spacing:.1em;color:#c9bdf0}.pt b{font-size:14.5px}
+.btn{display:block;width:100%;border:0;padding:15px;border-radius:16px;background:#fff;color:#5a2fc4;font:800 15px Inter;box-shadow:inset 0 -2px 0 #e7defd,0 14px 30px -14px #000;cursor:pointer}
+.dica{text-align:center;font-size:12px;color:#c9bdf0;margin-top:8px}
+.rep{position:fixed;top:calc(12px + env(safe-area-inset-top));right:12px;border:1.5px solid #ffffff44;background:#ffffff14;color:#fff;border-radius:12px;padding:8px 12px;font:700 12px Inter}
+@media (orientation:landscape) and (max-height:560px){.cont{left:auto;right:4vw;bottom:auto;top:50%;transform:translateY(-50%);width:min(48vw,440px);padding:0}.verso{display:none}.nome{font-size:28px}}
+</style>
+<div class="fundo"><b class="g1"></b><b class="g2"></b></div><div class="grade"></div><canvas id="c"></canvas>
+<div class="meio" id="meio"><b id="pc">0%</b><small>DO SEU DIA</small></div>
+<div class="cont" id="cont">
+ <div class="data">QUARTA-FEIRA, 25 DE NOVEMBRO</div>
+ <div class="nome">Bom dia, Wayna!</div>
+ <p class="verso">“Este é o dia que fez o Senhor; regozijemo-nos e alegremo-nos nele.”<em>SALMOS 118:24</em></p>
+ <div class="pts"><div class="pt"><i style="background:#7a4cf0">1</i><div><small>PRÓXIMA TAREFA</small><b>Trabalho · loja · 08:30</b></div></div><div class="pt"><i style="background:#e46fa3">2</i><div><small>LOJA HOJE</small><b>Vender R$ 6.652</b></div></div><div class="pt"><i style="background:#3fb878">3</i><div><small>EQUIPE</small><b>2 avisos para ver</b></div></div></div>
+ <div><button class="btn" id="ir">Começar o dia</button><div class="dica">ou deslize para cima</div></div>
+</div>
+<button class="rep" onclick="location.reload()">ver de novo</button>
+<script>
+const PCT=40; // quanto do dia ela já cumpriu (no app vem da nota do dia)
+const cv=document.getElementById('c'),cx=cv.getContext('2d');let W,H,D,CX,CY,R;
+const CORES=['#8b5cf6','#a98bff','#e46fa3','#ff9cc6','#3fb878','#5fe0a0'];
+function tam(){D=Math.min(2,devicePixelRatio||1);W=innerWidth;H=innerHeight;cv.width=W*D;cv.height=H*D;cx.setTransform(D,0,0,D,0,0);
+ const deitado=W>H&&H<560;R=deitado?Math.min(H*.32,130):Math.min(W*.3,140);CX=deitado?W*.27:W/2;CY=deitado?H/2:Math.max(R+70,H*.24);const m=document.getElementById('meio');m.style.left=CX+'px';m.style.top=CY+'px';m.style.transform='translate(-50%,-50%)'}
+tam();addEventListener('resize',tam);
+// partículas: algumas formam o arco cheio (colorido), outras o trilho apagado
+const N=Math.round(Math.min(900,innerWidth*2.2)),P=[];
+for(let i=0;i<N;i++){const t=i/N,cheio=t<PCT/100;const ang=-Math.PI/2+t*Math.PI*2,esp=(Math.random()-.5)*16;
+ const cor=cheio?CORES[Math.min(5,Math.floor(t/(PCT/100)*6))]:'#ffffff';
+ P.push({a:ang,e:esp,cheio,cor,x:Math.random()*innerWidth,y:Math.random()*innerHeight,vx:0,vy:0,s:cheio?2.4+Math.random()*1.6:1.6+Math.random(),al:cheio?.95:.16,d:Math.random()*900,ph:Math.random()*6.28})}
+// estrelas
+const E=Array.from({length:70},()=>({x:Math.random(),y:Math.random(),s:Math.random()*1.4+.4,f:Math.random()*6.28}));
+let t0=performance.now(),saindo=0;
+function quadro(t){const k=(t-t0)/1000;cx.clearRect(0,0,W,H);
+ for(const e of E){cx.globalAlpha=.25+.35*Math.sin(k*1.4+e.f)**2;cx.fillStyle='#fff';cx.fillRect(e.x*W,e.y*H,e.s,e.s)}
+ const giro=k*.25;
+ for(const p of P){const atraso=p.d/1000;let tx,ty;
+  if(saindo){const f=(t-saindo)/1000;p.vx+=(p.x-CX)*.004*f;p.vy+=(p.y-CY)*.004*f-0.05;p.x+=p.vx;p.y+=p.vy;}
+  else{const ang=p.a+giro*(p.cheio?0:.0)+Math.sin(k*1.2+p.ph)*.004,rr=R+p.e+Math.sin(k*2+p.ph)*2.2;tx=CX+Math.cos(ang)*rr;ty=CY+Math.sin(ang)*rr;
+   const q=Math.max(0,Math.min(1,(k-atraso*.9)/1.4)),ease=q<1?.05+.12*q:.18;p.x+=(tx-p.x)*ease;p.y+=(ty-p.y)*ease}
+  cx.globalAlpha=saindo?Math.max(0,p.al*(1-(t-saindo)/900)):p.al*(p.cheio?(.75+.25*Math.sin(k*3+p.ph)):1);cx.fillStyle=p.cor;
+  if(p.cheio){cx.shadowColor=p.cor;cx.shadowBlur=8}else cx.shadowBlur=0;cx.fillRect(p.x-p.s/2,p.y-p.s/2,p.s,p.s)}
+ cx.shadowBlur=0;cx.globalAlpha=1;
+ if(k>1.6&&!saindo){const m=document.getElementById('meio');if(!m.classList.contains('on')){m.classList.add('on')}const v=Math.min(PCT,Math.round((k-1.6)/1.0*PCT));document.getElementById('pc').textContent=v+'%'}
+ if(k>2.4)document.getElementById('cont').classList.add('on');
+ requestAnimationFrame(quadro)}
+requestAnimationFrame(quadro);
+document.getElementById('ir').onclick=()=>{saindo=performance.now();document.getElementById('meio').classList.remove('on');document.getElementById('cont').style.transition='opacity .5s';document.getElementById('cont').style.opacity=0;setTimeout(()=>location.reload(),2200)};
+</script>
