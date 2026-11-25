@@ -740,8 +740,8 @@ body.c-viva .nt-chips .on{background:#7a4cf0!important}
 body.c-viva .eq-rodape .btn,body.c-viva .nt-acoes .btn:not(.p){background:#ffffff1a;color:#fff;border:1.5px solid #ffffff33}
 #nt-fab{background:linear-gradient(135deg,#f27fb3,#7a4cf0);box-shadow:0 14px 30px -10px #e46fa3,inset 0 1px 0 #ffffffaa}
 /* bichinho: ícone novo de vidro nas cores dela e o jogo no tema do app */
-html.estilo-c .pet-flut{bottom:calc(166px + env(safe-area-inset-bottom));width:84px;height:84px;border-radius:28px}
-html.estilo-c .pet-flut .bolha{border-radius:28px;--ceu:linear-gradient(145deg,#f27fb3,#7a4cf0 55%,#3fb878)!important;box-shadow:inset 0 2px 0 #ffffffaa,inset 0 0 0 2px #ffffff99,0 18px 30px -14px #7a4cf0!important}
+html.estilo-c .pet-flut{bottom:calc(96px + env(safe-area-inset-bottom));width:60px;height:60px;border-radius:20px}html.estilo-c body.tem-fab .pet-flut{bottom:calc(162px + env(safe-area-inset-bottom))}
+html.estilo-c .pet-flut .bolha{border-radius:20px;--ceu:linear-gradient(145deg,#f27fb3,#7a4cf0 55%,#3fb878)!important;box-shadow:inset 0 2px 0 #ffffffaa,inset 0 0 0 2px #ffffff99,0 18px 30px -14px #7a4cf0!important}
 html.estilo-c .bolha{--ceu:radial-gradient(circle at 76% 18%,#ffe3a3 0 8%,transparent 8.5%),linear-gradient(180deg,#7a4cf0,#c86bd0 60%,#f7a6c9)!important}
 html.estilo-c .bolha .estrelas{display:none!important}
 html.estilo-c .chao{background:radial-gradient(ellipse at 50% 0,#8ff0be,#3fb878 60%,#2a9a5e)!important}
@@ -810,6 +810,9 @@ html.estilo-c .barra{grid-template-columns:20px 72px 1fr 46px!important;text-ali
  #pm-intro.c-intro .ci-pt{padding:9px 12px}#pm-intro.c-intro .ci-pt b{font-size:14.5px}
  #pm-intro.c-intro .ab-subir{bottom:calc(8px + env(safe-area-inset-bottom))!important;right:4vw!important;left:auto!important;width:min(46vw,430px)!important;flex-direction:row;justify-content:center;gap:6px}
 }
+
+html.estilo-c .pet-flut .pet-nome,html.estilo-c .pet-flut>small,html.estilo-c .pet-flut>span:not(.bolha){font-size:9.5px!important;padding:2px 7px!important}
+html.estilo-c .pet-flut .corpo-f{font-size:28px}html.estilo-c .pet-flut .corpo-f img,html.estilo-c .pet-flut .corpo-f svg,html.estilo-c .pet-flut .corpo-f>*{max-width:38px;max-height:44px}
 </style>
 </head>
 <body>
@@ -1521,7 +1524,7 @@ if(window.LT_NOTAS){const ib=NAV.findIndex(n=>n[0]==='biblia');if(ib>=0)NAV.spli
 // fundo vivo: desligado nas telas (25/11, pedido do Arnold); fica só na apresentação
 (()=>{const f=document.createElement('div');f.id='c-vivo';f.setAttribute('aria-hidden','true');let e='';for(let k=0;k<46;k++){const s=(1+(k%3)*.7).toFixed(1);e+=`<i style="left:${(k*53+17)%100}%;top:${(k*37+11)%100}%;width:${s}px;height:${s}px;animation-delay:${(k%7)*.6}s"></i>`}
  f.innerHTML='<b class="v1"></b><b class="v2"></b><b class="v3"></b><span class="grade"></span>'+e;document.body.prepend(f)})();
-const _rC=render;render=function(){_rC.apply(this,arguments);document.body.classList.toggle('c-viva',false) /* 25/11: fundo vivo só na apresentação */};
+const _rC=render;render=function(){_rC.apply(this,arguments);document.body.classList.toggle('c-viva',false) /* 25/11: fundo vivo só na apresentação */;document.body.classList.toggle('tem-fab',!!window.LT_NOTAS&&(tela==='inicio'||tela==='notas'))};
 const anelC=(p,cor,txt)=>{const r=22,C=2*Math.PI*r;return `<span class="c-an"><svg viewBox="0 0 58 58"><circle cx="29" cy="29" r="${r}" fill="none" stroke="#ffffff22" stroke-width="7"/><circle class="c-anel" cx="29" cy="29" r="${r}" fill="none" stroke="${cor}" stroke-width="7" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C*(1-Math.min(100,Math.max(0,p))/100)).toFixed(1)}" style="--c:${C.toFixed(1)}"/></svg><b>${txt}</b></span>`};
 function inicioC(){
  const h=hoje(),dt=new Date(),hr=dt.getHours(),cd=cuidadoDia(h),r=rotinaHoje();const {it,atras,ag}=proximaTarefa();
