@@ -524,6 +524,11 @@ canvas.ncgrabok{cursor:grab}canvas.ncgrab,canvas.ncgrabok.ncgrab{cursor:grabbing
 #perf .pf-t b{font-family:var(--f-display);font-size:15px}
 #perf.full{padding:6px 8px;width:256px}
 #perf.full canvas{display:block;width:240px;height:64px;margin-top:4px;border-radius:3px}
+#perf.teste{pointer-events:auto;z-index:60}
+#perf .pf-pt{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:6px}
+#perf .pf-pt button{font:600 11px/1.1 Inter,system-ui,sans-serif;padding:7px 4px;border-radius:6px;border:1px solid #ffffff33;background:#ffffff14;color:#fff;cursor:pointer;min-height:30px}
+#perf .pf-pt button[aria-pressed=true]{background:#c8553d;border-color:#ff8a7a}
+#perf .pf-pt small{grid-column:1/-1;opacity:.75;font-size:10px}
 #perf .pf-big{font-size:12px}#perf .pf-big b{font-size:22px}#perf .pf-big small{color:var(--mute);margin-left:4px}
 #perf table{border-collapse:collapse;width:100%;font-size:11.5px;margin-top:2px}
 #perf td{padding:0 4px 0 0;white-space:nowrap}#perf td:nth-child(odd){color:var(--mute)}#perf td:nth-child(even){font-variant-numeric:tabular-nums}
@@ -13736,7 +13741,8 @@ function renderGfxUI(){
     <div class="tgl">
       <button class="trow" data-real="1" aria-pressed="${realWanted()}" ${med ? '' : 'disabled'}><span><b>Gráficos realistas</b><small>${med ? 'Chão, construções, madeira, pedra e céu com texturas de foto em todas as fases. Vale a partir da próxima fase.' : 'Precisa da qualidade Médio ou maior.'}</small></span><i>${on(realWanted(), 'Ligado', 'Desligado')}</i></button>
       <button class="trow" data-rt="1" aria-pressed="${!!save.rt}" ${Q().bloom ? '' : 'disabled'}><span><b>Ray tracing (simulado)</b><small>${Q().bloom ? 'Sombras de contato e cantos mais escuros. Pesa: use no Alto ou Ultra.' : 'Precisa da qualidade Médio ou maior.'}</small></span><i>${on(save.rt, 'Ligado', 'Desligado')}</i></button>
-    </div>`;
+    </div>
+    <div class="nc-wipe" style="margin-top:18px;padding-top:12px;border-top:1px solid #ffffff22"><b style="color:#ff8a7a">Apagar herói</b><div class="istat" style="margin:4px 0 8px">Apaga o herói, o nível, os itens, a Adena, o histórico e as missões, e você começa do zero escolhendo classe e nome. Seu código da nuvem e seus amigos continuam. Não dá para desfazer.</div><button class="btn" style="width:100%;border-color:#c8553d;color:#ffb0a0" data-ncwipe="1">Apagar herói e começar do zero</button></div>`;
   document.querySelectorAll('.gfxbox').forEach(el => el.innerHTML = html);
 }
 
@@ -13792,12 +13798,23 @@ document.addEventListener('click', e => {
    e 33,3 ms = 30 fps), tempo de processamento do jogo (CPU), chamadas de desenho, triângulos, resolução interna, memória. */
 const PERF = {ft:new Float32Array(240), i:0, n:0, t:0, cpu:0, last:0, el:null, cv:null, tx:null, upd:0,
   reset(){ this.i = this.n = 0; this.ft.fill(0); this.upd = 0; } };
-function perfInit(){ if(PERF.el) return; const d = document.createElement('div'); d.id = 'perf'; d.hidden = true; d.innerHTML = '<div class="pf-t"></div><canvas width="240" height="64"></canvas>'; document.body.appendChild(d);
+/* 25/11/2026 (Arnold): TESTE DE DESEMPENHO. Botões para desligar cada efeito e ver qual pesa no celular dele. Só vale enquanto o teste estiver ligado. */
+const NCPT = {pr:false, fx:false, luz:false, sombra:false, grama:false, t:0};
+const NCPT_L = [['pr', 'Resolução menor'], ['fx', 'Sem brilho/efeitos'], ['luz', 'Sem luzes de tocha'], ['sombra', 'Sem sombras'], ['grama', 'Sem grama e enfeites']];
+function ncPTHtml(){ return '<div class="pf-pt">' + NCPT_L.map(([k, n]) => `<button type="button" data-pt="${k}" aria-pressed="${!!NCPT[k]}">${NCPT[k] ? 'DESLIGADO: ' : ''}${n}</button>`).join('') + '<small>Toque para desligar e veja se o FPS sobe. Vermelho = desligado.</small></div>'; }
+function ncPTToggle(k){ NCPT[k] = !NCPT[k]; if(k === 'pr' && !NCPT.pr){ try{ setupFX(); resize(); }catch(_){} } if(k === 'sombra' && !NCPT.sombra){ try{ renderer.shadowMap.autoUpdate = true; renderer.shadowMap.needsUpdate = true; }catch(_){} } NCPT.t = 0; ncPTApply(performance.now()); PERF.upd = 0; }
+function ncPTApply(now){ try{
+  if(NCPT.pr && renderer.getPixelRatio() > 1){ renderer.setPixelRatio(1); curPR = 1; if(composer) composer.setPixelRatio(1); }
+  if(NCPT.sombra){ renderer.shadowMap.autoUpdate = false; }
+  if(now - NCPT.t > 1000){ NCPT.t = now; scene.traverse(o => { if(o.isPointLight || o.isSpotLight){ if(o.userData.ptV === undefined) o.userData.ptV = o.visible; o.visible = NCPT.luz ? false : o.userData.ptV; }
+      if(o.isInstancedMesh || (o.userData && (o.userData.grass || o.userData.deco))){ if(o.userData.ptG === undefined) o.userData.ptG = o.visible; o.visible = NCPT.grama ? false : o.userData.ptG; } }); }
+}catch(_){} }
+function perfInit(){ if(PERF.el) return; const d = document.createElement('div'); d.id = 'perf'; d.hidden = true; d.innerHTML = '<div class="pf-t"></div><canvas width="240" height="64"></canvas>'; document.body.appendChild(d); d.addEventListener('click', e => { const b = e.target.closest('[data-pt]'); if(!b) return; e.stopPropagation(); ncPTToggle(b.dataset.pt); });
   PERF.el = d; PERF.tx = d.querySelector('.pf-t'); PERF.cv = d.querySelector('canvas'); }
 function perfFrame(now, cpuMs){
-  const mode = save.perf || 'off'; if(!PERF.el) perfInit(); PERF.el.hidden = mode === 'off' || !$('#pause').hidden; // some na pausa (não tampa o menu) PERF.el.classList.toggle('full', mode === 'full'); if(mode === 'off') return;
+  const mode = save.perf || 'off'; if(!PERF.el) perfInit(); PERF.el.hidden = mode === 'off' || !$('#pause').hidden; /* some na pausa (não tampa o menu) */ const full = mode === 'full' || mode === 'teste'; PERF.el.classList.toggle('full', full); PERF.el.classList.toggle('teste', mode === 'teste'); if(mode === 'off') return;   /* 25/11: antes o comentário // apagava esta parte e o medidor trabalhava mesmo desligado */
   if(PERF.last){ PERF.ft[PERF.i] = now - PERF.last; PERF.i = (PERF.i + 1)%PERF.ft.length; PERF.n = Math.min(PERF.n + 1, PERF.ft.length); } PERF.last = now; PERF.cpu = PERF.cpu*.9 + cpuMs*.1;
-  if(now - PERF.upd < 250) { if(mode === 'full') perfGraph(); return; } PERF.upd = now;
+  if(now - PERF.upd < 250) { if(full) perfGraph(); return; } PERF.upd = now; if(mode === 'teste') ncPTApply(now);
   const N = PERF.n; if(!N) return; const arr = []; for(let k=0;k<N;k++) arr.push(PERF.ft[(PERF.i - 1 - k + PERF.ft.length)%PERF.ft.length]);
   const recent = arr.slice(0, 20), cur = 1000/(recent.reduce((a, b) => a + b, 0)/recent.length), avg = 1000/(arr.reduce((a, b) => a + b, 0)/N);
   const sorted = arr.slice().sort((a, b) => b - a), low1 = 1000/(sorted.slice(0, Math.max(1, Math.round(N*.01))).reduce((a, b) => a + b, 0)/Math.max(1, Math.round(N*.01)));
@@ -13814,6 +13831,7 @@ function perfFrame(now, cpuMs){
     <tr><td>Triângulos</td><td>${(I.render.triangles/1000).toFixed(0)} mil</td><td>Texturas</td><td>${I.memory.textures}</td></tr>
     <tr><td>Resolução</td><td colspan="3">${W}×${H} (${Math.round(curPR*100)}%)</td></tr>
     <tr><td>Memória JS</td><td>${mem}</td><td>Tela</td><td>${DEVX.hz ? DEVX.hz + ' Hz' : '—'}</td></tr></table>`;
+  if(mode === 'teste') PERF.tx.innerHTML += ncPTHtml();
   perfGraph();
 }
 function perfGraph(){
@@ -13826,7 +13844,7 @@ function perfGraph(){
   g.stroke();
 }
 function renderPerfUI(){
-  const m = save.perf || 'off', opt = [['off', 'Desligado', 'Não mostra nada.'], ['fps', 'Só FPS', 'Um número pequeno no alto da tela.'], ['full', 'Completo', 'FPS atual, médio, mínimo e 1% mais lentos, tempo de cada quadro com gráfico, tempo do processador, desenhos, triângulos, resolução e memória.']];
+  const m = save.perf || 'off', opt = [['off', 'Desligado', 'Não mostra nada.'], ['fps', 'Só FPS', 'Um número pequeno no alto da tela.'], ['teste', 'Teste de desempenho', 'Medidor completo com botões para desligar cada efeito (resolução, brilho, luzes, sombras, grama) e ver qual deixa o jogo lento.'], ['full', 'Completo', 'FPS atual, médio, mínimo e 1% mais lentos, tempo de cada quadro com gráfico, tempo do processador, desenhos, triângulos, resolução e memória.']];
   const html = `<div class="eyebrow">Medidor na tela</div><div class="tgl">${opt.map(([k, n, d]) => `<button class="trow" data-perf="${k}" aria-pressed="${m === k}"><span><b>${n}</b><small>${d}</small></span><i>${m === k ? '✓' : ''}</i></button>`).join('')}</div>
     <div class="istat">No gráfico do modo completo, a linha azul é o tempo de cada quadro: abaixo da linha verde = 60 FPS ou mais; acima da amarela = menos de 30 FPS. Riscos vermelhos são travadinhas.</div>`;
   document.querySelectorAll('.perfbox').forEach(el => el.innerHTML = html);
@@ -13983,6 +14001,13 @@ function ncAutoStep(fps){ const A = save.ncAuto; if(!A || A.stop) return false;
 function ncAutoTxt(){ const A = save.ncAuto; if(!A) return 'Começa no gráfico Alto e, durante a partida, tira só o que pesa no seu aparelho (reflexo e resolução primeiro). Sombras, brilho e cores ficam o máximo que der.';
   if(A.stop === 'cap') return 'Seu aparelho segura o jogo em 30 quadros (modo economia de bateria). Gráfico no Alto.';
   return 'Ligado · agora: <b>' + NC_AUTO[A.i][0] + '</b>' + (A.stop === 'min' ? ' (já está no mais leve deste modo).' : '. Jogue uma partida: se ficar lento, o jogo tira o próximo item sozinho.'); }
+/* 25/11/2026 (Arnold): opção de apagar o herói e começar do zero. Toque duas vezes para confirmar (não dá para desfazer).
+   Usa o mesmo recomeço de 23/11: fica só o código da nuvem, amigos e configurações; guarda uma cópia de segurança no aparelho. */
+document.addEventListener('click', e => { const b = e.target.closest('[data-ncwipe]'); if(!b) return;
+  if(!b.dataset.arm){ b.dataset.arm = '1'; b.textContent = 'Tem certeza? Toque de novo para apagar tudo'; b.style.background = '#7a2a20'; b.style.color = '#fff'; setTimeout(() => { if(b.isConnected){ delete b.dataset.arm; b.textContent = 'Apagar herói e começar do zero'; b.style.background = ''; b.style.color = '#ffb0a0'; } }, 6000); return; }
+  b.disabled = true; b.textContent = 'Apagando…';
+  try{ const novo = ncRecomeco(save); delete novo.name; delete novo.ncMade; novo.ncReset = 1; save = novo; persist(); try{ localStorage.setItem(SAVE_KEY, JSON.stringify(save)); }catch(_){} }catch(err){ b.disabled = false; b.textContent = 'Não consegui apagar. Tente de novo.'; return; }
+  setTimeout(() => location.reload(), 600); });
 document.addEventListener('click', e => { if(!e.target.closest('[data-ncprefsave]')) return; persist(); const ok = ncPrefSave(); try{ banner(ok ? 'Configurações salvas' : 'Não consegui salvar', ok ? 'Ficam guardadas neste aparelho.' : 'O navegador bloqueou a gravação (modo privado?).', ok ? undefined : 'danger'); }catch(e){} });
 document.addEventListener('click', e => { if(!e.target.closest('[data-ncauto]')) return; save.ncAuto = {i:0, n:0}; ncAutoApply(); try{ banner('Ajuste ligado', 'Jogue uma partida. O jogo vai se acertando sozinho no primeiro minuto.'); }catch(e){} });
 function adaptRes(dt){
@@ -14029,7 +14054,7 @@ function loop(now){
   }
   renderRefl();
   if(COARSE){ renderer.shadowMap.autoUpdate = false; ncShF = (ncShF + 1) % 2; renderer.shadowMap.needsUpdate = ncShF === 0; }   /* 23/11 celular: a sombra é refeita a cada 2 quadros (não dá para ver a diferença) */
-  if(composer){ renderPass.scene = scene; renderPass.camera = camera; renderAODepth(); composer.render(dt); }
+  if(composer && !NCPT.fx){ renderPass.scene = scene; renderPass.camera = camera; renderAODepth(); composer.render(dt); }
   else renderer.render(scene, camera);
   perfFrame(now, performance.now() - cpu0);
 }
