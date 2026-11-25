@@ -1054,7 +1054,7 @@ function telaAjuda(){return `<h2 class="tit">Como usar</h2><p class="sub">Toque 
  ${GUIA.map(([t,h],i)=>`<div class="sec guia"${i?' data-fechado':''}><h3>${t}</h3><div class="vidro cartao guia-txt">${h}</div></div>`).join('')}
  <button class="btn p cheio" data-ir="inicio" style="margin-top:20px">Voltar ao início</button>`}
 /* ---------- Minha equipe (24/11/2026): vem do SUPER VISÃO do Arnold e atualiza sozinho ---------- */
-const EQ=(()=>{const DB='https://mgqwzaizkllkqqqbbcna.supabase.co',KEY='sb_publishable_nBJrSlD-qcQg26UIhVCWkQ_d9_fZCPc',CFG='6f4d9def-670c-470b-893d-e1d8da46a971',K='eq-codigo',KC='lt_equipe_cache';
+const EQ=(()=>{const DB='https://mgqwzaizkllkqqqbbcna.supabase.co',KEY='sb_publishable_nBJrSlD-qcQg26UIhVCWkQ_d9_fZCPc',CFG='6f4d9def-670c-470b-893d-e1d8da46a971',K=CHAVE+'_eqcod',KC=CHAVE+'_eqcache'; // chave por cliente: o mesmo celular pode ter apps de lojas diferentes
  let d=null,erro='',ocupado=false;try{d=JSON.parse(localStorage.getItem(KC)||'null')}catch(e){}
  const cod=()=>{try{return localStorage.getItem(K)||''}catch(e){return ''}};
  async function buscar(){if(!window.LT_EQUIPE||!cod()||ocupado)return;ocupado=true;
@@ -1071,6 +1071,7 @@ const EQ=(()=>{const DB='https://mgqwzaizkllkqqqbbcna.supabase.co',KEY='sb_publi
   if(t==='entrar'){const i=document.getElementById('eq-cod');entrar(i?i.value.trim():'')}
   else if(t==='sair'){if(confirm('Trocar a loja deste aparelho?'))sair()}
   else if(t==='atualizar'){erro='';buscar();toast('Atualizando a equipe')}
+  else if(t==='g'){try{localStorage.setItem('eq-codigo',cod())}catch(e){}window.open(a.getAttribute('href'),'_blank','noopener')}
   else if(t==='pessoa'){const p=(d&&d.pessoas||[]).find(x=>x.id===a.dataset.id);if(p)dlg(fichaPessoa(p))}});
  return {get d(){return d},get erro(){return erro},cod,buscar}})();
 const dBR=s=>s?parse(s).toLocaleDateString('pt-BR'):'';
@@ -1096,7 +1097,7 @@ function telaEquipe(){
  const G='https://arnoldsuheth.github.io/super-visao-app/g/?direto=1';const lim=dstr(new Date(Date.now()+60*864e5));
  return `<h2 class="tit">Minha equipe</h2><p class="sub">${esc(loja)}${at?' · atualizado '+at:''}</p>
  ${EQ.erro?`<p class="eq-aviso">${esc(EQ.erro)}</p>`:''}
- <div class="eq-acoes"><a class="btn p" href="${G}#novo" target="_blank" rel="noopener">${ic('mais')} Novo funcionário</a><a class="btn" href="${G}#ocorrencia" target="_blank" rel="noopener">${ic('doc')} Ocorrência</a></div>
+ <div class="eq-acoes"><a class="btn p" data-eq="g" href="${G}#novo">${ic('mais')} Novo funcionário</a><a class="btn" data-eq="g" href="${G}#ocorrencia">${ic('doc')} Ocorrência</a></div>
  <div class="sec"><h3>Agenda da equipe</h3><div class="vidro cartao eq-lista">${A.length?A.map(x=>`<div class="eq-ag" style="--c:${COR_EQ[x.tipo]||'var(--acc)'}"><span class="eq-dt">${quando(x.data)}</span><b>${esc(x.titulo)}</b></div>`).join(''):'<p class="sub">Nada marcado para os próximos 60 dias.</p>'}</div></div>
  <div class="sec"><h3>Pendências da loja ${PD.length?`<span class="eq-n">${PD.length}</span>`:''}</h3><div class="vidro cartao eq-lista">${PD.length?PD.map(x=>`<div class="eq-pd">${ic('alerta')}<span><b>${esc(x.titulo)}</b><small>${esc(x.tipo)}${x.desde?' · desde '+fmtData(x.desde):''}</small></span></div>`).join(''):'<p class="sub">Nenhuma pendência aberta.</p>'}</div></div>
  <div class="sec"><h3>Pessoas <span class="eq-n">${P.length}</span></h3><div class="eq-pessoas">${P.map(p=>{const tag=p.exp?'experiência':p.ferias&&p.ferias.saida&&p.ferias.saida<=lim?'férias perto':'';
