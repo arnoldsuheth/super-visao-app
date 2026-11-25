@@ -10726,7 +10726,8 @@ function renderBossParts(){ const b = boss; const el = $('#bParts'); if(!el || !
   el.innerHTML = b.parts.map(p => `<span class="${p.broken ? 'brk' : ''}"><i style="width:${p.broken ? 0 : Math.max(0, p.bhp/p.max*100)}%"></i>${p.n}${p.broken ? ' ✓' : ''}</span>`).join('') +
     (b.exhT > 0 ? '<span class="exh">Exausto</span>' : ''); }
 /* 23/11 (Arnold): chefes maiores para assustar mais (o tamanho final vem da escolha dele) */
-const ncBossK = () => +(window.ncBossK || save.bossK || 1);
+/* 25/11 (Arnold escolheu): chefe do mapa gigante 2,2x; chefe da masmorra um pouco maior, 2,6x. Só o tamanho, a força não muda */
+const ncBossK = () => +(window.ncBossK || save.bossK || ((typeof ncDG !== 'undefined' && ncDG) ? 2.6 : 2.2));
 function spawnBoss(st){
   const b = st.bossCfg, cr = makeCreature(b.color, b.scale, b.acc);
   cr.root.position.set(0, 0, ARENA_Z - 3); scene.add(cr.root);
