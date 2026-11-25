@@ -10,36 +10,40 @@
 .grade{position:fixed;inset:0;background:linear-gradient(#ffffff0a 1px,transparent 1px),linear-gradient(90deg,#ffffff0a 1px,transparent 1px);background-size:30px 30px;-webkit-mask-image:linear-gradient(180deg,#000 10%,transparent 85%);mask-image:linear-gradient(180deg,#000 10%,transparent 85%)}
 canvas{position:fixed;inset:0;width:100%;height:100%}
 .meio{pointer-events:none;position:fixed;left:50%;transform:translate(-50%,-50%);text-align:center;opacity:0;transition:opacity .8s}.meio.on{opacity:1}
-.meio b{display:block;font:800 46px/1 Inter;letter-spacing:-.03em}.meio small{font-size:12px;font-weight:700;letter-spacing:.14em;color:#d9ccff}
+.meio b{display:block;font:800 46px/1 Inter;letter-spacing:-.03em;text-shadow:0 2px 14px #0008}.meio small{font-size:13px;font-weight:700;color:#fff;opacity:.9}
 .cont{position:fixed;left:0;right:0;bottom:0;padding:0 24px calc(28px + env(safe-area-inset-bottom));max-width:460px;margin:0 auto}
 .cont>*{opacity:0;transform:translateY(16px);transition:opacity .7s,transform .7s cubic-bezier(.2,.9,.3,1)}.cont.on>*{opacity:1;transform:none}
-.cont.on>*:nth-child(2){transition-delay:.1s}.cont.on>*:nth-child(3){transition-delay:.2s}.cont.on>*:nth-child(4){transition-delay:.3s}.cont.on>*:nth-child(5){transition-delay:.45s}
-.data{font-size:11px;font-weight:800;letter-spacing:.14em;color:#c9bdf0}.nome{font:800 36px/1.05 Inter;letter-spacing:-.03em;margin:6px 0 8px}
-.verso{font-size:14.5px;line-height:1.45;color:#ece5ff;margin-bottom:14px}.verso em{display:block;font-style:normal;font-size:11px;font-weight:800;letter-spacing:.1em;color:#c9b5ff;margin-top:4px}
+.cont.on>*:nth-child(2){transition-delay:.1s}.cont.on>*:nth-child(3){transition-delay:.2s}.cont.on>*:nth-child(4){transition-delay:.3s}
+.data{font-size:14px;font-weight:700;color:#fff;opacity:.92}.nome{font:800 36px/1.05 Inter;letter-spacing:-.03em;margin:6px 0 8px}
+.verso{font-size:16px;line-height:1.45;color:#fff;margin-bottom:16px;font-weight:500}.verso em{display:block;font-style:normal;font-size:13px;font-weight:700;color:#fff;opacity:.85;margin-top:6px}
 .pts{display:grid;gap:8px;margin-bottom:16px}.pt{display:flex;gap:12px;align-items:center;padding:11px 14px;border-radius:18px;background:linear-gradient(135deg,#ffffff1f,#ffffff08);border:1.5px solid #ffffff33;box-shadow:inset 0 1px 0 #ffffff40;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
-.pt i{width:28px;height:28px;border-radius:9px;display:grid;place-items:center;font:800 12px Inter;font-style:normal;flex:none}.pt small{display:block;font-size:10px;font-weight:800;letter-spacing:.1em;color:#c9bdf0}.pt b{font-size:14.5px}
+.pt i{width:28px;height:28px;border-radius:9px;display:grid;place-items:center;font:800 12px Inter;font-style:normal;flex:none}.pt{margin-bottom:14px}.pt small{display:block;font-size:12.5px;font-weight:700;color:#fff;opacity:.85}.pt b{font-size:16px}
 .btn{display:block;width:100%;border:0;padding:15px;border-radius:16px;background:#fff;color:#5a2fc4;font:800 15px Inter;box-shadow:inset 0 -2px 0 #e7defd,0 14px 30px -14px #000;cursor:pointer}
-.dica{text-align:center;font-size:12px;color:#c9bdf0;margin-top:8px}
-.rep{position:fixed;top:calc(44px + env(safe-area-inset-top));right:12px;border:1.5px solid #ffffff44;background:#ffffff14;color:#fff;border-radius:12px;padding:8px 12px;font:700 12px Inter}
+
+.rep{position:fixed;top:calc(10px + env(safe-area-inset-top));right:12px;border:1.5px solid #ffffff44;background:#ffffff14;color:#fff;border-radius:12px;padding:8px 12px;font:700 12px Inter}
 @media (orientation:landscape) and (max-height:560px){.cont{left:auto;right:4vw;bottom:auto;top:50%;transform:translateY(-50%);width:min(48vw,440px);padding:0}.verso{display:none}.nome{font-size:28px}}
-.toque{position:fixed;left:50%;transform:translateX(-50%);top:calc(12px + env(safe-area-inset-top));font-size:11px;font-weight:700;color:#c9bdf0;background:#ffffff12;border:1px solid #ffffff22;padding:6px 10px;border-radius:10px;white-space:nowrap;animation:some 6s 4s forwards}@keyframes some{to{opacity:0}}canvas{touch-action:none}</style>
+.toque{position:fixed;left:16px;top:calc(14px + env(safe-area-inset-top));font-size:12px;font-weight:700;color:#fff;background:#ffffff12;border:1px solid #ffffff22;padding:6px 10px;border-radius:10px;white-space:nowrap;animation:some 6s 4s forwards}@keyframes some{to{opacity:0}}canvas{touch-action:none}@media (max-height:600px) and (orientation:portrait){.verso{font-size:14.5px}.nome{font-size:30px}}</style>
 <div class="fundo"><b class="g1"></b><b class="g2"></b></div><div class="grade"></div><canvas id="c"></canvas>
-<div class="meio" id="meio"><b id="pc">0%</b><small>DO SEU DIA</small></div>
+<div class="meio" id="meio"><b id="pc">0%</b><small>do seu dia</small></div>
 <div class="cont" id="cont">
- <div class="data">QUARTA-FEIRA, 25 DE NOVEMBRO</div>
+ <div class="data">Quarta-feira, 25 de novembro</div>
  <div class="nome">Bom dia, Wayna!</div>
- <p class="verso">“Este é o dia que fez o Senhor; regozijemo-nos e alegremo-nos nele.”<em>SALMOS 118:24</em></p>
- <div class="pts"><div class="pt"><i style="background:#7a4cf0">1</i><div><small>PRÓXIMA TAREFA</small><b>Trabalho · loja · 08:30</b></div></div><div class="pt"><i style="background:#e46fa3">2</i><div><small>LOJA HOJE</small><b>Vender R$ 6.652</b></div></div><div class="pt"><i style="background:#3fb878">3</i><div><small>EQUIPE</small><b>2 avisos para ver</b></div></div></div>
- <div><button class="btn" id="ir">Começar o dia</button><div class="dica">ou deslize para cima</div></div>
+ <p class="verso">“Este é o dia que fez o Senhor; regozijemo-nos e alegremo-nos nele.”<em>Salmos 118:24</em></p>
+ <div class="pt"><i style="background:#7a4cf0">→</i><div><small>Próxima tarefa</small><b>Trabalho · loja · 08:30</b></div></div>
+ <div><button class="btn" id="ir">Começar o dia</button></div>
 </div>
-<button class="rep" onclick="location.reload()">ver de novo</button><div class="toque" id="toque">arraste o anel para girar · toque nele para explodir · toque no céu</div>
+<button class="rep" onclick="location.reload()">ver de novo</button><div class="toque" id="toque">arraste ou toque no anel</div>
 <script>
 const PCT=40; // quanto do dia ela já cumpriu (no app vem da nota do dia)
 const cv=document.getElementById('c'),cx=cv.getContext('2d');let W,H,D,CX,CY,R;
 const CORES=['#8b5cf6','#a98bff','#e46fa3','#ff9cc6','#3fb878','#5fe0a0'];
 function tam(){D=Math.min(2,devicePixelRatio||1);W=innerWidth;H=innerHeight;cv.width=W*D;cv.height=H*D;cx.setTransform(D,0,0,D,0,0);
- const deitado=W>H&&H<560;R=deitado?Math.min(H*.32,130):Math.min(W*.3,140);CX=deitado?W*.27:W/2;CY=deitado?H/2:Math.max(R+70,H*.24);const m=document.getElementById('meio');m.style.left=CX+'px';m.style.top=CY+'px'}
-tam();addEventListener('resize',tam);
+ const deitado=W>H&&H<560,ct=document.getElementById('cont');
+ if(deitado){R=Math.min(H*.32,130);CX=W*.27;CY=H/2}
+ else{ // o anel fica só no espaço livre acima do texto, nunca por cima
+  const topo=ct.getBoundingClientRect().top-12,sup=56,livre=Math.max(130,topo-sup);R=Math.max(52,Math.min(W*.32,150,livre/2-14));CX=W/2;CY=sup+livre/2}
+ const m=document.getElementById('meio'),f=Math.max(.6,Math.min(1,R/120));m.style.left=CX+'px';m.style.top=CY+'px';m.querySelector('b').style.fontSize=Math.round(46*f)+'px'}
+tam();addEventListener('resize',tam);setTimeout(tam,50);
 // --- partículas do anel (cada uma tem um lugar no anel e volta para ele como uma mola) ---
 const N=Math.round(Math.min(950,innerWidth*2.3)),P=[];
 for(let i=0;i<N;i++){const t=i/N,cheio=t<PCT/100;
