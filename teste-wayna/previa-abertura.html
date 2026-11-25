@@ -9,7 +9,7 @@
 @keyframes mexe{to{transform:translate(8vw,-4vh) scale(1.15)}}
 .grade{position:fixed;inset:0;background:linear-gradient(#ffffff0a 1px,transparent 1px),linear-gradient(90deg,#ffffff0a 1px,transparent 1px);background-size:30px 30px;-webkit-mask-image:linear-gradient(180deg,#000 10%,transparent 85%);mask-image:linear-gradient(180deg,#000 10%,transparent 85%)}
 canvas{position:fixed;inset:0;width:100%;height:100%}
-.meio{position:fixed;left:50%;transform:translate(-50%,-50%);text-align:center;opacity:0;transition:opacity .8s}.meio.on{opacity:1}
+.meio{pointer-events:none;position:fixed;left:50%;transform:translate(-50%,-50%);text-align:center;opacity:0;transition:opacity .8s}.meio.on{opacity:1}
 .meio b{display:block;font:800 46px/1 Inter;letter-spacing:-.03em}.meio small{font-size:12px;font-weight:700;letter-spacing:.14em;color:#d9ccff}
 .cont{position:fixed;left:0;right:0;bottom:0;padding:0 24px calc(28px + env(safe-area-inset-bottom));max-width:460px;margin:0 auto}
 .cont>*{opacity:0;transform:translateY(16px);transition:opacity .7s,transform .7s cubic-bezier(.2,.9,.3,1)}.cont.on>*{opacity:1;transform:none}
@@ -20,9 +20,9 @@ canvas{position:fixed;inset:0;width:100%;height:100%}
 .pt i{width:28px;height:28px;border-radius:9px;display:grid;place-items:center;font:800 12px Inter;font-style:normal;flex:none}.pt small{display:block;font-size:10px;font-weight:800;letter-spacing:.1em;color:#c9bdf0}.pt b{font-size:14.5px}
 .btn{display:block;width:100%;border:0;padding:15px;border-radius:16px;background:#fff;color:#5a2fc4;font:800 15px Inter;box-shadow:inset 0 -2px 0 #e7defd,0 14px 30px -14px #000;cursor:pointer}
 .dica{text-align:center;font-size:12px;color:#c9bdf0;margin-top:8px}
-.rep{position:fixed;top:calc(12px + env(safe-area-inset-top));right:12px;border:1.5px solid #ffffff44;background:#ffffff14;color:#fff;border-radius:12px;padding:8px 12px;font:700 12px Inter}
+.rep{position:fixed;top:calc(44px + env(safe-area-inset-top));right:12px;border:1.5px solid #ffffff44;background:#ffffff14;color:#fff;border-radius:12px;padding:8px 12px;font:700 12px Inter}
 @media (orientation:landscape) and (max-height:560px){.cont{left:auto;right:4vw;bottom:auto;top:50%;transform:translateY(-50%);width:min(48vw,440px);padding:0}.verso{display:none}.nome{font-size:28px}}
-</style>
+.toque{position:fixed;left:50%;transform:translateX(-50%);top:calc(12px + env(safe-area-inset-top));font-size:11px;font-weight:700;color:#c9bdf0;background:#ffffff12;border:1px solid #ffffff22;padding:6px 10px;border-radius:10px;white-space:nowrap;animation:some 6s 4s forwards}@keyframes some{to{opacity:0}}canvas{touch-action:none}</style>
 <div class="fundo"><b class="g1"></b><b class="g2"></b></div><div class="grade"></div><canvas id="c"></canvas>
 <div class="meio" id="meio"><b id="pc">0%</b><small>DO SEU DIA</small></div>
 <div class="cont" id="cont">
@@ -32,33 +32,70 @@ canvas{position:fixed;inset:0;width:100%;height:100%}
  <div class="pts"><div class="pt"><i style="background:#7a4cf0">1</i><div><small>PRÓXIMA TAREFA</small><b>Trabalho · loja · 08:30</b></div></div><div class="pt"><i style="background:#e46fa3">2</i><div><small>LOJA HOJE</small><b>Vender R$ 6.652</b></div></div><div class="pt"><i style="background:#3fb878">3</i><div><small>EQUIPE</small><b>2 avisos para ver</b></div></div></div>
  <div><button class="btn" id="ir">Começar o dia</button><div class="dica">ou deslize para cima</div></div>
 </div>
-<button class="rep" onclick="location.reload()">ver de novo</button>
+<button class="rep" onclick="location.reload()">ver de novo</button><div class="toque" id="toque">arraste o anel para girar · toque nele para explodir · toque no céu</div>
 <script>
 const PCT=40; // quanto do dia ela já cumpriu (no app vem da nota do dia)
 const cv=document.getElementById('c'),cx=cv.getContext('2d');let W,H,D,CX,CY,R;
 const CORES=['#8b5cf6','#a98bff','#e46fa3','#ff9cc6','#3fb878','#5fe0a0'];
 function tam(){D=Math.min(2,devicePixelRatio||1);W=innerWidth;H=innerHeight;cv.width=W*D;cv.height=H*D;cx.setTransform(D,0,0,D,0,0);
- const deitado=W>H&&H<560;R=deitado?Math.min(H*.32,130):Math.min(W*.3,140);CX=deitado?W*.27:W/2;CY=deitado?H/2:Math.max(R+70,H*.24);const m=document.getElementById('meio');m.style.left=CX+'px';m.style.top=CY+'px';m.style.transform='translate(-50%,-50%)'}
+ const deitado=W>H&&H<560;R=deitado?Math.min(H*.32,130):Math.min(W*.3,140);CX=deitado?W*.27:W/2;CY=deitado?H/2:Math.max(R+70,H*.24);const m=document.getElementById('meio');m.style.left=CX+'px';m.style.top=CY+'px'}
 tam();addEventListener('resize',tam);
-// partículas: algumas formam o arco cheio (colorido), outras o trilho apagado
-const N=Math.round(Math.min(900,innerWidth*2.2)),P=[];
-for(let i=0;i<N;i++){const t=i/N,cheio=t<PCT/100;const ang=-Math.PI/2+t*Math.PI*2,esp=(Math.random()-.5)*16;
- const cor=cheio?CORES[Math.min(5,Math.floor(t/(PCT/100)*6))]:'#ffffff';
- P.push({a:ang,e:esp,cheio,cor,x:Math.random()*innerWidth,y:Math.random()*innerHeight,vx:0,vy:0,s:cheio?2.4+Math.random()*1.6:1.6+Math.random(),al:cheio?.95:.16,d:Math.random()*900,ph:Math.random()*6.28})}
-// estrelas
-const E=Array.from({length:70},()=>({x:Math.random(),y:Math.random(),s:Math.random()*1.4+.4,f:Math.random()*6.28}));
-let t0=performance.now(),saindo=0;
+// --- partículas do anel (cada uma tem um lugar no anel e volta para ele como uma mola) ---
+const N=Math.round(Math.min(950,innerWidth*2.3)),P=[];
+for(let i=0;i<N;i++){const t=i/N,cheio=t<PCT/100;
+ P.push({t,a:-Math.PI/2+t*Math.PI*2,e:(Math.random()-.5)*16,cheio,cor:cheio?CORES[Math.min(5,Math.floor(t/(PCT/100)*6))]:'#ffffff',
+  x:Math.random()*innerWidth,y:Math.random()*innerHeight,vx:0,vy:0,s:cheio?2.4+Math.random()*1.6:1.5+Math.random(),al:cheio?.95:.16,d:Math.random()*.9,ph:Math.random()*6.28})}
+// faíscas (saem da ponta do anel e dos toques), satélites, estrelas e estrelas cadentes
+const F=[],O=Array.from({length:14},(_,i)=>({r:1.32+Math.random()*.35,v:(.25+Math.random()*.4)*(i%2?1:-1),a:Math.random()*6.28,c:CORES[i%6],s:2+Math.random()*2}));
+const E=Array.from({length:90},()=>({x:Math.random(),y:Math.random(),s:Math.random()*1.4+.4,f:Math.random()*6.28,z:Math.random()*.8+.2}));
+let cad=null,proxCad=2.5;
+// --- toque / mouse ---
+const ptr={x:-999,y:-999,on:false,px:0,py:0};let rot=0,vrot=0,arrasto=null,ondas=[],t0=performance.now(),saindo=0,pulso=0;
+function pos(e){const p=e.touches?e.touches[0]:e;return [p.clientX,p.clientY]}
+function noAnel(x,y){return Math.abs(Math.hypot(x-CX,y-CY)-R)<R*.45}
+cv.addEventListener('pointerdown',e=>{const [x,y]=[e.clientX,e.clientY];ptr.x=x;ptr.y=y;ptr.on=true;
+ if(noAnel(x,y)){arrasto={a:Math.atan2(y-CY,x-CX),r:rot,t:performance.now()}}
+ else{ondas.push({x,y,t:performance.now(),c:CORES[Math.floor(Math.random()*6)]});for(let k=0;k<14;k++)F.push({x,y,vx:(Math.random()-.5)*5,vy:(Math.random()-.5)*5,v:1,c:CORES[k%6]})}});
+addEventListener('pointermove',e=>{ptr.x=e.clientX;ptr.y=e.clientY;if(e.pointerType==='mouse')ptr.on=true;
+ if(arrasto){const a=Math.atan2(e.clientY-CY,e.clientX-CX);let d=a-arrasto.a;if(d>Math.PI)d-=6.283;if(d<-Math.PI)d+=6.283;vrot=d*.5;rot+=d;arrasto.a=a}});
+addEventListener('pointerup',e=>{if(arrasto&&performance.now()-arrasto.t<250&&Math.abs(rot-arrasto.r)<.05)explode();arrasto=null;if(e.pointerType!=='mouse'){ptr.on=false;ptr.x=-999}});
+function explode(){pulso=performance.now();ondas.push({x:CX,y:CY,t:pulso,c:'#ffffff',grande:1});for(const p of P){const dx=p.x-CX,dy=p.y-CY,dd=Math.hypot(dx,dy)||1,f=p.cheio?9:5;p.vx+=dx/dd*f*(Math.random()+.5);p.vy+=dy/dd*f*(Math.random()+.5)}
+ const m=document.getElementById('meio');m.animate([{transform:'translate(-50%,-50%) scale(1)'},{transform:'translate(-50%,-50%) scale(1.25)'},{transform:'translate(-50%,-50%) scale(1)'}],{duration:600,easing:'cubic-bezier(.3,1.6,.5,1)'});if(navigator.vibrate)navigator.vibrate(12)}
 function quadro(t){const k=(t-t0)/1000;cx.clearRect(0,0,W,H);
- for(const e of E){cx.globalAlpha=.25+.35*Math.sin(k*1.4+e.f)**2;cx.fillStyle='#fff';cx.fillRect(e.x*W,e.y*H,e.s,e.s)}
- const giro=k*.25;
- for(const p of P){const atraso=p.d/1000;let tx,ty;
-  if(saindo){const f=(t-saindo)/1000;p.vx+=(p.x-CX)*.004*f;p.vy+=(p.y-CY)*.004*f-0.05;p.x+=p.vx;p.y+=p.vy;}
-  else{const ang=p.a+giro*(p.cheio?0:.0)+Math.sin(k*1.2+p.ph)*.004,rr=R+p.e+Math.sin(k*2+p.ph)*2.2;tx=CX+Math.cos(ang)*rr;ty=CY+Math.sin(ang)*rr;
-   const q=Math.max(0,Math.min(1,(k-atraso*.9)/1.4)),ease=q<1?.05+.12*q:.18;p.x+=(tx-p.x)*ease;p.y+=(ty-p.y)*ease}
-  cx.globalAlpha=saindo?Math.max(0,p.al*(1-(t-saindo)/900)):p.al*(p.cheio?(.75+.25*Math.sin(k*3+p.ph)):1);cx.fillStyle=p.cor;
+ // estrelas com profundidade: mexem com o dedo
+ const ox=ptr.on?(ptr.x-W/2)/W:Math.sin(k*.2)*.15,oy=ptr.on?(ptr.y-H/2)/H:Math.cos(k*.17)*.1;
+ for(const e of E){cx.globalAlpha=.2+.45*Math.sin(k*1.3+e.f)**2;cx.fillStyle='#fff';cx.fillRect(e.x*W-ox*20*e.z,e.y*H-oy*20*e.z,e.s,e.s)}
+ // estrela cadente
+ if(!cad&&k>proxCad&&!saindo){cad={x:Math.random()*W*.8+W*.3,y:Math.random()*H*.3,v:8+Math.random()*4,l:0};proxCad=k+3+Math.random()*4}
+ if(cad){cad.x-=cad.v;cad.y+=cad.v*.45;cad.l++;const g=cx.createLinearGradient(cad.x,cad.y,cad.x+70,cad.y-32);g.addColorStop(0,'#fff');g.addColorStop(1,'rgba(255,255,255,0)');cx.globalAlpha=Math.max(0,1-cad.l/60);cx.strokeStyle=g;cx.lineWidth=1.6;cx.beginPath();cx.moveTo(cad.x,cad.y);cx.lineTo(cad.x+70,cad.y-32);cx.stroke();if(cad.l>60)cad=null}
+ // giro do anel: devagar sozinho + o que ela arrastar
+ if(!arrasto){rot+=vrot+.0015;vrot*=.94}
+ const forma=Math.min(1,Math.max(0,(k-.2)/1.6));
+ // ondas dos toques
+ ondas=ondas.filter(o=>{const f=(t-o.t)/(o.grande?900:700);if(f>1)return false;cx.globalAlpha=(1-f)*.8;cx.strokeStyle=o.c;cx.lineWidth=o.grande?3:2;cx.beginPath();cx.arc(o.x,o.y,(o.grande?R*1.6:60)*f+(o.grande?R:4),0,6.283);cx.stroke();return true});
+ // partículas do anel
+ for(const p of P){
+  if(saindo){const f=(t-saindo)/1000;p.vx+=(p.x-CX)*.004*f;p.vy+=(p.y-CY)*.004*f-.05;p.vx*=.99;p.vy*=.99}
+  else{const ang=p.a+rot+Math.sin(k*1.2+p.ph)*.004,rr=R+p.e+Math.sin(k*2+p.ph+p.t*12)*2.6,tx=CX+Math.cos(ang)*rr,ty=CY+Math.sin(ang)*rr;
+   const q=Math.max(0,Math.min(1,(k-p.d)/1.2)),mola=.008+.03*q;p.vx+=(tx-p.x)*mola;p.vy+=(ty-p.y)*mola;
+   if(ptr.on){const dx=p.x-ptr.x,dy=p.y-ptr.y,d2=dx*dx+dy*dy;if(d2<5200){const f=(5200-d2)/5200*1.6,dd=Math.sqrt(d2)||1;p.vx+=dx/dd*f;p.vy+=dy/dd*f}}
+   p.vx*=.86;p.vy*=.86}
+  p.x+=p.vx;p.y+=p.vy;
+  cx.globalAlpha=saindo?Math.max(0,p.al*(1-(t-saindo)/900)):p.al*(p.cheio?(.7+.3*Math.sin(k*3+p.ph)):1);cx.fillStyle=p.cor;
   if(p.cheio){cx.shadowColor=p.cor;cx.shadowBlur=8}else cx.shadowBlur=0;cx.fillRect(p.x-p.s/2,p.y-p.s/2,p.s,p.s)}
- cx.shadowBlur=0;cx.globalAlpha=1;
- if(k>1.6&&!saindo){const m=document.getElementById('meio');if(!m.classList.contains('on')){m.classList.add('on')}const v=Math.min(PCT,Math.round((k-1.6)/1.0*PCT));document.getElementById('pc').textContent=v+'%'}
+ cx.shadowBlur=0;
+ if(!saindo&&forma>=1){
+  // ponta do anel (cometa) soltando faíscas
+  const ap=-Math.PI/2+PCT/100*6.283+rot,hx=CX+Math.cos(ap)*R,hy=CY+Math.sin(ap)*R;
+  const gl=cx.createRadialGradient(hx,hy,0,hx,hy,22);gl.addColorStop(0,'rgba(255,255,255,.95)');gl.addColorStop(.3,'rgba(95,224,160,.6)');gl.addColorStop(1,'rgba(95,224,160,0)');cx.globalAlpha=.8+.2*Math.sin(k*6);cx.fillStyle=gl;cx.beginPath();cx.arc(hx,hy,22,0,6.283);cx.fill();
+  if(Math.random()<.6)F.push({x:hx,y:hy,vx:-Math.sin(ap)*1.2+(Math.random()-.5),vy:Math.cos(ap)*1.2+(Math.random()-.5),v:1,c:Math.random()<.5?'#5fe0a0':'#ffffff'});
+  // satélites girando em volta
+  for(const o of O){o.a+=o.v*.016;const x=CX+Math.cos(o.a)*R*o.r,y=CY+Math.sin(o.a)*R*o.r*.92;cx.globalAlpha=.55+.4*Math.sin(k*2+o.a);cx.fillStyle=o.c;cx.shadowColor=o.c;cx.shadowBlur=10;cx.fillRect(x-o.s/2,y-o.s/2,o.s,o.s)}cx.shadowBlur=0}
+ // faíscas
+ for(let i=F.length-1;i>=0;i--){const f=F[i];f.x+=f.vx;f.y+=f.vy;f.vy+=.02;f.v-=.02;if(f.v<=0){F.splice(i,1);continue}cx.globalAlpha=f.v;cx.fillStyle=f.c;cx.fillRect(f.x-1.2,f.y-1.2,2.4,2.4)}
+ cx.globalAlpha=1;
+ if(k>1.6&&!saindo){const m=document.getElementById('meio');if(!m.classList.contains('on'))m.classList.add('on');const v=Math.min(PCT,Math.round((k-1.6)/1.0*PCT));document.getElementById('pc').textContent=v+'%';
+  if(v===PCT&&!quadro.feito){quadro.feito=1;ondas.push({x:CX,y:CY,t,c:'#c9b5ff',grande:1})}}
  if(k>2.4)document.getElementById('cont').classList.add('on');
  requestAnimationFrame(quadro)}
 requestAnimationFrame(quadro);
