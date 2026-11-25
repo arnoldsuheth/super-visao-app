@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="versao" content="202611241901"><meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#121316">
+<meta name="versao" content="202611242136"><meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#121316">
 <title>Gerentes · Indus</title>
 <meta name="description" content="Equipe da loja em 1 minuto: cadastro de funcionário novo e ocorrências direto pelo celular.">
 <meta property="og:type" content="website"><meta property="og:site_name" content="Gerentes · Indus">
@@ -266,8 +266,8 @@ function mostrarLoja(){const ok=!!loja;const n=ok?String(loja.nome).replace(' �
 function desenharCx(){const v=$('codigo').value;[...$('cx').children].forEach((c,i)=>{c.textContent=v[i]||'';c.classList.toggle('f',i===v.length)})}
 async function entrar(c,silencioso){if(!/^\d{4}$/.test(c)){if(!silencioso){if($('intro'))$('cxErro').textContent='Digite os 4 números do código.';else aviso('Digite os 4 números do código.')}return}
  $('entrar').disabled=true;$('entrar').textContent='Conferindo…';
- try{const l=await rpc('equipe_entrar',{p_cfg:CFG,p_codigo:c});loja=l;codigo=c;try{localStorage.setItem('eq-codigo',c)}catch(e){}$('msg').className='msg oculto';mostrarLoja();let dir=false;try{dir=sessionStorage.getItem('eq-direto')==='1';sessionStorage.removeItem('eq-direto')}catch(_){}if(!silencioso||dir)fecharIntro()}
- catch(e){loja=null;if(!silencioso){if($('intro')){$('cxErro').textContent='Código não encontrado. Confira com o supervisor.'}else aviso('Código não encontrado. Confira com o supervisor.');$('codigo').value='';desenharCx()}else{try{localStorage.removeItem('eq-codigo')}catch(_){}codigo='';mostrarLoja()}}
+ try{const l=await rpc('equipe_entrar',{p_cfg:CFG,p_codigo:c});if(!l||l.erro){const er=Error(l&&l.erro||'Código não encontrado. Confira com o supervisor.');er.codigo=true;throw er}loja=l;codigo=c;try{localStorage.setItem('eq-codigo',c)}catch(e){}$('msg').className='msg oculto';mostrarLoja();let dir=false;try{dir=sessionStorage.getItem('eq-direto')==='1';sessionStorage.removeItem('eq-direto')}catch(_){}if(!silencioso||dir)fecharIntro()}
+ catch(e){loja=null;const m=e.codigo?e.message:'Sem conexão agora. Tente de novo.';if(!silencioso){if($('intro')){$('cxErro').textContent=m}else aviso(m);$('codigo').value='';desenharCx()}else{if(e.codigo){try{localStorage.removeItem('eq-codigo')}catch(_){}codigo=''}mostrarLoja()}}
  $('entrar').disabled=false;$('entrar').textContent='Entrar'}
 $('codigo').addEventListener('input',()=>{$('cxErro').textContent='';$('codigo').value=$('codigo').value.replace(/\D/g,'').slice(0,4);desenharCx();if($('codigo').value.length===4)entrar($('codigo').value)});
 $('cx').onclick=()=>$('codigo').focus();
