@@ -1,1 +1,35 @@
-{"gerenciais":[],"parede":[],"caixa":[]}
+{
+ "gerenciais": [],
+ "parede": [
+  {
+   "nome": "Atendimento prioritário e peças em promoção sem desconto",
+   "arquivo": "parede/informativo-1-prioridade-e-promocao.pdf"
+  },
+  {
+   "nome": "Sonegar é crime (nota fiscal) e Disque 180 e 100",
+   "arquivo": "parede/informativo-2-nota-fiscal-e-disque-180.pdf"
+  },
+  {
+   "nome": "Proibido entrar de capacete e cartão de assinatura",
+   "arquivo": "parede/informativo-3-capacete-e-cartao.pdf"
+  },
+  {
+   "nome": "Objetos deixados na loja e telefones de emergência",
+   "arquivo": "parede/informativo-4-objetos-e-emergencia.pdf"
+  }
+ ],
+ "caixa": [
+  {
+   "nome": "Fechamento de caixa",
+   "arquivo": "caixa/fechamento-de-caixa.pdf"
+  },
+  {
+   "nome": "Ficha de cadastro de clientes",
+   "arquivo": "caixa/ficha-cadastro-de-clientes.pdf"
+  },
+  {
+   "nome": "Controle de saída e entrada de mercadoria (planilha)",
+   "arquivo": "caixa/controle-saida-e-entrada-de-mercadoria.xlsx"
+  }
+ ]
+}

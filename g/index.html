@@ -341,7 +341,7 @@ const _sub=$('fOc').onsubmit;$('fOc').onsubmit=e=>{if(modoAt&&!fotoDados){e.prev
 let DOCS=null;
 async function docsCarregar(){if(DOCS)return DOCS;try{DOCS=await (await fetch('docs/lista.json?'+Date.now())).json()}catch(e){DOCS={}}return DOCS}
 async function docsEnviar(d,b){const url=new URL('docs/'+d.arquivo,location.href).href;const txt=d.nome;b.disabled=true;
- try{const r=await fetch(url);const f=new File([await r.blob()],d.arquivo.split('/').pop(),{type:'application/pdf'});
+ try{const r=await fetch(url);const f=new File([await r.blob()],d.arquivo.split('/').pop(),{type:/\.xlsx$/i.test(d.arquivo)?'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':'application/pdf'});
   if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:txt});return}}catch(e){if(e&&e.name==='AbortError')return}finally{b.disabled=false}
  location.href='https://wa.me/?text='+encodeURIComponent(txt+': '+url)}
 document.querySelectorAll('.docb').forEach(b=>b.onclick=async()=>{const g=b.dataset.g,l=$('dl-'+g),abre=l.classList.contains('oculto');
