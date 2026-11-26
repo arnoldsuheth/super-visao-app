@@ -8114,7 +8114,7 @@ document.addEventListener('click', e => { const b = e.target.closest('[data-bsel
   if(d.bsel !== undefined){ bagSel = bagSel === d.bsel ? null : d.bsel; bagConfirm = 0; }
   else if(d.bagbuy !== undefined){ const c = ncBagCost(); if(save.gold >= c && ncBagBase() < 120){ save.gold -= c; save.bagMax = ncBagBase() + 10; persist(); try{ SFX.drop(); }catch(e){} } }
   else if(d.bagsort !== undefined){ save.inv.sort((a, b) => (SLOTS.indexOf(a.slot) - SLOTS.indexOf(b.slot)) || (b.tier - a.tier) || ((b.up || 0) - (a.up || 0)) || (a.id - b.id)); bagSel = null; persist(); try{ SFX.item(); }catch(e){} }
-  else { const it = byId(+(d.bagsell || d.bagbrk || d.bagdel)); if(!it || isEquipped(it)) return;
+  else { const it = byId(+(d.bagsell || d.bagbrk || d.bagdel)); if(!it) return; if(isEquipped(it)){ try{ banner('Esta peça está equipada', 'Tire a peça antes de vender, desmanchar ou excluir', 'danger'); }catch(_){} return; }   /* 25/11: antes não acontecia nada e parecia botão quebrado */
     if(d.bagsell){ save.gold += sellValue(it); take(it); try{ SFX.coin(); }catch(e){} }
     else if(d.bagbrk){ const out = ncBreak(it); ncBreakGive(out); take(it); try{ SFX.drop(); banner('Desmanchado', ncBreakTxt(out)); }catch(e){} }
     else if(d.bagdel){ if(bagConfirm !== it.id){ bagConfirm = it.id; } else take(it); } }
@@ -15629,7 +15629,7 @@ body.nc-ov #ncXp2{display:none}
 #ncFriends.fr-d .pop-box{left:50%!important;right:auto!important;top:auto!important;bottom:calc(8px + env(safe-area-inset-bottom,0px))!important;width:min(400px,calc(100vw - 16px))!important;max-height:min(46dvh,400px)!important;overflow-y:auto!important;border-radius:14px!important;border:1px solid #e8c36a99!important;translate:-50% 0;margin:0!important;font-size:13px!important;padding:10px 12px!important}
 #ncFriends.fr-d .fr-h b{font-size:17px}#ncFriends.fr-d .pop-x{width:34px!important;height:34px!important}
 @media (orientation:landscape) and (max-height:500px){#ncFriends.fr-d .pop-box{width:min(380px,calc(100vw - 16px))!important;max-height:calc(100dvh - 24px)!important}}
-body:not(.nc-cria) .nc-card[data-card=criar]{display:none!important}
+/* 25/11: o botão Personagens aparece sempre (antes só aparecia na hora de criar) */
 body.nc-crhide #ncCriar{display:none!important}
 #ncCriar .cr-top{display:flex;align-items:center;gap:8px}#ncCriar .cr-top h2{flex:1}
 #ncCriar .cr-mn{margin-left:auto;flex:0 0 auto;width:40px;height:40px;border-radius:50%;border:1px solid #ffffff33;background:#0f0c26;color:#ffd36a;font-size:20px;line-height:1;cursor:pointer}
