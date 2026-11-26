@@ -8587,7 +8587,7 @@ function kkPaint(h){
     ['Badge_Shield','Rectangle_Shield','Round_Shield','Spike_Shield'].forEach(n => { const i = hide.indexOf(n); if(i >= 0) hide.splice(i, 1); if(n !== want) hide.push('^' + n + '$'); }); }
   if(h.cls === 'assassin' && tOf('off') < 0) hide.push('^Knife_Offhand$');   // 25/11: sem a 2ª adaga, mão esquerda vazia
   if(h.cls === 'archer' && GR_OF[Math.max(0, tOf('weapon'))] < 2){ const i = hide.indexOf('1H_Crossbow'); if(i >= 0) hide.splice(i, 1); hide.push('2H_Crossbow'); }   // 22/11: NG e D usam a besta pequena; do C em diante, a besta grande
-  x.m.traverse(o => { if(o.isMesh){ o.visible = !hide.some(r => new RegExp(r).test(o.name)); if(/_Helmet$|_Hat$/.test(o.name) && !o.userData.kkS){ o.scale.multiplyScalar(1.05); o.userData.kkS = 1; } } });   // elmo um pouco maior: o cabelo nao atravessa mais
+  x.m.traverse(o => { if(o.isMesh){ o.visible = !hide.some(r => new RegExp(r).test(o.name)); if(/_Helmet$|_Hat$/.test(o.name) && !o.userData.kkS){ o.scale.multiplyScalar(1.05); o.userData.kkS = 1; } if(/_Cape$/.test(o.name) && !o.userData.ncCapa){ o.geometry = o.geometry.clone(); o.geometry.translate(0, 0, -.05); o.userData.ncCapa = 1; } } });   // 26/11 (Arnold): capa um pouco mais afastada das costas para não entrar no corpo ao correr   // elmo um pouco maior: o cabelo nao atravessa mais
   const lk = save.look || {}, col = {};
   const tun = lk.tunic != null && TUNICS[lk.tunic] ? TUNICS[lk.tunic].c : null;   // a 1ª cor (Azul) também vale; antes só valia da 2ª em diante
   if(tun != null) col.cloth = tun; else if(k.cloth) col.cloth = k.cloth;
@@ -13204,6 +13204,7 @@ function ncSunFollow(px, pz){
   _sp.set(px, 0, pz - 3); const a = Math.round(_sp.dot(_sr)/tx)*tx, b = Math.round(_sp.dot(_su)/tx)*tx, c = _sp.dot(_sf);
   _sp.copy(_sr).multiplyScalar(a).addScaledVector(_su, b).addScaledVector(_sf, c);
   dirLight.target.position.copy(_sp); dirLight.position.set(_sp.x + ox, _sp.y + oy, _sp.z + oz);
+  dirLight.shadow.normalBias = Math.max(.02, tx*.45);   // sombra no próprio boneco (chapéu, rosto) sem 'chiado' piscando
 }
 function updateCamera(dt){
   const paused = !running && !$('#pause').hidden, Z = ZOOMS[save.zoom] || ZOOMS[4];
