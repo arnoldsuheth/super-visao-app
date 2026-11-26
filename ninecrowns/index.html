@@ -8182,7 +8182,7 @@ function pieceImg(t, slot, cls, wtype, up, sa){ const U = ncUp(Math.min(NC_UP_MA
     const next = () => { if(i >= q.length) return; const u = q[i++]; fetch(u).catch(() => {}).finally(() => setTimeout(next, 30)); };
     for(let k = 0; k < 4; k++) next(); }).catch(() => {}); }
   window.addEventListener('load', () => setTimeout(go, 4000)); setTimeout(go, 12000); })();
-const NC_WICO = {sword:0, hammer:0, axe:2, staff:3, daggers:4};
+const NC_WICO = {sword:0, axe:3, staff:4, daggers:5};   /* 25/11: os números tinham ficado errados depois que entraram as armas do Xamã e do Sacerdote (Assassina via cajado, Mago via machado...). Martelo usa o desenho próprio. */
 function ncWIco(t, wt){ try{ if((save.cls === 'shaman' || save.cls === 'priest') && wt === 'staff'){ const y = ncWSty(save.cls); if(y) return 'pw_' + (save.cls === 'shaman' ? 'sha' : 'pri') + y + '_' + t; if(save.cls === 'shaman') return 'rg_DruidStaff_1_1_B'; }   /* 24/11: o ícone é a mesma arma que está na mão */
   if(wt === 'fists') return NC_FIST[t]; if(wt === 'bow') return GR_OF[t] < 2 ? 'kk_1H_Crossbow' : 'kk_2H_Crossbow'; if(wt === 'scythe') return 'scythe_' + GR_OF[t]; const i = NC_WICO[wt]; return i == null ? null : NC_WPN_SET[i].f[t]; }catch(e){ return null; } }
 function pieceImgOld(t, slot, cls, wtype){
