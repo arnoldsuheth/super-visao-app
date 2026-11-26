@@ -5701,7 +5701,7 @@ const CLASSES = {
             {id:'meteor', name:'Meteoro', full:'Meteoro', cd:11, desc:'um meteoro cai no alvo e explode em área grande'},
             {id:'arcshield', name:'Escudo', full:'Escudo Arcano', cd:20, desc:'escudo de magia: leva metade do dano por 6 s e recupera 10% de vida'},
             {id:'storm', name:'Tempestade', full:'Tempestade', cd:30, desc:'SUPREMA: raios caem sem parar em volta do alvo por 2 s'}]},
-  archer:{name:'Arqueira', tag:'Arco e flecha', wtype:'bow', desc:'Muito rápida, atira sem parar e foge dos perigos.', hp:.85, atk:.72, def:.85, spd:1.12, block:0, crit:0, cd:.3, attack:'arrow', dash:'Rolamento',
+  archer:{name:'Arqueira', tag:'Arco e flecha', wtype:'bow', desc:'Muito rápida, atira sem parar e foge dos perigos.', hp:.85, atk:.72, def:.85, spd:1.05, block:0, crit:0, cd:.36, attack:'arrow', dash:'Rolamento',
     skills:[{id:'volley', name:'Chuva', full:'Chuva de Flechas', cd:7, desc:'três ondas de flechas caem sobre a área do alvo'},
             {id:'pierce', name:'Perfurar', full:'Flecha Perfurante', cd:4.5, desc:'atravessa todos os inimigos em linha'},
             {id:'trap', name:'Armadilha', full:'Armadilha', cd:9, desc:'deixa uma armadilha no chão que explode e prende por 2 s'},
@@ -5715,7 +5715,7 @@ const CLASSES = {
             {id:'charge', name:'Investida', full:'Investida Sagrada', cd:9, desc:'corre para frente com o escudo, atropela e atordoa'},
             {id:'judgment', name:'Julgamento', full:'Julgamento', cd:12, desc:'um raio de luz cai do céu no alvo e atordoa'},
             {id:'kingaura', name:'Aura', full:'Aura do Rei', cd:30, desc:'SUPREMA: por 8 s leva metade do dano e bate 20% mais forte; explode luz em volta'}]},
-  assassin:{name:'Assassina', tag:'Adagas duplas', wtype:'daggers', desc:'Golpes muito rápidos, críticos altos e teleporte pelas costas do inimigo.', hp:.9, atk:.68, def:.85, spd:1.15, block:0, crit:.15, cd:.34, attack:'stab', dash:'Sombra',
+  assassin:{name:'Assassina', tag:'Adagas duplas', wtype:'daggers', desc:'Golpes muito rápidos, críticos altos e teleporte pelas costas do inimigo.', hp:.9, atk:.68, def:.85, spd:1.05, block:0, crit:.15, cd:.34, attack:'stab', dash:'Sombra',
     skills:[{id:'shadow', name:'Sombra', full:'Passo Sombrio', cd:5, desc:'aparece atrás do inimigo mais próximo com um golpe crítico'},
             {id:'fan', name:'Leque', full:'Leque de Lâminas', cd:6, desc:'lança 9 adagas em leque'},
             {id:'poison', name:'Veneno', full:'Veneno', cd:7, desc:'nuvem de veneno no alvo que machuca por 3 s'},
@@ -5723,7 +5723,7 @@ const CLASSES = {
             {id:'deathmark', name:'Marca', full:'Marca da Morte', cd:10, desc:'marca o alvo e, depois de 1 s, um golpe crítico enorme'},
             {id:'bladedance', name:'Dança', full:'Dança das Lâminas', cd:30, desc:'SUPREMA: gira entre os inimigos cortando tudo em volta, intocável'}]},
 };
-CLASSES.monk = {name:'Monge', tag:'Punhos e chutes', wtype:'fists', desc:'Luta de mãos vazias com socos muito rápidos, rajadas de energia e chutes giratórios.', hp:1.05, atk:.82, def:1, spd:1.1, block:0, crit:.1, cd:.35, attack:'punch', dash:'Passo Leve',
+CLASSES.monk = {name:'Monge', tag:'Punhos e chutes', wtype:'fists', desc:'Luta de mãos vazias com socos muito rápidos, rajadas de energia e chutes giratórios.', hp:1.05, atk:.82, def:1, spd:1.05, block:0, crit:.1, cd:.35, attack:'punch', dash:'Passo Leve',
   skills:[{id:'quake', name:'Palma', full:'Palma Sísmica', cd:5, desc:'uma onda de energia à frente que causa muito dano e atordoa'},
           {id:'cyclone', name:'Tornado', full:'Tornado de Chutes', cd:9, desc:'gira chutando tudo ao redor quatro vezes, andando mais rápido e curando a cada acerto'},
             {id:'hundred', name:'Cem Socos', full:'Cem Socos', cd:6, desc:'rajada de socos à frente, muito rápida'},
@@ -5843,7 +5843,7 @@ function itemName(it){
   if(it.slot === 'weapon') return WVAR[it.wtype][it.v].n + ' ' + TIERS[it.tier].pre + u;
   return SLOT_INFO[it.slot].n + ' ' + TIERS[it.tier].pre + u;
 }
-function itemStats(it){ const b = Object.assign({}, itemStatsBase(it)); if(it.tier >= 6) b.atkPct = (b.atkPct || 0) + .04*(it.tier - 5); if(it.sa){ const o = ncSaOpt(it); b[o.f] = (b[o.f] || 0) + o.v; }
+function itemStats(it){ const b = Object.assign({}, itemStatsBase(it)); if(it.slot === 'boots' && it.up) b.spdPct = (b.spdPct || 0) + .005*it.up; if(it.tier >= 6) b.atkPct = (b.atkPct || 0) + .04*(it.tier - 5); if(it.sa){ const o = ncSaOpt(it); b[o.f] = (b[o.f] || 0) + o.v; }
   const u = it.up || 0, xk = it.ex ? (it.ex.startsWith('boss:') ? 1.12 : 1.1) : 1; if(u || xk > 1){ const k = (1 + .08*u)*xk, add = {hp:6, def:1, atk:2};   /* 25/11/2026 (Arnold: evoluir não mudava nada): cada +1 dá +8% e no mínimo +2 ataque, +1 defesa, +6 vida */ ['hp','def','atk'].forEach(n => { if(b[n]) b[n] = Math.round(b[n]*k) + add[n]*u; }); } return b; }
 function itemStatsBase(it){
   const t = it.tier, m = TIERS[t].mult, r = Math.round, f = v => Math.round(v*100)/100;
@@ -5851,9 +5851,9 @@ function itemStatsBase(it){
     case 'helmet':  return {def:r(5*m), crit:f(.03 + t*.025)};
     case 'chest':   return {hp:r(80*m), def:r(6*m)};
     case 'shoulders': return {hp:r(30*m), def:r(4*m)};
-    case 'bracers': return {atk:r(6*m), aspd:f(.04 + t*.04)};
+    case 'bracers': return {atk:r(6*m), aspd:NC_BAL2.luva[GR_OF[t] || 0]};   /* 26/11/2026: destreza das luvas por grade */
     case 'greaves': return {hp:r(40*m), def:r(3*m)};
-    case 'boots':   return {spd:f(.5 + t*.33), def:r(3*m)};
+    case 'boots':   return {spdPct:NC_BAL2.bota[GR_OF[t] || 0], def:r(3*m)};   /* 26/11/2026 (Arnold): a velocidade vem da bota, por grade */
     case 'shield':  return {def:r(7*m), block:f(.03 + t*.028)};
     case 'amulet':  return {hp:r(30*m), crit:f(.02 + t*.015), regen:f(t*.001*100)/100};
     case 'weapon':  return Object.assign({atk:r(7*Math.pow(1.6, t))}, WVAR[it.wtype][it.v].m);
@@ -5866,7 +5866,8 @@ function statText(b){
   if(b.atkPct) out.push('+' + Math.round(b.atkPct*100) + '% ataque');
   if(b.def) out.push('+' + b.def + ' defesa');
   if(b.spd) out.push('+' + String(b.spd).replace('.',',') + ' velocidade');
-  if(b.aspd) out.push('golpes ' + Math.round(b.aspd*100) + '% mais rápidos');
+  if(b.aspd) out.push('+' + Math.round(b.aspd*100) + '% destreza');
+  if(b.spdPct) out.push('+' + (Math.round(b.spdPct*1000)/10).toString().replace('.', ',') + '% velocidade');
   if(b.crit) out.push('+' + Math.round(b.crit*100) + '% crítico');
   if(b.block) out.push(Math.round(b.block*100) + '% bloqueio');
   if(b.regen) out.push('regenera vida');
@@ -6175,7 +6176,7 @@ const DIFFS = {
   facil:   {name:'Fácil',    css:'#86d873', desc:'Inimigos com menos vida e dano, mais lentos para atacar. Bom para explorar com calma.',
             hp:.7, dmg:.55, spd:.9, tele:1.2, bossCd:1.25, extra:0, elite:0, reward:.8, drop:0, qb:0, potion:.5, hearts:1.3, hyper:1, wind:1.2, atkCd:1.2, aggro:13, shots:1, defMult:1, blockMult:1, regenMult:1, potCd:0, goldLoss:0},
   normal:  {name:'Normal',   css:'#eef0f7', desc:'O equilíbrio original do jogo.',
-            hp:1, dmg:1, spd:1, tele:1, bossCd:1, extra:0, elite:0, scale:.35, reward:1, drop:0, qb:0, potion:.5, hearts:1, hyper:1, wind:1, atkCd:1, aggro:15, shots:1, defMult:1, blockMult:1, regenMult:1, potCd:0, goldLoss:0},
+            hp:1.4, dmg:1.25, spd:1, tele:1, bossCd:1, extra:0, elite:.12, scale:.35, reward:1, drop:0, qb:0, potion:.5, hearts:1, hyper:1, wind:1, atkCd:1, aggro:15, shots:1, defMult:1, blockMult:1, regenMult:1, potCd:8, goldLoss:0},
   dificil: {name:'Difícil',  css:'#f08a3c', desc:'Para sofrer. Inimigos com 3× vida e 3,4× dano e que ficam mais fortes junto com o seu nível e equipamento, mais rápidos, atacam quase sem pausa e chegam em bandos maiores com elites. Arqueiros atiram 2 flechas. Sua defesa vale 25% menos e você bloqueia menos. Poções curam 35% e só podem ser usadas a cada 8 s. Morrer custa 10% do seu ouro. Recompensas 1,8×.',
             hp:3, dmg:3.4, spd:1.22, tele:.72, bossCd:.55, extra:2, elite:.2, scale:.8, reward:1.8, drop:.06, qb:.7, potion:.35, hearts:.3, hyper:2, wind:.75, atkCd:.7, aggro:20, shots:2, defMult:.75, blockMult:.6, regenMult:.5, potCd:8, goldLoss:.1},
   pesadelo:{name:'Pesadelo', css:'#ff4a4a', desc:'Sofrimento de verdade. Inimigos com 4× vida e 7× dano, que crescem junto com o seu nível e equipamento (ficar forte não deixa fácil), muito rápidos, quase sem aviso antes de bater, te perseguem pelo mapa inteiro e vêm em bandos com 40% de elites. Arqueiros atiram 3 flechas. Sua defesa vale metade, quase não bloqueia e não regenera vida. Poções curam 25% a cada 15 s e não caem corações. O chefe já começa furioso, avisa os golpes em cima da hora, dispara muito mais e chama elites. Morrer custa 25% do ouro. Recompensas 3× e chance 4× maior de peças raras.',
@@ -6191,6 +6192,8 @@ const ncBossParty = () => { let n = 1; try{ n = Math.max(1, Math.min(6, ncCoop.p
 const NC_ERAMP = i => Math.min(1, .6 + .067*i);                         // dano dos monstros nas primeiras áreas
 const NC_BHPK = i => 2*Math.pow(.94, i);                                 // vida do Boss por área
 const NC_BDMGK = [.6,.65,.7,.75,.8,.85,1,1,1,.95,.9,.9,.85,.8,.75,.7,.6,.5];   // dano do Boss por área
+/* 26/11/2026 (Arnold, página de aprovação): balanceamento novo. andar = base 20% menor; bota = velocidade por grade (NG, D, C, B, A, S); luva = destreza por grade; golpe = todos 25% mais lentos */
+const NC_BAL2 = {andar:.8, bota:[.03, .06, .09, .12, .16, .20], luva:[.02, .04, .07, .10, .12, .15], golpe:1.25, tetoDestreza:.6};
 const NC_BAL = {mHp:2.5, mDmg:2, bossHp:NC_BOSS_HP, bossDmg:2.2, eliteHp:5, eliteDmg:2.4, defCap:.6, xp:1.5};
 const DF = () => DIFFS.normal;
 let ESCALE = {hp:1, dmg:1};
@@ -6340,7 +6343,7 @@ function bonuses(){
 }
 function stats(){
   const L = (save.level - 1)*NC_LV_K, c = CLS();
-  const s = {hp:100 + L*24, atk:10 + L*3.2, def:2 + Math.floor(L*.9), spd:5.8, aspd:0, crit:.05 + c.crit, critMult:2, block:.05, range:0, regen:0,
+  const s = {hp:100 + L*24, atk:10 + L*3.2, def:2 + Math.floor(L*.9), spd:5.8*NC_BAL2.andar, aspd:0, crit:.05 + c.crit, critMult:2, block:.05, range:0, regen:0,
              atkPct:0, leech:0, stunCh:0, multi:0, elem:null, freezeCh:0, chainCh:0, burn:false, hpPct:0, defPct:0, spdPct:0, dmgRes:0, elemRes:0, pen:0, luck:0};
   const addG = (k, v) => s[k] = (s[k] || 0) + v;
   for(const slot of SLOTS){ const it = equipped(slot); if(!it) continue; const b = itemStats(it); for(const k in b){ if(k === 'elem') s.elem = b.elem; else s[k] += b[k]; } gemFx(it, addG); }
@@ -11724,7 +11727,7 @@ function nearestEnemy(range, from){
   return best_;
 }
 function aimAngle(range){ const t = ncTgtOk(); if(t && !t.e) return Math.atan2(t.x - P.pos.x, t.z - P.pos.z); const e = nearestEnemy(range); return e ? Math.atan2(e.pos.x - P.pos.x, e.pos.z - P.pos.z) : null; }
-function atkCooldown(){ return CLS().cd/(1 + P.S.aspd + (P.rageT > 0 ? .6 : 0)); }
+function atkCooldown(){ return CLS().cd*NC_BAL2.golpe/(1 + Math.min(NC_BAL2.tetoDestreza, P.S.aspd) + (P.rageT > 0 ? .6 : 0)); }   /* 26/11/2026 (Arnold): todos batem 25% mais devagar; a Destreza (luvas, arma, pedras) acelera até +60% */
 /* 23/11/2026 (Arnold): o ataque do Xamã estava igual ao do Necromante (bola mágica). 3 opções novas, todas guiadas (acertam o alvo):
    terra = espinhos de pedra saem do chão embaixo do inimigo · vento = redemoinho que atravessa a fila de inimigos · cipo = chicote de cipó que puxa o inimigo.
    Melhora quando alguma habilidade do Xamã chega no nível 3 (pega mais inimigos) e no nível 5 (SUPER: também atordoa rapidinho). */
@@ -11826,7 +11829,7 @@ function doAttack(){
    Na rampa a diferença é pequena e o golpe pega. o.y = altura de onde saiu o golpe (padrão: o herói); o.anyY ignora. */
 const NC_ESQ = {guard:.9, guardCd:1, reach:8, charge:.3, chargeDmg:.8, stun:1.2};
 /* 26/11/2026 (Arnold): esquiva própria das outras 7 classes (sugestões do Claude) */
-const NC_ESQ2 = {warrior:{dmg:.4, kb:13}, archer:{range:12}, mage:{rad:3.5, frio:1.6}, necro:{dmg:.35, cura:.03}, shaman:{rad:5, prende:1.5}, priest:{cura:.08}, monk:{dmg:1.2, kb:10, alc:2.8}};   // esquivas: escudo do Paladino (s), alcance do avanço da Assassina (m), investida do Bárbaro (s, dano, atordoar s)
+const NC_ESQ2 = {warrior:{dmg:.4, kb:13}, archer:{range:12, espinho:.5, lento:1.5, dura:4}, mage:{rad:3.5, frio:1.6}, necro:{segura:2, rad:5, maxPorGrade:[1, 2, 3, 4, 5, 5]}, shaman:{rad:5, lobo:2, rapido:1.8}, priest:{cura:.08}, monk:{dmg:1.2, kb:10, alc:2.8}};   // esquivas: escudo do Paladino (s), alcance do avanço da Assassina (m), investida do Bárbaro (s, dano, atordoar s)
 const NC_STAB = {back:1.6, bleed:.2, bleedT:4, afterShadow:1.5};   // estocada: pelas costas 60% a mais; sangramento = 20% do ataque por segundo, 4 s
 const Y_TOL = 1.6;
 const yOk = (ey, oy, tol) => Math.abs(ey - oy) <= (tol || Y_TOL);
@@ -11838,13 +11841,19 @@ function ncEsquiva(cls){
   const olha = t => { if(t) P.face = P.targetFace = Math.atan2(t.pos.x - P.pos.x, t.pos.z - P.pos.z); };
   P.dashTg = null; P.dashHits = null;
   if(cls === 'warrior'){ P.dashT = .22; P.dashCd = .8; P.inv = Math.max(P.inv, .4); P.dashHits = new Set(); P.dashMode = 'empurra'; floatText(P.pos, 'Investida!', 'block'); SFX.dash(); }
-  else if(cls === 'archer'){ const t = nearestEnemy(E.range), b = longe(t); P.dashDir.set(b.x, 0, b.z); P.dashT = .2; P.dashCd = .8; P.inv = Math.max(P.inv, .42); olha(t);
-    P.dashEnd = () => { const t2 = (t && !t.dead && !t.dying) ? t : nearestEnemy(E.range); olha(t2); if(t2){ P.atkCd = 0; doAttack(); } }; SFX.dash(); }
+  else if(cls === 'archer'){   /* 26/11 (Arnold escolheu B): rolamento para o lado e armadilha de espinhos onde ela estava */
+    const t = nearestEnemy(E.range); let lx = -fw.z, lz = fw.x; if(t){ const dx = t.pos.x - P.pos.x, dz = t.pos.z - P.pos.z, d = Math.hypot(dx, dz) || 1; lx = -dz/d; lz = dx/d; }
+    ncTrap(P.pos.x, P.pos.z); P.dashDir.set(lx, 0, lz); P.dashT = .2; P.dashCd = .85; P.inv = Math.max(P.inv, .42); olha(t); floatText(P.pos, 'Armadilha!', 'block'); SFX.dash(); }
   else if(cls === 'mage'){ const ox = P.pos.x, oz = P.pos.z; burst(P.pos, 0x9fe8ff, 16, 3, 4, 1.2);
     for(const e of enemies){ if(e.dead || e.dying || (e.kind === 'boss' && !e.awake)) continue; if(Math.hypot(e.pos.x - ox, e.pos.z - oz) < E.rad + e.r) hitEnemy(e, .15, {freeze:E.frio, kb:0, noProc:true, quiet:true}); }
     P.pos.x += P.dashDir.x*6.5; P.pos.z += P.dashDir.z*6.5; clampPos(P.pos, bossActive);
     burst(P.pos, 0x9fe8ff, 14, 3, 4, 1); P.inv = Math.max(P.inv, .35); P.dashCd = .9; floatText(P.pos, 'Gelo!', 'block'); SFX.bolt(); }
-  else if(cls === 'necro'){ P.dashT = .3; P.dashCd = .95; P.inv = Math.max(P.inv, .5); P.dashHits = new Set(); P.dashMode = 'nevoa'; burst(P.pos, 0x8a3dff, 16, 3, 4, 1.2); SFX.dash(); }
+  else if(cls === 'necro'){   /* 26/11 (Arnold escolheu B): recua e deixa um esqueleto no lugar, que segura os monstros perto por 2 s */
+    const ox = P.pos.x, oz = P.pos.z, b = longe(nearestEnemy(8)); try{ spawnAlly(ox, oz); }catch(_){}
+    for(const e of enemies){ if(e.dead || e.dying || (e.kind === 'boss' && !e.awake)) continue; if(Math.hypot(e.pos.x - ox, e.pos.z - oz) < E.rad + e.r) hitEnemy(e, .05, {stun:E.segura, freeze:E.segura, kb:0, noProc:true, quiet:true}); }
+    P.dashDir.set(b.x, 0, b.z); P.dashT = .22; P.dashCd = 1; P.inv = Math.max(P.inv, .45); burst(P.pos, 0x8a3dff, 16, 3, 4, 1.2); floatText(P.pos, 'Levante-se!', 'heal'); SFX.dash(); }
+  else if(cls === 'shaman' && E.lobo){   /* 26/11 (Arnold escolheu B): vira lobo espiritual e corre bem rápido por 2 s */
+    P.loboT = E.lobo; P.dashCd = 1.4; P.inv = Math.max(P.inv, .3); burst(P.pos, 0x7ad9a0, 20, 4, 4, 1.3); floatText(P.pos, 'Lobo espiritual!', 'block'); SFX.dash(); }
   else if(cls === 'shaman'){ let n = 0;
     for(const e of enemies){ if(e.dead || e.dying || (e.kind === 'boss' && !e.awake)) continue; if(Math.hypot(e.pos.x - P.pos.x, e.pos.z - P.pos.z) < E.rad + e.r){ if(hitEnemy(e, .1, {stun:E.prende, freeze:E.prende, kb:0, noProc:true, quiet:true}) !== false){ n++; burst(e.pos, 0x6fbf4a, 8, 2, 3, 1); } } }
     const b = longe(nearestEnemy(E.rad)); P.dashDir.set(b.x, 0, b.z); P.dashT = .1; P.dashCd = .9; P.inv = Math.max(P.inv, .3);
@@ -12104,8 +12113,23 @@ function spawnAlly(x, z){
   cr.root.position.set(p.x, heightAt(p.x, p.z), p.z); scene.add(cr.root); burst(cr.root.position, 0x6aff9a, 12, 3, 5, .3);
   monAttach(cr, 'f_Ghost_Skull', {boss:true});
   allies.push({cr, pos:cr.root.position, life:12, atkT:.5, walk:0});
+  /* 26/11/2026 (Arnold): Necromante tem no máximo 1 esqueleto no No Grade e libera mais 1 a cada grade da arma, até 5 */
+  if(save.cls === 'necro'){ let g = 0; try{ const w = equipped('weapon'); g = w ? GR_OF[w.tier] || 0 : 0; }catch(_){} const mx = NC_ESQ2.necro.maxPorGrade[g] || 1;
+    while(allies.length > mx){ const o = allies.shift(); burst(o.pos, 0x6aff9a, 8, 3, 4, .5); removeObj(o.cr.root); } }
 }
+/* 26/11/2026: armadilha de espinhos da Arqueira: fica 4 s no chão; quem pisar leva dano e fica lento */
+const ncTraps = [];
+function ncTrap(x, z){ const g = new T.Group(), m = new T.MeshStandardMaterial({color:0x8a6a3a, roughness:.8}), tip = new T.MeshStandardMaterial({color:0xd8e0e8, metalness:.4, roughness:.4});
+  const base = new T.Mesh(new T.CylinderGeometry(.9, .95, .08, 12), m); g.add(base);
+  for(let k = 0; k < 7; k++){ const a = k/7*Math.PI*2, c = new T.Mesh(new T.ConeGeometry(.09, .42, 6), tip); c.position.set(Math.sin(a)*.55, .22, Math.cos(a)*.55); g.add(c); }
+  const c0 = new T.Mesh(new T.ConeGeometry(.1, .5, 6), tip); c0.position.y = .26; g.add(c0);
+  g.position.set(x, heightAt(x, z) + .02, z); scene.add(g); ncTraps.push({g, x, z, t:NC_ESQ2.archer.dura, hit:new Set()}); }
+function ncTrapsUpdate(dt){ for(let i = ncTraps.length - 1; i >= 0; i--){ const tr = ncTraps[i]; tr.t -= dt;
+    if(tr.t <= 0 || P.dead){ removeObj(tr.g); ncTraps.splice(i, 1); continue; } if(tr.t < 1) tr.g.visible = Math.floor(tr.t*10) % 2 === 0;
+    for(const e of enemies){ if(e.dead || e.dying || tr.hit.has(e) || (e.kind === 'boss' && !e.awake)) continue;
+      if(Math.hypot(e.pos.x - tr.x, e.pos.z - tr.z) < 1.1 + e.r){ tr.hit.add(e); hitEnemy(e, NC_ESQ2.archer.espinho, {freeze:NC_ESQ2.archer.lento, kb:0, noProc:true}); burst(e.pos, 0xd8e0e8, 6, 2, 3, 1); } } } }
 function updateAllies(dt){
+  try{ ncTrapsUpdate(dt); }catch(_){}
   for(let i = allies.length-1; i >= 0; i--){
     const a = allies[i], cr = a.cr; a.life -= dt; a.atkT -= dt; monUpdate(a, dt);
     if(a.life <= 0 || P.dead){ burst(a.pos, 0x6aff9a, 10, 3, 4, .5); removeObj(cr.root); allies.splice(i, 1); continue; }
@@ -12285,7 +12309,7 @@ function usePotRes(){
   if(!(save.potRes > 0)){ floatText(P.pos, 'Sem ' + ncPotResName().toLowerCase(), 'hurt'); return; }
   if(P.pot2T > 0){ floatText(P.pos, 'Poção em ' + Math.ceil(P.pot2T) + ' s', 'hurt'); return; }
   const m = ncResMax(); if(P.res >= m){ floatText(P.pos, ncRes() === 'mp' ? 'Mana cheia' : 'Stamina cheia', 'hurt'); return; }
-  save.potRes--; P.pot2T = 4; const g = Math.round(m*.6); P.res = Math.min(m, P.res + g);
+  save.potRes--; P.pot2T = 8; const g = Math.round(m*.6); P.res = Math.min(m, P.res + g);
   floatText(P.pos, '+' + g + (ncRes() === 'mp' ? ' mana' : ' stamina'), 'heal'); SFX.potion(); burst(P.pos, ncRes() === 'mp' ? 0x4a9aff : 0x6ae05a, 10, 2, 5, 1);
 }
 /* LÁPIDE (22/11, Arnold): ao morrer não perde Adena; tudo da mochila que não está equipado fica numa lápide onde você caiu.
@@ -12780,7 +12804,8 @@ function updatePlayer(dt){
         if(!t.dead && !t.dying && Math.hypot(t.pos.x - P.pos.x, t.pos.z - P.pos.z) < t.r + 2){ P.swingT = P.swingDur = .16; P.backE = t; P.backUntil = clock + .3;
           if(hitEnemy(t, 1, {nx:P.dashDir.x, nz:P.dashDir.z, kb:2}) !== false && !t.dead && !t.dying){ t.burnT = NC_STAB.bleedT; t.burnAcc = t.burnAcc || 0; t.burnDps = Math.max(t.burnDps || 0, S.atk*NC_STAB.bleed); t.burnCol = 0xc81e2a; } } } }
     else if(P.guardT > 0){ P.guardT -= dt; P.blockT = Math.max(P.blockT, .05); const sp = S.spd*.3*wxSlow(); vx = mx*sp; vz = mz*sp; }
-    else { const sp = S.spd*(P.mounted ? 2 : P.swingT > 0 ? .55 : P.castT > 0 ? .7 : 1)*wxSlow(); vx = mx*sp; vz = mz*sp; }
+    else { const sp = S.spd*(P.mounted ? 2 : P.swingT > 0 ? .55 : P.castT > 0 ? .7 : 1)*wxSlow()*(P.loboT > 0 ? NC_ESQ2.shaman.rapido : 1); vx = mx*sp; vz = mz*sp;
+      if(P.loboT > 0){ P.loboT -= dt; if(Math.random() < .5) burst(P.pos, 0x7ad9a0, 1, .6, 1, .7); } }
     P.pos.x += vx*dt; P.pos.z += vz*dt;
     clampPos(P.pos, bossActive, P.mounted ? .8 : .45);
     hero.root.position.y = heightAt(P.pos.x, P.pos.z);
@@ -12832,7 +12857,7 @@ function updatePlayer(dt){
   hero.auras.forEach((a, i) => a.rotation.z += dt*(i%2 ? -1.5 : 1.5));
   if(S.regen) P.hp = Math.min(S.hp, P.hp + S.hp*S.regen*dt);
   /* 25/11/2026 (Arnold): a vida volta sozinha em todas as classes: devagar na luta, mais rápido depois de 4 s sem levar dano */
-  if(!P.dead && P.hp < S.hp){ const calm = clock - (P.hurtT || -99) > 4; P.hp = Math.min(S.hp, P.hp + S.hp*(calm ? .025 : .004)*dt); }
+  if(!P.dead && P.hp < S.hp){ const calm = clock - (P.hurtT || -99) > 4; P.hp = Math.min(S.hp, P.hp + S.hp*(calm ? .025 : 0)*dt); }   /* 26/11/2026 (Arnold): só volta fora da luta */
   if(P.potT > 0) P.potT -= dt;
   if(P.pot2T > 0) P.pot2T -= dt;
 }
