@@ -6194,7 +6194,7 @@ const freshSave = () => ({ncEp:NC_EP, level:1, xp:0, gold:0, potions:3, inv:[], 
   mats:{refino:3, superior:0, ancestral:0, selo:0, bencao:0, broca:1, metal:5}, gems:{}, gemPity:{}, frags:[0,0,0,0,0,0,0,0,0,0], coins:5, cnt:{}, mq:{}, seq:{step:0, lvl:0}, pityEx:{}, evBought:{}, worldWins:{}});
 let save = loadSave();
 /* Configurações ficam guardadas por aparelho (chave nc-prefs): entrar com código, a nuvem ou restaurar cópia não desconfiguram mais gráfico, som, câmera e controles */
-const NC_PREF_KEYS = ['keys','gfx','gfxAuto','gfxV4','gfxo','ncAuto','zoom','muted','vol','rt','real','perf','swapCtl'];
+const NC_PREF_KEYS = ['keys','gfx','gfxAuto','gfxV4','gfxV5','gfxo','ncAuto','zoom','muted','vol','rt','real','perf','swapCtl'];
 try{ const pf = JSON.parse(localStorage.getItem('nc-prefs')); if(pf) NC_PREF_KEYS.forEach(k => { if(k in pf) save[k] = pf[k]; }); }catch(e){}
 function ncPrefSave(){ try{ const pf = {}; NC_PREF_KEYS.forEach(k => { if(save[k] !== undefined) pf[k] = save[k]; }); localStorage.setItem('nc-prefs', JSON.stringify(pf)); return true; }catch(e){ return false; } }
 if(!save.nc80){ save.level = Math.min(80, Math.max(1, Math.round(1 + ((save.level || 1) - 1)*79/43))); save.nc80 = 1; }
@@ -6583,6 +6583,8 @@ function detectChip(g){
 const CHIP = detectChip();
 if(save.gfx === 'economia') save.gfx = 'minimo';
 if(!save.gfxV4){ save.gfxAuto = true; save.gfxV4 = true; }
+/* 25/11/2026 (Arnold): todo aparelho começa no gráfico mais leve (Muito leve), sem ajuste automático; quem quiser vai subindo. A escolha fica guardada no aparelho. */
+if(!save.gfxV5){ save.gfx = 'minimo'; save.gfxAuto = false; save.ncAuto = null; save.gfxo = null; save.gfxV5 = true; }
 if(save.gfxAuto || !GFX_NAMES.includes(save.gfx)){ save.gfx = CHIP.preset; save.gfxAuto = true; }
 if(COARSE && (save.gfx === 'alto' || save.gfx === 'ultra')) save.gfx = 'medio';   /* 23/11 pacote leve: Alto e Ultra só no computador */
 persist();
