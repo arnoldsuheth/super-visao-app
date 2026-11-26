@@ -340,16 +340,30 @@ const _sub=$('fOc').onsubmit;$('fOc').onsubmit=e=>{if(modoAt&&!fotoDados){e.prev
 // 26/11/2026 (pedido do Arnold): Documentos da loja (3 grupos). Cada arquivo abre ou vai direto para o WhatsApp
 let DOCS=null;
 async function docsCarregar(){if(DOCS)return DOCS;try{DOCS=await (await fetch('docs/lista.json?'+Date.now())).json()}catch(e){DOCS={}}return DOCS}
-async function docsEnviar(d,b){const url=new URL('docs/'+d.arquivo,location.href).href;const txt=d.nome;b.disabled=true;
- try{const r=await fetch(url);const f=new File([await r.blob()],d.arquivo.split('/').pop(),{type:/\.xlsx$/i.test(d.arquivo)?'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':'application/pdf'});
-  if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:txt});return}}catch(e){if(e&&e.name==='AbortError')return}finally{b.disabled=false}
- location.href='https://wa.me/?text='+encodeURIComponent(txt+': '+url)}
+// arquivos trancados: ficam embaralhados no site; a chave só vem para quem entrou com o código da loja
+const MIME={pdf:'application/pdf',docx:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',doc:'application/msword',xlsx:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'};
+const nomeArq=d=>d.nomeArquivo||d.arquivo.split('/').pop(),tipoArq=d=>MIME[(nomeArq(d).split('.').pop()||'').toLowerCase()]||'application/octet-stream';
+let docChave=null;const un64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+async function docsBlob(d){
+ if(!d.cifrado){const r=await fetch('docs/'+d.arquivo);if(!r.ok)throw Error('arquivo');return new Blob([await r.blob()],{type:tipoArq(d)})}
+ if(!docChave){const k=await rpc('equipe_doc_chave',{p_cfg:CFG,p_codigo:codigo});if(!k)throw Error('Entre de novo com o código da loja para abrir este arquivo.');docChave=await crypto.subtle.importKey('raw',un64(k),'AES-GCM',false,['decrypt'])}
+ const r=await fetch('docs/'+d.cifrado);if(!r.ok)throw Error('arquivo');const u=new Uint8Array(await r.arrayBuffer());
+ return new Blob([await crypto.subtle.decrypt({name:'AES-GCM',iv:u.slice(0,12)},docChave,u.slice(12))],{type:tipoArq(d)})}
+async function docsAbrir(d,b){const pdf=tipoArq(d)==='application/pdf';const w=pdf?window.open('','_blank'):null;b.disabled=true;
+ try{const u=URL.createObjectURL(await docsBlob(d));if(pdf){if(w)w.location.href=u;else location.href=u}else{const a=document.createElement('a');a.href=u;a.download=nomeArq(d);document.body.append(a);a.click();a.remove()}}
+ catch(e){if(w)w.close();aviso(e.message&&e.message!=='arquivo'?e.message:'Não consegui abrir agora. Tente de novo.')}finally{b.disabled=false}}
+async function docsEnviar(d,b){b.disabled=true;
+ try{const f=new File([await docsBlob(d)],nomeArq(d),{type:tipoArq(d)});
+  if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:d.nome});return}
+  if(d.cifrado){aviso('Neste aparelho não dá para enviar o arquivo direto. Toque em Abrir, salve e envie pelo WhatsApp.');return}}
+ catch(e){if(e&&e.name==='AbortError')return;if(d.cifrado){aviso(e.message&&e.message!=='arquivo'?e.message:'Não consegui preparar o arquivo.');return}}finally{b.disabled=false}
+ location.href='https://wa.me/?text='+encodeURIComponent(d.nome+': '+new URL('docs/'+d.arquivo,location.href).href)}
 document.querySelectorAll('.docb').forEach(b=>b.onclick=async()=>{const g=b.dataset.g,l=$('dl-'+g),abre=l.classList.contains('oculto');
  document.querySelectorAll('.docl').forEach(x=>x.classList.add('oculto'));document.querySelectorAll('.docb').forEach(x=>x.setAttribute('aria-expanded','false'));if(!abre)return;
  l.classList.remove('oculto');b.setAttribute('aria-expanded','true');const D=await docsCarregar(),L=D[g]||[];
  l.innerHTML=L.length?'':'<p class="docv">Ainda não há arquivos aqui.</p>';
  L.forEach(d=>{const it=document.createElement('div');it.className='doci';it.innerHTML='<b></b><div class="bts"><a target="_blank" rel="noopener">Abrir</a><button type="button"><svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-12.3 7.4L3 21l2.1-5.6A8.4 8.4 0 1 1 21 11.5z"/></svg>Enviar no WhatsApp</button></div>';
-  it.querySelector('b').textContent=d.nome;it.querySelector('a').href='docs/'+d.arquivo;const bt=it.querySelector('button');bt.onclick=()=>docsEnviar(d,bt);l.append(it)})});
+  it.querySelector('b').textContent=d.nome;const ab=it.querySelector('a');ab.href='#';ab.removeAttribute('target');ab.onclick=ev=>{ev.preventDefault();docsAbrir(d,ab)};const bt=it.querySelector('button');bt.onclick=()=>docsEnviar(d,bt);l.append(it)})});
 
 // emblema D (nome GERENTES animado)
 const D2=`<defs>

@@ -1,5 +1,46 @@
 {
- "gerenciais": [],
+ "gerenciais": [
+  {
+   "nome": "Documentos para admissão (lista)",
+   "cifrado": "gerenciais/documentos-para-admissao.enc",
+   "nomeArquivo": "Documentos para admissao.docx"
+  },
+  {
+   "nome": "Formulário de cadastro para admissão",
+   "cifrado": "gerenciais/formulario-cadastro-admissao.enc",
+   "nomeArquivo": "Formulario cadastro admissao.doc"
+  },
+  {
+   "nome": "Avaliação do período de experiência",
+   "cifrado": "gerenciais/avaliacao-periodo-experiencia.enc",
+   "nomeArquivo": "Avaliacao periodo de experiencia.pdf"
+  },
+  {
+   "nome": "Termo de uso do celular",
+   "cifrado": "gerenciais/termo-uso-de-celular.enc",
+   "nomeArquivo": "Termo uso do celular.docx"
+  },
+  {
+   "nome": "Modelo de advertência",
+   "cifrado": "gerenciais/modelo-advertencia.enc",
+   "nomeArquivo": "Modelo advertencia.docx"
+  },
+  {
+   "nome": "Carta de pedido de demissão",
+   "cifrado": "gerenciais/carta-pedido-de-demissao.enc",
+   "nomeArquivo": "Carta pedido de demissao.pdf"
+  },
+  {
+   "nome": "Carta de oposição ao sindicato",
+   "cifrado": "gerenciais/carta-de-oposicao.enc",
+   "nomeArquivo": "Carta de oposicao.pdf"
+  },
+  {
+   "nome": "Benefício de descontos para funcionários",
+   "cifrado": "gerenciais/beneficio-descontos-funcionarios.enc",
+   "nomeArquivo": "Beneficio descontos funcionarios.docx"
+  }
+ ],
  "parede": [
   {
    "nome": "Atendimento prioritário e peças em promoção sem desconto",
@@ -30,6 +71,15 @@
   {
    "nome": "Controle de saída e entrada de mercadoria (planilha)",
    "arquivo": "caixa/controle-saida-e-entrada-de-mercadoria.xlsx"
+  },
+  {
+   "nome": "Recibo de domingo trabalhado",
+   "arquivo": "caixa/recibo-de-domingo-trabalhado.pdf"
+  },
+  {
+   "nome": "Setores e contatos da Indus (com quem falar)",
+   "cifrado": "caixa/setores-e-contatos.enc",
+   "nomeArquivo": "Setores e contatos Indus.pdf"
   }
  ]
 }
