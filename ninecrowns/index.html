@@ -6302,7 +6302,13 @@ const exChance = id => (save.pityEx[id] || 0) >= CFG.pity.exHard ? 1 : Math.min(
 const pct = v => Math.round(v*100) + '%';
 const byId = id => save.inv.find(i => i.id === id);
 function equipped(slot){ const id = save.eq[slot]; if(id == null) return null; const it = byId(id); if(!it){ delete save.eq[slot]; return null; } return it; }
-const isEquipped = it => save.eq[it.slot] === it.id;
+const ncDual = () => save.cls === 'assassin';   /* 25/11 (Arnold): a Assassina usa 2 adagas, uma em cada mão (save.eq.off = mão esquerda) */
+const NC_OFF_K = .5;   /* a adaga da mão esquerda soma metade dos atributos dela */
+const isEquipped = it => save.eq[it.slot] === it.id || (it.slot === 'weapon' && save.eq.off === it.id);
+const ncUnEq = it => { for(const k in save.eq) if(save.eq[k] === it.id) delete save.eq[k]; };
+const ncEqSlots = () => { const a = ncSlots(); if(ncDual()) a.splice(a.indexOf('weapon') + 1, 0, 'off'); return a; };
+const ncEqName = sl => sl === 'off' ? 'Mão esquerda' : ncDual() && sl === 'weapon' ? 'Mão direita' : SLOT_INFO[sl].n;
+const ncLvOk = it => save.level >= grLv(it.tier);
 const ownsSet = t => GATE_ARMOR.every(s => save.inv.some(i => i.slot === s && i.tier >= t));
 function gearPower(){ let s = 0; for(const sl of [...ARMOR, 'weapon']){ const it = equipped(sl); s += it ? it.tier + 1 : 0; } return s/(ARMOR.length + 1); }
 function bonuses(){
@@ -6323,6 +6329,7 @@ function stats(){
              atkPct:0, leech:0, stunCh:0, multi:0, elem:null, freezeCh:0, chainCh:0, burn:false, hpPct:0, defPct:0, spdPct:0, dmgRes:0, elemRes:0, pen:0, luck:0};
   const addG = (k, v) => s[k] = (s[k] || 0) + v;
   for(const slot of SLOTS){ const it = equipped(slot); if(!it) continue; const b = itemStats(it); for(const k in b){ if(k === 'elem') s.elem = b.elem; else s[k] += b[k]; } gemFx(it, addG); }
+  if(ncDual()){ const o = equipped('off'); if(o && o.id !== save.eq.weapon){ const b = itemStats(o); for(const k in b){ if(k === 'elem'){ if(!s.elem) s.elem = b.elem; } else if(typeof b[k] === 'number') s[k] = (s[k] || 0) + b[k]*NC_OFF_K; else s[k] = s[k] || b[k]; } gemFx(o, addG); } }   // 25/11: adaga da mão esquerda
   s.hp *= c.hp*(1 + s.hpPct); s.atk *= c.atk*(1 + s.atkPct); s.def *= c.def*(1 + s.defPct); s.spd *= c.spd*(1 + s.spdPct); s.block += c.block;
   const sp = ncSpec(); if(sp) sp.fx(s);
   try{ const pd = ncPetOn(); if(pd) pd.fx(s); }catch(e){}
@@ -6372,11 +6379,18 @@ function randomSlot(){ const r = Math.random(); if(r < .2) return 'weapon'; if(r
 function addItem(it){
   save.inv.push(it);
   if(!save.eq[it.slot] && itemOk(it) && save.level >= grLv(it.tier)) save.eq[it.slot] = it.id;
+  else if(it.slot === 'weapon' && ncDual() && !save.eq.off && save.eq.weapon !== it.id && itemOk(it) && ncLvOk(it)) save.eq.off = it.id;   // 2ª adaga vai direto para a mão esquerda
   return true;
 }
 function equipItem(it){
   if(!itemOk(it)){ try{ banner('Só ' + CLASSES[itemCls(it)].name + ' pode usar', itemName(it), 'danger'); }catch(e){} return; }
   if(save.level < grLv(it.tier)){ try{ banner('Nível ' + grLv(it.tier) + ' para usar ' + GR(it.tier), 'Você está no nível ' + save.level, 'danger'); }catch(e){} return; }
+  if(it.slot === 'weapon' && ncDual()){   /* 25/11: 1ª adaga na mão direita, 2ª na esquerda; com as duas cheias, troca a mais fraca */
+    if(isEquipped(it)) return;
+    if(!equipped('weapon')){ save.eq.weapon = it.id; return; }
+    if(!equipped('off')){ save.eq.off = it.id; try{ banner('Adaga na mão esquerda', itemName(it)); }catch(e){} return; }
+    const a = equipped('weapon'), b = equipped('off'), wk = (b.tier*100 + (b.up || 0)) <= (a.tier*100 + (a.up || 0)) ? 'off' : 'weapon';
+    save.eq[wk] = it.id; try{ banner('Trocou a adaga da ' + (wk === 'off' ? 'mão esquerda' : 'mão direita'), itemName(it)); }catch(e){} return; }
   save.eq[it.slot] = it.id;
 }
 function fixWeaponForClass(){
@@ -6386,9 +6400,12 @@ function fixWeaponForClass(){
     const cur = equipped(slot);
     if(cur && itemOk(cur) && save.level >= grLv(cur.tier)) continue;
     delete save.eq[slot];
-    const best = save.inv.filter(i => i.slot === slot && itemOk(i) && save.level >= grLv(i.tier)).sort((a,b) => (b.tier - a.tier) || (b.q - a.q))[0];
+    const best = save.inv.filter(i => i.slot === slot && i.id !== save.eq.off && itemOk(i) && save.level >= grLv(i.tier)).sort((a,b) => (b.tier - a.tier) || (b.q - a.q))[0];
     if(best) save.eq[slot] = best.id;
   }
+  if(!ncDual()){ delete save.eq.off; return; }   // só a Assassina tem mão esquerda
+  const o = equipped('off'); if(o && (o.slot !== 'weapon' || o.id === save.eq.weapon || !itemOk(o) || !ncLvOk(o))) delete save.eq.off;
+  if(!save.eq.off){ const b2 = save.inv.filter(i => i.slot === 'weapon' && i.id !== save.eq.weapon && itemOk(i) && ncLvOk(i)).sort((a,b) => (b.tier - a.tier) || ((b.up || 0) - (a.up || 0)))[0]; if(b2) save.eq.off = b2.id; }
 }
 
 /* ================= AUDIO ================= */
@@ -7945,9 +7962,9 @@ function itemRow(it, actions){
   return `<div class="irow" style="--tc:${css};--rc:${TIERS[it.tier].css}">${ic}<div style="min-width:0"><div class="iname ${it.tier === 9 ? 'prism' : ''}">${itemName(it)}${skDots(it)}<small>${TIERS[it.tier].s} ${TIERS[it.tier].n}</small></div><div class="istat">${statText(itemStats(it))}</div>${isEquipped(it) ? '' : cmpText(it)}</div><div class="iact">${actions}</div></div>`;
 }
 function renderGear(){
-  $('#eqGrid').innerHTML = ncSlots().map(slot => {
+  $('#eqGrid').innerHTML = ncEqSlots().map(slot => {
     const it = equipped(slot);
-    return `<button class="eq ${it ? 'has' : ''}" data-uneq="${slot}" style="--tc:${it ? TIERS[it.tier].css : '#3a405c'}" ${it ? '' : 'disabled'} title="${it ? 'Tirar ' + itemName(it) : 'Vazio'}">${it ? pieceImg(it.tier, slot, 'ps-eq', it.wtype, it.up) : slotIcon(slot)}<span class="en">${it ? itemName(it) : SLOT_INFO[slot].n}</span><span class="es" ${it ? `style="color:${TIERS[it.tier].css}"` : ''}>${it ? TIERS[it.tier].sc + ' · ' + TIERS[it.tier].n : 'vazio'}</span></button>`;
+    return `<button class="eq ${it ? 'has' : ''}" data-uneq="${slot}" style="--tc:${it ? TIERS[it.tier].css : '#3a405c'}" ${it ? '' : 'disabled'} title="${it ? 'Tirar ' + itemName(it) : 'Vazio'}">${it ? pieceImg(it.tier, it.slot, 'ps-eq', it.wtype, it.up) : slotIcon(slot === 'off' ? 'weapon' : slot)}<span class="en">${it ? (slot === 'off' || (slot === 'weapon' && ncDual()) ? ncEqName(slot) + ': ' : '') + itemName(it) : ncEqName(slot)}</span><span class="es" ${it ? `style="color:${TIERS[it.tier].css}"` : ''}>${it ? TIERS[it.tier].sc + ' · ' + TIERS[it.tier].n : 'vazio'}</span></button>`;
   }).join('');
   const B = bonuses(), c = B.counts;
   let bl = `<div class="bon"><b>Peças vestidas:</b> ${TIERS.map((t, i) => c[i] ? `<span style="color:${t.css}">${c[i]} ${t.name}</span>` : '').filter(Boolean).join(' · ') || 'nenhuma'}<small>As combinações misturam peças de grades diferentes: Grade C, Grade B ou A e Ródio (A) ou Rutênio (S).</small></div>`;
@@ -8097,15 +8114,19 @@ function ncPopHTML(){ const pz = mode !== 'hub';
   else { const it = save.inv.find(i => String(i.id) === String(bagSel) && !isEquipped(i)); if(it){ const wrong = !itemOk(it);
     const out = ncBreak(it);
     const cur = equipped(it.slot);
-    det = itemRow(it, '<button class="btn sm primary" data-bagequip="' + it.id + '" ' + (wrong || save.level < grLv(it.tier) ? 'disabled' : '') + '>' + (wrong ? 'Só ' + CLASSES[itemCls(it)].name : save.level < grLv(it.tier) ? 'Nível ' + grLv(it.tier) : 'Equipar') + '</button>')
-      + (cur ? '<div class="pop-eq"><div class="eyebrow">Você está usando</div>' + itemRow(cur, '') + '</div>' : '<div class="pop-eq istat">Nada equipado neste lugar: esta peça só soma.</div>')
+    det = itemRow(it, '<button class="btn sm primary" data-bagequip="' + it.id + '" ' + (wrong || save.level < grLv(it.tier) ? 'disabled' : '') + '>' + (wrong ? 'Só ' + CLASSES[itemCls(it)].name : save.level < grLv(it.tier) ? 'Nível ' + grLv(it.tier) : it.slot === 'weapon' && ncDual() && cur && !equipped('off') ? 'Equipar na mão esquerda' : 'Equipar') + '</button>')
+      + (cur ? '<div class="pop-eq"><div class="eyebrow">Você está usando' + (it.slot === 'weapon' && ncDual() ? ' (mão direita)' : '') + '</div>' + itemRow(cur, '') + (it.slot === 'weapon' && ncDual() && equipped('off') ? '<div class="eyebrow">Mão esquerda</div>' + itemRow(equipped('off'), '') : '') + '</div>' : '<div class="pop-eq istat">Nada equipado neste lugar: esta peça só soma.</div>')
       + '<div class="bag-act"><button class="btn sm" data-bagsell="' + it.id + '">Vender<small>' + adenaTxt(sellValue(it)) + '</small></button><button class="btn sm" data-bagbrk="' + it.id + '">Desmanchar<small>vira material</small></button><button class="btn sm' + (bagConfirm === it.id ? ' danger' : '') + '" data-bagdel="' + it.id + '">' + (bagConfirm === it.id ? 'Toque de novo<small>some para sempre</small>' : 'Excluir<small>joga fora</small>') + '</button></div><div class="bag-brk">Desmanchar dá: <b>' + ncBreakTxt(out) + '</b> (materiais da forja)</div>'; } }
   return det; }
 function ncPopDraw(){ let el = document.getElementById('ncPop'); if(!el){ el = document.createElement('div'); el.id = 'ncPop'; document.body.appendChild(el); }
   const vis = [...document.querySelectorAll('.bgrid')].some(h => h.offsetParent !== null || h.getClientRects().length > 0);   /* 23/11: valia só para 2 listas; na mochila da fase o cartão do item não abria */
   const det = bagSel !== null && vis ? ncPopHTML() : '';
   el.hidden = !det; el.innerHTML = det ? '<div class="pop-bg" data-bagclose></div><div class="pop-box"><button class="pop-x" data-bagclose aria-label="Fechar">✕</button>' + det + '</div>' : ''; }
-function ncBagRefresh(){ try{ if(mode === 'hub'){ applyGear(hero); renderHub(); } else { try{ refreshGearInStage(); }catch(e){} renderPauseGear(); } }catch(e){} }
+function ncBagRefresh(){ try{   /* 25/11 (Arnold): dentro da fase a Mochila é a janela da cidade por cima do jogo; antes só a pausa era redesenhada e a janela aberta ficava parada até fechar e abrir */
+  if(mode === 'stage' && P && P.S){ const r = P.hp/P.S.hp; P.S = stats(); P.hp = Math.max(1, Math.min(P.S.hp, Math.round(P.S.hp*r))); }
+  try{ applyGear(hero); }catch(e){} persist();
+  if(mode === 'hub' || !$('#hub').hidden) renderHub();
+  if(mode === 'stage') renderPauseGear(); }catch(e){} }
 document.addEventListener('click', e => { const b = e.target.closest('[data-bsel],[data-bagbuy],[data-bagsort],[data-bagsell],[data-bagbrk],[data-bagdel],[data-bagclose],[data-bagequip]');
   if(!b){ if(bagSel !== null && !e.target.closest('#ncPop')){ bagSel = null; bagConfirm = 0; ncPopDraw(); } return; } const d = b.dataset;
   if(d.bagclose !== undefined){ bagSel = null; bagConfirm = 0; ncPopDraw(); return; }
@@ -8418,11 +8439,11 @@ function fuseHTML(){
 function forge(slot){
   const f = fuseInputs(slot); if(!f) return; const cost = fuseCost(f.t); if(save.gold < cost) return;
   save.gold -= cost;
-  f.items.forEach(it => { if(isEquipped(it)) delete save.eq[slot]; returnGems(it); save.inv = save.inv.filter(i => i !== it); });
+  f.items.forEach(it => { ncUnEq(it); returnGems(it); save.inv = save.inv.filter(i => i !== it); });
   const last = f.items[2], nu = newItem(slot, f.t + 1, {wtype:last.wtype, v:last.v, cls:save.cls, boss:true});
   nu.up = Math.max(...f.items.map(i => i.up || 0)) >= 10 ? 5 : 0;
   save.inv.push(nu); save.eq[slot] = nu.id;
-  persist(); SFX.drop(); applyGear(hero); renderHub();
+  persist(); SFX.drop(); ncBagRefresh();
   banner('Fundido: ' + itemName(nu), TIERS[nu.tier].s + ' ' + TIERS[nu.tier].n);
 }
 function defaultRegion(){ let t = 0; for(let i=0;i<3;i++) if(unlocked(STAGES[i*6])) t = i; return t; }
@@ -8564,6 +8585,7 @@ function kkPaint(h){
   try{ const F = ncFestSave(); if(F.on.cabeca && F.own[F.on.cabeca]) hide.push('_Helmet$', '_Hat$'); }catch(_){}   // 22/11 (Arnold): gorro/chifre de evento fica NO LUGAR do chapéu e do elmo, não por cima
   if(d.model === 'kk_knight' && !k.noShield){ const st = tOf('shield'), want = h.cls === 'paladin' ? (st >= 7 ? 'Spike_Shield' : 'Rectangle_Shield') : st >= 8 ? 'Spike_Shield' : st >= 5 ? 'Rectangle_Shield' : st >= 3 ? 'Badge_Shield' : 'Round_Shield';
     ['Badge_Shield','Rectangle_Shield','Round_Shield','Spike_Shield'].forEach(n => { const i = hide.indexOf(n); if(i >= 0) hide.splice(i, 1); if(n !== want) hide.push('^' + n + '$'); }); }
+  if(h.cls === 'assassin' && tOf('off') < 0) hide.push('^Knife_Offhand$');   // 25/11: sem a 2ª adaga, mão esquerda vazia
   if(h.cls === 'archer' && GR_OF[Math.max(0, tOf('weapon'))] < 2){ const i = hide.indexOf('1H_Crossbow'); if(i >= 0) hide.splice(i, 1); hide.push('2H_Crossbow'); }   // 22/11: NG e D usam a besta pequena; do C em diante, a besta grande
   x.m.traverse(o => { if(o.isMesh){ o.visible = !hide.some(r => new RegExp(r).test(o.name)); if(/_Helmet$|_Hat$/.test(o.name) && !o.userData.kkS){ o.scale.multiplyScalar(1.05); o.userData.kkS = 1; } } });   // elmo um pouco maior: o cabelo nao atravessa mais
   const lk = save.look || {}, col = {};
@@ -8723,7 +8745,8 @@ const NC_WPN_SET = [
   {re:/^2H_Staff$/, cls:'priest', get f(){ const y = ncWSty('priest'); return y ? Array.from({length:10}, (_, t) => 'pw:pri' + y + ':' + t) : ['kk_staff_A','kk_staff_A','rg_DruidStaff_1_1_A','rg_DruidStaff_1_1_A','rg_DruidStaff_2_1_A','rg_DruidStaff_2_1_A','rg_DruidStaff_1_1_B','kk_staff_B','kk_staff_B','kk_staff_B']; }},
   {re:/^2H_Axe$/, not:'shaman', f:['bb_Axe_02','bb_Axe_02','bb_Axe_04','bb_Axe_07','kk_axe_A','kk_axe_A','kk_axe_B','kk_axe_C','kk_axe_C','kk_halberd']},
   {re:/^2H_Staff$/, not:'priest', f:['kk_staff_A','kk_staff_A','rg_DruidStaff_1_1_A','rg_DruidStaff_1_1_A','rg_DruidStaff_2_1_A','rg_DruidStaff_2_1_A','rg_DruidStaff_1_1_B','kk_staff_B','kk_staff_B','kk_staff_B']},
-  {re:/^Knife(_Offhand)?$/, f:['bb_Dagger_01','bb_Dagger_01','bb_Dagger_03','bb_Dagger_03','bb_Dagger_05','bb_Dagger_05','bb_Dagger_07','kk_dagger_A','kk_dagger_A','kk_dagger_B']},
+  {re:/^Knife$/, f:['bb_Dagger_01','bb_Dagger_01','bb_Dagger_03','bb_Dagger_03','bb_Dagger_05','bb_Dagger_05','bb_Dagger_07','kk_dagger_A','kk_dagger_A','kk_dagger_B']},
+  {re:/^Knife_Offhand$/, slot:'off', f:['bb_Dagger_01','bb_Dagger_01','bb_Dagger_03','bb_Dagger_03','bb_Dagger_05','bb_Dagger_05','bb_Dagger_07','kk_dagger_A','kk_dagger_A','kk_dagger_B']},   // cada mão mostra o modelo da própria adaga
   {re:/^(Round|Badge|Rectangle|Spike)_Shield$/, slot:'shield', f:['kk_shield_A','kk_shield_A',null,null,null,null,'kk_shield_B','kk_shield_C','kk_shield_C',null]}];
 
 /* 24/11 (Arnold): armas próprias do Xamã e do Sacerdote, desenhadas por código (o jogo não tinha modelos para eles).
@@ -13364,8 +13387,8 @@ const inspect = {yaw:0, dist:4.6};
   pz.addEventListener('wheel', e => { if(e.target !== pz) return; e.preventDefault(); inspect.dist = clamp(inspect.dist*(e.deltaY > 0 ? 1.1 : .9), 2.2, 9); }, {passive:false}); })();
 function renderPauseGear(){
   const B = bonuses(), S = stats();
-  const eq = ncSlots().map(slot => { const it = equipped(slot);
-    return `<button class="eq ${it ? 'has' : ''}" data-puneq="${slot}" style="--tc:${it ? TIERS[it.tier].css : '#3a405c'}" ${it ? '' : 'disabled'} title="${it ? 'Tirar ' + itemName(it) : 'Vazio'}">${it ? pieceImg(it.tier, slot, 'ps-eq', it.wtype, it.up) : slotIcon(slot)}<span class="en">${it ? itemName(it) : SLOT_INFO[slot].n}</span><span class="es" ${it ? `style="color:${TIERS[it.tier].css}"` : ''}>${it ? TIERS[it.tier].sc + ' · ' + TIERS[it.tier].n : 'vazio'}</span></button>`; }).join('');
+  const eq = ncEqSlots().map(slot => { const it = equipped(slot);
+    return `<button class="eq ${it ? 'has' : ''}" data-puneq="${slot}" style="--tc:${it ? TIERS[it.tier].css : '#3a405c'}" ${it ? '' : 'disabled'} title="${it ? 'Tirar ' + itemName(it) : 'Vazio'}">${it ? pieceImg(it.tier, it.slot, 'ps-eq', it.wtype, it.up) : slotIcon(slot === 'off' ? 'weapon' : slot)}<span class="en">${it ? (slot === 'off' || (slot === 'weapon' && ncDual()) ? ncEqName(slot) + ': ' : '') + itemName(it) : ncEqName(slot)}</span><span class="es" ${it ? `style="color:${TIERS[it.tier].css}"` : ''}>${it ? TIERS[it.tier].sc + ' · ' + TIERS[it.tier].n : 'vazio'}</span></button>`; }).join('');
   const act = [...B.sets.map(t => `<b style="color:${TIERS[t].css}">${SET_NAMES[t]}</b>`), ...COMBOS.filter(k => B.combos.includes(k.id)).map(k => `<b style="color:${k.css}">${k.name}</b>`)];
   const fl = [['all','Todos'], ...ncSlots().map(s => [s, SLOT_INFO[s].n])];
   const list = save.inv.filter(i => !isEquipped(i) && (pFilter === 'all' || i.slot === pFilter))
@@ -13395,9 +13418,9 @@ $('#rightPanel').addEventListener('click', e => {
   if(d.play){ startStage(+d.play, false, false); return; }
   if(d.boss){ startStage(+d.boss, true, false); return; }
   if(d.filter){ invFilter = d.filter; renderHub(); return; }
-  if(d.uneq){ delete save.eq[d.uneq]; persist(); applyGear(hero); renderHub(); return; }
-  if(d.eq){ const it = byId(+d.eq); if(it){ equipItem(it); persist(); applyGear(hero); renderHub(); SFX.item(); } return; }
-  if(d.sell){ const it = byId(+d.sell); if(it){ save.gold += sellValue(it); returnGems(it); if(isEquipped(it)) delete save.eq[it.slot]; save.inv = save.inv.filter(i => i !== it); persist(); SFX.coin(); applyGear(hero); renderHub(); } return; }
+  if(d.uneq){ delete save.eq[d.uneq]; ncBagRefresh(); return; }
+  if(d.eq){ const it = byId(+d.eq); if(it){ equipItem(it); ncBagRefresh(); SFX.item(); } return; }
+  if(d.sell){ const it = byId(+d.sell); if(it){ save.gold += sellValue(it); returnGems(it); ncUnEq(it); save.inv = save.inv.filter(i => i !== it); SFX.coin(); ncBagRefresh(); } return; }
   if(d.forge){ forge(d.forge); return; }
   if(d.ftab){ forgeTab = d.ftab; renderHub(); return; }
   if(d.fsa){ const it = byId(+d.fsa) || byId(d.fsa); if(it && !it.sa){ const c = saCost(it); if(c && (save.mats.lblue || 0) >= c){ save.mats.lblue -= c; it.sa = NC_SA[b.dataset.sak] ? b.dataset.sak : 'atk'; persist(); try{ SFX.drop(); banner('Brilho na arma!', itemName(it) + ' brilha mais e ganhou +8% de ataque.'); }catch(_){} if(isEquipped(it)){ P && (P.S = stats()); applyGear(hero); } } } renderHub(); return; }
@@ -13406,23 +13429,23 @@ $('#rightPanel').addEventListener('click', e => {
   const fit = byId(forgeSel);
   if(d.fup && fit){ const U = UPG[(fit.up || 0) + 1]; const prot = U && ((U.lose && forgeOpt.selo && save.mats.selo > 0) || (U.brk && !U.lose && forgeOpt.bencao && save.mats.bencao > 0));
     if(U && (U.lose || U.brk || U.brkAll) && !prot && forgeConfirm !== fit.id){ forgeConfirm = fit.id; renderHub(); return; }
-    forgeConfirm = 0; const m = tryUpgrade(fit); if(m){ banner(m[0], m[1], m[2]); if(isEquipped(fit)) applyGear(hero); } renderHub(); return; }
+    forgeConfirm = 0; const m = tryUpgrade(fit); if(m){ banner(m[0], m[1], m[2]); } ncBagRefresh(); return; }
   if(d.cslot){ craftSlot = d.cslot; renderHub(); return; }
   if(d.cgr !== undefined){ craftGr = +d.cgr; renderHub(); return; }
-  if(d.craft !== undefined){ craftItem(+d.craft); applyGear(hero); renderHub(); return; }
+  if(d.craft !== undefined){ craftItem(+d.craft); ncBagRefresh(); return; }
   if(d.sfilter){ stoneFilter = d.sfilter; renderHub(); return; }
   if(d.sslot){ shopSlot = d.sslot; renderHub(); return; }
-  if(d.sbuy !== undefined){ const t = +d.sbuy, p = piecePrice(t); if(save.gold >= p && t <= CFG.shopMaxTier && ncRoom(shopSlot)){ save.gold -= p; buyPiece(t); applyGear(hero); } renderHub(); return; }
+  if(d.sbuy !== undefined){ const t = +d.sbuy, p = piecePrice(t); if(save.gold >= p && t <= CFG.shopMaxTier && ncRoom(shopSlot)){ save.gold -= p; buyPiece(t); } ncBagRefresh(); return; }
   if(d.mbuy !== undefined){ const o = SHOP[+d.mbuy], p = o.a; if(save.gold >= p){ save.gold -= p; o.g(); persist(); SFX.coin(); } renderHub(); return; }
   if(d.ncreal){ const n = +d.ncreal, c = n*100000; if(save.gold >= c){ save.gold -= c; save.coins = (save.coins || 0) + n; SFX.coin(); persist(); feed('+' + n + ' Moeda Real', '#ffd24a'); } renderHub(); return; }
   if(d.buypot){ const pp = NC_POT_P, k = d.buypot === 'hp' ? 'potions' : 'potRes'; if(save.gold >= pp && (save[k] || 0) < NC_POT_MAX){ save.gold -= pp; save[k] = (save[k] || 0) + 1; SFX.coin(); persist(); } renderHub(); return; }
   if(d.evbuy){ const E = curEvent(), p = shopPrice(60); if(E && save.coins >= p && !save.evBought[evKey()] && ncRoom(shopSlot)){ save.coins -= p; save.evBought[evKey()] = 1; const t = clamp(Math.round(gearPower()) - 1, 1, CFG.shopMaxTier); buyPiece(t, 'ev:' + E.id); } renderHub(); return; }
-  if(d.fragx !== undefined){ const t = +d.fragx, need = CFG.frag[t]; if(need && (save.frags[t] || 0) >= need && ncRoom(shopSlot)){ save.frags[t] -= need; buyPiece(t); applyGear(hero); } renderHub(); return; }
+  if(d.fragx !== undefined){ const t = +d.fragx, need = CFG.frag[t]; if(need && (save.frags[t] || 0) >= need && ncRoom(shopSlot)){ save.frags[t] -= need; buyPiece(t); } ncBagRefresh(); return; }
   if(d.mclaim){ const m = MISSIONS.find(x => x.id === d.mclaim), p = mProg(m); if(p.cur >= p.goal){ grantRw(m.rw(p.q.lvl)); p.q.lvl++; delete p.q.base; delete p.q.tgt; persist(); SFX.level(); banner('Missão concluída: ' + m.n, rwText(m.rw(p.q.lvl - 1))); } renderHub(); return; }
   if(d.seq){ const q = seqState(); if(q.cur >= q.goal){ const rw = seqReward(q.q.lvl, q.q.step); grantRw(rw); q.q.step++; if(q.q.step >= SEQ.length){ q.q.step = 0; q.q.lvl++; } delete q.q.base; persist(); SFX.level(); banner('Campanha das Coroas', rwText(rw)); } renderHub(); return; }
   if(d.world !== undefined){ startStage(+d.world*6 + 5, true, true); return; }
-  if(d.fpull !== undefined && fit){ removeGem(fit, +d.fpull); SFX.coin(); renderHub(); return; }
-  if(d.fins && fit){ if(insertGem(fit, d.fins)){ SFX.item(); const [k, r] = d.fins.split(':'); banner('Pedra encaixada', stoneName(k, +r) + ' em ' + itemName(fit)); if(isEquipped(fit)) applyGear(hero); } renderHub(); return; }
+  if(d.fpull !== undefined && fit){ removeGem(fit, +d.fpull); SFX.coin(); ncBagRefresh(); return; }
+  if(d.fins && fit){ if(insertGem(fit, d.fins)){ SFX.item(); const [k, r] = d.fins.split(':'); banner('Pedra encaixada', stoneName(k, +r) + ' em ' + itemName(fit)); } ncBagRefresh(); return; }
   if(d.freroll && fit){ rerollSockets(fit); SFX.item(); renderHub(); return; }
   if(d.ffuse){ const [k, r] = d.ffuse.split(':'); const m = fuseGem(k, +r); if(m) banner(m[0], m[1], m[2]); renderHub(); return; }
   if(d.track !== undefined){ playTrack(+d.track, mBoss); return; }
