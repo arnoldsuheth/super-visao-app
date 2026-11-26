@@ -894,6 +894,7 @@ body.nc-swap #joyZone{left:auto;right:0}
       <button type="button" data-hb="hero"><svg viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg><span>Herói</span></button>
       <button type="button" data-hb="smith"><svg viewBox="0 0 24 24"><path d="M4 20h16M7 20v-4h10v4M9 16v-3h6v3"/><path d="M14 4l6 6-2 2-6-6Z"/><path d="M12 8 4 16"/></svg><span>Forja</span></button>
       <button type="button" data-hb="fest"><svg viewBox="0 0 24 24"><path d="M12 2l3 6H9Z"/><path d="M7 9h10l-2 5H9Z"/><path d="M5 15h14l-2 5H7Z"/><path d="M12 20v2"/></svg><span>Festivos</span></button>
+      <button type="button" data-hb="dg"><svg viewBox="0 0 24 24"><path d="M4 21V10a8 8 0 0 1 16 0v11"/><path d="M9 21v-6a3 3 0 0 1 6 0v6"/><path d="M2 21h20"/></svg><span>Masmorra</span></button>
       <button type="button" data-hb="merch"><svg viewBox="0 0 24 24"><path d="M4 9h16l-1 11H5Z"/><path d="M4 9l2-5h12l2 5"/><path d="M10 13h4"/></svg><span>Mercador</span></button>
     </nav>
   </div>
@@ -13938,7 +13939,7 @@ $('#pauseX').onclick = () => togglePause(false);
 let ncInst = false;
 function ncStagePanel(k){ if(mode !== 'stage' || !P || P.dead || !running) return; running = false; unlockMouse(); for(const q in keys) keys[q] = false; attackHeld = false;
   ncInst = true; document.body.classList.add('nc-inst'); $('#hub').hidden = false; renderHub();
-  try{ const M = {smith:['r','forge'], merch:['r','shop'], bag:['r','gear'], hero:['l','hero'], set:['l','set']}[k] || ['r','gear']; window.ncMenu.toggle(M[0], M[1]); if(k === 'smith' || k === 'merch') window.ncMenu.npc(k); }catch(_){} }
+  try{ if(k === 'dg') window.ncWorldView = 'dg'; const M = {smith:['r','forge'], merch:['r','shop'], bag:['r','gear'], hero:['l','hero'], set:['l','set'], dg:['r','stages']}[k] || ['r','gear']; window.ncMenu.toggle(M[0], M[1]); if(k === 'smith' || k === 'merch') window.ncMenu.npc(k); }catch(_){} }
 new MutationObserver(() => { if(ncInst && !document.body.classList.contains('nc-r') && !document.body.classList.contains('nc-l')){ ncInst = false; document.body.classList.remove('nc-inst'); $('#hub').hidden = true; if(mode === 'stage' && $('#pause').hidden && !P.dead) running = true; } }).observe(document.body, {attributes:true, attributeFilter:['class']});
 document.querySelector('.nc-hb').addEventListener('click', e => { const b = e.target.closest('[data-hb]'); if(!b) return; const k = b.dataset.hb;
   { const nv = document.querySelector('.nc-hb'); if(k === 'menu'){ const o = nv.classList.toggle('open'); b.setAttribute('aria-expanded', String(o)); return; } nv.classList.remove('open'); nv.querySelector('[data-hb=menu]').setAttribute('aria-expanded', 'false'); }   /* 23/11 (Arnold aprovou): atalhos dentro do botão Menu */
@@ -15662,7 +15663,7 @@ const K={hero:['heroi',C.azul],skills:['habilid',C.azul],play:['progresso',C.azu
  bag:['mochila',C.marrom],gear:['mochila',C.marrom],smith:['forja',C.laranja],forge:['forja',C.laranja],
  merch:['mercador',C.ouro],shop:['mercador',C.ouro],fest:['festivos',C.ouro],
  party:['grupo',C.verde],conn:['grupo',C.verde],stable:['estabulo',C.teal],
- stages:['mapa',C.roxo],portal:['portal',C.roxo],missions:['missao',C.verm],set:['ajustes',C.cinza],music:['musica',C.cinza],bell:['sino',C.ambar],bau:['bau',C.marrom]};
+ stages:['mapa',C.roxo],portal:['portal',C.roxo],dg:['portal',C.roxo],missions:['missao',C.verm],set:['ajustes',C.cinza],music:['musica',C.cinza],bell:['sino',C.ambar],bau:['bau',C.marrom]};
 const BYNAME={'Mundo':'stages','Progresso':'play','Ajustes':'set','Música':'music'};
 const svg=k=>`<svg class="nc-mg" viewBox="0 0 100 100" fill="currentColor" aria-hidden="true">${G[k]}</svg>`;
 function med(key){const k=K[key];if(!k)return '';return `<span class="nc-med" style="--c:${k[1]}" aria-hidden="true"><i class="r"></i><i class="n"></i><i class="g"></i><i class="f"></i>${svg(k[0])}</span>`}
