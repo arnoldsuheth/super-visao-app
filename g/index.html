@@ -18,7 +18,7 @@ body{font:16px/1.45 system-ui,-apple-system,'Segoe UI',sans-serif;background:var
 main{max-width:560px;margin:0 auto}
 .logo{font:800 13px system-ui;letter-spacing:3px;color:var(--ac)}
 h1{font:800 24px/1.2 system-ui;margin:6px 0 2px}.sub{color:var(--mute);font-size:14px;margin-bottom:14px}
-.seg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.seg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px}
 button{font:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .seg button,.chips button{border:1.5px solid var(--line);background:var(--card);color:var(--ink);font-weight:700}
 .seg button{border-radius:12px;padding:13px}
@@ -146,6 +146,19 @@ html,body{overflow-x:hidden}
 @media(prefers-reduced-motion:reduce){.topo-linha:after,.bal,.pal-aneis,.eu{animation:none!important;opacity:1}}
 html,body{max-width:100%;overflow-x:clip;overscroll-behavior-x:none}body{touch-action:pan-y}
 #intro{overscroll-behavior:contain;touch-action:pan-y;max-width:100vw}
+
+/* 26/11/2026: 3 abas (Novo funcionário, Ocorrência, Atestado) e Documentos da loja */
+.seg button{flex-direction:column;gap:4px;white-space:normal;font-size:13.5px;line-height:1.15;padding:11px 6px;text-align:center}
+.docs h3{margin:0 0 4px;font-size:17px}.docs .sub{margin:0 0 12px}
+.docb{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:1.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:14px;padding:13px 14px;margin:0 0 8px;font:inherit;font-weight:700;cursor:pointer}
+.docb .ico{flex:none;color:var(--ac)}.docb small{display:block;font-weight:500;opacity:.7;font-size:12.5px;margin-top:2px}.docb .seta{margin-left:auto;opacity:.6}
+.docb[aria-expanded=true]{border-color:var(--ac)}
+.docl{margin:-2px 0 12px;display:grid;gap:8px}.docl.oculto{display:none}
+.doci{border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:grid;gap:8px}.doci b{font-size:14.5px}
+.doci .bts{display:grid;grid-template-columns:1fr 1.9fr;gap:8px}.doci button{white-space:nowrap}.docs{margin-top:16px}.docb[aria-expanded=true] .seta{transform:rotate(90deg)}
+.doci a,.doci button{display:flex;align-items:center;justify-content:center;gap:6px;border-radius:10px;padding:10px 8px;font:inherit;font-weight:700;font-size:14px;text-decoration:none;cursor:pointer}
+.doci a{border:1.5px solid var(--line);color:var(--ink);background:transparent}.doci button{border:0;background:#1fa855;color:#fff}
+.docv{font-size:13.5px;opacity:.7;padding:4px 2px}
 </style></head><body><main>
 <div id="intro" role="dialog" aria-label="Apresentação"><div class="aneis-f" aria-hidden="true"></div>
  <header class="topo"><div class="topo-in emb-d" id="embD" aria-label="GERENTES · Indus"></div><i class="topo-linha" aria-hidden="true"></i></header>
@@ -172,7 +185,7 @@ html,body{max-width:100%;overflow-x:clip;overscroll-behavior-x:none}body{touch-a
   <button type="button" class="enviar" id="entrar" style="margin-top:12px">Entrar</button></div>
  <div id="lojaOk" class="oculto"><div class="okl"><span class="ck"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ff8a2a" stroke-width="2.4" stroke-linecap="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span><b id="lojaNome"></b><small>Código confirmado. Fica gravado neste celular.</small></span></div>
   <button type="button" class="trocar" id="trocarLoja">Não é sua loja?</button></div></div>
- <div class="seg"><button id="tNovo" class="on" type="button"><svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg> Novo funcionário</button><button id="tOc" type="button"><svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5"/><path d="M9 13h7"/><path d="M9 17h5"/></svg> Ocorrência</button></div>
+ <div class="seg"><button id="tNovo" class="on" type="button"><svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg> Novo funcionário</button><button id="tOc" type="button"><svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5"/><path d="M9 13h7"/><path d="M9 17h5"/></svg> Ocorrência</button><button id="tAt" type="button"><svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M12 11v6"/><path d="M9 14h6"/></svg> Atestado</button></div>
 
  <form id="fNovo" autocomplete="off">
   <div class="card">
@@ -208,7 +221,7 @@ html,body{max-width:100%;overflow-x:clip;overscroll-behavior-x:none}body{touch-a
   </div>
   <button class="enviar" type="submit">Enviar ocorrência</button>
  </form>
- <div id="msg" class="msg oculto"></div>
+ <div class="card docs" id="docs"><h3>Documentos da loja</h3><p class="sub">Abra o arquivo ou envie direto no WhatsApp.</p><button type="button" class="docb" data-g="gerenciais" aria-expanded="false"><svg class="ico" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h18v13H3z"/><path d="M8 7V4h8v3"/><path d="M3 12h18"/></svg><span>Documentos gerenciais<small>Para a gerente da loja</small></span><svg class="ico seta" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button><div class="docl oculto" id="dl-gerenciais"></div><button type="button" class="docb" data-g="parede" aria-expanded="false"><svg class="ico" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg><span>Documentos e informativos de parede<small>Para imprimir e fixar na loja</small></span><svg class="ico seta" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button><div class="docl oculto" id="dl-parede"></div><button type="button" class="docb" data-g="caixa" aria-expanded="false"><svg class="ico" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/><path d="M7 15h3"/></svg><span>Documentos do operador de caixa<small>Para quem trabalha no caixa</small></span><svg class="ico seta" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button><div class="docl oculto" id="dl-caixa"></div></div><div id="msg" class="msg oculto"></div>
 </div>
 <div id="feito" class="card feito oculto"><span class="okc"><svg class="ico" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><b>Enviado!</b><p class="sub">O supervisor vai conferir. Obrigado.</p><button class="enviar" type="button" onclick="try{sessionStorage.setItem('eq-direto','1')}catch(e){}location.reload()">Enviar outro</button></div>
 </main>
@@ -299,6 +312,31 @@ $('fOc').onsubmit=e=>{e.preventDefault();if(!pessoa||(!pessoa.id&&!$('pessoaOutr
  if(escolha.oc==='Saiu da empresa')d.motivo=escolha.saiu;
  if(fotoDados)d.foto=fotoDados;
  enviar('ocorrencia',d,e.submitter||$('fOc').querySelector('.enviar'))};
+
+
+// 26/11/2026 (pedido do Arnold): aba Atestado (nome, dias, data, foto obrigatória)
+let modoAt=false;const blOc=document.querySelector('[data-campo=oc]').closest('.f');
+// a opção Atestado sai da aba Ocorrência (agora tem aba própria); fica escondida só para a aba Atestado usar
+[...document.querySelectorAll('[data-campo=oc] button')].find(b=>b.textContent.trim()==='Atestado').style.display='none';
+function abaAt(on){modoAt=on;blOc.classList.toggle('oculto',on);const bs=[...document.querySelectorAll('[data-campo=oc] button')];(on?bs.find(b=>b.textContent.trim()==='Atestado'):bs[0]).click();
+ $('fOc').querySelector('.enviar').textContent=on?'Enviar atestado':'Enviar ocorrência';const lb=$('fotoBox').previousElementSibling;if(lb)lb.textContent=on?'Foto do atestado (obrigatória)':'Foto do documento (opcional)'}
+$('tAt').onclick=()=>{['tNovo','tOc'].forEach(x=>$(x).classList.remove('on'));$('tAt').classList.add('on');$('fOc').classList.remove('oculto');$('fNovo').classList.add('oculto');abaAt(true)};
+const _tOc=$('tOc').onclick;$('tOc').onclick=()=>{_tOc();$('tAt').classList.remove('on');abaAt(false)};
+const _tNovo=$('tNovo').onclick;$('tNovo').onclick=()=>{_tNovo();$('tAt').classList.remove('on');if(modoAt)abaAt(false)};
+const _sub=$('fOc').onsubmit;$('fOc').onsubmit=e=>{if(modoAt&&!fotoDados){e.preventDefault();aviso('Tire a foto do atestado.');return}_sub(e)};
+// 26/11/2026 (pedido do Arnold): Documentos da loja (3 grupos). Cada arquivo abre ou vai direto para o WhatsApp
+let DOCS=null;
+async function docsCarregar(){if(DOCS)return DOCS;try{DOCS=await (await fetch('docs/lista.json?'+Date.now())).json()}catch(e){DOCS={}}return DOCS}
+async function docsEnviar(d,b){const url=new URL('docs/'+d.arquivo,location.href).href;const txt=d.nome;b.disabled=true;
+ try{const r=await fetch(url);const f=new File([await r.blob()],d.arquivo.split('/').pop(),{type:'application/pdf'});
+  if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:txt});return}}catch(e){if(e&&e.name==='AbortError')return}finally{b.disabled=false}
+ location.href='https://wa.me/?text='+encodeURIComponent(txt+': '+url)}
+document.querySelectorAll('.docb').forEach(b=>b.onclick=async()=>{const g=b.dataset.g,l=$('dl-'+g),abre=l.classList.contains('oculto');
+ document.querySelectorAll('.docl').forEach(x=>x.classList.add('oculto'));document.querySelectorAll('.docb').forEach(x=>x.setAttribute('aria-expanded','false'));if(!abre)return;
+ l.classList.remove('oculto');b.setAttribute('aria-expanded','true');const D=await docsCarregar(),L=D[g]||[];
+ l.innerHTML=L.length?'':'<p class="docv">Ainda não há arquivos aqui.</p>';
+ L.forEach(d=>{const it=document.createElement('div');it.className='doci';it.innerHTML='<b></b><div class="bts"><a target="_blank" rel="noopener">Abrir</a><button type="button"><svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-12.3 7.4L3 21l2.1-5.6A8.4 8.4 0 1 1 21 11.5z"/></svg>Enviar no WhatsApp</button></div>';
+  it.querySelector('b').textContent=d.nome;it.querySelector('a').href='docs/'+d.arquivo;const bt=it.querySelector('button');bt.onclick=()=>docsEnviar(d,bt);l.append(it)})});
 
 // emblema D (nome GERENTES animado)
 const D2=`<defs>
