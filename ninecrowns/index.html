@@ -7534,7 +7534,7 @@ function sampleG(arr, x, z){
   const i = Math.floor(gx), j = Math.floor(gz), fx = gx - i, fz = gz - j, k = j*GW + i;
   return (arr[k]*(1 - fx) + arr[k+1]*fx)*(1 - fz) + (arr[k+GW]*(1 - fx) + arr[k+GW+1]*fx)*fz;
 }
-function heightAt(x, z){ return GRID ? sampleG(GRID.H, x, z) : 0; }
+function heightAt(x, z){ const F = window.ncDgFlat; if(F && F.on() && Math.abs(x - F.x) < F.hw && z > F.z0 && z < F.z1) return F.y; return GRID ? sampleG(GRID.H, x, z) : 0; }   /* 26/11/2026: dentro da masmorra o chão é reto (habilidades como a chuva de flechas apareciam embaixo do piso) */
 const clearAt = (x, z) => sampleG(GRID.CL, x, z);
 
 const CELL = 4; let grid = new Map();
@@ -7939,8 +7939,8 @@ function renderStages(){
       return rows.map(([t, nm, who, lv]) => { const k = t + st.id, best = (save.dgBest || {})[k] || 0, pc = Math.round(best/6*100), w = (save.dgWins || {})[k] || 0, [lo, hi] = bossRange(st);
         return `<div class="card dgc ${un ? '' : 'locked'}" style="--tc:${t === 'd' ? '#ff7ad0' : '#8a6aff'}"><div class="num">${st.id + 1}</div><div class="cname">${nm} · ${st.name}</div>
           <div class="cmeta">${who} · Nível recomendado <b>${lv}</b>${save.level < lv ? ' <span style="color:var(--warn)">(você está no ' + save.level + ')</span>' : ''}</div>
-          <div class="dg-prog"><div class="vr-bar"><i style="width:${pc}%"></i></div><b>${pc}%</b><span>${best >= 6 ? 'concluída' : best ? 'até a sala ' + best + ' de 5' : 'não começou'}</span></div>
-          <details class="nc-more st-more"><summary>Detalhes</summary><div class="pills"><span class="pill">5 salas fechadas + chefe</span><span class="pill">Monstros +50% vida e dano</span><span class="pill">Baú: peça ${GR(lo)}–${GR(hi)} garantida + coins</span><span class="pill">Concluída ${w}×</span></div></details>
+          <div class="dg-prog"><div class="vr-bar"><i style="width:${pc}%"></i></div><b>${pc}%</b><span>${best >= 6 ? 'concluída' : best >= 5 ? 'chegou no chefe (sala 5)' : best ? 'até a sala ' + best + ' de 5' : 'não começou'}</span></div>
+          <details class="nc-more st-more"><summary>Detalhes</summary><div class="pills"><span class="pill">4 salas + a sala do chefe</span><span class="pill">Monstros +50% vida e dano</span><span class="pill">Baú: peça ${GR(lo)}–${GR(hi)} garantida + coins</span><span class="pill">Concluída ${w}×</span></div></details>
           <div class="acts"><button class="btn ${un ? 'primary' : ''}" data-${t === 'd' ? 'dgd' : 'dg'}="${st.id}" ${un ? '' : 'disabled'}>${un ? 'Entrar' : lockReason(st)}</button></div></div>`; }).join(''); }).join(''); return; }
   $('#stages').innerHTML = STAGES.filter(s => s.region === hubRegion).map(st => {
     const un = unlocked(st), wins = save.beaten[st.id] || 0, has = save.inv.some(i => i.slot === st.slot && i.tier >= st.itier), rq = reqStar(st), weak = gp < rq;
@@ -10673,11 +10673,12 @@ const NC_DG_ON = true;   // 22/11: fotos aprovadas pelo Arnold
 let ncDG = null, ncDgG = null;
 const NC_DG_COL = [0x6a5a8a, 0x5a7a9a, 0x8a5a4a, 0x4a7a5a, 0x9a3a3a];   // cor das tochas de cada sala
 function ncDgParty(){ try{ return (ncCoop && ncCoop.ch && ncCoop.peers) ? Math.max(1, Object.keys(ncCoop.peers).length + 1) : 1; }catch(_){ return 1; } }
-function ncDgStart(stId, duo){ ncDG = {st:stId, room:0, rooms:5, duo:!!duo, mult:duo ? (ncDgParty() > 1 ? 1.7 : 2.4) : 1.5, door:false, boss:false, boosted:false, live:[]}; startStage(stId, true, false, {}); }
+function ncDgStart(stId, duo){ ncDG = {st:stId, room:0, rooms:4,   /* 26/11/2026 (Arnold): a 5ª sala é a do chefe */ duo:!!duo, mult:duo ? (ncDgParty() > 1 ? 1.7 : 2.4) : 1.5, door:false, boss:false, boosted:false, live:[]}; startStage(stId, true, false, {}); }
 /* 25/11 (Arnold): estilo novo das masmorras. Antes era uma muralha redonda no meio da arena (céu e grama aparecendo).
    Agora é um salão fechado de verdade: paredes altas, chão de lajotas, colunas, escuridão em volta e luz das tochas.
    3 estilos para ele escolher (save.dgStyle ou window.ncDgStyle): A Calabouço, B Caverna de cristal, C Cripta. */
-const NC_DG_W = 16, NC_DG_L = 22, NC_DG_H = 5, NC_DG_HS = 1.4;   // parede da frente baixa para a câmera ver o salão
+const NC_DG_W = 24, NC_DG_L = 30,   /* 26/11/2026 (Arnold: salas muito pequenas): era 16 x 22 */
+  NC_DG_H = 5, NC_DG_HS = 1.4;   // parede da frente baixa para a câmera ver o salão
 const NC_DG_TH = {
   A:{nome:'Calabouço', wall:[0x34303a,0x2a2730], floor:[0x2b2830,0x35313b], trim:0x4a4452, fog:0x07060a, flame:[0xff8a3a,0xffa24a,0xff7a2a,0xffb05a,0xff5a2a], extra:'chains'},
   B:{nome:'Caverna de cristal', wall:[0x2a3040,0x222838], floor:[0x1f2432,0x272d3d], trim:0x3a4258, fog:0x05080f, flame:[0x6ad8ff,0x9a7aff,0x5ac8ff,0xb07aff,0x7ae0ff], extra:'crystals'},
@@ -10688,14 +10689,15 @@ function ncDgTheme(){ const k = (window.ncDgStyle || save.dgStyle || 'B'); /* 25
    descendo até a sala do chefe. Mapa local: corredor x ±2, z de +2 a +11; salão x ±8, z de -11 a +2. */
 const NC_DG_CW = 2, NC_DG_CZ = 2;
 function ncDgSetup(){ if(!ncDG) return; WORLD.bossRest = true; gateOpen = true;
-  const C = ncDG.C = {x:0, z:ARENA_Z}; const y0 = heightAt(C.x, C.z);
+  window.ncDgFlat = null; const C = ncDG.C = {x:0, z:ARENA_Z}; const y0 = ncDG.y0 = heightAt(C.x, C.z);
+  window.ncDgFlat = {x:C.x, hw:NC_DG_W/2 + 4, z0:C.z - NC_DG_L/2 - 16, z1:C.z + NC_DG_L/2 + 4, y:y0 + .11, on:() => !!(ncDG && ncDG.C && mode === 'stage')};
   if(boss){ ncDG.bz = boss.pos.z; boss.pos.z = ARENA_Z - 60; boss.cr.root.visible = false; }
   for(const e of enemies) if(e.kind === 'minion' && !e.dead){ e.dead = true; removeObj(e.cr.root); removeObj(e.bar.g); }
   const TH = ncDG.th = ncDgTheme();
   const rg = (curStage && curStage.region) || 0, LK = ncDG.lk = Math.max(.7, 1.35 - rg*.08);   /* claridade por reino */
   try{ if(REAL && REAL.sky) REAL.sky.visible = false; scene.fog = new T.Fog(C2(TH.fog), 18 + 6*LK, 44 + 10*LK); scene.background = C2(TH.fog); if(hemiLight) hemiLight.intensity *= .45*LK; if(dirLight) dirLight.intensity *= .35*LK; }catch(_){}
   ncDgBuild(); ncDgRoom(); }
-function ncDgBuild(){ const D = ncDG, C = D.C, TH = D.th, LK = D.lk || 1, y0 = heightAt(C.x, C.z);
+function ncDgBuild(){ const D = ncDG, C = D.C, TH = D.th, LK = D.lk || 1, y0 = D.y0 !== undefined ? D.y0 : heightAt(C.x, C.z);
   if(ncDgG){ ncDgG.parent && ncDgG.parent.remove(ncDgG); }
   const G = ncDgG = new T.Group(); G.position.set(C.x, y0, C.z); scene.add(G);
   const W = NC_DG_W, L = NC_DG_L, H = NC_DG_H, hw = W/2, hl = L/2, cw = NC_DG_CW, cz = NC_DG_CZ;
@@ -10777,7 +10779,7 @@ function ncDgRoom(){ const D = ncDG, st = curStage; D.room++; try{ save.dgBest =
     const x = D.C.x + (inC ? (Math.random() - .5)*2 : (Math.random() - .5)*(NC_DG_W - 4)), z = D.C.z + (inC ? NC_DG_CZ + 2 + Math.random()*3 : -NC_DG_L/2 + 2 + Math.random()*(NC_DG_L/2 + NC_DG_CZ - 4));
     const e = spawnMinion(st, x, z, true, i >= n, null); e.hp = e.maxHp = Math.round(e.maxHp*D.mult); e.dmg *= D.mult; D.live.push(e); }
   ncDgTraps();
-  banner((D.duo ? 'Masmorra de dupla' : 'Masmorra') + ' · Sala ' + D.room + ' de ' + D.rooms, D.room >= 2 ? 'Cuidado com as armadilhas. Derrote todos para abrir a porta' : 'Derrote todos os monstros para abrir a porta', D.room >= D.rooms ? 'danger' : ''); }
+  banner((D.duo ? 'Masmorra de dupla' : 'Masmorra') + ' · Sala ' + D.room + ' de ' + (D.rooms + 1), D.room >= 2 ? 'Cuidado com as armadilhas. Derrote todos para abrir a porta' : 'Derrote todos os monstros para abrir a porta', D.room >= D.rooms ? 'danger' : ''); }
 function ncDgClamp(p, door){ const D = ncDG, C = D.C, hw = NC_DG_W/2 - .7, hl = NC_DG_L/2 - .7, cw = NC_DG_CW - .7, cz = C.z + NC_DG_CZ - .7;
   let x = p.x - C.x; if(p.z > cz){ if(Math.abs(x) > cw){ const pen = p.z - cz, side = Math.abs(x) - cw; if(pen < side) p.z = cz; else x = Math.sign(x)*cw; } } else x = Math.max(-hw, Math.min(hw, x));
   p.x = C.x + x; const zmin = door ? -1e9 : C.z - hl; p.z = Math.max(zmin, Math.min(C.z + hl, p.z)); }
@@ -10798,11 +10800,14 @@ function ncDgTick(dt){ const D = ncDG; if(!D || mode !== 'stage' || !D.C) return
       D.door = false; }
     if(D.door && D.room >= D.rooms && dz < -lim){ try{ P.pos.y = heightAt(P.pos.x, P.pos.z) - Math.min(2.4, (-lim - dz)*.42); }catch(_){} } }
   else if(!D.boosted && boss){ D.boosted = true; boss.hp = boss.maxHp = Math.round(boss.maxHp*D.mult); boss.dmg *= D.mult; } }
-function ncDgBoss(){ const D = ncDG; D.boss = true; ncDgBuild(); ncDgTraps(); if(D.gate) D.gate.visible = true; if(D.portal) D.portal.visible = false;
+function ncDgBoss(){ const D = ncDG; D.boss = true; ncDgBuild(); ncDgTraps();
+  try{ save.dgBest = save.dgBest || {}; const bk = (D.duo ? 'd' : 's') + curStage.id; save.dgBest[bk] = Math.max(save.dgBest[bk] || 0, 5); persist(); }catch(_){}
+  if(!boss || boss.dead || boss.dying){ try{ spawnBoss(curStage); D.boosted = false; }catch(_){} }   /* 26/11/2026 (Arnold: a sala do chefe ficou vazia): o chefe é criado de novo se não existir */ if(D.gate) D.gate.visible = true; if(D.portal) D.portal.visible = false;
   const pal = (D.th && D.th.flame) || NC_DG_COL, col = pal[4 % pal.length]; if(ncDgG) ncDgG.traverse(o => { if(o.userData.dgFlame){ o.material.color.setHex(col); o.material.emissive.setHex(col); } });
   if(boss){ boss.pos.x = D.C.x; boss.pos.z = D.C.z - 5; boss.cr.root.visible = true; }
   WORLD.bossRest = false; gateOpen = true; P.pos.set(D.C.x, heightAt(D.C.x, D.C.z + NC_DG_L/2 - 1.5), D.C.z + NC_DG_L/2 - 1.5); P.face = P.targetFace = Math.PI;
-  banner('Sala do chefe', 'Vença ' + curStage.boss + ' para abrir o baú da masmorra', 'danger'); }
+  if(boss){ boss.dead = false; boss.dying = 0; boss.awake = true; try{ wakeBoss(boss); }catch(_){} }
+  banner('Sala 5 de 5 · Chefe', 'Vença ' + curStage.boss + ' para abrir o baú da masmorra', 'danger'); }
 function C2(c){ return new T.Color(c); }
 function ncDgReward(st){ const D = ncDG; if(!D) return null; const [lo, hi] = bossRange(st), out = [];
   const it = newItem(randomSlot(), Math.min(hi, lo + (Math.random() < .35 ? 1 : 0)), {wtype:CLS().wtype}); if(addItem(it)){ out.push(it); runLoot.push(it); }
