@@ -8577,7 +8577,7 @@ function kkPaint(h){
   const tex = kkTex(d.model, col); if(!tex) return;
   /* 22/11 (Arnold): começa como aldeão (roupa simples de pano) e cada parte do corpo muda quando você equipa a peça daquela parte,
      com a cor do grade: peito = peitoral; braços = braçadeira (ou ombreira); pernas = calça (ou bota). */
-  const plainCol = Object.assign({}, col, {cloth:0xcdb892, leather:0x7a5a3a, metal:0xa08a6a, trim:0xb8a27c, cape:0x8a7a5a});
+  const plainCol = Object.assign({}, col, {cloth:tun != null ? tun : 0xcdb892, leather:tun != null ? mix(tun, 0x5a3a26, .55) : 0x7a5a3a, metal:tun != null ? mix(tun, 0xa08a6a, .45) : 0xa08a6a, trim:tun != null ? mix(tun, 0xffffff, .35) : 0xb8a27c, cape:tun != null ? mix(tun, 0x000000, .25) : 0x8a7a5a});   /* 25/11 (Arnold): a cor escolhida da roupa aparece também sem armadura (antes ficava sempre bege) */
   const plain = kkTex(d.model, plainCol) || tex;
   const partTex = t => { if(t < 0) return plain; const c2 = Object.assign({}, col, {metal:mix(0x9aa7ac, TIERS[t].hex, .6)}); if(k.trim || col.trim) c2.trim = mix(col.trim || k.trim || 0xd8b65c, TIERS[t].hex, .45); return kkTex(d.model, c2) || tex; };
   const tArm = tOf('bracers') >= 0 ? tOf('bracers') : tOf('shoulders'), tLeg = tOf('greaves') >= 0 ? tOf('greaves') : tOf('boots');
