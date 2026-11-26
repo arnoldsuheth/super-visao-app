@@ -14597,7 +14597,37 @@ function ncDelChar(i){ const slots = (save.ncSlots || []).slice(); const acc = n
   try{ localStorage.setItem('nc-bak-apagado', JSON.stringify(ncSnap())); }catch(_){}
   if(slots.length){ const tgt = slots.shift(); acc.ncSlots = slots; ncCommit(Object.assign(freshSave(), tgt, acc)); }
   else { acc.ncSlots = []; const s2 = Object.assign(freshSave(), acc); s2.ncReset = 1; s2.ncEp = NC_EP; ncCommit(s2); } }
-function ncCharsHTML(){ const l = ncChars(); let h = '<div class="cr-chars"><div class="cr-ch-t">Seus personagens <span>' + l.length + ' de ' + NC_MAX_CH + '</span></div>';
+/* 25/11/2026 (Arnold): na tela de Personagens os heróis aparecem em 3D: o escolhido na frente e o outro atrás.
+   Toque no herói de trás (ou no nome dele) para jogar com ele. Sem cartões nem menus por personagem. */
+let ncBack = null, ncBackTm = null;
+function ncBackHide(){ try{ if(ncBack && ncBack.h) scene.remove(ncBack.h.root); }catch(_){} try{ if(hero && hero.root.userData.px0 != null){ hero.root.position.x = hero.root.userData.px0; delete hero.root.userData.px0; } }catch(_){} document.body.classList.remove('nc-pers'); ncBack = null; clearInterval(ncBackTm); ncBackTm = null; const u = document.getElementById('ncBackUI'); if(u) u.remove(); }
+function ncBackShow(){ ncBackHide(); if(typeof mode === 'undefined' || mode !== 'hub') return;
+  const slots = save.ncSlots || [], snap = slots[0];
+  const ui = document.createElement('div'); ui.id = 'ncBackUI'; document.body.appendChild(ui); document.body.classList.add('nc-pers');
+  try{ if(hero && hero.root.userData.px0 == null){ hero.root.userData.px0 = hero.root.position.x; hero.root.position.x = .65; } }catch(_){}   /* o escolhido vai um pouco para a direita e o outro fica atrás, à esquerda */
+  if(snap){ const real = save; let h = null; try{ save = Object.assign({}, real, snap); h = makeHero(); }catch(_){ h = null; } finally{ save = real; }
+    if(h){ h.root.position.set(-1.15, .4, -1.9); h.root.rotation.y = .35; scene.add(h.root); } ncBack = {h, i:0, name:snap.name || 'Sem nome', cls:snap.cls, level:snap.level || 1}; }
+  else if(ncHasChar()) ncBack = {h:null, empty:true};
+  ui.innerHTML = (ncHasChar() ? '<div class="bk-lb bk-me"><b>' + String(save.name).replace(/[<>]/g, '') + '</b><small>' + ((CLASSES[save.cls] || {}).name || '') + ' · nível ' + save.level + '</small></div>' : '')
+    + (ncBack ? (ncBack.empty ? '<button type="button" class="bk-lb bk-other bk-new" data-chnew><b>+ Novo personagem</b><small>toque para criar</small></button>'
+      : '<button type="button" class="bk-hit" data-chplay="0" aria-label="Jogar com ' + String(ncBack.name).replace(/[<>"]/g, '') + '"></button><button type="button" class="bk-lb bk-other" data-chplay="0"><b>' + String(ncBack.name).replace(/[<>]/g, '') + '</b><small>' + ((CLASSES[ncBack.cls] || {}).name || '') + ' · nível ' + ncBack.level + '</small><em>Toque para jogar</em></button>') : '');
+  ui.addEventListener('click', e => { const p = e.target.closest('[data-chplay]'); if(p){ ui.querySelectorAll('[data-chplay] em').forEach(x => x.textContent = 'Abrindo…'); ncPlayChar(0); return; } if(e.target.closest('[data-chnew]')) ncNewChar(); });
+  const v = new T.Vector3(); let last = performance.now();
+  const pos = (root, dy) => { v.set(root.position.x, root.position.y + dy, root.position.z); v.project(camera); return [(v.x*.5 + .5)*innerWidth, (-v.y*.5 + .5)*innerHeight]; };
+  ncBackTm = setInterval(() => { try{ const now = performance.now(), dt = Math.min(.1, (now - last)/1000); last = now; const el = document.getElementById('ncCriar');
+      if(mode !== 'hub' || !el || el.hidden){ ncBackHide(); return; }
+      const me = ui.querySelector('.bk-me'); if(me && hero){ const [x, y] = pos(hero.root, 2.45); me.style.left = x + 'px'; me.style.top = Math.max(52, y) + 'px'; }
+      const o = ui.querySelector('.bk-other'), hit = ui.querySelector('.bk-hit');
+      if(o){ const root = ncBack && ncBack.h ? ncBack.h.root : {position:{x:-1.15, y:.4, z:-1.9}}; const [x, y] = pos(root, 2.3), [, yf] = pos(root, 0); o.style.left = x + 'px'; o.style.top = Math.max(68, y) + 'px';
+        if(hit){ hit.style.left = (x - 50) + 'px'; hit.style.top = y + 'px'; hit.style.height = Math.max(40, yf - y) + 'px'; } }
+      if(ncBack && ncBack.h && ncBack.h.mx){ const h = ncBack.h; h.body.visible = false; h.mx.m.visible = true; try{ mxPlay(h, 'idle'); h.mx.mixer.update(dt); kkRead(h); }catch(_){} }
+    }catch(_){} }, 33); }
+function ncCharsHTML(){ const l = ncChars();
+  if(true){ let h = '<div class="cr-chars cr-min"><p>' + (l.length > 1 ? 'Toque no herói de trás para jogar com ele.' : l.length === 1 && ncHasChar() ? 'Você tem 1 de ' + NC_MAX_CH + ' personagens. Toque em "+ Novo personagem" atrás do herói.' : '') + '</p>';
+    if(ncHasChar()) h += '<button type="button" class="cr-del" data-chdel="-1">Apagar ' + String(save.name).replace(/[<>]/g, '') + '</button>';
+    else if((save.ncSlots || []).length) h += '<button type="button" class="cr-del" data-chdel="0">Apagar ' + String((save.ncSlots[0] || {}).name || '').replace(/[<>]/g, '') + '</button>';
+    return h + '</div>'; }
+  let h = '<div class="cr-chars"><div class="cr-ch-t">Seus personagens <span>' + l.length + ' de ' + NC_MAX_CH + '</span></div>';
   h += l.map(c => '<div class="cr-ch' + (c.i < 0 ? ' on' : '') + '"><img src="assets/icons/cls/' + (CLASSES[c.cls] ? c.cls : 'warrior') + '.png" alt=""><span><b>' + String(c.name).replace(/[<>]/g, '') + '</b><small>' + ((CLASSES[c.cls] || {}).name || '') + ' · nível ' + c.level + (c.i < 0 ? ' · jogando agora' : '') + '</small></span>'
     + (c.i >= 0 ? '<button type="button" class="cr-chb" data-chplay="' + c.i + '">Jogar</button>' : '') + '<button type="button" class="cr-chb del" data-chdel="' + c.i + '">Apagar</button></div>').join('');
   if(l.length < NC_MAX_CH && ncHasChar()) h += '<button type="button" class="cr-chnew" data-chnew>Criar novo personagem</button>';
@@ -14615,7 +14645,7 @@ function ncCharsHTML(){ const l = ncChars(); let h = '<div class="cr-chars"><div
       el.addEventListener('click', e => { if(e.target.closest('[data-crclose]')){ el.hidden = true; document.body.classList.remove('nc-noauto', 'nc-cria'); return; }
         const pl = e.target.closest('[data-chplay]'); if(pl){ pl.textContent = 'Abrindo…'; ncPlayChar(+pl.dataset.chplay); return; }
         const nw = e.target.closest('[data-chnew]'); if(nw){ nw.textContent = 'Preparando…'; ncNewChar(); return; }
-        const dl = e.target.closest('[data-chdel]'); if(dl){ if(!dl.dataset.arm){ dl.dataset.arm = '1'; dl.textContent = 'Toque de novo para apagar'; dl.classList.add('arm'); setTimeout(() => { if(dl.isConnected){ delete dl.dataset.arm; dl.textContent = 'Apagar'; dl.classList.remove('arm'); } }, 6000); return; } dl.textContent = 'Apagando…'; ncDelChar(+dl.dataset.chdel); return; }
+        const dl = e.target.closest('[data-chdel]'); if(dl){ if(!dl.dataset.arm){ const t0 = dl.textContent; dl.dataset.arm = '1'; dl.textContent = 'Tem certeza? Toque de novo para apagar'; dl.classList.add('arm'); setTimeout(() => { if(dl.isConnected){ delete dl.dataset.arm; dl.textContent = t0; dl.classList.remove('arm'); } }, 6000); return; } dl.textContent = 'Apagando…'; ncDelChar(+dl.dataset.chdel); return; }
         if(e.target.closest('[data-crmin]')){ el.classList.add('mini'); return; } if(e.target.closest('[data-crmax]')){ el.classList.remove('mini'); return; } const st = e.target.closest('[data-crstep]'); if(st){ const i = CLASS_ORDER.indexOf(escolha), n = CLASS_ORDER.length, k = CLASS_ORDER[(i + (+st.dataset.crstep) + n) % n]; const b = el.querySelector('[data-crk="' + k + '"]'); if(b) b.click(); const cu = el.querySelector('.cr-cur'); if(cu) cu.innerHTML = '<img alt="" src="assets/icons/cls/' + k + '.png"><b>' + CLASSES[k].name + '</b>'; return; } const c = e.target.closest('[data-crk]'); if(c){ escolha = c.dataset.crk; el.querySelectorAll('[data-crk]').forEach(b => b.classList.toggle('on', b === c)); try{ save.cls = escolha; save.known = [escolha]; save.main = escolha; fixWeaponForClass(); rebuildHubHero(); }catch(_){} const d = el.querySelector('.cr-desc'); if(d) d.textContent = CLASSES[escolha].desc || ''; const cu = el.querySelector('.cr-cur'); if(cu) cu.innerHTML = '<img alt="" src="assets/icons/cls/' + escolha + '.png"><b>' + CLASSES[escolha].name + '</b>'; return; }
         if(e.target.closest('[data-crgo]')){ const nome = (el.querySelector('input').value || '').replace(/[<>]/g, '').trim().slice(0, 14);
           if(!nome){ el.querySelector('input').focus(); el.querySelector('input').placeholder = 'Escreva um nome'; return; }
@@ -14623,7 +14653,7 @@ function ncCharsHTML(){ const l = ncChars(); let h = '<div class="cr-chars"><div
           save.name = nome; delete save.ncReset; save.ncMade = 1; save.ncDirty = 1; persist();
           try{ rebuildHubHero(); }catch(_){} try{ renderHub(); }catch(_){} try{ ncCoop.track(); }catch(_){}
           el.hidden = true; document.body.classList.remove('nc-noauto', 'nc-cria'); setTimeout(() => { try{ if(mode === 'hub') ncGiftDot(); }catch(_){} }, 1500); try{ banner('Bem-vindo, ' + nome, CLASSES[escolha].name + ' · boa jornada!'); }catch(_){} } }); }
-    desenha(el); el.hidden = false; el.classList.remove('mini'); document.body.classList.add('nc-noauto', 'nc-cria'); try{ window.ncDaily(false); }catch(_){} }
+    desenha(el); el.hidden = false; el.classList.remove('mini'); document.body.classList.add('nc-noauto', 'nc-cria'); try{ window.ncDaily(false); }catch(_){} setTimeout(() => { try{ ncBackShow(); }catch(_){} }, 50); }
   /* 23/11 (Arnold): a tela de criar recolhe e some sozinha quando outra janela abre; o botão "Criar herói" do menu abre de novo */
   window.ncCriarAbre = () => { const el = document.getElementById('ncCriar'); try{ ncMenu.close('l'); ncMenu.close('r'); }catch(_){} if(el && !el.hidden){ el.classList.remove('mini'); } else abre(); };   /* 25/11: abre sempre (lista de personagens) */
   setInterval(() => { try{ const el = document.getElementById('ncCriar'); if(!el || el.hidden){ document.body.classList.remove('nc-crhide'); return; } const b = document.body.classList;
@@ -15508,6 +15538,16 @@ body.nc-ov .nc-me,body.nc-ov #ncBell,body.nc-ov #ncChat{display:none!important}
 
 /* 23/11/2026: tela de criar personagem depois do recomeço geral */
 #ncCriar .cr-chars{margin:0 0 12px;display:grid;gap:6px}
+#ncCriar .cr-min p{margin:0;font:500 13px Inter,system-ui,sans-serif;color:#cfc6e6}#ncCriar .cr-min p:empty{display:none}
+#ncCriar .cr-del{justify-self:start;background:none;border:0;color:#ff9a8a;font:600 13px Inter,system-ui,sans-serif;text-decoration:underline;padding:8px 0;min-height:36px;cursor:pointer}#ncCriar .cr-del.arm{color:#fff;background:#7a2a20;text-decoration:none;padding:8px 12px;border-radius:10px}
+#ncBackUI{position:fixed;inset:0;z-index:121;pointer-events:none}
+html body.nc-pers .nc-mini,html body.nc-pers .nc-grid,html body.nc-pers #ncBell,html body.nc-pers .nc-me,html body.nc-pers #playBtn,html body.nc-pers .nc-play,html body.nc-pers .nc-card{display:none!important}
+#ncBackUI .bk-lb{position:absolute;transform:translate(-50%,-100%);display:grid;justify-items:center;gap:1px;padding:5px 10px;border-radius:10px;background:#120d2acc;border:1px solid #ffffff30;color:#fff;font:600 13px Inter,system-ui,sans-serif;white-space:nowrap;pointer-events:none}
+#ncBackUI .bk-lb small{font-weight:500;font-size:11px;color:#cfc6e6}#ncBackUI .bk-lb em{font-style:normal;font-size:11px;color:#ffd36a}
+#ncBackUI .bk-me{border-color:#ffd38a}
+#ncBackUI button.bk-lb,#ncBackUI .bk-hit{pointer-events:auto;cursor:pointer}#ncBackUI button.bk-lb{min-height:44px}
+#ncBackUI .bk-hit{position:absolute;width:100px;background:transparent;border:0}
+#ncBackUI .bk-new{border-style:dashed;border-color:#ffd38a}
 #ncCriar .cr-ch-t{font:700 13px Inter,system-ui,sans-serif;color:#ffd36a;display:flex;justify-content:space-between}#ncCriar .cr-ch-t span{color:#cfc6e6;font-weight:600}
 #ncCriar .cr-ch{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:12px;background:#ffffff0d;border:1.5px solid #ffffff22}#ncCriar .cr-ch.on{border-color:#ffd38a}
 #ncCriar .cr-ch img{width:36px;height:36px;flex:none}#ncCriar .cr-ch span{flex:1;min-width:0;display:grid}#ncCriar .cr-ch b{font:700 15px Inter,system-ui,sans-serif;color:#fff}#ncCriar .cr-ch small{font:500 12px Inter,system-ui,sans-serif;color:#cfc6e6}
