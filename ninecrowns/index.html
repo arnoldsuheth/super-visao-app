@@ -11771,6 +11771,19 @@ function doAttack(){
   P.alt ^= 1;
   playAttackSfx();
   let hitAny = false;
+  if(kind === 'stab'){   /* 26/11 (Arnold): estocada da Assassina = 1 alvo só, faz sangrar e pelas costas bate mais forte */
+    let t = null, td = 1e9;
+    for(const e of enemies){ if(e.dead || e.dying || (e.kind === 'boss' && !e.awake)) continue;
+      const dx = e.pos.x - P.pos.x, dz = e.pos.z - P.pos.z, d = Math.hypot(dx, dz);
+      if(d < reach + e.r && (d < e.r + .6 || angDiff(Math.atan2(dx, dz), P.face) < arcW) && d < td){ t = e; td = d; } }
+    if(t){ const dx = t.pos.x - P.pos.x, dz = t.pos.z - P.pos.z, d = Math.hypot(dx, dz) || 1;
+      const ry = t.cr && t.cr.root ? t.cr.root.rotation.y : 0, back = angDiff(Math.atan2(-dx, -dz), ry) > 1.9 || (P.backE === t && clock < (P.backUntil || 0));   // herói atrás do monstro (mais de ~110° da frente dele)
+      if(hitEnemy(t, back ? NC_STAB.back : 1, {nx:dx/d, nz:dz/d, kb:4}) !== false){ hitAny = true;
+        if(!t.dead && !t.dying){ t.burnT = NC_STAB.bleedT; t.burnAcc = t.burnAcc || 0; t.burnDps = Math.max(t.burnDps || 0, S.atk*NC_STAB.bleed); t.burnCol = 0xc81e2a; }
+        if(back) floatText(t.pos, 'Pelas costas!', 'crit'); } }
+    if(hitAny) addShake(.07);
+    return;
+  }
   for(const e of enemies){
     if(e.dead || e.dying) continue;
     if(e.kind === 'boss' && !e.awake) continue;
@@ -11783,6 +11796,7 @@ function doAttack(){
 }
 /* Altura no combate: quem está muito mais alto ou mais baixo (ex.: em cima de um morro) não é atingido.
    Na rampa a diferença é pequena e o golpe pega. o.y = altura de onde saiu o golpe (padrão: o herói); o.anyY ignora. */
+const NC_STAB = {back:1.6, bleed:.2, bleedT:4, afterShadow:1.5};   // estocada: pelas costas 60% a mais; sangramento = 20% do ataque por segundo, 4 s
 const Y_TOL = 1.6;
 const yOk = (ey, oy, tol) => Math.abs(ey - oy) <= (tol || Y_TOL);
 function hitEnemy(e, mult, o){
@@ -12008,7 +12022,7 @@ function useSkill(j){
       burst(P.pos, 0x6a3a9a, 14, 3, 4, 1);
       if(tg){ const dx = tg.pos.x - P.pos.x, dz = tg.pos.z - P.pos.z, d = Math.hypot(dx, dz) || 1;
         P.pos.x = tg.pos.x + dx/d*(tg.r + .8); P.pos.z = tg.pos.z + dz/d*(tg.r + .8); clampPos(P.pos, bossActive);
-        P.face = P.targetFace = Math.atan2(tg.pos.x - P.pos.x, tg.pos.z - P.pos.z); P.swingT = P.swingDur = .16; hitEnemy(tg, 1.6, {crit:true, stun:.8, kb:3}); }
+        P.face = P.targetFace = Math.atan2(tg.pos.x - P.pos.x, tg.pos.z - P.pos.z); P.swingT = P.swingDur = .16; hitEnemy(tg, 1.6, {crit:true, stun:.8, kb:3}); P.backE = tg; P.backUntil = clock + NC_STAB.afterShadow; }   // 26/11: depois da Sombra, as estocadas nesse monstro contam como pelas costas
       else { P.pos.x += Math.sin(P.face)*7; P.pos.z += Math.cos(P.face)*7; clampPos(P.pos, bossActive); }
       burst(P.pos, 0x6a3a9a, 14, 3, 4, 1); P.inv = Math.max(P.inv, .4); SFX.dash(); break; }
     case 'quake': { const a = aimAngle(8); if(a !== null) P.face = P.targetFace = a; P.swingT = P.swingDur = .2;
