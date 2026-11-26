@@ -578,6 +578,12 @@ body:has(#pause:not([hidden])) #ncBell,body:has(#pause:not([hidden])) #ncChat{di
 .fsel .chipb,#forgeTabs .chipb{flex:none!important;min-height:34px!important;padding:5px 12px!important;font:600 13px/1.1 Inter,system-ui,sans-serif!important;letter-spacing:0!important;text-transform:none!important;white-space:nowrap!important;scroll-snap-align:start}
 #forgeTabs{display:flex!important;flex-wrap:nowrap!important;overflow-x:auto!important;gap:6px!important;scrollbar-width:none}
 #forgeTabs::-webkit-scrollbar{display:none}
+
+/* 26/11/2026 (Arnold: "a bola de andar é pequena, meu dedo pega na câmera"): área grande e invisível de andar no canto de baixo.
+   Encostou o dedo em qualquer lugar dela, a bola vai para baixo do dedo. */
+#joyZone{position:fixed;left:0;bottom:0;width:48vw;height:52vh;pointer-events:auto;touch-action:none;z-index:0;background:transparent}
+body.nc-swap #joyZone{left:auto;right:0}
+#joy.solto{transition:none!important}
 </style>
 </head>
 <body>
@@ -881,6 +887,7 @@ body:has(#pause:not([hidden])) #ncBell,body:has(#pause:not([hidden])) #ncChat{di
 </div>
 
 <div id="touch" hidden>
+  <div id="joyZone" aria-hidden="true"></div>
   <div id="joy"><div id="knob"></div></div>
   <div class="tbtns">
     <button id="tPot" aria-label="Poção de vida"><b id="tPotN">3</b></button>
@@ -8646,6 +8653,7 @@ function ncHelm3D(h, x){ if(!(window.NC_HELM3D || NC_HELM3D)) return; let fc = 0
     if(g >= 5){ const cr = new T.Group(); cr.position.y = 1.4; G.add(cr); cr.add(new T.Mesh(new T.CylinderGeometry(.25, .29, .09, 16, 1, true), acc));
       for(let k = 0; k < 6; k++){ const a = k/6*Math.PI*2, sp = new T.Mesh(new T.ConeGeometry(.045, .16, 6), acc); sp.position.set(Math.sin(a)*.27, .12, Math.cos(a)*.27); cr.add(sp); } }
     hd.add(G); x.helm = G; return; }
+  if(g === 0) return;   /* 26/11/2026 (Arnold: "que pinico é esse"): No Grade não põe capacete; fica o capuz ou o cabelo da própria classe */
   // do D em diante usa o elmo de verdade do cavaleiro (mesmo estilo dos bonecos), com enfeites por grade por cima
   if(g >= 1){ const md = MX.models.kk_knight; if(!md){ if(!x.helmWait){ x.helmWait = 1; mxLoad('warrior', ok => { x.helmWait = 0; if(ok) try{ kkPaint(h); }catch(_){} }); } return; }
     let src = null; md.scene.traverse(o => { if(!src && o.isMesh && o.name === 'Knight_Helmet') src = o; }); if(!src || !own) return;
@@ -11155,6 +11163,17 @@ joy.addEventListener('pointerdown', e => { joyId = e.pointerId; joy.setPointerCa
 joy.addEventListener('pointermove', e => { if(e.pointerId === joyId) moveJoy(e); });
 const endJoy = e => { if(e.pointerId === joyId){ joyId = null; joyX = joyZ = 0; knob.style.transform = ''; } };
 joy.addEventListener('pointerup', endJoy); joy.addEventListener('pointercancel', endJoy);
+/* 26/11/2026: área grande de andar. A bola aparece onde o dedo encostou e volta ao lugar quando solta */
+{ const zone = $('#joyZone'); let zid = null;
+  const volta = () => { joy.style.left = joy.style.top = joy.style.bottom = joy.style.right = ''; joy.classList.remove('solto'); };
+  zone.addEventListener('pointerdown', e => { if(joyId !== null) return; zid = joyId = e.pointerId; zone.setPointerCapture(e.pointerId);
+    const w = joy.offsetWidth || 120, h = joy.offsetHeight || 120;
+    joy.classList.add('solto'); joy.style.right = 'auto'; joy.style.bottom = 'auto';
+    joy.style.left = Math.max(4, Math.min(innerWidth - w - 4, e.clientX - w/2)) + 'px'; joy.style.top = Math.max(4, Math.min(innerHeight - h - 4, e.clientY - h/2)) + 'px';
+    const r = joy.getBoundingClientRect(); jcx = r.left + r.width/2; jcy = r.top + r.height/2; moveJoy(e); e.preventDefault(); });
+  zone.addEventListener('pointermove', e => { if(e.pointerId === zid) moveJoy(e); });
+  const fim = e => { if(e.pointerId !== zid) return; zid = null; endJoy(e); volta(); };
+  zone.addEventListener('pointerup', fim); zone.addEventListener('pointercancel', fim); }
 const tAtk = $('#tAtk');
 tAtk.addEventListener('pointerdown', e => { e.preventDefault(); if(running && !inputLocked){ attackHeld = true; attackPressed = true; } });
 ['pointerup','pointercancel','pointerleave'].forEach(ev => tAtk.addEventListener(ev, () => attackHeld = false));
