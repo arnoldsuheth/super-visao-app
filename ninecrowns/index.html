@@ -11724,7 +11724,7 @@ function ncShamanAtk(tipo){ const t = ncTgtOk(); let e = t && t.e && !t.e.dead &
 function doAttack(){
   if(P && P.ncCC && (P.ncCC.stun > 0 || P.ncCC.fear > 0)) return;
   const S = P.S, c = CLS();
-  if(!ncSpend(ncAtkCost())){ P.atkCd = .25; return; }
+  if(ncRes() === 'mp'){ if(!ncSpend(ncAtkCost())){ P.atkCd = .25; return; } } else ncSpGain();   /* 25/11: golpe de stamina enche a barra */
   if(P.mounted) toggleMount(false);
   { const t = ncTgtOk(); if(t){ const tx = t.e ? t.e.pos.x : t.x, tz = t.e ? t.e.pos.z : t.z; if(Math.hypot(tx - P.pos.x, tz - P.pos.z) < 18) P.face = P.targetFace = Math.atan2(tx - P.pos.x, tz - P.pos.z); } }
   P.atkCd = atkCooldown();
@@ -12149,6 +12149,7 @@ function gainXP(n, fromParty){
 function hurtPlayer(raw, elemental){
   if(ncAiPeer) return;   // o monstro está atacando o amigo: o dano é no aparelho dele
   if(P.inv > 0 || P.dead || inputLocked) return;
+  P.hurtT = clock;
   if(DEV.god){ P.inv = .2; return; }
   if(P.aegisT > 0){ floatText(P.pos, 'Imune', 'heal'); P.inv = .2; return; }
   if(P.wallT > 0) raw *= .5;
@@ -12169,9 +12170,11 @@ const ncResMax = () => Math.round((ncRes() === 'mp' ? 100 : 100) + save.level*2)
 const ncResRegen = () => ncRes() === 'mp' ? 3.2 + save.level*.05 : 6 + save.level*.06;   /* 23/11: voltava rápido demais */
 const ncAtkCost = () => ncRes() === 'mp' ? 3 : 4;
 const ncSkCost = sk => Math.round(ncResMax()*(sk.cd >= 15 ? .32 : .17));   /* 23/11: gasto cresce com a barra (antes era fixo e quase não gastava) */
-function ncResInit(){ if(P && P.res == null) P.res = ncResMax(); }
+/* 25/11/2026 (Arnold): stamina é o contrário da mana: começa vazia e enche conforme você bate; gasta nas habilidades. Fora de luta ela esvazia devagar. */
+function ncResInit(){ if(P && P.res == null) P.res = ncRes() === 'sp' ? 0 : ncResMax(); }
+function ncSpGain(){ if(!P || ncRes() !== 'sp') return; ncResInit(); let near = false; try{ near = enemies.some(e => !e.dead && Math.hypot(e.pos.x - P.pos.x, e.pos.z - P.pos.z) < 9); }catch(_){} if(!near) return; P.res = Math.min(ncResMax(), P.res + ncResMax()*.08); P.atkT = clock; }
 function ncSpend(n, quiet){ ncResInit(); if(P.res < n){ if(!quiet && clock - (P.resMsgT || 0) > 1.2){ P.resMsgT = clock; floatText(P.pos, ncRes() === 'mp' ? 'Sem mana' : 'Sem energia', 'hurt'); } return false; } P.res -= n; P.resT = clock; return true; }
-function ncResTick(dt){ if(!P) return; ncResInit(); const m = ncResMax(); if(P.res < m && clock - (P.resT || 0) > .6) P.res = Math.min(m, P.res + ncResRegen()*dt); }
+function ncResTick(dt){ if(!P) return; ncResInit(); const m = ncResMax(); if(ncRes() === 'sp'){ if(P.res > 0 && clock - Math.max(P.atkT || 0, P.resT || 0) > 6) P.res = Math.max(0, P.res - m*.03*dt); return; } if(P.res < m && clock - (P.resT || 0) > .6) P.res = Math.min(m, P.res + ncResRegen()*dt); }
 function usePotion(){
   if(mode !== 'stage' || !running || inputLocked || P.dead) return;
   if(save.potions <= 0){ floatText(P.pos, 'Sem poções', 'hurt'); return; }
@@ -12650,7 +12653,7 @@ function updatePlayer(dt){
   if(P.skill && !['bash','leap','whirl','cyclone'].includes(P.skill.id)){   // pedido do Arnold: dá para andar usando qualquer habilidade
     const sp = S.spd*.7*wxSlow(); P.pos.x += mx*sp*dt; P.pos.z += mz*sp*dt; clampPos(P.pos, bossActive, .45); }
   if(!P.skill){
-    if(dashPressed && P.dashCd <= 0 && !inputLocked && !P.mounted && ncSpend(Math.round(ncResMax()*.12))){   /* 23/11 (Arnold): esquiva gasta mana (magos) ou stamina (luta) */
+    if(dashPressed && P.dashCd <= 0 && !inputLocked && !P.mounted && (ncRes() === 'sp' || ncSpend(Math.round(ncResMax()*.12)))){   /* 25/11: com a stamina começando vazia, a esquiva das classes de luta não gasta (só a dos magos gasta mana) */   /* 23/11 (Arnold): esquiva gasta mana (magos) ou stamina (luta) */
       if(len > .15) P.dashDir.set(mx/len, 0, mz/len); else P.dashDir.set(Math.sin(P.face), 0, Math.cos(P.face));
       P.face = P.targetFace = Math.atan2(P.dashDir.x, P.dashDir.z);
       if(c.attack === 'bolt' || c.attack === 'dark'){
@@ -12712,6 +12715,8 @@ function updatePlayer(dt){
   unflash(P, hero.mats, dt);
   hero.auras.forEach((a, i) => a.rotation.z += dt*(i%2 ? -1.5 : 1.5));
   if(S.regen) P.hp = Math.min(S.hp, P.hp + S.hp*S.regen*dt);
+  /* 25/11/2026 (Arnold): a vida volta sozinha em todas as classes: devagar na luta, mais rápido depois de 4 s sem levar dano */
+  if(!P.dead && P.hp < S.hp){ const calm = clock - (P.hurtT || -99) > 4; P.hp = Math.min(S.hp, P.hp + S.hp*(calm ? .025 : .004)*dt); }
   if(P.potT > 0) P.potT -= dt;
   if(P.pot2T > 0) P.pot2T -= dt;
 }
