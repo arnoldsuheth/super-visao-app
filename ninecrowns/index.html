@@ -5829,7 +5829,7 @@ function itemName(it){
   return SLOT_INFO[it.slot].n + ' ' + TIERS[it.tier].pre + u;
 }
 function itemStats(it){ const b = Object.assign({}, itemStatsBase(it)); if(it.tier >= 6) b.atkPct = (b.atkPct || 0) + .04*(it.tier - 5); if(it.sa){ const o = ncSaOpt(it); b[o.f] = (b[o.f] || 0) + o.v; }
-  const u = it.up || 0, xk = it.ex ? (it.ex.startsWith('boss:') ? 1.12 : 1.1) : 1; if(u || xk > 1){ const k = (1 + .04*u)*xk; ['hp','def','atk'].forEach(n => { if(b[n]) b[n] = Math.round(b[n]*k); }); } return b; }
+  const u = it.up || 0, xk = it.ex ? (it.ex.startsWith('boss:') ? 1.12 : 1.1) : 1; if(u || xk > 1){ const k = (1 + .08*u)*xk, add = {hp:6, def:1, atk:2};   /* 25/11/2026 (Arnold: evoluir não mudava nada): cada +1 dá +8% e no mínimo +2 ataque, +1 defesa, +6 vida */ ['hp','def','atk'].forEach(n => { if(b[n]) b[n] = Math.round(b[n]*k) + add[n]*u; }); } return b; }
 function itemStatsBase(it){
   const t = it.tier, m = TIERS[t].mult, r = Math.round, f = v => Math.round(v*100)/100;
   switch(it.slot){
@@ -5993,7 +5993,7 @@ function tryUpgrade(it){
   save.gold -= cost; if(UM) save.mats[UM] -= (U.q || 1);
   let msg;
   if(Math.random() < upChance(it)){
-    it.up = nx; it.fp = 0; let extra = '+' + nx*4 + '% em vida, ataque e defesa da peça';
+    it.up = nx; it.fp = 0; let extra = '+' + nx*8 + '% em vida, ataque e defesa da peça';
     if((nx === 10 && !it.w10) || (nx === NC_UP_MAX && !it.w15)){ it['w' + nx] = 1; if(it.sk.length < 5){ it.skx = (it.skx || 0) + 1; it.sk.push('W'); it.gm.push(null); extra = 'Ganhou um encaixe novo para pedra'; } else extra = 'Brilho de evolução +' + nx + ' desbloqueado'; }
     msg = ['Sucesso! ' + itemName(it), extra, '']; SFX.drop();
   } else {
@@ -8237,7 +8237,7 @@ function craftItem(t){
 }
 function statsAfter(it){ const c = Object.assign({}, it, {up:(it.up || 0) + 1}); return itemStats(c); }
 function upHTML(){
-  let h = `<p class="lede">Evolua a peça de <b>+1 até +12</b>. Cada nível dá <b>+4%</b> em vida, ataque e defesa da peça. <b>+1 a +3</b>: só Adena, sempre dá certo. <b>+4 em diante</b>: Adena + <b>Lesser Blue</b> (até Grade A) ou <b>Lesser Gold</b> (Grade S): 10 no +4, 20 no +5, até 90 no +12. <b>Se falhar do +4 em diante, a peça quebra e vira material.</b></p>` + forgeItems();
+  let h = `<p class="lede">Evolua a peça de <b>+1 até +12</b>. Cada nível dá <b>+8%</b> (e no mínimo +2 de ataque, +1 de defesa e +6 de vida) na peça. <b>+1 a +3</b>: só Adena, sempre dá certo. <b>+4 em diante</b>: Adena + <b>Lesser Blue</b> (até Grade A) ou <b>Lesser Gold</b> (Grade S): 10 no +4, 20 no +5, até 90 no +12. <b>Se falhar do +4 em diante, a peça quebra e vira material.</b></p>` + forgeItems();
   const it = byId(forgeSel); if(!it) return h + '<div class="empty">Nenhuma peça para evoluir.</div>';
   ensureSk(it); const T = TIERS[it.tier];
   if(it.up >= NC_UP_MAX) return h + `<div class="fpanel" style="--tc:${T.css}"><div class="big">${itemName(it)}</div><div class="istat">Esta peça já está no máximo (+12).</div></div>`;
