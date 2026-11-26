@@ -584,6 +584,12 @@ body:has(#pause:not([hidden])) #ncBell,body:has(#pause:not([hidden])) #ncChat{di
 #joyZone{position:fixed;left:0;bottom:0;width:48vw;height:52vh;pointer-events:auto;touch-action:none;z-index:0;background:transparent}
 body.nc-swap #joyZone{left:auto;right:0}
 #joy.solto{transition:none!important}
+
+/* 26/11/2026 (Arnold: o ataque normal não pisca): o botão de ataque dá um toque de luz e encolhe a cada golpe; a recarga aparece em cima */
+@keyframes ncGolpe{0%{transform:scale(.88);filter:brightness(1.6)}100%{transform:scale(1);filter:none}}
+#touch .tbtns button.nc-golpe{animation:ncGolpe .22s ease-out}
+#tAtk .nc-cdt{position:absolute;inset:0;display:grid;place-items:center;z-index:4;font:700 19px/1 var(--f-display);font-style:normal;color:#fff;text-shadow:0 0 4px #000,0 2px 3px #000;pointer-events:none}
+#tAtk.nc-recarga svg,#tAtk.nc-recarga img{opacity:.35}
 </style>
 </head>
 <body>
@@ -11788,7 +11794,7 @@ function doAttack(){
   if(ncRes() === 'mp'){ if(!ncSpend(ncAtkCost())){ P.atkCd = .25; return; } } else ncSpGain();   /* 25/11: golpe de stamina enche a barra */
   if(P.mounted) toggleMount(false);
   { const t = ncTgtOk(); if(t){ const tx = t.e ? t.e.pos.x : t.x, tz = t.e ? t.e.pos.z : t.z; if(Math.hypot(tx - P.pos.x, tz - P.pos.z) < 18) P.face = P.targetFace = Math.atan2(tx - P.pos.x, tz - P.pos.z); } }
-  P.atkCd = atkCooldown();
+  P.atkCd = atkCooldown(); { const ab = document.getElementById('tAtk'); if(ab){ ab.classList.remove('nc-golpe'); void ab.offsetWidth; ab.classList.add('nc-golpe'); } }   /* 26/11/2026: o botão pisca a cada golpe */
   if(c.attack === 'nature' && (window.ncShaAtk !== '' )){ ncShamanAtk(window.ncShaAtk || save.shaAtk || 'terra'); return; }   // 23/11: novo ataque do Xamã (3 opções para o Arnold escolher)
   if(c.attack === 'holy' || c.attack === 'nature'){ const a = aimAngle(15); if(a !== null) P.face = P.targetFace = a; P.castT = .18;   // Sacerdote (luz) e Xamã (natureza): magia de longe
     firePlayer({kind:'dark', col:c.attack === 'holy' ? 0xfff0a0 : 0x7aff9a, ang:P.face, spd:19, mult:1, life:.9, r:.5}); playAttackSfx(); return; }
@@ -13206,9 +13212,13 @@ function updateHUD(){
   const s2 = document.getElementById('sk2'); if(s2) s2.classList.toggle('on', P.rageT > 0 || P.aegisT > 0);
   const s4 = document.getElementById('sk4'); if(s4) s4.classList.toggle('on', P.mounted);
   $('#tSk1').style.setProperty('--cd', fr[1]); $('#tSk2').style.setProperty('--cd', fr[2]); $('#tDash').style.setProperty('--cd', fr[3]);
+  /* 26/11/2026 (Arnold): ataque, esquiva e poções também mostram a recarga e os segundos que faltam, como as habilidades */
+  { const tx = v => v > 0.05 ? (v < 1 ? v.toFixed(1).replace('.', ',') : String(Math.ceil(v))) : '', put = (id, v, f) => { const b = document.getElementById(id); if(!b) return; b.style.setProperty('--cd', Math.max(0, Math.min(1, f))); const t = tx(v); if(id === 'tAtk'){ let e = b.querySelector('.nc-cdt'); if(!e){ e = document.createElement('em'); e.className = 'nc-cdt'; b.appendChild(e); } if(e.textContent !== t) e.textContent = t; b.classList.toggle('nc-recarga', !!t); return; } if(t){ if(b.getAttribute('data-cd') !== t) b.setAttribute('data-cd', t); } else if(b.hasAttribute('data-cd')) b.removeAttribute('data-cd'); };
+    put('tAtk', Math.max(0, P.atkCd), fr[0]); put('tDash', Math.max(0, P.dashCd), fr[3]);
+    put('tPot', Math.max(0, P.potT || 0), (P.potT || 0)/(DF().potCd || 8)); put('tPot2', Math.max(0, P.pot2T || 0), (P.pot2T || 0)/8); }
   $('#tSk1').classList.toggle('tbtn-super', ncSkLv(ncSlot(0)) >= NC_SK_MAX); $('#tSk2').classList.toggle('tbtn-super', ncSkLv(ncSlot(1)) >= NC_SK_MAX);
   { const left = [0, P.cd[ncSlot(0)], P.cd[ncSlot(1)], 0]; const txt = v => v > 0 ? (v < 1 ? v.toFixed(1) : String(Math.ceil(v))) : '';
-    for(let i = 1; i < 3; i++){ const si = ncSlot(i - 1), lk = !ncSkLv(si), t = lk ? (ncLvOf(save.cls) < NC_SK_REQ[si] ? 'Nv' + NC_SK_REQ[si] : '🔒') : txt(left[i]), el = document.getElementById('sk' + i); if(el){ let n = el.querySelector('.cdn'); if(!n){ n = document.createElement('em'); n.className = 'cdn'; el.appendChild(n); } if(n.textContent !== t) n.textContent = t; el.classList.toggle('cding', !!t); }
+    for(let i = 1; i < 3; i++){ const si = ncSlot(i - 1), lk = !ncSkLv(si), t = lk ? (ncLvOf(save.cls) < NC_SK_REQ[si] ? 'Nv' + NC_SK_REQ[si] : 'Bloq') : txt(left[i]), el = document.getElementById('sk' + i); if(el){ let n = el.querySelector('.cdn'); if(!n){ n = document.createElement('em'); n.className = 'cdn'; el.appendChild(n); } if(n.textContent !== t) n.textContent = t; el.classList.toggle('cding', !!t); }
       const tb = document.getElementById(i === 1 ? 'tSk1' : 'tSk2'); if(tb){ if(t) tb.setAttribute('data-cd', t); else if(tb.hasAttribute('data-cd')){ tb.removeAttribute('data-cd'); tb.classList.remove('nc-ready'); void tb.offsetWidth; tb.classList.add('nc-ready'); } } } }
   $('#tMount').textContent = P.mounted ? 'Descer' : 'Cavalo'; { const n = String(save.potions || 0); if($('#tPotN').textContent !== n) $('#tPotN').textContent = n; const n2 = String(save.potRes || 0); if($('#tPot2N').textContent !== n2){ $('#tPot2N').textContent = n2; $('#hPot2').textContent = n2; $('#hPot2L').textContent = ncRes() === 'mp' ? 'Mana' : 'Stamina'; } }
 }
