@@ -11796,6 +11796,7 @@ function doAttack(){
 }
 /* Altura no combate: quem está muito mais alto ou mais baixo (ex.: em cima de um morro) não é atingido.
    Na rampa a diferença é pequena e o golpe pega. o.y = altura de onde saiu o golpe (padrão: o herói); o.anyY ignora. */
+const NC_ESQ = {guard:.9, guardCd:1, reach:8, charge:.3, chargeDmg:.8, stun:1.2};   // esquivas: escudo do Paladino (s), alcance do avanço da Assassina (m), investida do Bárbaro (s, dano, atordoar s)
 const NC_STAB = {back:1.6, bleed:.2, bleedT:4, afterShadow:1.5};   // estocada: pelas costas 60% a mais; sangramento = 20% do ataque por segundo, 4 s
 const Y_TOL = 1.6;
 const yOk = (ey, oy, tol) => Math.abs(ey - oy) <= (tol || Y_TOL);
@@ -12191,6 +12192,7 @@ function hurtPlayer(raw, elemental){
   P.hurtT = clock;
   if(DEV.god){ P.inv = .2; return; }
   if(P.aegisT > 0){ floatText(P.pos, 'Imune', 'heal'); P.inv = .2; return; }
+  if(P.guardT > 0){ floatText(P.pos, 'Bloqueou!', 'block'); SFX.block(); burst(P.pos, 0x9af0ff, 6, 3, 3, 1.2); P.inv = .2; return; }   // 26/11: escudo levantado do Paladino
   if(P.wallT > 0) raw *= .5;
   if(Math.random() < P.S.block){
     P.inv = .3; P.blockT = .25; floatText(P.pos, 'Bloqueou!', 'block'); SFX.block(); burst(P.pos, 0x9af0ff, 6, 3, 3, 1.2); return;
@@ -12699,10 +12701,25 @@ function updatePlayer(dt){
         burst(P.pos, 0xb08aff, 14, 3, 4, 1);
         P.pos.x += P.dashDir.x*6.5; P.pos.z += P.dashDir.z*6.5; clampPos(P.pos, bossActive);
         burst(P.pos, 0xb08aff, 14, 3, 4, 1); P.inv = Math.max(P.inv, .35); P.dashCd = .9; SFX.bolt();
-      } else { P.dashT = .19; P.dashCd = .7; P.inv = Math.max(P.inv, save.cls === 'assassin' ? .45 : .32); SFX.dash(); }
+      } else if(save.cls === 'paladin'){   /* 26/11 (Arnold): esquiva do Paladino = levanta o escudo e bloqueia */
+        P.guardT = NC_ESQ.guard; P.blockT = NC_ESQ.guard; P.dashCd = NC_ESQ.guardCd; floatText(P.pos, 'Escudo!', 'block'); SFX.block(); burst(P.pos, 0x9af0ff, 8, 2, 3, 1.2);
+      } else {
+        P.dashT = .19; P.dashCd = .7; P.inv = Math.max(P.inv, save.cls === 'assassin' ? .45 : .32); P.dashTg = null; P.dashHits = null;
+        if(save.cls === 'assassin'){   /* 26/11: Assassina avança no monstro mais perto e faz sangrar */
+          const tg = nearestEnemy(NC_ESQ.reach);
+          if(tg){ const dx = tg.pos.x - P.pos.x, dz = tg.pos.z - P.pos.z, d = Math.hypot(dx, dz) || 1; P.dashDir.set(dx/d, 0, dz/d); P.face = P.targetFace = Math.atan2(dx, dz);
+            P.dashT = Math.max(.05, Math.min(.36, (d - tg.r - .8)/21)); P.dashTg = tg; P.inv = Math.max(P.inv, P.dashT + .3); }
+        } else if(save.cls === 'barbarian'){ P.dashT = NC_ESQ.charge; P.dashHits = new Set(); P.inv = Math.max(P.inv, NC_ESQ.charge + .1); }   /* 26/11: Bárbaro avança e atordoa quem acertar */
+        SFX.dash(); }
     }
     let vx, vz;
-    if(P.dashT > 0){ P.dashT -= dt; vx = P.dashDir.x*21; vz = P.dashDir.z*21; burst(P.pos, save.cls === 'assassin' ? 0x6a3a9a : 0xdfe6ff, 1, .5, 1, .6); }
+    if(P.dashT > 0){ P.dashT -= dt; vx = P.dashDir.x*21; vz = P.dashDir.z*21; burst(P.pos, save.cls === 'assassin' ? 0x6a3a9a : save.cls === 'barbarian' ? 0xff8a3a : 0xdfe6ff, 1, .5, 1, .6);
+      if(P.dashHits) for(const e of enemies){ if(e.dead || e.dying || P.dashHits.has(e) || (e.kind === 'boss' && !e.awake)) continue;
+        if(Math.hypot(e.pos.x - P.pos.x, e.pos.z - P.pos.z) < e.r + 1.1){ P.dashHits.add(e); hitEnemy(e, NC_ESQ.chargeDmg, {stun:NC_ESQ.stun, nx:P.dashDir.x, nz:P.dashDir.z, kb:6}); floatText(e.pos, 'Atordoado!', 'crit'); addShake(.12); } }
+      if(P.dashT <= 0 && P.dashTg){ const t = P.dashTg; P.dashTg = null;
+        if(!t.dead && !t.dying && Math.hypot(t.pos.x - P.pos.x, t.pos.z - P.pos.z) < t.r + 2){ P.swingT = P.swingDur = .16; P.backE = t; P.backUntil = clock + .3;
+          if(hitEnemy(t, 1, {nx:P.dashDir.x, nz:P.dashDir.z, kb:2}) !== false && !t.dead && !t.dying){ t.burnT = NC_STAB.bleedT; t.burnAcc = t.burnAcc || 0; t.burnDps = Math.max(t.burnDps || 0, S.atk*NC_STAB.bleed); t.burnCol = 0xc81e2a; } } } }
+    else if(P.guardT > 0){ P.guardT -= dt; P.blockT = Math.max(P.blockT, .05); const sp = S.spd*.3*wxSlow(); vx = mx*sp; vz = mz*sp; }
     else { const sp = S.spd*(P.mounted ? 2 : P.swingT > 0 ? .55 : P.castT > 0 ? .7 : 1)*wxSlow(); vx = mx*sp; vz = mz*sp; }
     P.pos.x += vx*dt; P.pos.z += vz*dt;
     clampPos(P.pos, bossActive, P.mounted ? .8 : .45);
