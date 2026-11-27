@@ -840,7 +840,7 @@ body.nc-swap #joyZone{left:auto;right:0}
       <div class="stages" id="stages"></div>
     </div>
     <div id="vGear" class="panel" style="padding:0;border:0;background:none;backdrop-filter:none" hidden>
-      <h2>Equipado <small>toque numa peça para tirar</small></h2>
+      <h2>Equipado <small>toque numa peça para tirar</small></h2><button type="button" class="btn sm" id="ncElmoBtn" aria-pressed="false">Mostrar elmo: Sim</button>
       <div class="eqgrid" id="eqGrid"></div>
       <h2>Mochila</h2>
       <div class="filters bag-f" id="invFilters"></div>
@@ -5646,6 +5646,9 @@ const BOSS_BASE = id => Math.min(8, 2 + Math.floor(id/2.4));
 const reqStar = st => Math.min(9, 1 + Math.round(st.id*.5));
 /* 26/11/2026 (Arnold aprovou): 1 grade a cada 3 mapas. Mapas 1-3 No Grade, 4-6 D, 7-9 C, 10-12 B, 13-15 A, 16-18 S.
    Pedras: mapas 1-3 nenhuma; 4-6 Lesser Blue (SA); 7-9 + Silver Coin; 10-12 + Green Coin e Lesser Gold; 13 em diante + Gold Coin. */
+/* 26/11/2026 (Arnold: juntar 1 de ouro estava quase impossível). Valores em bronze (100 bronze = 1 prata, 100 prata = 1 ouro), no mapa 1; sobem a cada mapa.
+   Meta: cerca de 1 a 2 de ouro no fim do Ato 1, sem ficar fácil. */
+const NC_PREMIO = {monstro:2, elite:2, posto:20, postos3:300, chefe:400, masmorra:600};
 const NC_ZONA = st => Math.min(5, Math.floor(((st && st.id) || 0)/3));
 const NC_GT = g => [GR_OF.indexOf(g), GR_OF.lastIndexOf(g)];
 const NC_ZMAT = [[], ['lblue'], ['lblue','scoin'], ['lblue','scoin','gcoin','lgold'], ['lblue','scoin','gcoin','lgold','ocoin'], ['lblue','scoin','gcoin','lgold','ocoin']];
@@ -5729,7 +5732,7 @@ const CLASSES = {
   archer:{name:'Arqueira', tag:'Arco e flecha', wtype:'bow', desc:'Muito rápida, atira sem parar e foge dos perigos.', hp:.85, atk:.72, def:.85, spd:1.05, block:0, crit:0, cd:.36, attack:'arrow', dash:'Rolamento',
     skills:[{id:'volley', name:'Chuva', full:'Chuva de Flechas', cd:7, desc:'três ondas de flechas caem sobre a área do alvo'},
             {id:'pierce', name:'Perfurar', full:'Flecha Perfurante', cd:4.5, desc:'atravessa todos os inimigos em linha'},
-            {id:'trap', name:'Armadilha', full:'Armadilha', cd:9, desc:'deixa uma armadilha no chão que explode e prende por 2 s'},
+            {id:'trap', name:'Armadilha', full:'Armadilha', cd:9, desc:'fica armada no chão até um monstro pisar: prende 2 s e faz sangrar. Cada nível = 1 armadilha a mais ao mesmo tempo'},
             {id:'backstep', name:'Recuo', full:'Salto para Trás', cd:7, desc:'pula para trás atirando: empurra quem está perto'},
             {id:'explarrow', name:'Explosiva', full:'Flecha Explosiva', cd:8, desc:'flecha que explode no alvo em área'},
             {id:'eagle', name:'Águia', full:'Olho de Águia', cd:30, desc:'SUPREMA: +20% de dano por 10 s e uma flecha gigante em linha'}]},
@@ -7303,6 +7306,9 @@ function buildHero(cls){
   applyGear(h);
   return h;
 }
+function ncElmoBtnPaint(){ const b = document.getElementById('ncElmoBtn'); if(b){ b.textContent = 'Mostrar elmo: ' + (save.hideHelm ? 'Não' : 'Sim'); b.setAttribute('aria-pressed', String(!!save.hideHelm)); } }
+document.addEventListener('click', e => { if(!e.target.closest('#ncElmoBtn')) return; save.hideHelm = !save.hideHelm; persist(); ncElmoBtnPaint(); try{ applyGear(hero); }catch(_){} });
+setTimeout(ncElmoBtnPaint, 0);
 function applyGear(h){
   for(const s of ARMOR){ const it = equipped(s); h.armor[s].forEach(m => { m.visible = !!it; if(it){ m.material = h.tm[it.tier]; m.scale.setScalar(1 + it.tier*.018); } }); }
   for(const d of h.decos){ const it = equipped(d.slot); d.m.visible = !!it && it.tier + 1 >= d.min; if(d.m.visible) d.m.material = d.gem ? h.gm[it.tier] : h.tm[it.tier]; }
@@ -8611,10 +8617,12 @@ function kkTex(model, col){
 const NC_HEADS = [['', 'Da classe'], ['kk_knight', 'Loiro curto'], ['kk_barbarian', 'Careca de barba'], ['kk_mage', 'Cabelo escuro'], ['kk_rogue', 'Cabelo comprido']];   // capuz não é cabelo: é acessório de cabeça (aparece com o capacete equipado)
 MX_DEF.priest = {model:'kk_mage', anims:'kk:priest', h:1.95, kk2:{hide:['^Spellbook$','Spellbook_open','1H_Wand','_Hat$'], clips:{atk1:'Spellcast_Shoot', atk2:'Spellcast_Shoot', atk3:'Spellcast_Raise', smash:'Spellcast_Long', spin:'Spellcast_Raise'}, cloth:0xf4f0e6, cape:0xd8b65c, trim:0xd8b65c, hair:0xf0d890}, atk:{at:.2, speed:1.9}};
 MX_DEF.shaman = {model:'kk_barbarian', anims:'kk:shaman', h:2.15, kk2:{hide:['Offhand','Barbarian_Round_Shield','^1H_Axe$','Mug'], clips:{atk1:'Spellcast_Shoot', atk2:'Spellcast_Shoot', atk3:'Spellcast_Raise', smash:'Spellcast_Long', spin:'Spellcast_Raise'}, cloth:0x2a8a7a, cape:0xd0702a, trim:0xf4efe6}, atk:{at:.2, speed:1.9}};
+/* 26/11/2026 (Arnold): botão "Mostrar elmo" na Mochila. Elmo escondido ou gorro de evento = some o elmo/capuz/chapéu e fica só o enfeite (os atributos do elmo continuam valendo) */
+const ncSemElmo = () => { if(save.hideHelm) return true; try{ const F = ncFestSave(); return !!(F.on.cabeca && F.own[F.on.cabeca]); }catch(_){ return false; } };
 const NC_HEAD_CLS = {kk_knight:'warrior', kk_barbarian:'barbarian', kk_mage:'mage', kk_rogue:'assassin', kk_rogue_hooded:'archer'};
 function ncHead(h, col0){ const x = h.mx; if(!x || !x.d.kk2) return; const col = {}; if(col0.hair) col.hair = col0.hair; if(col0.skin) col.skin = col0.skin;   // o rosto só recebe cor de cabelo e pele
   let want = (save.look && save.look.head) || ''; if(want === 'kk_rogue_hooded') want = '';
-  if(x.d.model === 'kk_rogue_hooded') want = equipped('helmet') ? 'kk_rogue_hooded' : (want || 'kk_rogue');   // Arqueira: capuz só com algo equipado na cabeça
+  if(x.d.model === 'kk_rogue_hooded') want = equipped('helmet') && !ncSemElmo() ? 'kk_rogue_hooded' : (want || 'kk_rogue');   // Arqueira: capuz só com algo equipado na cabeça
   let own = null; x.m.traverse(o => { if(o.isSkinnedMesh && /_Head(_Hooded)?$/.test(o.name) && !o.userData.ncHead) own = o; }); if(!own) return;
   if(x.headM && (x.headKey !== want || !want || want === x.d.model)){ x.headM.parent && x.headM.parent.remove(x.headM); x.headM = null; x.headKey = ''; }
   if(!want || want === x.d.model){ return; }
@@ -8631,7 +8639,7 @@ function ncHead(h, col0){ const x = h.mx; if(!x || !x.d.kk2) return; const col =
 function kkPaint(h){
   const x = h.mx; if(!x) return; const d = x.d, k = d.kk2, tOf = s => { const it = equipped(s); return it ? it.tier : -1; }, mix = (a, b, t) => new T.Color(a).lerp(new T.Color(b), t).getHex();
   const hide = k.hide.slice(); if(tOf('helmet') < 0) hide.push('_Helmet$', '_Hat$');
-  try{ const F = ncFestSave(); if(F.on.cabeca && F.own[F.on.cabeca]) hide.push('_Helmet$', '_Hat$'); }catch(_){}   // 22/11 (Arnold): gorro/chifre de evento fica NO LUGAR do chapéu e do elmo, não por cima
+  if(ncSemElmo()) hide.push('_Helmet$', '_Hat$');   // 22/11 (Arnold): gorro/chifre de evento fica NO LUGAR do chapéu e do elmo, não por cima
   if(d.model === 'kk_knight' && !k.noShield){ const st = tOf('shield'), want = h.cls === 'paladin' ? (st >= 7 ? 'Spike_Shield' : 'Rectangle_Shield') : st >= 8 ? 'Spike_Shield' : st >= 5 ? 'Rectangle_Shield' : st >= 3 ? 'Badge_Shield' : 'Round_Shield';
     ['Badge_Shield','Rectangle_Shield','Round_Shield','Spike_Shield'].forEach(n => { const i = hide.indexOf(n); if(i >= 0) hide.splice(i, 1); if(n !== want) hide.push('^' + n + '$'); }); }
   if(h.cls === 'assassin' && tOf('off') < 0) hide.push('^Knife_Offhand$');   // 25/11: sem a 2ª adaga, mão esquerda vazia
@@ -8670,7 +8678,7 @@ function kkPaint(h){
 const NC_HELM3D = true,   // 22/11: aprovado pelo Arnold
   NC_HELM_T = [0, .42, .02, 1, 1.0, .56, .36, .58, .22, .8];
 function ncHelm3D(h, x){ if(!(window.NC_HELM3D || NC_HELM3D)) return; let fc = 0; try{ const F = ncFestSave(); fc = F.on.cabeca && F.own[F.on.cabeca]; }catch(_){}
-  const it = fc ? null : equipped('helmet'), g = it ? GR_OF[it.tier] : -1, key = g + ':' + (it ? it.tier : -1);   // com gorro de evento, o elmo some (o gorro fica no lugar)
+  const it = (fc || save.hideHelm) ? null : equipped('helmet'), g = it ? GR_OF[it.tier] : -1, key = g + ':' + (it ? it.tier : -1);   // com gorro de evento, o elmo some (o gorro fica no lugar)
   if(x.helm && x.helm.userData.k === key && x.helm.parent) return; [x.helm, x.helmM].forEach(o => { if(o && o.parent) o.parent.remove(o); }); x.helm = x.helmM = null; if(g < 0) return;
   let hd = null, own = null; x.m.traverse(o => { if(!hd && o.name === 'head') hd = o; if(!own && o.isSkinnedMesh && /_Head(_Hooded)?$/.test(o.name)) own = o; }); if(!hd) return;
   if(h.cls === 'priest'){ x.m.traverse(o => { if(o.isMesh && /_Helmet$|_Hat$/.test(o.name)) o.visible = false; }); return; }   // Sacerdote: sem chapéu; a auréola muda por grade (ncClassDeco)
@@ -9517,6 +9525,7 @@ function buildStage(st, onlyBoss){
   weatherP = WX_DEF[st.id] ? makeAmbient(WX_DEF[st.id].p) : null;
   stormT = 3 + Math.random()*4;
 
+  try{ while(ncArmas.length) removeObj(ncArmas.pop().g); }catch(_){}   // 26/11: armadilhas não passam para a próxima fase
   allies = []; hazards = []; enemies = []; projs = []; pprojs = []; tels = []; parts = []; pickups = []; waves = []; rings = []; volleys = []; bolts = []; try{ while(ncFx.length){ const f = ncFx.pop(); f.end && f.end(); } }catch(_){} loot = []; runes = []; chests = []; BLD = []; PUDS = []; WATERS = []; dropFx = null; runLoot = []; runMats = {}; runGems = {}; runFrags = {}; runCoins = 0;
   hero = makeHero(); scene.add(hero.root);
   const S = stats();
@@ -10368,11 +10377,16 @@ function markGuard(e, r){ e.post = r; r.guards++;
   const m = new T.Mesh(new T.RingGeometry(.45, .62, 20), bmat(0xc8a8ff, {transparent:true, opacity:.8, side:T.DoubleSide, depthWrite:false})); m.rotation.x = -Math.PI/2; m.position.y = .06; e.cr.root.add(m); }
 function postFreed(r){
   r.taken = true; SFX.rune(); burst({x:r.x, z:r.z, y:heightAt(r.x, r.z) + 1.4}, 0xc8a8ff, 30, 6, 8, 1); fxRing(r.x, r.z, 6, 0xc8a8ff, .5); addShake(.25); removeObj(r.g);
-  for(let i=0;i<5;i++) spawnPickup('gold', {x:r.x, z:r.z}, Math.round(4*Math.pow(1.15, curStage.id)));
+  for(let i=0;i<5;i++) spawnPickup('gold', {x:r.x, z:r.z}, Math.round(NC_PREMIO.posto*Math.pow(1.2, curStage.id)));
   if(Math.random() < .35*LUCK()) dropLoot({x:r.x, z:r.z}, rollRar('elite', NC_GT(NC_ZONA(curStage))[0], NC_GT(NC_ZONA(curStage))[1]));
   try{ save.postos = save.postos || {}; const L = save.postos[curStage.id] = save.postos[curStage.id] || []; if(!L.includes(r.idx)) L.push(r.idx); persist(); }catch(_){}   // 26/11 (Arnold): posto libertado fica salvo até vencer o chefe
   const n = runes.filter(q => q.taken).length, need = runes.length;
-  if(n >= need){ gateOpen = true; barrier.visible = false; banner('Todos os postos libertados!', 'O portal do chefe se abriu: a arena fica no extremo norte', 'rune'); SFX.drop(); }
+  if(n >= need){ gateOpen = true; barrier.visible = false;
+    /* 26/11/2026 (Arnold: prêmio das 3 missões era só moedinha): libertar os 3 postos dá um baú com Adena, 1 peça garantida do grade do mapa e pedras do mapa */
+    let ganhou = ''; try{ const z = NC_ZONA(curStage), ad = Math.round(NC_PREMIO.postos3*Math.pow(1.2, curStage.id)); save.gold += ad; ganhou = adenaTxt(ad);
+      const it = newItem(randomSlot(), NC_GT(z)[1], {wtype:CLS().wtype}); if(addItem(it)){ runLoot.push(it); ganhou += ' + ' + itemName(it); }
+      NC_ZMAT[z].forEach(k => { save.mats[k] = (save.mats[k] || 0) + 1; runMats[k] = (runMats[k] || 0) + 1; }); persist(); }catch(_){}
+    banner('Todos os postos libertados!', 'Prêmio: ' + ganhou + '. O portal do chefe se abriu no extremo norte', 'rune'); SFX.drop(); }
   else banner('Posto libertado! (' + n + ' de ' + need + ')', 'O selo quebrou. Siga os feixes roxos até os outros postos', 'rune');
 }
 const NC_CHEST_MS = 12*3600*1000;
@@ -10849,7 +10863,7 @@ function ncDgReward(st){ const D = ncDG; if(!D) return null; const [lo, hi] = bo
   const it = newItem(randomSlot(), up, {wtype:CLS().wtype}); if(addItem(it)){ out.push(it); runLoot.push(it); }
   if(D.duo){ const it2 = newItem(randomSlot(), up, {wtype:CLS().wtype}); if(addItem(it2)){ out.push(it2); runLoot.push(it2); } }
   try{ NC_ZMAT[Math.min(5, z + 1)].forEach((k, i) => { save.mats[k] = (save.mats[k] || 0) + Math.max(1, 3 - i); runMats[k] = (runMats[k] || 0) + Math.max(1, 3 - i); }); }catch(_){}
-  try{ const ad = Math.round(60*Math.pow(1.2, st.id)*(D.duo ? 1.5 : 1)); save.gold += ad; }catch(_){}
+  try{ const ad = Math.round(NC_PREMIO.masmorra*Math.pow(1.25, st.id)*(D.duo ? 1.5 : 1)); save.gold += ad; }catch(_){}
   save.dgWins = save.dgWins || {}; const k = (D.duo ? 'd' : 's') + st.id; save.dgWins[k] = (save.dgWins[k] || 0) + 1; save.dgBest = save.dgBest || {}; save.dgBest[k] = 6;
   banner('Baú da masmorra!', out.length ? 'Ganhou ' + out.map(itemName).join(' e ') : 'Bolsa cheia: libere espaço', 'gold'); ncDG = null; return out; }
 function spawnMinion(st, x, z, awake, elite, type){
@@ -12018,7 +12032,7 @@ function firePlayer(o){
 }
 const NC_SKFX = {pheal:{t:"buff", heal:0.25, c:0xfff2a0}, pshield:{t:"buff", wall:6, c:0xfff0c0}, psmite:{t:"tgt", R:3.2, m:3, c:0xfff0a0, d:0.3, bolt:1, stun:1.2}, pbless:{t:"buff", cry:10, c:0xffe28a}, prenew:{t:"buff", hot:8, c:0xbfffb0}, pchoir:{t:"self", R:6, m:3.6, c:0xfff6c0, heal:0.4},
   stotem:{t:"buff", hot:8, totem:1, c:0x7aff9a}, schain:{t:"tgt", R:3.4, m:0.9, c:0x8ad8ff, waves:4, gap:0.12, bolt:1}, sfury:{t:"buff", rage:10, c:0xff8a3a}, squake:{t:"self", R:4.5, m:1.8, c:0xc8a060, stun:1.5}, swolf:{t:"buff", ally:1, c:0x9ad8ff}, sstorm:{t:"tgt", R:6, m:1.3, c:0x8ad8ff, waves:7, gap:0.35, bolt:1},
- icelance:{t:"line", L:12, W:1.2, m:2.2, c:0x8fe6ff, stun:1}, meteor:{t:"tgt", R:4, m:3.2, c:0xff7a1a, d:0.7, fall:1}, arcshield:{t:"buff", wall:6, heal:0.1, c:0xa0a8ff}, storm:{t:"tgt", R:6, m:1.2, c:0xb070ff, waves:6, gap:0.3, bolt:1}, trap:{t:"self", R:3.2, m:1.8, c:0xc8a060, stun:2, d:0.8}, backstep:{t:"dash", D:-6, R:3, m:1.2, c:0xa8ffb0}, explarrow:{t:"tgt", R:3.5, m:2.4, c:0xff9a3a, d:0.3}, eagle:{t:"line", L:18, W:1.6, m:4.8, c:0xffe070, cry:10, crit:1}, healight:{t:"buff", heal:0.35, c:0xfff2a0}, charge:{t:"dash", D:7, R:2.2, m:2, c:0xffe28a, stun:1, line:1}, judgment:{t:"tgt", R:3, m:3, c:0xfff0a0, d:0.4, bolt:1, stun:1.5}, kingaura:{t:"self", R:6, m:2.5, c:0xffd24a, wall:8, cry:8}, poison:{t:"tgt", R:2.8, m:0.5, c:0x7aff5a, waves:6, gap:0.5}, smoke:{t:"self", R:4, m:0.8, c:0x8a8a9a, stun:2, inv:1.5}, deathmark:{t:"tgt", R:1.6, m:2.4, c:0xff3a5a, d:1, crit:1}, bladedance:{t:"self", R:4.2, m:0.8, c:0xd8dee8, waves:7, gap:0.18, inv:1.4}, hundred:{t:"line", L:3.4, W:1.6, m:0.55, c:0xffe0a0, waves:8, gap:0.08}, meditate:{t:"buff", heal:0.3, res:1, cry:6, c:0x9affe0}, flykick:{t:"dash", D:6, R:2.6, m:2.2, c:0xffb070, stun:1.2}, dragon:{t:"line", L:16, W:2.2, m:5, c:0xff4a1a, crit:1}, curse:{t:"tgt", R:4, m:0.7, c:0x9a3ad8, waves:5, gap:0.6}, corpse:{t:"tgt", R:4, m:2.6, c:0x4aff7a, d:0.25}, scythe:{t:"self", R:4.5, m:2.2, c:0x7a2ad8, heal:0.1}, reaper:{t:"line", L:14, W:2.5, m:5.5, c:0x6a1ab8, heal:0.2, crit:1}};
+ icelance:{t:"line", L:12, W:1.2, m:2.2, c:0x8fe6ff, stun:1}, meteor:{t:"tgt", R:4, m:3.2, c:0xff7a1a, d:0.7, fall:1}, arcshield:{t:"buff", wall:6, heal:0.1, c:0xa0a8ff}, storm:{t:"tgt", R:6, m:1.2, c:0xb070ff, waves:6, gap:0.3, bolt:1}, trap:{t:"self", R:3.2, m:1.8, c:0xc8a060, stun:2, d:0.8, arma:1}, backstep:{t:"dash", D:-6, R:3, m:1.2, c:0xa8ffb0}, explarrow:{t:"tgt", R:3.5, m:2.4, c:0xff9a3a, d:0.3}, eagle:{t:"line", L:18, W:1.6, m:4.8, c:0xffe070, cry:10, crit:1}, healight:{t:"buff", heal:0.35, c:0xfff2a0}, charge:{t:"dash", D:7, R:2.2, m:2, c:0xffe28a, stun:1, line:1}, judgment:{t:"tgt", R:3, m:3, c:0xfff0a0, d:0.4, bolt:1, stun:1.5}, kingaura:{t:"self", R:6, m:2.5, c:0xffd24a, wall:8, cry:8}, poison:{t:"tgt", R:2.8, m:0.5, c:0x7aff5a, waves:6, gap:0.5}, smoke:{t:"self", R:4, m:0.8, c:0x8a8a9a, stun:2, inv:1.5}, deathmark:{t:"tgt", R:1.6, m:2.4, c:0xff3a5a, d:1, crit:1}, bladedance:{t:"self", R:4.2, m:0.8, c:0xd8dee8, waves:7, gap:0.18, inv:1.4}, hundred:{t:"line", L:3.4, W:1.6, m:0.55, c:0xffe0a0, waves:8, gap:0.08}, meditate:{t:"buff", heal:0.3, res:1, cry:6, c:0x9affe0}, flykick:{t:"dash", D:6, R:2.6, m:2.2, c:0xffb070, stun:1.2}, dragon:{t:"line", L:16, W:2.2, m:5, c:0xff4a1a, crit:1}, curse:{t:"tgt", R:4, m:0.7, c:0x9a3ad8, waves:5, gap:0.6}, corpse:{t:"tgt", R:4, m:2.6, c:0x4aff7a, d:0.25}, scythe:{t:"self", R:4.5, m:2.2, c:0x7a2ad8, heal:0.1}, reaper:{t:"line", L:14, W:2.5, m:5.5, c:0x6a1ab8, heal:0.2, crit:1}};
 /* Executa as habilidades novas a partir da ficha acima (t = tipo):
    line = golpe em linha · tgt = cai no alvo · self = em volta de você · dash = avança/recua · buff = cura e reforços */
 function ncSkUp(f, l){ if(l < 3) return f; f = Object.assign({}, f); const s5 = l >= 5;
@@ -12028,7 +12042,7 @@ function ncSkUp(f, l){ if(l < 3) return f; f = Object.assign({}, f); const s5 = 
   else if(f.t === 'dash'){ f.D *= 1.3; if(s5) f.R = (f.R || 2.5)*1.6; }
   ['heal','hot','cry','rage','wall'].forEach(k => { if(f[k]) f[k] *= s5 ? 1.6 : 1.3; }); if(s5 && (f.heal || f.hot || f.cry || f.wall)) f.party = 1;
   return f; }
-function ncSkFx(f, i){ f = ncSkUp(f, ncSkLv(i)); const skm = ncSkMul(i), ox = P.pos.x, oz = P.pos.z, oy = P.pos.y, o = {skm, stun:f.stun || 0, kb:8, crit:!!f.crit};
+function ncSkFx(f, i){ if(f.arma) return ncArmaSk(f, i); f = ncSkUp(f, ncSkLv(i)); const skm = ncSkMul(i), ox = P.pos.x, oz = P.pos.z, oy = P.pos.y, o = {skm, stun:f.stun || 0, kb:8, crit:!!f.crit};
   const ring = (x, z, R) => { fxRing(x, z, R, f.c, .45); for(let q = 0; q < 10; q++){ const a2 = q/10*Math.PI*2; burst({x:x + Math.sin(a2)*R*.8, z:z + Math.cos(a2)*R*.8, y:oy}, f.c, 3, 2, 5, .35); } };
   const area = (x, z, R) => { aoe(x, z, R, f.m, Object.assign({}, o, {y:oy})); ring(x, z, R); if(f.bolt) bolt(x, oy + 9, z, x, oy, z, f.c); };
   const rep = fn => { const n = f.waves || 1; for(let k = 0; k < n; k++) setTimeout(() => { if(mode === 'stage') fn(k); }, ((f.d || 0) + k*(f.gap || 0))*1000); };
@@ -12168,7 +12182,30 @@ function ncTrap(x, z){ const g = new T.Group(), m = new T.MeshStandardMaterial({
   for(let k = 0; k < 7; k++){ const a = k/7*Math.PI*2, c = new T.Mesh(new T.ConeGeometry(.09, .42, 6), tip); c.position.set(Math.sin(a)*.55, .22, Math.cos(a)*.55); g.add(c); }
   const c0 = new T.Mesh(new T.ConeGeometry(.1, .5, 6), tip); c0.position.y = .26; g.add(c0);
   g.position.set(x, heightAt(x, z) + .02, z); scene.add(g); ncTraps.push({g, x, z, t:NC_ESQ2.archer.dura, hit:new Set()}); }
-function ncTrapsUpdate(dt){ for(let i = ncTraps.length - 1; i >= 0; i--){ const tr = ncTraps[i]; tr.t -= dt;
+/* 26/11/2026 (Arnold): habilidade Armadilha da Arqueira. Fica armada até um monstro pisar; aí fecha, dá dano, prende 2 s e faz sangrar.
+   O nível da habilidade diz quantas podem ficar armadas ao mesmo tempo (nível 1 = 1 ... nível 5 = 5). Passou do limite, a mais antiga some. */
+const NC_ARMA = {raio:2.2, sang:.25, sangT:5};
+const ncArmas = [];
+function ncArmaSk(f, i){ const lv = Math.max(1, ncSkLv(i)), max = Math.min(5, lv), skm = ncSkMul(i);
+  while(ncArmas.length >= max){ const v = ncArmas.shift(); burst({x:v.x, z:v.z, y:heightAt(v.x, v.z)}, 0xc8a060, 6, 2, 2, .3); removeObj(v.g); }
+  const x = P.pos.x + Math.sin(P.face)*1.6, z = P.pos.z + Math.cos(P.face)*1.6, g = new T.Group();
+  const ferro = new T.MeshStandardMaterial({color:0x9aa0a8, metalness:.6, roughness:.35}), mola = new T.MeshStandardMaterial({color:0x6a4a2a, roughness:.8});
+  g.add(new T.Mesh(new T.CylinderGeometry(.75, .8, .06, 16), mola));
+  for(const lado of [-1, 1]){ const meia = new T.Group(); meia.position.z = lado*.05; for(let k = 0; k < 6; k++){ const d = new T.Mesh(new T.ConeGeometry(.07, .3, 5), ferro); d.position.set(-.55 + k*.22, .14, lado*.55); meia.add(d); }
+    const aro = new T.Mesh(new T.TorusGeometry(.62, .04, 6, 16, Math.PI), ferro); aro.rotation.set(Math.PI/2, 0, lado > 0 ? 0 : Math.PI); aro.position.y = .05; meia.add(aro); g.add(meia); }
+  const luz = new T.Mesh(new T.RingGeometry(.85, 1, 20), bmat(0xffc860, {transparent:true, opacity:.5, side:T.DoubleSide, depthWrite:false})); luz.rotation.x = -Math.PI/2; luz.position.y = .04; g.add(luz);
+  g.position.set(x, heightAt(x, z) + .02, z); scene.add(g); ncArmas.push({g, x, z, f, skm, luz, t:0});
+  burst({x, z, y:heightAt(x, z)}, 0xc8a060, 8, 2, 3, .3); floatText(P.pos, 'Armadilha ' + ncArmas.length + '/' + max, 'block'); }
+function ncArmasUpdate(dt){ if(mode !== 'stage' || P.dead){ while(ncArmas.length) removeObj(ncArmas.pop().g); return; }
+  for(let i = ncArmas.length - 1; i >= 0; i--){ const a = ncArmas[i]; a.t += dt; a.luz.material.opacity = .3 + Math.sin(a.t*4)*.2;
+    const pegou = enemies.find(e => !e.dead && !e.dying && !(e.kind === 'boss' && !e.awake) && Math.hypot(e.pos.x - a.x, e.pos.z - a.z) < .9 + e.r);
+    if(!pegou) continue;
+    for(const e of enemies){ if(e.dead || e.dying || (e.kind === 'boss' && !e.awake)) continue; if(Math.hypot(e.pos.x - a.x, e.pos.z - a.z) > NC_ARMA.raio + e.r) continue;
+      if(hitEnemy(e, a.f.m, {skm:a.skm, stun:a.f.stun, freeze:a.f.stun, kb:0, noProc:true}) !== false && !e.dead && !e.dying){
+        e.burnT = NC_ARMA.sangT; e.burnAcc = e.burnAcc || 0; e.burnDps = Math.max(e.burnDps || 0, P.S.atk*NC_ARMA.sang*a.skm); e.burnCol = 0xc81e2a; } }
+    burst({x:a.x, z:a.z, y:heightAt(a.x, a.z)}, 0xc81e2a, 14, 3, 4, .4); fxRing(a.x, a.z, NC_ARMA.raio, 0xc8a060, .35); addShake(.12); try{ SFX.slam(); }catch(_){}
+    floatText(pegou.pos, 'Preso!', 'crit'); removeObj(a.g); ncArmas.splice(i, 1); } }
+function ncTrapsUpdate(dt){ try{ ncArmasUpdate(dt); }catch(_){} for(let i = ncTraps.length - 1; i >= 0; i--){ const tr = ncTraps[i]; tr.t -= dt;
     if(tr.t <= 0 || P.dead){ removeObj(tr.g); ncTraps.splice(i, 1); continue; } if(tr.t < 1) tr.g.visible = Math.floor(tr.t*10) % 2 === 0;
     for(const e of enemies){ if(e.dead || e.dying || tr.hit.has(e) || (e.kind === 'boss' && !e.awake)) continue;
       if(Math.hypot(e.pos.x - tr.x, e.pos.z - tr.z) < 1.1 + e.r){ tr.hit.add(e); hitEnemy(e, NC_ESQ2.archer.espinho, {freeze:NC_ESQ2.archer.lento, kb:0, noProc:true}); burst(e.pos, 0xd8e0e8, 6, 2, 3, 1); } } } }
@@ -12207,11 +12244,11 @@ function killMinion(e){
   const id = curStage.id, k = e.elite ? 5 : 1;
   /* 22/11 (Arnold): jogo para ~80 h; comum dá pouco XP, elite dá muito, para puxar o jogador às áreas de elite e ao Boss */
   gainXP(Math.round(10*Math.pow(1.2, id)*(e.elite ? NC_XP.elite : NC_XP.minion)));
-  spawnPickup('gold', e.pos, Math.round((2 + Math.random()*3)*Math.pow(1.15, id))*k);
+  spawnPickup('gold', e.pos, Math.round((2 + Math.random()*3)*Math.pow(1.15, id))*k*NC_PREMIO.monstro);
   const rw = Math.min(2, DF().reward)*LUCK(), sp = CFG.species[id] || 'metal', basic = id % 2 ? 'minerio' : 'metal', ev = evFx();
   save.cnt.kills = (save.cnt.kills || 0) + 1;
   if(e.elite){ save.cnt.elites = (save.cnt.elites || 0) + 1;
-    for(let i=0;i<3;i++) spawnPickup('gold', e.pos, Math.round(3*Math.pow(1.15, id))); spawnPickup('heart', e.pos, .35);
+    for(let i=0;i<3;i++) spawnPickup('gold', e.pos, Math.round(3*Math.pow(1.15, id)*NC_PREMIO.elite)); spawnPickup('heart', e.pos, .35);
     if(Math.random() < CFG.itemCh.elite*LUCK()*(ev.item || 1)) dropLoot(e.pos, rollRar('elite', NC_GT(NC_ZONA(curStage))[0], NC_GT(NC_ZONA(curStage))[1]));
     if(Math.random() < CFG.matCh.elite) giveMat(basic, 1 + (Math.random() < .5 ? 1 : 0)); if(Math.random() < .4*rw) giveMat(sp);
     if(Math.random() < .7) giveMat('refino', 1 + (Math.random() < .4 ? 1 : 0)); if(Math.random() < .08*rw) giveMat('superior'); if(Math.random() < .1) giveMat('broca');
@@ -12728,7 +12765,7 @@ function bossDefeated(b){
       if(Math.random() < .4){ const it2 = newItem(randomSlot(), rollRar('boss', Math.max(0, lo - 1), Math.min(hi, lo + 1), M.bias*.3), {boss:true}); if(addItem(it2)){ extra.push(it2); runLoot.push(it2); got.push(itemName(it2)); } } }
     breaks.push({n:p.n, got}); });
 
-  const xp = Math.round(120*Math.pow(1.2, id)*DF().reward), gold = Math.round(30*Math.pow(1.2, id)*DF().reward);
+  const xp = Math.round(120*Math.pow(1.2, id)*DF().reward), gold = Math.round(NC_PREMIO.chefe*Math.pow(1.25, id)*DF().reward);   // 26/11 (Arnold): chefe paga bem mais
   save.best = save.best || {}; const di = DIFF_ORDER.indexOf(save.diff); if(di > (save.best[id] ?? -1)) save.best[id] = di;
   gainXP(Math.round(xp/DF().reward*NC_XP.boss)); save.gold += gold;
   const setDone = !hadSet && ownsSet(st.region*2 + 2);
@@ -15366,6 +15403,7 @@ body:not(.nc-play-ok) #ncBell{}
 .nc-ptag:not(.pty) .pb{display:none}.nc-ptag.pty b{color:#7dff8a}
 .cbtn .cb-ic{width:34px;height:34px;float:left;margin:0 8px 0 0;filter:drop-shadow(0 2px 3px #0009)}
 body.nc-l #ncBell,body.nc-r #ncBell{display:none}
+@media (orientation:landscape) and (max-height:540px){#ncBell{left:calc(192px + env(safe-area-inset-left,0px))}}   /* 26/11/2026 (Arnold): celular deitado, o sino ficava em cima do quadro do grupo */
 @keyframes ncSuper{0%{box-shadow:0 0 0 2px #ffe08a,0 0 8px 2px #ffb83a}50%{box-shadow:0 0 0 3px #fff2b0,0 0 16px 5px #ffd23a}100%{box-shadow:0 0 0 2px #ffe08a,0 0 8px 2px #ffb83a}}
 .tnode.super>i{animation:ncSuper 1.4s ease-in-out infinite;border-radius:10px}.tnode.super b::after{content:" · SUPER";color:#ffd23a;font-size:11px}
 .tbtn-super{animation:ncSuper 1.4s ease-in-out infinite!important}
@@ -15905,6 +15943,7 @@ body.nc-ov #ncXp2{display:none}
 /* 24/11 (Arnold: ícones sumiram no iPhone): o desenho do ícone ganha tamanho fixo em pixels (o Safari às vezes zera a altura em %) */
 .pimg.nci{width:var(--s)!important;height:var(--s)!important;min-width:var(--s);min-height:var(--s)}
 .pimg.nci>svg{display:block;width:calc(var(--s)*.78)!important;height:calc(var(--s)*.78)!important;min-width:calc(var(--s)*.78);flex:none}
+#ncElmoBtn{margin:-4px 0 10px;min-height:36px}
 .pimg.nci>span.ncimg{position:absolute;left:11%;top:9%;width:78%;height:78%;display:block;background-repeat:no-repeat;background-position:center;background-size:contain;z-index:1;pointer-events:none;-webkit-transform:translateZ(0)}.pimg.nci>span.ncimg.w{left:8%;top:6%;width:84%;height:84%}
 .pimg.nci>img.nca{display:block;width:calc(var(--s)*.78)!important;height:calc(var(--s)*.78)!important;position:relative;z-index:1;filter:drop-shadow(0 2px 2px rgba(0,0,0,.55))}
 .pimg.nci>img.wico{display:block;width:calc(var(--s)*.84)!important;height:calc(var(--s)*.84)!important;object-fit:contain}
