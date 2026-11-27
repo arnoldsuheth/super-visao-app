@@ -924,6 +924,7 @@ body.nc-swap #joyZone{left:auto;right:0}
     <button id="tPot" aria-label="Poção de vida"><b id="tPotN">3</b></button>
     <button id="tPot2" aria-label="Poção de mana ou stamina"><b id="tPot2N">2</b></button>
     <button id="tMount">Cavalo</button>
+    <button id="tBuff" aria-label="Buffs">Buff</button>
     <button id="tDash">Esquiva</button>
     <button id="tSk2">H2</button>
     <button id="tSk1">H1</button>
@@ -6450,6 +6451,7 @@ function stats(){
   const addG = (k, v) => s[k] = (s[k] || 0) + v;
   for(const slot of SLOTS){ const it = equipped(slot); if(!it) continue; const b = itemStats(it); for(const k in b){ if(k === 'elem') s.elem = b.elem; else s[k] += b[k]; } gemFx(it, addG); }
   if(ncDual()){ const o = equipped('off'); if(o && o.id !== save.eq.weapon){ const b = itemStats(o); for(const k in b){ if(k === 'elem'){ if(!s.elem) s.elem = b.elem; } else if(typeof b[k] === 'number') s[k] = (s[k] || 0) + b[k]*NC_OFF_K; else s[k] = s[k] || b[k]; } gemFx(o, addG); } }   // 25/11: adaga da mão esquerda
+  try{ ncBuffStats(s); }catch(_){}
   s.aspd += ncRes() === 'mp' ? s.saAcu : s.saAcu*.5;
   try{ const SB = ncSetBonus(); if(SB){ s.setFull = SB; if(SB.tipo === 'Heavy'){ s.defPct += .10; s.hpPct += .05; } else if(SB.tipo === 'Light'){ s.spdPct += .08; s.crit += .05; } else { s.resPct = (s.resPct || 0) + .10; s.atkPct += .08; } } }catch(_){}   // 26/11: Heavy +10% def +5% vida; Light +8% vel +5% crítico; Robe +10% mana +8% dano de magia   // Acumen: magia mais rápida (classes de mana pegam inteiro)
   s.hp *= c.hp*(1 + s.hpPct); s.atk *= c.atk*(1 + s.atkPct); s.def *= c.def*(1 + s.defPct); s.spd *= c.spd*(1 + s.spdPct); s.block += c.block;
@@ -11406,6 +11408,7 @@ addEventListener('keydown', e => {
   const livre = c => !NC_BIND.some(b => bindOf(b[0]) === c);   // E e R continuam funcionando no teclado se não estiverem em outra ação
   if(isKey(e, 's1') || e.code === 'Digit1' || (e.code === 'KeyE' && livre('KeyE'))) useSkill(0);
   if(isKey(e, 's2') || e.code === 'Digit2' || (e.code === 'KeyR' && livre('KeyR'))) useSkill(1);
+  if(e.code === 'Digit3' || (e.code === 'KeyB' && livre('KeyB'))) ncBuffUsar();
   if(e.code.startsWith('Arrow')) e.preventDefault();
 });
 addEventListener('keyup', e => { keys[e.code] = false; });
@@ -11485,6 +11488,8 @@ tAtk.addEventListener('pointerdown', e => { e.preventDefault(); if(running && !i
 ['pointerup','pointercancel','pointerleave'].forEach(ev => tAtk.addEventListener(ev, () => attackHeld = false));
 $('#tDash').addEventListener('pointerdown', e => { e.preventDefault(); if(running && !inputLocked) dashPressed = true; });
 $('#tSk1').addEventListener('pointerdown', e => { e.preventDefault(); useSkill(0); });
+$('#tBuff').addEventListener('pointerdown', e => { e.preventDefault(); ncBuffUsar(); });
+setInterval(() => { try{ const b = $('#tBuff'), r = P ? Math.max(0, Math.ceil((P.ncBuffCd || 0) - clock)) : 0; if(r) b.setAttribute('data-cd', r); else b.removeAttribute('data-cd'); b.style.setProperty('--cd', r ? r/NC_BUFF_CD : 0); }catch(_){} }, 250);
 $('#tSk2').addEventListener('pointerdown', e => { e.preventDefault(); useSkill(1); });
 $('#tMount').addEventListener('pointerdown', e => { e.preventDefault(); toggleMount(); });
 $('#tPot').addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); usePotion(); });
@@ -12653,7 +12658,8 @@ function hurtPlayer(raw, elemental){
     P.inv = .3; P.blockT = .25; floatText(P.pos, 'Bloqueou!', 'block'); SFX.block(); burst(P.pos, 0x9af0ff, 6, 3, 3, 1.2); return;
   }
   if(dnNightOn()) raw *= 1.1;
-  const dmg = Math.max(1, Math.round(raw*(1 - P.S.reduce)*(1 - Math.min(.45, P.S.dmgRes || 0))*(elemental ? 1 - Math.min(.6, P.S.elemRes || 0) : 1)));
+  let dmg = Math.max(1, Math.round(raw*(1 - P.S.reduce)*(1 - Math.min(.45, P.S.dmgRes || 0))*(elemental ? 1 - Math.min(.6, P.S.elemRes || 0) : 1)));
+  if(P.ncEscudo > 0){ const ab = Math.min(P.ncEscudo, Math.round(dmg*.6)); P.ncEscudo -= ab; dmg = Math.max(0, dmg - ab); try{ ncResInit(); if(ncRes() === 'mp') P.res = Math.min(ncResMax(), P.res + 4); }catch(_){} burst(P.pos, 0x6a8aff, 5, 2, 3, 1.1); if(P.ncEscudo <= 0){ floatText(P.pos, 'Escudo quebrou', 'hurt'); try{ delete ncBuffs.manaesc; }catch(_){} } if(dmg <= 0){ P.inv = .3; return; } }   // 26/11: Escudo de Mana segura 60% do golpe e devolve mana
   P.hp -= dmg; P.inv = .55; if(gradePass) gradePass.uniforms.uHurt.value = 1;
   floatText(P.pos, '-' + dmg, 'hurt'); rumble(.55, .35, 160); P.flashT = .12; SFX.hurt(); addShake(.3);
   if(P.hp <= 0){ P.hp = 0; playerDie(); }
@@ -12670,7 +12676,50 @@ const ncSkCost = sk => Math.round(ncResMax()*(sk.cd >= 15 ? .32 : .17));   /* 23
 function ncResInit(){ if(P && P.res == null) P.res = ncRes() === 'sp' ? 0 : ncResMax(); }
 function ncSpGain(){ if(!P || ncRes() !== 'sp') return; ncResInit(); let near = false; try{ near = enemies.some(e => !e.dead && Math.hypot(e.pos.x - P.pos.x, e.pos.z - P.pos.z) < 9); }catch(_){} if(!near) return; P.res = Math.min(ncResMax(), P.res + ncResMax()*.08); P.atkT = clock; }
 function ncSpend(n, quiet){ ncResInit(); if(P.res < n){ if(!quiet && clock - (P.resMsgT || 0) > 1.2){ P.resMsgT = clock; floatText(P.pos, ncRes() === 'mp' ? 'Sem mana' : 'Sem energia', 'hurt'); } return false; } P.res -= n; P.resT = clock; return true; }
-function ncResTick(dt){ if(!P) return; ncResInit(); const m = ncResMax(); if(ncRes() === 'sp'){ if(P.res > 0 && clock - Math.max(P.atkT || 0, P.resT || 0) > 6) P.res = Math.max(0, P.res - m*.03*dt); return; } if(P.res < m && clock - (P.resT || 0) > .6) P.res = Math.min(m, P.res + ncResRegen()*dt); }
+/* 26/11/2026 (Arnold aprovou): 3 buffs por classe, usados juntos no botão Buff (tecla 3/B). Duram de 3 min (nível 1) a 15 min (nível 5);
+   o nível do buff sobe com o nível do herói (1 a cada 16). Recarga de 30 s. Pegam em todos do grupo na mesma fase (menos os marcados "só ele").
+   O ícone com o tempo fica embaixo da vida. */
+const NC_BUFF = {
+  mage:     [{k:'intel', n:'Inteligência Arcana', c:'#8ad8ff', fx:{atkPct:.15}}, {k:'manaesc', n:'Escudo de Mana', c:'#6a8aff', fx:{}, escudo:.25, so:1}, {k:'clareza', n:'Clareza', c:'#b0e0ff', fx:{}, res:.6}],
+  warrior:  [{k:'grito', n:'Grito de Guerra', c:'#ff7a5a', fx:{atkPct:.12}}, {k:'pele', n:'Pele de Ferro', c:'#c8d0d8', fx:{defPct:.15}}, {k:'folego', n:'Segundo Fôlego', c:'#7aff9a', fx:{}, cura:.006}],
+  paladin:  [{k:'aura', n:'Aura de Proteção', c:'#ffe08a', fx:{defPct:.15}}, {k:'bencao', n:'Bênção Curadora', c:'#9affb0', fx:{}, cura:.007}, {k:'escsag', n:'Escudo Sagrado', c:'#fff0c0', fx:{block:.10}}],
+  barbarian:[{k:'furia', n:'Fúria', c:'#ff5a3a', fx:{aspd:.15}}, {k:'sede', n:'Sede de Sangue', c:'#c81e2a', fx:{leech:.03}}, {k:'couro', n:'Couro Grosso', c:'#c8925a', fx:{hpPct:.12}}],
+  archer:   [{k:'falcao', n:'Olho de Falcão', c:'#ffd23a', fx:{crit:.08}}, {k:'passos', n:'Passos Leves', c:'#9aff9a', fx:{spdPct:.10}}, {k:'foco', n:'Foco', c:'#ffb06a', fx:{range:1.5}, mira:1}],
+  assassin: [{k:'instinto', n:'Instinto Assassino', c:'#c070ff', fx:{crit:.08}}, {k:'sombras', n:'Agilidade das Sombras', c:'#7a6aa0', fx:{spdPct:.10}}, {k:'veneno', n:'Lâminas Envenenadas', c:'#7aff6a', fx:{burn:true}}],
+  monk:     [{k:'mantra', n:'Mantra da Força', c:'#ffb03a', fx:{atkPct:.12}}, {k:'medit', n:'Meditação', c:'#9affe0', fx:{}, cura:.004, res:.4}, {k:'postura', n:'Postura de Ferro', c:'#c8d0d8', fx:{defPct:.15}}],
+  necro:    [{k:'pacto', n:'Pacto Sombrio', c:'#a040ff', fx:{atkPct:.15}}, {k:'ossos', n:'Armadura de Ossos', c:'#e8e0d0', fx:{defPct:.15}}, {k:'fome', n:'Fome de Almas', c:'#c81e5a', fx:{leech:.03}, so:1}],
+  shaman:   [{k:'totem', n:'Totem da Cura', c:'#7aff9a', fx:{}, cura:.007}, {k:'lobo', n:'Espírito do Lobo', c:'#9ad8ff', fx:{spdPct:.10}}, {k:'ancest', n:'Fúria Ancestral', c:'#ff9a3a', fx:{aspd:.12}}],
+  priest:   [{k:'vida', n:'Bênção da Vida', c:'#ffe6a0', fx:{hpPct:.12}}, {k:'prece', n:'Prece de Proteção', c:'#fff0c0', fx:{defPct:.15}}, {k:'inspira', n:'Inspiração', c:'#a0d8ff', fx:{}, res:.6}]};
+const ncBuffLv = () => Math.min(5, 1 + Math.floor(((save.level || 1) - 1)/16));
+const ncBuffDur = lv => 180*lv;   // 3 min por nível: 3, 6, 9, 12, 15 min
+const NC_BUFF_CD = 30;
+let ncBuffs = {};   // k -> {d, ate, lv, de}
+function ncBuffDef(k){ for(const c in NC_BUFF) for(const d of NC_BUFF[c]) if(d.k === k) return d; return null; }
+function ncBuffAtivos(){ const t = Date.now(); for(const k in ncBuffs) if(ncBuffs[k].ate <= t){ delete ncBuffs[k]; if(k === 'manaesc' && P) P.ncEscudo = 0; try{ P && (P.S = stats()); }catch(_){} } return ncBuffs; }
+function ncBuffAplicar(k, lv, seg, de){ const d = ncBuffDef(k); if(!d) return; ncBuffs[k] = {d, lv, ate:Date.now() + seg*1000, de:de || ''};
+  if(d.escudo && P){ P.ncEscudo = Math.round((P.S ? P.S.hp : 100)*d.escudo*(1 + (lv - 1)*.15)); P.ncEscudoMax = P.ncEscudo; }
+  try{ P.S = stats(); }catch(_){} }
+function ncBuffUsar(){ if(mode !== 'stage' || !P || P.dead) return; const L = NC_BUFF[save.cls]; if(!L) return;
+  if(clock < (P.ncBuffCd || 0)){ if(clock - (P.lockMsgT || 0) > 1){ P.lockMsgT = clock; floatText(P.pos, 'Buff em ' + Math.ceil(P.ncBuffCd - clock) + ' s', 'hurt'); } return; }
+  const lv = ncBuffLv(), seg = ncBuffDur(lv); L.forEach(d => ncBuffAplicar(d.k, lv, seg, save.name || ''));
+  P.ncBuffCd = clock + NC_BUFF_CD; try{ SFX.level(); }catch(_){} burst(P.pos, 0xffe08a, 22, 4, 7, 1); fxRing(P.pos.x, P.pos.z, 3.5, 0xffe08a, .4); floatText(P.pos, 'Buff nv ' + lv + '!', 'heal');
+  try{ if(ncCoop.ch && curStage && ncCoop.partyN() > 1) ncCoop.send('buff', {ks:L.filter(d => !d.so).map(d => d.k), lv, seg, st:curStage.id, de:save.name || ''}); }catch(_){} }
+function ncBuffRecebe(p){ if(!p || mode !== 'stage' || !curStage || p.st !== curStage.id || !P) return; (p.ks || []).forEach(k => ncBuffAplicar(k, p.lv || 1, p.seg || 180, p.de)); try{ floatText(P.pos, 'Buff de ' + (p.de || 'amigo'), 'heal'); }catch(_){} }
+function ncBuffTick(dt){ if(!P || P.dead || mode !== 'stage') return; const A = ncBuffAtivos(); let cura = 0, res = 0;
+  for(const k in A){ const d = A[k].d, m = 1 + (A[k].lv - 1)*.1; cura += (d.cura || 0)*m; res += (d.res || 0)*m; }
+  if(cura && P.hp < P.S.hp) P.hp = Math.min(P.S.hp, P.hp + P.S.hp*cura*dt);
+  if(res && ncRes() === 'mp'){ ncResInit(); P.res = Math.min(ncResMax(), P.res + ncResRegen()*res*dt); }
+  /* Bárbaro: barra de Loucura (no lugar da stamina). Quanto mais cheia, mais vida volta, de leve: até 1,2% da vida por segundo com a barra cheia */
+  if(save.cls === 'barbarian' && ncRes() === 'sp' && P.res > 0 && P.hp < P.S.hp){ const f = P.res/ncResMax(); P.hp = Math.min(P.S.hp, P.hp + P.S.hp*.012*f*dt); } }
+function ncBuffStats(s){ const A = ncBuffAtivos(); for(const k in A){ const d = A[k].d, m = 1 + (A[k].lv - 1)*.1; for(const f in d.fx){ if(f === 'burn'){ s.burn = true; if(!s.elem) s.elem = 'poison'; } else s[f] = (s[f] || 0) + d.fx[f]*m; } } }
+function ncBuffHud(){ let el = document.getElementById('hBuff'); const hl = document.querySelector('#hud .hud-l'); if(!hl) return;
+  if(!el){ el = document.createElement('div'); el.id = 'hBuff'; const ref = document.getElementById('hObj'); hl.insertBefore(el, ref); }
+  const A = ncBuffAtivos(), ks = Object.keys(A); el.hidden = !ks.length || mode !== 'stage'; if(el.hidden) return; const t = Date.now();
+  el.innerHTML = ks.map(k => { const b = A[k], r = Math.max(0, Math.round((b.ate - t)/1000)), mm = Math.floor(r/60), ss = String(r % 60).padStart(2, '0');
+    return '<span class="hb" style="--c:' + b.d.c + '" title="' + b.d.n + (b.de && b.de !== save.name ? ' (de ' + b.de + ')' : '') + '"><i>' + b.d.n.split(' ').map(w => w[0]).join('').slice(0, 2) + '</i>' + mm + ':' + ss + '</span>'; }).join('')
+    + (P && P.ncEscudo > 0 ? '<span class="hb esc" style="--c:#6a8aff"><i>EM</i>' + P.ncEscudo + '</span>' : ''); }
+setInterval(() => { try{ ncBuffHud(); }catch(_){} }, 500);
+function ncResTick(dt){ try{ ncBuffTick(dt); }catch(_){} if(!P) return; ncResInit(); const m = ncResMax(); if(ncRes() === 'sp'){ if(P.res > 0 && clock - Math.max(P.atkT || 0, P.resT || 0) > 6) P.res = Math.max(0, P.res - m*.03*dt); return; } if(P.res < m && clock - (P.resT || 0) > .6) P.res = Math.min(m, P.res + ncResRegen()*dt); }
 function usePotion(){
   if(mode !== 'stage' || !running || inputLocked || P.dead) return;
   if(save.potions <= 0){ floatText(P.pos, 'Sem poções', 'hurt'); return; }
@@ -14767,6 +14816,7 @@ var ncCoop = {
     const ch = this.ch = this.sb.channel('nc-room-' + code, {config:{broadcast:{self:false}, presence:{key:this.id}}});
     ch.on('broadcast', {event:'st'}, m => this.onState(m.payload))
       .on('broadcast', {event:'go'}, m => this.onGo(m.payload))
+      .on('broadcast', {event:'buff'}, m => { try{ ncBuffRecebe(m.payload); }catch(_){} })
       .on('broadcast', {event:'xp'}, m => { const p = m.payload; if(p && mode === 'stage' && curStage && p.st === curStage.id && P && Math.hypot(p.x - P.pos.x, p.z - P.pos.z) < 30) gainXP(p.v, true); })
       .on('broadcast', {event:'gift'}, m => this.onGift(m.payload))
       .on('broadcast', {event:'en'}, m => this.onEn(m.payload))
@@ -16300,6 +16350,10 @@ body.nc-ov #ncXp2{display:none}
  #ncGire svg{width:84px;height:84px;animation:ncGira 2.2s ease-in-out infinite}#ncGire b{font:700 22px Cinzel,serif;color:#f2c14e}}
 @keyframes ncGira{0%,20%{transform:rotate(0)}50%,80%{transform:rotate(-90deg)}100%{transform:rotate(-90deg)}}
 .nc-tabs.nc-herotabs,.fsel.nc-tabs{position:sticky;top:var(--nchead,0px);z-index:5;background:#1c163c;box-shadow:0 8px 10px -6px #0009;padding-top:6px;padding-bottom:8px}
+#tBuff{right:208px;bottom:140px;width:52px;height:52px;background:rgba(200,150,40,.85);font:800 12px/1 system-ui,sans-serif;color:#fff}
+#hBuff{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;pointer-events:none}#hBuff[hidden]{display:none}
+#hBuff .hb{display:inline-flex;align-items:center;gap:3px;border:1px solid var(--c);background:rgba(10,8,24,.75);border-radius:8px;padding:1px 5px 1px 2px;font:700 10.5px/1.4 system-ui,sans-serif;color:#fff;text-shadow:0 1px 1px #000}
+#hBuff .hb i{font-style:normal;display:inline-grid;place-items:center;width:16px;height:16px;border-radius:50%;background:var(--c);color:#111;font-size:8.5px;text-shadow:none}
 .pimg.nci>span.ncimg{position:absolute;left:11%;top:9%;width:78%;height:78%;display:block;background-repeat:no-repeat;background-position:center;background-size:contain;z-index:1;pointer-events:none;-webkit-transform:translateZ(0)}.pimg.nci>span.ncimg.w{left:8%;top:6%;width:84%;height:84%}
 .pimg.nci>img.nca{display:block;width:calc(var(--s)*.78)!important;height:calc(var(--s)*.78)!important;position:relative;z-index:1;filter:drop-shadow(0 2px 2px rgba(0,0,0,.55))}
 .pimg.nci>img.wico{display:block;width:calc(var(--s)*.84)!important;height:calc(var(--s)*.84)!important;object-fit:contain}
