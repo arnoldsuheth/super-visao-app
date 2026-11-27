@@ -280,6 +280,12 @@ kbd{font-family:var(--f-display);font-size:12px;background:var(--panel-2);border
 .chip.g{color:var(--gold);font-family:var(--f-body);font-weight:700;font-size:16px;font-variant-numeric:tabular-nums;display:inline-flex;align-items:center;gap:6px}
 .chip.g::before,.gold.coin::before{content:'';display:inline-block;width:.85em;height:.85em;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff3c0,#f2c14e 50%,#a8741f);box-shadow:inset 0 0 0 1.5px #8a5a10;flex:none}
 .gold.coin{display:inline-flex;align-items:center;gap:6px;font-family:var(--f-body);font-weight:700;font-variant-numeric:tabular-nums}
+#ncEvArc{position:fixed;z-index:4;border-radius:50%;pointer-events:none;-webkit-mask:radial-gradient(circle,transparent 62%,#000 63%,#000 70%,transparent 71%);mask:radial-gradient(circle,transparent 62%,#000 63%,#000 70%,transparent 71%);filter:drop-shadow(0 0 6px var(--c));animation:ncEvBrilho 1.6s ease-in-out infinite}
+#ncEvArc[hidden],#ncEvTag[hidden]{display:none}
+@keyframes ncEvBrilho{0%,100%{opacity:.65}50%{opacity:1}}
+#ncEvTag{position:fixed;z-index:4;transform:translate(-100%,-50%);pointer-events:none;text-align:right;font:700 10.5px/1.25 system-ui,sans-serif;color:#fff;text-shadow:0 1px 2px #000,0 0 4px #000;white-space:nowrap}
+#ncEvTag b{display:block;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;opacity:.85}#ncEvTag span{display:block}
+body.nc-l #ncEvArc,body.nc-r #ncEvArc,body.nc-l #ncEvTag,body.nc-r #ncEvTag{display:none}
 #mm{width:132px;height:auto;aspect-ratio:1;border:3px solid #a8741f;border-radius:50%;background:#0e1222;box-shadow:0 4px 14px #0008;opacity:.95;transition:opacity .2s;pointer-events:auto;cursor:zoom-in}
 #mm.big{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(82vw,62vh);z-index:7;cursor:zoom-out;border-color:var(--gold-deep);opacity:.82}
 .bossbar{position:absolute;left:50%;transform:translateX(-50%);top:calc(64px + env(safe-area-inset-top,0px));width:min(520px,calc(100vw - 340px));min-width:200px;text-align:center}
@@ -6097,8 +6103,32 @@ const ncNight = () => { if(CFG.event.force === 'off') return null; const h = new
 const ncNightLeft = () => { const d = new Date(), e = new Date(d); e.setHours(NC_NIGHT.h1, 0, 0, 0); return Math.max(1, Math.ceil((e - d)/6e4)); };
 const ncNightBox = () => { const n = ncNight(); return n ? `<div class="evbox" style="--tc:${n.css}"><div class="big">${n.n}: agora!</div><div class="istat">Vai até a meia-noite.</div><p class="lede">${n.d}</p></div>`
   : `<div class="evbox" style="--tc:${NC_NIGHT.css};opacity:.75"><div class="big">${NC_NIGHT.n}</div><div class="istat">Todo dia das 22:00 à meia-noite.</div><p class="lede">${NC_NIGHT.d}</p></div>`; };
-const evFx = () => { const a = (curEvent() || {fx:{}}).fx, n = ncNight(); if(!n) return a; const o = Object.assign({}, a);
-  for(const k in n.fx) o[k] = (o[k] || 1)*n.fx[k]; return o; };
+/* 26/11/2026 (Arnold: "só temos 2 eventos; criar vários durante o dia e a semana"). Hora do aparelho. Somam com o evento da semana.
+   Cada evento ativo vira um arco colorido brilhando em volta do minimapa, com o nome embaixo. */
+const NC_EV_DIA = [
+  {id:'ferreiro', n:'Manhã do Ferreiro',      css:'#ff9a3a', h0:7,  h1:9,  d:'Fabricar custa 25% menos e evoluir tem +10% de chance.', fx:{craft:.75, up:.1}},
+  {id:'almoco',   n:'Hora do Almoço',         css:'#5ee08a', h0:12, h1:13, d:'+30% de XP.', fx:{xp:1.3}},
+  {id:'elites',   n:'Caçada de Elites',       css:'#b46aff', h0:15, h1:16, d:'Mais armas e armaduras e o dobro de pedras nas elites.', fx:{item:1.3, stoneElite:2}},
+  {id:'adena',    n:'Chuva de Adena',         css:'#ffd23a', h0:19, h1:20, d:'O dobro de Adena.', fx:{gold:2}},
+  {id:'fds',      n:'Fim de Semana Lendário', css:'#ff4a4a', dias:[0, 6], d:'Sábado e domingo: +20% de XP e mais drop.', fx:{xp:1.2, item:1.2}}];
+function ncEvAtivos(){ if(CFG.event.force === 'off') return []; const d = new Date(), h = d.getHours(), out = NC_EV_DIA.filter(e => e.dias ? e.dias.includes(d.getDay()) : h >= e.h0 && h < e.h1); const n = ncNight(); if(n) out.push(n); return out; }
+const evFx = () => { const a = (curEvent() || {fx:{}}).fx, L = ncEvAtivos(); if(!L.length) return a; const o = Object.assign({}, a);
+  for(const n of L) for(const k in n.fx) o[k] = (k === 'up' ? (o[k] || 0) + n.fx[k] : (o[k] || 1)*n.fx[k]); return o; };
+/* arcos em volta do minimapa */
+function ncEvArcos(){ const mm = document.getElementById('mm'); let el = document.getElementById('ncEvArc'), tg = document.getElementById('ncEvTag');
+  if(!el){ el = document.createElement('div'); el.id = 'ncEvArc'; document.body.appendChild(el); tg = document.createElement('div'); tg.id = 'ncEvTag'; document.body.appendChild(tg); }
+  const L = ncEvAtivos(), r = mm ? mm.getBoundingClientRect() : null, ok = L.length && r && r.width > 10 && getComputedStyle(mm).display !== 'none' && mode === 'stage';
+  el.hidden = tg.hidden = !ok; if(!ok) return;
+  const n = L.length, seg = 360/n, gap = n > 1 ? 6 : 0;
+  el.style.background = 'conic-gradient(' + L.map((e, i) => `${e.css} ${i*seg + gap/2}deg ${(i + 1)*seg - gap/2}deg, transparent ${(i + 1)*seg - gap/2}deg ${(i + 1)*seg + gap/2}deg`).join(',') + ')';
+  el.style.setProperty('--c', L[0].css);
+  const pad = 7; el.style.left = (r.left - pad) + 'px'; el.style.top = (r.top - pad) + 'px'; el.style.width = el.style.height = (r.width + pad*2) + 'px';
+  tg.innerHTML = '<b>Evento ativo</b>' + L.map(e => `<span style="color:${e.css}">${e.n}</span>`).join('');
+  if(innerWidth < innerHeight){   // celular em pé: embaixo do minimapa, do "Posto" e do Menu, alinhado à direita
+    let y = r.bottom + pad; ['mmTag'].map(i => document.getElementById(i)).concat([document.querySelector('.nc-hb')]).forEach(o => { if(!o || o.hidden) return; const q = o.getBoundingClientRect(); if(q.height && q.right > r.left - 20 && q.top < y + 60) y = Math.max(y, q.bottom); });
+    tg.style.left = (r.right + 4) + 'px'; tg.style.top = (y + 6) + 'px'; tg.style.transform = 'translate(-100%,0)'; }
+  else { tg.style.left = (r.left - pad - 8) + 'px'; tg.style.top = (r.top + r.height/2) + 'px'; tg.style.transform = ''; } }
+setInterval(() => { try{ ncEvArcos(); }catch(_){} }, 1000);
 const evEnds = () => { const ms = 6048e5 - (Date.now() % 6048e5); return Math.ceil(ms/864e5); };
 
 /* ===== RECOMPENSAS EM CAMPO ===== */
@@ -8385,6 +8415,7 @@ function renderShop(){
   const E = curEvent();
   let h = ncWalletHTML(NC_GEMS4);
   if(ncNight()) h += ncNightBox();
+  ncEvAtivos().filter(e => e.id !== 'noite').forEach(e => { h += `<div class="evbox" style="--tc:${e.css}"><div class="big">${e.n}: agora!</div><p class="lede">${e.d}</p></div>`; });
   { const pp = NC_POT_P, rk = ncRes() === 'mp' ? 'mp' : 'sp', row = (k, n, d, have, key) => `<div class="frow" style="--tc:${k === 'hp' ? '#ff5a6a' : k === 'mp' ? '#4a9aff' : '#6ae05a'}"><span class="ncpot">${window.ncPotSvg(k)}</span><div><div class="fn">${n} <small style="color:var(--mute)">× ${have} / ${NC_POT_MAX}</small></div><div class="istat">${d}</div></div><div class="iact"><button class="btn sm primary" data-buypot="${key}" ${save.gold >= pp && have < NC_POT_MAX ? '' : 'disabled'}>Comprar<small>${adenaTxt(pp)}</small></button></div></div>`;
     h += `<h2>Poções</h2><div class="blist">` + row('hp', 'Poção de Vida', 'Cura parte da sua vida.', save.potions || 0, 'hp')
       + row(rk, ncPotResName(), rk === 'mp' ? 'Recupera 60% da mana.' : 'Recupera 60% da stamina.', save.potRes || 0, 'res')
