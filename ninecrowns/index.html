@@ -5606,7 +5606,7 @@ body.nc-swap #joyZone{left:auto;right:0}
   function hide(){ if(ov){ ov.remove(); ov = null; } }
   fetch('assets.json', {cache:'no-cache'}).then(function(r){ return r.ok ? r.json() : Promise.reject(); }).then(function(m){
     var done = false; try{ done = localStorage.getItem(KEY) === m.v; }catch(e){}
-    if(done) return;
+    return caches.has('ads-' + m.v).then(function(tem){ if(done && tem) return;   /* 27/11: se a cópia salva sumiu, baixa de novo */
     show();
     return caches.open('ads-' + m.v).then(function(c){
       var files = m.files, n = 0, i = 0, fail = 0, total = files.length;
@@ -5619,7 +5619,7 @@ body.nc-swap #joyZone{left:auto;right:0}
       }
       var w = []; for(var k = 0; k < 6; k++) w.push(next());
       return Promise.all(w).then(function(){ if(!fail && !skip){ try{ localStorage.setItem(KEY, m.v); }catch(e){} } hide(); });
-    });
+    }); });
   }).catch(function(){ hide(); });
 })();
 </script>

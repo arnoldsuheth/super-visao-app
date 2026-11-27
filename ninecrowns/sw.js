@@ -1,7 +1,7 @@
 /* gerado pelo build.py - não edite */
 const V = 'ads-nc-1';
 self.addEventListener('install', e => self.skipWaiting());
-self.addEventListener('activate', e => e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k.startsWith('ads-') && k !== V).map(k => caches.delete(k)))).then(() => self.clients.claim())));
+self.addEventListener('activate', e => e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k.startsWith('ads-nc-') && k !== V).map(k => caches.delete(k)))).then(() => self.clients.claim())));
 self.addEventListener('fetch', e => {
   const r = e.request, u = new URL(r.url);
   if(r.method !== 'GET' || u.origin !== location.origin) return;
