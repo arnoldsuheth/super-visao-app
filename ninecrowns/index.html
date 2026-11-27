@@ -12310,7 +12310,7 @@ function hurtPlayer(raw, elemental){
 }
 /* Mana e stamina (pedido do Arnold, 20/11): Mago e Necromante gastam mana; as classes de luta gastam stamina.
    Gasto pequeno no ataque básico e maior nas habilidades. Volta sozinho com o tempo; a poção também recupera. */
-const NC_MANA = {mage:1, necro:1, priest:1, shaman:1};
+const NC_MANA = {mage:1, necro:1, priest:1, shaman:1, archer:1};   /* 26/11/2026 (Arnold: arqueira apelona): a Arqueira gasta mana em cada flecha, em vez de ganhar stamina */
 const ncRes = () => NC_MANA[save.cls] ? 'mp' : 'sp';
 const ncResMax = () => Math.round((ncRes() === 'mp' ? 100 : 100) + save.level*2);
 const ncResRegen = () => ncRes() === 'mp' ? 3.2 + save.level*.05 : 6 + save.level*.06;   /* 23/11: voltava rápido demais */
