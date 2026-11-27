@@ -5877,9 +5877,36 @@ const itemOk = it => { const c = itemCls(it); return !c || c === save.cls; };
 
 function itemName(it){
   const u = (it.up ? ' +' + it.up : '') + (it.ex ? (it.ex.startsWith('boss:') ? ' · Relíquia do ' + (STAGES[+it.ex.slice(5)] || {}).boss : ' · Edição ' + ((EVENTS.find(e => 'ev:' + e.id === it.ex) || {}).n || 'Especial')) : '');
+  try{ const nm = ncNomeSet(it); if(nm) return nm + u; }catch(_){}
   if(it.slot === 'weapon') return WVAR[it.wtype][it.v].n + ' ' + TIERS[it.tier].pre + u;
   return SLOT_INFO[it.slot].n + ' ' + TIERS[it.tier].pre + u;
 }
+/* 26/11/2026 (Arnold aprovou): nomes por SET, estilo Lineage. No Grade = peças de pobre. D Glad, C Nightmare, B Doom, A Majestic, S Imperial.
+   Tipo pela classe: Heavy (Guerreiro, Paladino, Bárbaro), Light (Arqueira, Assassina, Monge), Robe (Mago, Necromante, Xamã, Sacerdote). */
+const NC_SET_N = ['', 'Glad', 'Nightmare', 'Doom', 'Majestic', 'Imperial'];
+const NC_SET_POBRE = {helmet:'Pinico', chest:'Farrapo', shoulders:'Remendos', bracers:'Trapos nas Mãos', greaves:'Calça Remendada', boots:'Chinelo Furado', amulet:'Cordão de Barbante', shield:'Tampa de Barril'};
+const NC_SET_PECA = {helmet:'Elmo', chest:'Peitoral', shoulders:'Ombreiras', bracers:'Luvas', greaves:'Calças', boots:'Botas', amulet:'Amuleto', shield:'Escudo'};
+const NC_SET_TIPO = {warrior:'Heavy', paladin:'Heavy', barbarian:'Heavy', archer:'Light', assassin:'Light', monk:'Light', mage:'Robe', necro:'Robe', shaman:'Robe', priest:'Robe'};
+const NC_ARMA_N = {
+  warrior:['Espada de Pau','Espada Larga','Montante de Aço','Montante do Guardião','Matadragões','Espada dos Reis'],
+  paladin:['Porrete','Maça de Ferro','Martelo de Guerra','Martelo Sagrado','Martelo do Juízo','Martelo dos Reis'],
+  barbarian:['Machadinha Cega','Machado de Lenhador','Machado de Batalha','Machado do Berserker','Machado do Dragão','Machado dos Reis'],
+  assassin:['Facas de Cozinha','Adagas de Ferro','Adagas Gêmeas','Adagas da Sombra','Presas da Víbora','Adagas dos Reis'],
+  archer:['Arco de Galho','Arco Curto','Arco Longo','Arco do Caçador','Arco do Dragão','Arco dos Reis'],
+  mage:['Galho Seco','Cajado de Aprendiz','Cajado Arcano','Cajado do Arquimago','Cajado de Fogo e Gelo','Cajado dos Reis'],
+  necro:['Foice de Roça','Foice de Ferro','Foice Sombria','Foice das Almas','Foice da Morte','Foice dos Reis'],
+  shaman:['Graveto','Cajado de Raízes','Cajado dos Espíritos','Cajado do Ancião','Cajado da Floresta Antiga','Cajado dos Reis'],
+  priest:['Vela Acesa','Cetro de Bronze','Cetro Solar','Cetro da Aurora','Cetro Celestial','Cetro dos Reis'],
+  monk:['Faixas de Pano','Faixas de Couro','Manoplas de Ferro','Punhos do Trovão','Punhos do Dragão','Punhos dos Reis']};
+const NC_WT_CLS = {sword:'warrior', hammer:'paladin', axe:'barbarian', daggers:'assassin', bow:'archer', scythe:'necro', fists:'monk'};
+function ncNomeSet(it){ const g = GR_OF[it.tier] || 0, plus = it.tier > 0 && GR_OF[it.tier - 1] === g ? '+' : '';
+  if(it.slot === 'weapon'){ let c = NC_WT_CLS[it.wtype]; if(it.wtype === 'staff') c = ['priest', 'shaman'].includes(save.cls) ? save.cls : 'mage'; const L = NC_ARMA_N[c]; return L ? L[g] + (plus ? ' +' : '') : null; }
+  if(!NC_SET_PECA[it.slot]) return null;
+  if(g === 0) return NC_SET_POBRE[it.slot] + (plus ? ' +' : '');
+  const tipo = ['amulet', 'shield'].includes(it.slot) ? '' : ' ' + (NC_SET_TIPO[save.cls] || 'Heavy');
+  return NC_SET_PECA[it.slot] + ' ' + NC_SET_N[g] + tipo + (plus ? ' +' : ''); }
+/* bônus do set completo: as 6 peças de armadura do mesmo grade (D em diante) */
+function ncSetBonus(){ const gs = ARMOR.map(sl => { const it = equipped(sl); return it ? GR_OF[it.tier] : -1; }); const g = gs[0]; if(g < 1 || gs.some(x => x !== g)) return null; return {g, tipo:NC_SET_TIPO[save.cls] || 'Heavy'}; }
 function itemStats(it){ const b = Object.assign({}, itemStatsBase(it)); if(it.slot === 'boots' && it.up) b.spdPct = (b.spdPct || 0) + .005*it.up; if(it.tier >= 6) b.atkPct = (b.atkPct || 0) + .04*(it.tier - 5); for(const k of ncSas(it)){ const D = NC_SA2[k]; b[D.f] = (b[D.f] || 0) + ncSaVal(k, it); }
   const u = it.up || 0, xk = it.ex ? (it.ex.startsWith('boss:') ? 1.12 : 1.1) : 1; if(u || xk > 1){ const k = (1 + .08*u)*xk, add = {hp:6, def:1, atk:2};   /* 25/11/2026 (Arnold: evoluir não mudava nada): cada +1 dá +8% e no mínimo +2 ataque, +1 defesa, +6 vida */ ['hp','def','atk'].forEach(n => { if(b[n]) b[n] = Math.round(b[n]*k) + add[n]*u; }); } return b; }
 function itemStatsBase(it){
@@ -6414,7 +6441,8 @@ function stats(){
   const addG = (k, v) => s[k] = (s[k] || 0) + v;
   for(const slot of SLOTS){ const it = equipped(slot); if(!it) continue; const b = itemStats(it); for(const k in b){ if(k === 'elem') s.elem = b.elem; else s[k] += b[k]; } gemFx(it, addG); }
   if(ncDual()){ const o = equipped('off'); if(o && o.id !== save.eq.weapon){ const b = itemStats(o); for(const k in b){ if(k === 'elem'){ if(!s.elem) s.elem = b.elem; } else if(typeof b[k] === 'number') s[k] = (s[k] || 0) + b[k]*NC_OFF_K; else s[k] = s[k] || b[k]; } gemFx(o, addG); } }   // 25/11: adaga da mão esquerda
-  s.aspd += ncRes() === 'mp' ? s.saAcu : s.saAcu*.5;   // Acumen: magia mais rápida (classes de mana pegam inteiro)
+  s.aspd += ncRes() === 'mp' ? s.saAcu : s.saAcu*.5;
+  try{ const SB = ncSetBonus(); if(SB){ s.setFull = SB; if(SB.tipo === 'Heavy'){ s.defPct += .10; s.hpPct += .05; } else if(SB.tipo === 'Light'){ s.spdPct += .08; s.crit += .05; } else { s.resPct = (s.resPct || 0) + .10; s.atkPct += .08; } } }catch(_){}   // 26/11: Heavy +10% def +5% vida; Light +8% vel +5% crítico; Robe +10% mana +8% dano de magia   // Acumen: magia mais rápida (classes de mana pegam inteiro)
   s.hp *= c.hp*(1 + s.hpPct); s.atk *= c.atk*(1 + s.atkPct); s.def *= c.def*(1 + s.defPct); s.spd *= c.spd*(1 + s.spdPct); s.block += c.block;
   const sp = ncSpec(); if(sp) sp.fx(s);
   try{ const pd = ncPetOn(); if(pd) pd.fx(s); }catch(e){}
@@ -12552,7 +12580,7 @@ function hurtPlayer(raw, elemental){
    Gasto pequeno no ataque básico e maior nas habilidades. Volta sozinho com o tempo; a poção também recupera. */
 const NC_MANA = {mage:1, necro:1, priest:1, shaman:1, archer:1};   /* 26/11/2026 (Arnold: arqueira apelona): a Arqueira gasta mana em cada flecha, em vez de ganhar stamina */
 const ncRes = () => NC_MANA[save.cls] ? 'mp' : 'sp';
-const ncResMax = () => Math.round((ncRes() === 'mp' ? 100 : 100) + save.level*2);
+const ncResMax = () => Math.round(((ncRes() === 'mp' ? 100 : 100) + save.level*2)*(1 + ((typeof P !== 'undefined' && P && P.S && P.S.resPct) || 0)));
 const ncResRegen = () => ncRes() === 'mp' ? 3.2 + save.level*.05 : 6 + save.level*.06;   /* 23/11: voltava rápido demais */
 const ncAtkCost = () => ncRes() === 'mp' ? 3 : 4;
 const ncSkCost = sk => Math.round(ncResMax()*(sk.cd >= 15 ? .32 : .17));   /* 23/11: gasto cresce com a barra (antes era fixo e quase não gastava) */
