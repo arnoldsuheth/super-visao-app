@@ -558,6 +558,10 @@ canvas.ncgrabok{cursor:grab}canvas.ncgrab,canvas.ncgrabok.ncgrab{cursor:grabbing
 #ncChat input{flex:1;min-width:0;background:#0006;border:1px solid #ffd36a88;border-radius:8px;color:#fff;padding:7px 9px;font:inherit}
 #ncChat .ch-in button{background:#ffd36acc;border:0;border-radius:8px;padding:0 10px;font:700 12px system-ui;color:#2a1a00}
 #ncChat .ch-b{pointer-events:auto;margin-top:4px;background:#0004;border:1px solid #ffffff55;border-radius:50%;width:38px;height:38px;font-size:18px}
+/* 27/11 (Arnold): buffs embaixo, no meio da tela: imagem com o tempo */
+#hBuff .hb{display:flex!important;flex-direction:column;align-items:center;gap:1px!important;border:0!important;background:none!important;padding:0!important;font:800 10px/1 system-ui,sans-serif!important;color:#fff;text-shadow:0 1px 2px #000,0 0 3px #000}
+#hBuff .hb i{width:30px!important;height:30px!important;border-radius:7px!important;background-color:#222!important;background-size:cover!important;background-position:center!important;background-repeat:no-repeat!important;border:2px solid var(--c);box-shadow:0 0 6px var(--c)}
+.arv-info{border-style:solid!important;border-color:#e8c36a66!important;color:#f0e2b8!important}
 </style>
 
 <style id="nc-pause-b">/* 25/11/2026 (Arnold escolheu B): menu de pausa com 3 quadrados com ícone de traço; dourado = principal, escuro com borda prata = comum; câmera em 3 colunas iguais */
@@ -11360,12 +11364,15 @@ document.addEventListener('click', e => { const b = e.target.closest('[data-rebi
    Parte 1: as 2 habilidades que já existem. As outras 4 de cada classe entram nas próximas partes. */
 /* 22/11 (Arnold aprovou): cada habilidade vai até o nível 5. No 3 ganha uma melhoria, no 5 vira SUPER (contorno dourado). 1 ponto a cada 3 níveis. */
 /* 23/11 (Arnold escolheu): 1ª habilidade no nível 2; depois 5, 10, 18, 28 e a Suprema no 40. 1 ponto a cada 2 níveis. */
-const NC_SK_REQ = [2, 5, 10, 18, 28, 40, 10, 14, 20, 28, 36, 46], NC_SK_MAX = 5;   // 26/11: 6 a 11 = 2ª árvore
+const NC_SK_REQ = [2, 5, 10, 18, 28, 40, 2, 5, 10, 18, 28, 40], NC_SK_MAX = 5;   // 27/11 (Arnold): as 2 árvores com os mesmos níveis; começa por qualquer uma
 /* 26/11/2026 (Arnold aprovou): 2 árvores por classe, usadas juntas (os pontos são divididos). A 2ª libera no nível 10 pagando 20 de ouro. */
 const NC_ARV_NOMES = {"mage": ["Fogo", "Gelo"], "warrior": ["Fúria", "Guardião"], "paladin": ["Luz Sagrada", "Muralha"], "barbarian": ["Berserker", "Terremoto"], "archer": ["Área", "Venenos e Elementos"], "assassin": ["Sombras", "Veneno"], "monk": ["Punho de Ferro", "Vento"], "necro": ["Mortos-Vivos", "Maldição"], "shaman": ["Espíritos", "Tempestade"], "priest": ["Cura", "Julgamento"]};
 const NC_ARV2 = {"mage": [{"id": "g_cristal", "name": "Cristal", "full": "Cristal de Gelo", "cd": 5, "desc": "cristal em linha que atravessa e deixa lento"}, {"id": "g_nevasca", "name": "Nevasca", "full": "Nevasca", "cd": 12, "desc": "neve cai no alvo em ondas e deixa todos lentos"}, {"id": "g_prisao", "name": "Prisão", "full": "Prisão de Gelo", "cd": 14, "desc": "congela quem estiver perto por 2 s"}, {"id": "g_espelho", "name": "Espelho", "full": "Passo Gélido", "cd": 9, "desc": "recua deixando gelo que deixa lento"}, {"id": "g_avalanche", "name": "Avalanche", "full": "Avalanche", "cd": 16, "desc": "bloco de gelo gigante cai no alvo"}, {"id": "g_zero", "name": "Zero", "full": "Zero Absoluto", "cd": 30, "desc": "SUPREMA: tudo em volta congela e quebra"}], "warrior": [{"id": "w_provoca", "name": "Provocar", "full": "Provocar", "cd": 10, "desc": "puxa a atenção dos monstros perto e atordoa rapidinho"}, {"id": "w_escudoaco", "name": "Aço", "full": "Escudo de Aço", "cd": 18, "desc": "leva menos dano por alguns segundos"}, {"id": "w_contra", "name": "Contra", "full": "Contra-ataque", "cd": 7, "desc": "gira a espada e acerta quem estiver em volta"}, {"id": "w_avanco", "name": "Avanço", "full": "Avanço do Guardião", "cd": 9, "desc": "avança empurrando tudo na frente"}, {"id": "w_terremoto", "name": "Abalo", "full": "Abalo", "cd": 14, "desc": "pancada no chão que atordoa em volta"}, {"id": "w_baluarte", "name": "Baluarte", "full": "Baluarte", "cd": 30, "desc": "SUPREMA: escudo enorme e cura"}], "paladin": [{"id": "p_pancada", "name": "Pancada", "full": "Pancada de Escudo", "cd": 8, "desc": "pancada de escudo que atordoa"}, {"id": "p_parede", "name": "Parede", "full": "Parede de Escudo", "cd": 18, "desc": "leva bem menos dano por alguns segundos"}, {"id": "p_martelo", "name": "Martelo", "full": "Martelo Lançado", "cd": 9, "desc": "martelo em linha que atordoa"}, {"id": "p_consag", "name": "Consagração", "full": "Consagração", "cd": 12, "desc": "o chão em volta queima de luz em ondas"}, {"id": "p_juizo", "name": "Juízo", "full": "Raio do Juízo", "cd": 15, "desc": "raio de luz no alvo que atordoa"}, {"id": "p_fortaleza", "name": "Fortaleza", "full": "Fortaleza", "cd": 30, "desc": "SUPREMA: quase não leva dano e se cura"}], "barbarian": [{"id": "b_pancada", "name": "Pancada", "full": "Pancada no Chão", "cd": 8, "desc": "pancada que atordoa em volta"}, {"id": "b_fenda", "name": "Fenda", "full": "Fenda", "cd": 10, "desc": "abre o chão em linha e atordoa"}, {"id": "b_tremor", "name": "Tremor", "full": "Tremor", "cd": 12, "desc": "tremores em ondas em volta"}, {"id": "b_salto", "name": "Salto", "full": "Salto Sísmico", "cd": 10, "desc": "salta longe e esmaga onde cair"}, {"id": "b_rocha", "name": "Rocha", "full": "Chuva de Rocha", "cd": 15, "desc": "rochas caem no alvo e atordoam"}, {"id": "b_apocalipse", "name": "Apocalipse", "full": "Apocalipse", "cd": 30, "desc": "SUPREMA: o chão explode em três ondas gigantes"}], "archer": [{"id": "a_veneno", "name": "Veneno", "full": "Flecha Venenosa", "cd": 5, "desc": "flecha que envenena o alvo e quem estiver perto"}, {"id": "a_fogo", "name": "Fogo", "full": "Flecha de Fogo", "cd": 7, "desc": "flecha que explode e queima"}, {"id": "a_gelo", "name": "Gelo", "full": "Flecha de Gelo", "cd": 7, "desc": "flecha em linha que deixa lento"}, {"id": "a_nuvem", "name": "Nuvem", "full": "Nuvem Tóxica", "cd": 12, "desc": "nuvem de veneno no alvo em ondas"}, {"id": "a_elemental", "name": "Elementos", "full": "Chuva Elemental", "cd": 14, "desc": "flechas de fogo e gelo caem em ondas"}, {"id": "a_tempest", "name": "Tempestade", "full": "Tempestade de Flechas", "cd": 30, "desc": "SUPREMA: chuva enorme de fogo, gelo e veneno"}], "assassin": [{"id": "s_corte", "name": "Corte", "full": "Corte Tóxico", "cd": 5, "desc": "corte em linha que envenena"}, {"id": "s_frasco", "name": "Frasco", "full": "Frasco de Veneno", "cd": 8, "desc": "joga um frasco que envenena em área"}, {"id": "s_nuvem", "name": "Névoa", "full": "Névoa Venenosa", "cd": 12, "desc": "névoa de veneno em volta em ondas"}, {"id": "s_salto", "name": "Bote", "full": "Bote da Víbora", "cd": 9, "desc": "avança e envenena quem passar"}, {"id": "s_toxina", "name": "Toxina", "full": "Toxina Mortal", "cd": 14, "desc": "golpe forte que envenena muito"}, {"id": "s_peste", "name": "Peste", "full": "Peste", "cd": 30, "desc": "SUPREMA: tudo em volta fica envenenado"}], "monk": [{"id": "m_furacao", "name": "Furacão", "full": "Chute Furacão", "cd": 7, "desc": "gira chutando em volta"}, {"id": "m_rajada", "name": "Rajada", "full": "Rajada de Vento", "cd": 8, "desc": "empurrão de vento em linha"}, {"id": "m_passo", "name": "Passo", "full": "Passo do Vento", "cd": 8, "desc": "avança muito rápido acertando quem passar"}, {"id": "m_ciclone", "name": "Ciclone", "full": "Ciclone", "cd": 12, "desc": "ciclone no alvo em ondas"}, {"id": "m_lamina", "name": "Lâmina", "full": "Lâmina de Vento", "cd": 12, "desc": "corte de vento em linha bem longa"}, {"id": "m_tornado", "name": "Tornado", "full": "Tornado", "cd": 30, "desc": "SUPREMA: tornado gigante em volta"}], "necro": [{"id": "n_maldicao", "name": "Maldição", "full": "Maldição", "cd": 8, "desc": "amaldiçoa o alvo e quem estiver perto: ficam lentos"}, {"id": "n_drenar", "name": "Drenar", "full": "Drenar Vida", "cd": 8, "desc": "suga a força do alvo"}, {"id": "n_praga", "name": "Praga", "full": "Praga", "cd": 12, "desc": "praga em volta que corrói"}, {"id": "n_mao", "name": "Mão", "full": "Mão da Cova", "cd": 10, "desc": "mãos saem do chão em linha e prendem"}, {"id": "n_desespero", "name": "Desespero", "full": "Desespero", "cd": 15, "desc": "área de medo no alvo: todos ficam lentos"}, {"id": "n_morte", "name": "Morte", "full": "Toque da Morte", "cd": 30, "desc": "SUPREMA: a morte cai no alvo e corrói tudo"}], "shaman": [{"id": "t_raio", "name": "Raio", "full": "Raio", "cd": 5, "desc": "raio no alvo"}, {"id": "t_corrente", "name": "Corrente", "full": "Corrente Elétrica", "cd": 10, "desc": "raios pulam entre os monstros"}, {"id": "t_trovao", "name": "Trovão", "full": "Trovão", "cd": 12, "desc": "trovão em volta que atordoa"}, {"id": "t_vento", "name": "Ventania", "full": "Ventania", "cd": 9, "desc": "ventania em linha"}, {"id": "t_furia", "name": "Fúria", "full": "Fúria do Céu", "cd": 15, "desc": "raios caem em ondas no alvo"}, {"id": "t_ira", "name": "Ira", "full": "Ira dos Céus", "cd": 30, "desc": "SUPREMA: tempestade gigante de raios"}], "priest": [{"id": "j_lanca", "name": "Lança", "full": "Lança de Luz", "cd": 5, "desc": "lança de luz em linha"}, {"id": "j_sentenca", "name": "Sentença", "full": "Sentença", "cd": 9, "desc": "luz cai no alvo e atordoa"}, {"id": "j_sol", "name": "Sol", "full": "Explosão Solar", "cd": 11, "desc": "explosão de luz em volta"}, {"id": "j_cruz", "name": "Cruz", "full": "Cruz de Luz", "cd": 11, "desc": "faixa larga de luz em linha"}, {"id": "j_juizo", "name": "Juízo", "full": "Juízo Final", "cd": 15, "desc": "raio de luz enorme no alvo que atordoa"}, {"id": "j_apocal", "name": "Apocalipse", "full": "Apocalipse Sagrado", "cd": 30, "desc": "SUPREMA: ondas de luz que atordoam"}]};
 const NC_ARV2_CUSTO = 200000, NC_ARV2_NV = 10;
 const ncArv2On = () => !!(save.arv2 && save.arv2[save.cls]);
+/* 27/11/2026 (Arnold): começa por qualquer árvore; a 1ª habilidade aprendida ativa aquela árvore. Usar as duas juntas: nível 10 + 20 de ouro */
+const ncArvUsada = a => { const t = ncSkTree(); for(let i = a*6; i < a*6 + 6; i++) if(t[i]) return true; return false; };
+const ncArvOpen = a => ncArv2On() || ncArvUsada(a) || (!ncArvUsada(0) && !ncArvUsada(1));
 try{ for(const c in NC_ARV2){ if(CLASSES[c] && CLASSES[c].skills.length <= 6) CLASSES[c].skills = CLASSES[c].skills.slice(0, 6).concat(NC_ARV2[c]); } }catch(_){}
 window.NC_AL2 = {"g_cristal": "icelance", "g_nevasca": "frost", "g_prisao": "frost", "g_espelho": "backstep", "g_avalanche": "meteor", "g_zero": "storm", "w_provoca": "wcry", "w_escudoaco": "wall", "w_contra": "whirl", "w_avanco": "charge", "w_terremoto": "leap", "w_baluarte": "kingblade", "p_pancada": "bash", "p_parede": "wall", "p_martelo": "judgment", "p_consag": "holy", "p_juizo": "judgment", "p_fortaleza": "kingaura", "b_pancada": "leap", "b_fenda": "thunder", "b_tremor": "thunder", "b_salto": "leap", "b_rocha": "cataclysm", "b_apocalipse": "cataclysm", "a_veneno": "poison", "a_fogo": "explarrow", "a_gelo": "pierce", "a_nuvem": "smoke", "a_elemental": "volley", "a_tempest": "eagle", "s_corte": "bladedance", "s_frasco": "poison", "s_nuvem": "smoke", "s_salto": "deathmark", "s_toxina": "deathmark", "s_peste": "smoke", "m_furacao": "hundred", "m_rajada": "flykick", "m_passo": "flykick", "m_ciclone": "dragon", "m_lamina": "flykick", "m_tornado": "dragon", "n_maldicao": "curse", "n_drenar": "reaper", "n_praga": "corpse", "n_mao": "scythe", "n_desespero": "curse", "n_morte": "reaper", "t_raio": "storm", "t_corrente": "chain", "t_trovao": "thunder", "t_vento": "storm", "t_furia": "storm", "t_ira": "storm", "j_lanca": "holy", "j_sentenca": "judgment", "j_sol": "holy", "j_cruz": "judgment", "j_juizo": "judgment", "j_apocal": "holy"};
 const ncSkTree = () => { save.skt = save.skt || {}; const t = save.skt[save.cls] || (save.skt[save.cls] = []); return t; };
@@ -11382,14 +11389,18 @@ const ncSlot = j => ncSkSlots()[j];
 function ncTreeHTML(){ const c = CLS(), u = window.ncIconUrl || (() => 'none'), pts = ncSkPts(), lv = ncLvOf(save.cls);
   let h = '<div class="eyebrow">Árvore de habilidades · ' + c.name + '</div><div class="tree-top"><span>Pontos para usar: <b>' + pts + '</b></span>' + (lv < 2 ? '<small>O 1º ponto vem no nível 2.</small>' : '<small>1 ponto a cada 2 níveis · máximo nível 5 · no 3 ganha melhoria, no 5 vira SUPER</small>') + '</div><div class="tree">';
   const AN = NC_ARV_NOMES[save.cls] || ['1', '2'];
-  for(let i = 0; i < NC_SK_REQ.length; i++){ if(i === 0) h += '<div class="arv-h">Árvore 1 · ' + AN[0] + '</div>';
-    if(i === 6){ h += '<div class="arv-h">Árvore 2 · ' + AN[1] + '</div>'; if(!ncArv2On()){ h += '<div class="arv-lock">' + (lv >= NC_ARV2_NV ? 'Libere a 2ª árvore e use as duas juntas (os pontos são divididos).' : 'Libera no nível ' + NC_ARV2_NV + '.') + '<button class="btn sm primary" data-arv2 ' + (lv >= NC_ARV2_NV && save.gold >= NC_ARV2_CUSTO ? '' : 'disabled') + '>Liberar · ' + adenaTxt(NC_ARV2_CUSTO) + '</button></div>'; } }
-    const sk = c.skills[i], l = ncSkLv(i), req = NC_SK_REQ[i], open = lv >= req && (i < 6 || ncArv2On());
+  const livre = !ncArvUsada(0) && !ncArvUsada(1) && !ncArv2On();
+  if(livre) h += '<div class="arv-lock arv-info">Comece por qualquer uma das duas árvores: a 1ª habilidade que você aprender ativa aquela árvore.</div>';
+  for(let i = 0; i < NC_SK_REQ.length; i++){
+    if(i === 0 || i === 6){ const a = i/6; h += '<div class="arv-h">Árvore ' + (a + 1) + ' · ' + AN[a] + '</div>';
+      if(!ncArvOpen(a)) h += '<div class="arv-lock">' + (lv >= NC_ARV2_NV ? 'Use as duas árvores juntas (os pontos são divididos).' : 'Para usar as duas árvores juntas: nível ' + NC_ARV2_NV + '.') + '<button class="btn sm primary" data-arv2 ' + (lv >= NC_ARV2_NV && save.gold >= NC_ARV2_CUSTO ? '' : 'disabled') + '>Liberar · ' + adenaTxt(NC_ARV2_CUSTO) + '</button></div>'; }
+    const sk = c.skills[i], l = ncSkLv(i), req = NC_SK_REQ[i], open = lv >= req && ncArvOpen(i < 6 ? 0 : 1);
     if(!sk){ h += '<div class="tnode soon"><i></i><div><b>Habilidade ' + (i + 1) + (i === 5 ? ' · Suprema' : '') + '</b><small>Nível ' + req + ' · chega na próxima atualização</small></div></div>'; continue; }
     const can = open && pts > 0 && l < NC_SK_MAX;
-    h += '<div class="tnode' + (l ? ' on' : '') + (l >= NC_SK_MAX ? ' super' : '') + (open ? '' : ' lock') + '"><i style=\'background-image:' + u(sk.id) + '\'>' + (l ? '<em>' + l + '</em>' : '') + '</i><div><b>' + sk.full + '</b><small>' + (open ? (l ? 'Nível ' + l + ' de ' + NC_SK_MAX + ' · dano ' + Math.round(ncSkMul(i)*100) + '% · recarga ' + (sk.cd*ncSkFast(i)).toFixed(1) + ' s' : 'Ainda não aprendida') : 'Libera no nível ' + req) + '</small><span>' + sk.desc + '</span></div>'
+    h += '<div class="tnode' + (l ? ' on' : '') + (l >= NC_SK_MAX ? ' super' : '') + (open ? '' : ' lock') + '"><i style=\'background-image:' + u(sk.id) + '\'>' + (l ? '<em>' + l + '</em>' : '') + '</i><div><b>' + sk.full + '</b><small>' + (open ? (l ? 'Nível ' + l + ' de ' + NC_SK_MAX + ' · dano ' + Math.round(ncSkMul(i)*100) + '% · recarga ' + (sk.cd*ncSkFast(i)).toFixed(1) + ' s' : 'Ainda não aprendida') : lv >= req ? 'Árvore não ativa' : 'Libera no nível ' + req) + '</small><span>' + sk.desc + '</span></div>'
       + '<div class="tbtn"><button class="btn sm' + (can ? ' primary' : '') + '" data-skup="' + i + '" ' + (can ? '' : 'disabled') + '>' + (l ? (l >= NC_SK_MAX ? 'Máx.' : '+1') : 'Aprender') + '</button>'
       + (l ? '<span class="tslot">' + [0, 1].map(j => '<button class="' + (ncSlot(j) === i ? 'on' : '') + '" data-skslot="' + j + ':' + i + '" title="Colocar no botão ' + keyLabel(bindOf(j ? 's2' : 's1')) + '">' + keyLabel(bindOf(j ? 's2' : 's1')) + '</button>').join('') + '</span>' : '') + '</div></div>'; }
+  h += ncBuffTreeHTML();
   const used = ncSkTree().some(v => v);
   h += '</div>' + (used ? '<button class="btn sm" data-skreset style="margin-top:8px">Refazer pontos · ' + adenaTxt(ncSkResetCost()) + '</button>' : '');
   return h; }
@@ -11400,7 +11411,9 @@ document.addEventListener('click', e => { const b = e.target.closest('[data-arv2
 document.addEventListener('click', e => { const b = e.target.closest('[data-skup],[data-skreset],[data-skslot]'); if(!b) return;
   if(b.dataset.skslot){ const [j, i] = b.dataset.skslot.split(':').map(Number); const sl = ncSkSlots().slice(); const o = sl.indexOf(i); if(o >= 0 && o !== j) sl[o] = sl[j]; sl[j] = i; save.sks[save.cls] = sl; persist(); ncTreeDraw(); try{ renderSkillbar(); }catch(_){} return; }
   if(b.dataset.skreset !== undefined){ const c = ncSkResetCost(); if(save.gold < c){ try{ banner('Adena insuficiente', 'Refazer custa ' + adenaTxt(c)); }catch(_){} return; } save.gold -= c; save.skt[save.cls] = []; persist(); try{ SFX.drop(); }catch(_){} }
-  else { const i = +b.dataset.skup, t = ncSkTree(); if((i < 6 || ncArv2On()) && ncLvOf(save.cls) >= NC_SK_REQ[i] && ncSkPts() > 0 && (t[i] || 0) < NC_SK_MAX && CLS().skills[i]){ t[i] = (t[i] || 0) + 1; persist(); try{ SFX.item(); }catch(_){} } }
+  else { const i = +b.dataset.skup, t = ncSkTree(); if(ncArvOpen(i < 6 ? 0 : 1) && ncLvOf(save.cls) >= NC_SK_REQ[i] && ncSkPts() > 0 && (t[i] || 0) < NC_SK_MAX && CLS().skills[i]){ t[i] = (t[i] || 0) + 1;
+      if(t[i] === 1){ save.sks = save.sks || {}; const sl = ncSkSlots().slice(); if(!sl.includes(i)){ const j = sl.findIndex(v => !ncSkLv(v)); if(j >= 0){ sl[j] = i; save.sks[save.cls] = sl; } } }   // 27/11: a habilidade nova vai sozinha para um botão vazio
+      persist(); try{ SFX.item(); }catch(_){} } }
   ncTreeDraw(); try{ renderSkillbar(); }catch(_){} });
 window.ncSkillsPop = o => ncSkillsPop(o);
 function ncSkillsPop(open){ let el = document.getElementById('ncSkPop'); if(!el){ el = document.createElement('div'); el.id = 'ncSkPop'; el.hidden = true; document.body.appendChild(el);
@@ -11521,7 +11534,7 @@ setInterval(() => { try{ const A = ncAuto(), a1 = $('#tPotA'), a2 = $('#tPot2A')
   if(mode !== 'stage' || !P || P.dead || !running) return;
   if(A.hp && save.potions > 0 && !(P.potT > 0) && P.hp <= P.S.hp*NC_AUTO_PCT) usePotion();
   if(A.res && ncRes() === 'mp' && save.potRes > 0 && !(P.pot2T > 0)){ ncResInit(); if(P.res <= ncResMax()*NC_AUTO_PCT) usePotRes(); } }catch(_){} }, 300);
-setInterval(() => { try{ const b = $('#tBuff'), r = P ? Math.max(0, Math.ceil((P.ncBuffCd || 0) - clock)) : 0; if(r) b.setAttribute('data-cd', r); else b.removeAttribute('data-cd'); b.style.setProperty('--cd', r ? r/NC_BUFF_CD : 0); }catch(_){} }, 250);
+setInterval(() => { try{ const b = $('#tBuff'); b.style.display = ncBuffLivres().length ? '' : 'none'; const r = P ? Math.max(0, Math.ceil((P.ncBuffCd || 0) - clock)) : 0; if(r) b.setAttribute('data-cd', r); else b.removeAttribute('data-cd'); b.style.setProperty('--cd', r ? r/NC_BUFF_CD : 0); }catch(_){} }, 250);
 $('#tSk2').addEventListener('pointerdown', e => { e.preventDefault(); useSkill(1); });
 $('#tMount').addEventListener('pointerdown', e => { e.preventDefault(); toggleMount(); });
 $('#tPot').addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); usePotion(); });
@@ -12724,6 +12737,14 @@ const NC_BUFF = {
   shaman:   [{k:'totem', n:'Totem da Cura', c:'#7aff9a', fx:{}, cura:.007}, {k:'lobo', n:'Espírito do Lobo', c:'#9ad8ff', fx:{spdPct:.10}}, {k:'ancest', n:'Fúria Ancestral', c:'#ff9a3a', fx:{aspd:.12}}],
   priest:   [{k:'vida', n:'Bênção da Vida', c:'#ffe6a0', fx:{hpPct:.12}}, {k:'prece', n:'Prece de Proteção', c:'#fff0c0', fx:{defPct:.15}}, {k:'inspira', n:'Inspiração', c:'#a0d8ff', fx:{}, res:.6}]};
 const ncBuffLv = () => Math.min(5, 1 + Math.floor(((save.level || 1) - 1)/16));
+/* 27/11/2026 (Arnold): cada buff libera na árvore num nível: o 1º no 10, o 2º no 25 e o 3º (o melhor) no 40 */
+const NC_BUFF_NV = [10, 25, 40];
+const NC_BUFF_IC = {intel:'arcshield', manaesc:'aegis', clareza:'meditate', grito:'wcry', pele:'wall', folego:'healight', aura:'kingaura', bencao:'healight', escsag:'aegis', furia:'rage', sede:'drain', couro:'wall', falcao:'eagle', passos:'backstep', foco:'pierce', instinto:'deathmark', sombras:'shadow', veneno:'poison', mantra:'rage', medit:'meditate', postura:'wall', pacto:'curse', ossos:'corpse', fome:'reaper', totem:'healight', lobo:'eagle', ancest:'thunder', vida:'healight', prece:'kingaura', inspira:'holy'};
+const ncBuffIc = k => (window.ncIconUrl || (() => 'none'))(NC_BUFF_IC[k] || 'aegis');
+const ncBuffLivres = () => (NC_BUFF[save.cls] || []).filter((d, i) => ncLvOf(save.cls) >= NC_BUFF_NV[i]);
+function ncBuffTreeHTML(){ const L = NC_BUFF[save.cls]; if(!L) return ''; const lv = ncLvOf(save.cls);
+  return '<div class="arv-h">Buffs · botão Buff (tecla 3)</div>' + L.map((d, i) => { const ok = lv >= NC_BUFF_NV[i];
+    return '<div class="tnode' + (ok ? ' on' : ' lock') + '"><i style=\'background-image:' + ncBuffIc(d.k) + '\'></i><div><b>' + d.n + '</b><small>' + (ok ? 'Liberado · dura ' + Math.round(ncBuffDur(ncBuffLv())/60) + ' min' + (d.so ? ' · só você' : ' · vale para o grupo') : 'Libera no nível ' + NC_BUFF_NV[i]) + '</small></div></div>'; }).join(''); }
 const ncBuffDur = lv => 180*lv;   // 3 min por nível: 3, 6, 9, 12, 15 min
 const NC_BUFF_CD = 30;
 let ncBuffs = {};   // k -> {d, ate, lv, de}
@@ -12732,7 +12753,7 @@ function ncBuffAtivos(){ const t = Date.now(); for(const k in ncBuffs) if(ncBuff
 function ncBuffAplicar(k, lv, seg, de){ const d = ncBuffDef(k); if(!d) return; ncBuffs[k] = {d, lv, ate:Date.now() + seg*1000, de:de || ''};
   if(d.escudo && P){ P.ncEscudo = Math.round((P.S ? P.S.hp : 100)*d.escudo*(1 + (lv - 1)*.15)); P.ncEscudoMax = P.ncEscudo; }
   try{ P.S = stats(); }catch(_){} }
-function ncBuffUsar(){ if(mode !== 'stage' || !P || P.dead) return; const L = NC_BUFF[save.cls]; if(!L) return;
+function ncBuffUsar(){ if(mode !== 'stage' || !P || P.dead) return; const L = ncBuffLivres(); if(!L.length){ if(clock - (P.lockMsgT || 0) > 1){ P.lockMsgT = clock; floatText(P.pos, 'Buff libera no nível ' + NC_BUFF_NV[0], 'hurt'); } return; }
   if(clock < (P.ncBuffCd || 0)){ if(clock - (P.lockMsgT || 0) > 1){ P.lockMsgT = clock; floatText(P.pos, 'Buff em ' + Math.ceil(P.ncBuffCd - clock) + ' s', 'hurt'); } return; }
   const lv = ncBuffLv(), seg = ncBuffDur(lv); L.forEach(d => ncBuffAplicar(d.k, lv, seg, save.name || ''));
   P.ncBuffCd = clock + NC_BUFF_CD; try{ SFX.level(); }catch(_){} burst(P.pos, 0xffe08a, 22, 4, 7, 1); fxRing(P.pos.x, P.pos.z, 3.5, 0xffe08a, .4); floatText(P.pos, 'Buff nv ' + lv + '!', 'heal');
@@ -12745,13 +12766,20 @@ function ncBuffTick(dt){ if(!P || P.dead || mode !== 'stage') return; const A = 
   /* Bárbaro: barra de Loucura (no lugar da stamina). Quanto mais cheia, mais vida volta, de leve: até 1,2% da vida por segundo com a barra cheia */
   if(save.cls === 'barbarian' && ncRes() === 'sp' && P.res > 0 && P.hp < P.S.hp){ const f = P.res/ncResMax(); P.hp = Math.min(P.S.hp, P.hp + P.S.hp*.012*f*dt); } }
 function ncBuffStats(s){ const A = ncBuffAtivos(); for(const k in A){ const d = A[k].d, m = 1 + (A[k].lv - 1)*.1; for(const f in d.fx){ if(f === 'burn'){ s.burn = true; if(!s.elem) s.elem = 'poison'; } else s[f] = (s[f] || 0) + d.fx[f]*m; } } }
-function ncBuffHud(){ let el = document.getElementById('hBuff'); const hl = document.querySelector('#hud .hud-l'); if(!hl) return;
-  if(!el){ el = document.createElement('div'); el.id = 'hBuff'; const ref = document.getElementById('hObj'); hl.insertBefore(el, ref); }
+function ncBuffHud(){ let el = document.getElementById('hBuff');
+  if(!el){ el = document.createElement('div'); el.id = 'hBuff'; document.body.appendChild(el); }
   const A = ncBuffAtivos(), ks = Object.keys(A); el.hidden = !ks.length || mode !== 'stage'; if(el.hidden) return; const t = Date.now();
   el.innerHTML = ks.map(k => { const b = A[k], r = Math.max(0, Math.round((b.ate - t)/1000)), mm = Math.floor(r/60), ss = String(r % 60).padStart(2, '0');
-    return '<span class="hb" style="--c:' + b.d.c + '" title="' + b.d.n + (b.de && b.de !== save.name ? ' (de ' + b.de + ')' : '') + '"><i>' + b.d.n.split(' ').map(w => w[0]).join('').slice(0, 2) + '</i>' + mm + ':' + ss + '</span>'; }).join('')
-    + (P && P.ncEscudo > 0 ? '<span class="hb esc" style="--c:#6a8aff"><i>EM</i>' + P.ncEscudo + '</span>' : ''); }
+    return '<span class="hb" style="--c:' + b.d.c + '" title="' + b.d.n + (b.de && b.de !== save.name ? ' (de ' + b.de + ')' : '') + '"><i style=\'background-image:' + ncBuffIc(k) + '\'></i>' + mm + ':' + ss + '</span>'; }).join('')
+    + (P && P.ncEscudo > 0 ? '<span class="hb esc" style="--c:#6a8aff" title="Escudo de Mana"><i style=\'background-image:' + ncBuffIc('manaesc') + '\'></i>' + P.ncEscudo + '</span>' : ''); }
 setInterval(() => { try{ ncBuffHud(); }catch(_){} }, 500);
+/* 27/11/2026 (Arnold): no celular deitado com tela baixa, os botões subiam em cima do minimapa. Agora o bloco de botões encolhe só o necessário para caber embaixo do minimapa */
+setInterval(() => { try{ const tb = document.querySelector('.tbtns'); if(!tb) return; const land = innerWidth > innerHeight && innerHeight < 560;
+  if(!land || mode !== 'stage' || document.body.classList.contains('nc-swap')){ if(tb.style.transform){ tb.style.transform = ''; } return; }
+  let bot = 0; ['#mm', '#ncEvArc', '#mmTag'].forEach(q => { const e = document.querySelector(q); if(!e || !e.getClientRects().length) return; const r = e.getBoundingClientRect(); if(r.height && r.right > innerWidth - 260) bot = Math.max(bot, r.bottom); });
+  const r = tb.getBoundingClientRect(), k0 = parseFloat((tb.style.transform.match(/scale\(([\d.]+)/) || [0, 0])[1]) || .78, alto = r.height/k0, base = innerHeight - r.bottom;
+  const k = Math.max(.5, Math.min(.78, (innerHeight - bot - 6 - base)/alto)); if(Math.abs(k - k0) > .005 || !tb.style.transform) tb.style.transform = 'scale(' + k.toFixed(3) + ')'; }catch(_){} }, 400);
+
 function ncResTick(dt){ try{ ncBuffTick(dt); }catch(_){} if(!P) return; ncResInit(); const m = ncResMax(); if(ncRes() === 'sp'){ if(P.res > 0 && clock - Math.max(P.atkT || 0, P.resT || 0) > 6) P.res = Math.max(0, P.res - m*.03*dt); return; } if(P.res < m && clock - (P.resT || 0) > .6) P.res = Math.min(m, P.res + ncResRegen()*dt); }
 function usePotion(){
   if(mode !== 'stage' || !running || inputLocked || P.dead) return;
@@ -16384,7 +16412,7 @@ body.nc-ov #ncXp2{display:none}
 @keyframes ncGira{0%,20%{transform:rotate(0)}50%,80%{transform:rotate(-90deg)}100%{transform:rotate(-90deg)}}
 .nc-tabs.nc-herotabs,.fsel.nc-tabs{position:sticky;top:var(--nchead,0px);z-index:5;background:#1c163c;box-shadow:0 8px 10px -6px #0009;padding-top:6px;padding-bottom:8px}
 #tBuff{right:208px;bottom:140px;width:52px;height:52px;background:rgba(200,150,40,.85);font:800 12px/1 system-ui,sans-serif;color:#fff}
-#hBuff{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;pointer-events:none}#hBuff[hidden]{display:none}
+#hBuff{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(8px + env(safe-area-inset-bottom,0px));z-index:30;display:flex;gap:6px;pointer-events:none}#hBuff[hidden]{display:none}
 #hBuff .hb{display:inline-flex;align-items:center;gap:3px;border:1px solid var(--c);background:rgba(10,8,24,.75);border-radius:8px;padding:1px 5px 1px 2px;font:700 10.5px/1.4 system-ui,sans-serif;color:#fff;text-shadow:0 1px 1px #000}
 #hBuff .hb i{font-style:normal;display:inline-grid;place-items:center;width:16px;height:16px;border-radius:50%;background:var(--c);color:#111;font-size:8.5px;text-shadow:none}
 .arv-h{grid-column:1/-1;font:700 13px/1.2 Cinzel,serif;color:#f2c14e;letter-spacing:.06em;margin:10px 0 2px;text-transform:uppercase}
@@ -16411,6 +16439,42 @@ body.nc-crhide #ncCriar{display:none!important}
 #ncCriar.mini .cr-box{max-height:none!important;padding:2px 14px calc(2px + env(safe-area-inset-bottom,0px))!important}
 #ncCriar.mini .cr-bar{display:flex;justify-content:center;gap:8px;width:100%;padding:12px;border:0;background:none;color:#ffd36a;font:600 16px/1 system-ui,sans-serif;cursor:pointer}
 @keyframes ncFrIn{from{opacity:0}to{opacity:1}}
+
+/* 27/11/2026 (Arnold): celular deitado com menus compactos: dá para ver mais itens e as abas ficam presas em cima ao rolar */
+@media (orientation:landscape) and (max-height:500px){
+  #ncCriar .cr-box{padding:6px 10px 8px!important;max-height:none!important}
+  #ncCriar .cr-bar{display:none!important}
+  #ncCriar .cr-top{position:absolute!important;right:8px;top:6px;margin:0!important;height:auto!important;z-index:2}
+  #ncCriar .cr-top h2{display:none!important}
+  #ncCriar .cr-mn{width:28px!important;height:28px!important;font-size:12px!important}
+  #ncCriar .cr-g{grid-template-columns:repeat(10,minmax(0,1fr))!important;gap:4px!important;margin:0 34px 0 0!important}
+  #ncCriar .cr-c{padding:3px 1px!important;min-height:0!important;height:46px!important;gap:1px!important;border-radius:9px!important}
+  #ncCriar .cr-c img{width:24px!important;height:24px!important}
+  #ncCriar .cr-c b{font-size:10px!important;letter-spacing:-.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+  #ncCriar .cr-c small{display:none!important}
+  #ncCriar .cr-desc{font-size:11.5px!important;margin:4px 0 0!important;min-height:0!important}
+  #ncCriar .cr-n{margin-top:6px!important;gap:8px!important}
+  #ncCriar .cr-n input{height:34px!important;min-height:0!important;font-size:14px!important;padding:0 12px!important}
+  #ncCriar .cr-n button{height:34px!important;min-height:0!important;font-size:15px!important;padding:0 22px!important}
+  html body #hub>aside.panel,html body #hub>#rightPanel{padding-top:2px!important}
+  html body #hub>:is(aside.panel,#rightPanel)>.nc-head{min-height:0!important;height:auto!important;padding:4px 16px 4px!important;top:-6px!important}
+  html body #hub>:is(aside.panel,#rightPanel) .nc-head b{font-size:16px!important}
+  html body #hub>:is(aside.panel,#rightPanel) .nc-x{width:30px!important;height:30px!important;font-size:15px!important}
+  html body #hub>:is(aside.panel,#rightPanel) .nc-i{min-height:0!important;padding:3px 8px!important;font-size:12px!important;margin:2px 0!important}
+  html body #hub>:is(aside.panel,#rightPanel) .nc-tabs{padding:3px!important;gap:4px!important;margin:4px 0!important}
+  html body #hub>:is(aside.panel,#rightPanel) .nc-tabs .chipb{padding:4px 11px!important;font-size:12.5px!important;min-height:0!important;height:28px!important}
+  html body #hub>:is(aside.panel,#rightPanel) h2{font-size:15px!important;margin:8px 0 4px!important}
+  html body #hub>:is(aside.panel,#rightPanel) .eyebrow{font-size:10px!important;margin:4px 0 2px!important}
+  #ncTreeBox{margin:4px 0!important}
+  #ncTreeBox .tree-top{margin:0 0 4px!important;font-size:12px}#ncTreeBox .tree-top b{font-size:15px!important}#ncTreeBox .tree-top small{font-size:10.5px}
+  #ncTreeBox .tnode{padding:5px 8px!important;gap:8px!important;min-height:0!important}
+  #ncTreeBox .tnode>i{width:36px!important;height:36px!important;flex:0 0 36px!important}
+  #ncTreeBox .tnode b{font-size:13px!important}#ncTreeBox .tnode small,#ncTreeBox .tnode span{font-size:11px!important;line-height:1.25!important}
+  #ncTreeBox .tnode .btn{padding:4px 10px!important;font-size:11.5px!important;min-height:0!important}
+  #ncTreeBox .arv-h{font-size:12px!important;margin:8px 0 3px!important}
+  #ncTreeBox .arv-lock{padding:5px 8px!important;font-size:11.5px!important}
+  #ncTreeBox .arv-lock .btn{padding:4px 12px!important;font-size:12px!important}
+}
 </style>
 </body>
 </html>
