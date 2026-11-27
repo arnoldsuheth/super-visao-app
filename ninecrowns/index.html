@@ -3,6 +3,19 @@
 <head>
 <meta charset="utf-8">
 <style>/* 27/11 (Arnold): antes de carregar ficava tela branca. Fundo escuro com aviso aparece na hora */html{background:#07061a url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20300%20200%22%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%23f2c14e%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Crect%20x%3D%22128%22%20y%3D%2220%22%20width%3D%2244%22%20height%3D%2276%22%20rx%3D%227%22/%3E%3Cpath%20d%3D%22M190%2040a40%2040%200%200%201%2010%2040l-6-5m6%205%206-5%22/%3E%3C/g%3E%3Ctext%20x%3D%22150%22%20y%3D%22140%22%20text-anchor%3D%22middle%22%20font-family%3D%22Georgia%2Cserif%22%20font-size%3D%2226%22%20fill%3D%22%23f2c14e%22%20letter-spacing%3D%223%22%3ENINE%20CROWNS%3C/text%3E%3Ctext%20x%3D%22150%22%20y%3D%22172%22%20text-anchor%3D%22middle%22%20font-family%3D%22system-ui%2Csans-serif%22%20font-size%3D%2214%22%20fill%3D%22%23cfc9e6%22%3ECarregando...%20deixe%20o%20celular%20deitado%3C/text%3E%3C/svg%3E") center/min(320px,80vw) auto no-repeat;min-height:100%}body{background:transparent}</style>
+<script>/* 27/11/2026 (Arnold): o iPhone não deixa site travar a tela deitada. No celular o jogo roda dentro de uma moldura:
+   com o celular em pé, a moldura gira o jogo (já aparece deitado); com o celular deitado, ocupa a tela normal */
+(function(){ try{ if(self !== top || /[?&]nci=1/.test(location.search) || /nctest/.test(location.hash) || !matchMedia('(pointer:coarse)').matches) return;
+  var u = location.pathname + (location.search ? location.search + '&' : '?') + 'nci=1' + location.hash;
+  try{ window.stop(); }catch(e){}
+  document.documentElement.innerHTML = '<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">'
+    + '<title>Nine Crowns</title><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black"><meta name="theme-color" content="#07061a">'
+    + '<meta name="apple-mobile-web-app-title" content="Nine Crowns"><link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="assets/icon-180.png">'
+    + '<style>html,body{margin:0;height:100%;overflow:hidden;background:#07061a}#ncF{position:fixed;left:0;top:0;border:0;width:100vw;height:100vh;height:100dvh;display:block;background:#07061a}'
+    + '@media (orientation:portrait){#ncF{width:100vh;width:100dvh;height:100vw;transform-origin:0 0;transform:rotate(90deg) translateY(-100%)}}</style></head>'
+    + '<body><iframe id="ncF" src="' + u.replace(/"/g, '%22') + '" allow="autoplay; fullscreen; screen-wake-lock; clipboard-write" allowfullscreen></iframe></body>';
+}catch(e){} })();</script>
+
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Nine Crowns</title>
 <meta name="claude:viewport-fit-sides" content="cover">
