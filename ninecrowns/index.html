@@ -12550,15 +12550,32 @@ function gainXP(n, fromParty){
   try{ n *= 1 + (ncCoop.partyN() - 1)*.05; }catch(_){}   // grupo: +5% de XP por amigo na mesma fase, e todos ganham o mesmo
   n = Math.round(n*DF().reward*(evFx().xp || 1)*(ncXp2Left() ? 2 : 1));   /* XP em dobro do prêmio do dia */
   save.xp += n;
-  let up = false;
+  let up = false; const ncS0 = (typeof P !== 'undefined' && P && P.S) ? P.S : null, ncLv0 = save.level;
   while(save.level < NC_MAX_LV && save.xp >= xpNeed(save.level)){ save.xp -= xpNeed(save.level); save.level++; up = true; if(save.level % 2 === 0 && save.level !== NC_SPEC_LV) setTimeout(() => { try{ banner('Novo ponto de habilidade', (NC_SK_REQ.includes(save.level) ? 'Habilidade nova liberada! ' : '') + 'Abra a árvore (Herói ou tecla H).'); }catch(_){} }, 600); if(save.level === NC_SPEC_LV) setTimeout(() => { try{ banner('Nível ' + NC_SPEC_LV + ': especialização liberada', 'Abra o menu Herói e escolha o seu caminho'); }catch(e){} }, 1800); }
   if(save.level >= NC_MAX_LV){ save.level = NC_MAX_LV; save.xp = 0; }
   if(up && P){
     P.S = stats(); P.hp = P.S.hp;
-    floatText(P.pos, 'NÍVEL ' + save.level + '!', 'lvl'); SFX.level();
+    floatText(P.pos, 'NÍVEL ' + save.level + '!', 'lvl'); SFX.level(); try{ ncNivelFx(ncLv0, ncS0, P.S); }catch(_){}
     burst(P.pos, 0x86d873, 16, 4, 7, 1);
   }
 }
+/* 26/11/2026 (Arnold: subir de nível era quase imperceptível): coluna de luz dourada, câmera lenta rápida, anel no chão
+   e um painel "NÍVEL X!" com o que melhorou e o que liberou. Some sozinho em 3,5 s e não bloqueia o toque. */
+function ncNivelFx(lv0, s0, s1){ const lv = save.level;
+  try{ const g = new T.Group(); g.position.set(P.pos.x, P.pos.y, P.pos.z); scene.add(g);
+    const col = new T.Mesh(new T.CylinderGeometry(.9, 1.3, 14, 20, 1, true), bmat(0xffd86a, Object.assign({opacity:.55, side:T.DoubleSide}, ADD))); col.position.y = 7; g.add(col);
+    const ring = new T.Mesh(new T.RingGeometry(.6, 1.0, 40), bmat(0xfff0a0, Object.assign({opacity:.9, side:T.DoubleSide}, ADD))); ring.rotation.x = -Math.PI/2; ring.position.y = .08; g.add(ring);
+    const t0 = performance.now(); const passo = () => { const t = (performance.now() - t0)/1600; if(t >= 1 || mode !== 'stage'){ removeObj(g); return; }
+      g.position.set(P.pos.x, P.pos.y, P.pos.z); col.material.opacity = .55*(1 - t); col.scale.set(1 + t*.6, 1, 1 + t*.6); ring.scale.setScalar(1 + t*7); ring.material.opacity = .9*(1 - t); requestAnimationFrame(passo); }; passo();
+    for(let k = 0; k < 3; k++) setTimeout(() => { try{ burst(P.pos, 0xffe08a, 18, 5, 9, 1); }catch(_){} }, k*180);
+    addShake(.2); if(timeScale === 1){ timeScale = .4; setTimeout(() => { if(timeScale === .4) timeScale = 1; }, 650); } }catch(_){}
+  const gan = []; if(s0 && s1){ const d = (k, n) => { const v = Math.round(s1[k] - s0[k]); if(v > 0) gan.push('+' + v + ' ' + n); }; d('hp', 'vida'); d('atk', 'ataque'); d('def', 'defesa'); }
+  const lib = []; if(lv % 2 === 0) lib.push('Novo ponto de habilidade');
+  try{ if(NC_SK_REQ.includes(lv)) lib.push('Habilidade nova liberada'); }catch(_){}
+  const gi = GR_LV.indexOf(lv); if(gi > 0) lib.push('Agora você pode usar ' + GR_N[gi].replace(' ', ' '));
+  let el = document.getElementById('ncNivel'); if(!el){ el = document.createElement('div'); el.id = 'ncNivel'; document.body.appendChild(el); }
+  el.innerHTML = '<div class="nv-t">NÍVEL ' + lv + '!</div>' + (gan.length ? '<div class="nv-g">' + gan.join(' · ') + '</div>' : '') + lib.map(x => '<div class="nv-l">' + x + '</div>').join('');
+  el.classList.remove('on'); void el.offsetWidth; el.classList.add('on'); clearTimeout(el.ncT); el.ncT = setTimeout(() => el.classList.remove('on'), 3500); }
 function hurtPlayer(raw, elemental){
   if(ncAiPeer) return;   // o monstro está atacando o amigo: o dano é no aparelho dele
   if(P.inv > 0 || P.dead || inputLocked) return;
@@ -16200,6 +16217,10 @@ body.nc-ov #ncXp2{display:none}
 .ncsa-slots{display:flex;flex-wrap:wrap;gap:5px;margin:5px 0}.ncsa-on{border:1px solid var(--sc);color:var(--sc);border-radius:8px;padding:2px 7px;font:700 12px/1.3 system-ui;box-shadow:0 0 8px color-mix(in srgb,var(--sc) 45%,transparent)}
 .ncsa-off{border:1px dashed #6a6490;color:#9a94c0;border-radius:8px;padding:2px 7px;font:600 12px/1.3 system-ui}
 .ncsa-pick{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}.ncsa-pick .btn{border-color:var(--sc)!important;color:#fff;min-height:34px}.ncsa-row{align-items:flex-start}
+#ncNivel{position:fixed;left:50%;top:22%;transform:translate(-50%,-10px) scale(.9);z-index:90;pointer-events:none;text-align:center;opacity:0;transition:opacity .35s,transform .35s;padding:12px 22px;border-radius:16px;background:radial-gradient(ellipse at center,rgba(40,24,6,.85),rgba(20,12,4,.55) 70%,transparent);color:#fff;text-shadow:0 2px 4px #000}
+#ncNivel.on{opacity:1;transform:translate(-50%,0) scale(1)}
+#ncNivel .nv-t{font:800 clamp(34px,9vw,56px)/1 Cinzel,serif;color:#ffd86a;letter-spacing:.06em;text-shadow:0 0 18px #ffb02a,0 2px 4px #000}
+#ncNivel .nv-g{font:700 15px/1.4 system-ui,sans-serif;margin-top:6px;color:#fff3c8}#ncNivel .nv-l{font:700 14px/1.4 system-ui,sans-serif;color:#9affb0}
 .pimg.nci>span.ncimg{position:absolute;left:11%;top:9%;width:78%;height:78%;display:block;background-repeat:no-repeat;background-position:center;background-size:contain;z-index:1;pointer-events:none;-webkit-transform:translateZ(0)}.pimg.nci>span.ncimg.w{left:8%;top:6%;width:84%;height:84%}
 .pimg.nci>img.nca{display:block;width:calc(var(--s)*.78)!important;height:calc(var(--s)*.78)!important;position:relative;z-index:1;filter:drop-shadow(0 2px 2px rgba(0,0,0,.55))}
 .pimg.nci>img.wico{display:block;width:calc(var(--s)*.84)!important;height:calc(var(--s)*.84)!important;object-fit:contain}
