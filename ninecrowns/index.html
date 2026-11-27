@@ -12729,7 +12729,7 @@ function usePotion(){
   floatText(P.pos, '+' + h, 'heal'); SFX.potion(); burst(P.pos, 0x86d873, 10, 2, 5, 1);
 }
 /* Poção de mana (Mago e Necromante) ou de stamina (as outras classes), pedido do Arnold em 22/11: recupera 60% e tem espera de 4 s */
-const NC_POT_P = 25, NC_POT_MAX = 9, ncPotResName = () => ncRes() === 'mp' ? 'Poção de Mana' : 'Poção de Stamina';
+const NC_POT_P = 25, NC_POT_MAX = 9, ncPotResName = () => ncRes() === 'mp' ? 'Poção de Mana' : save.cls === 'barbarian' ? 'Poção de Loucura' : 'Poção de Stamina';
 function usePotRes(){
   if(!P || P.dead) return; ncResInit();
   if(!(save.potRes > 0)){ floatText(P.pos, 'Sem ' + ncPotResName().toLowerCase(), 'hurt'); return; }
@@ -13624,7 +13624,7 @@ function renderSkillbar(){
   const s0 = c.skills[ncSlot(0)], s1b = c.skills[ncSlot(1)];
   $('#tSk1').textContent = s0.name; $('#tSk2').textContent = s1b.name; $('#tDash').textContent = c.dash;
   if(window.ncHud) window.ncHud(s0.id, s1b.id);
-  try{ document.documentElement.style.setProperty('--nc-pot2', window.ncPotUrl(ncRes() === 'mp' ? 'mp' : 'sp')); $('#hPot2L').textContent = ncRes() === 'mp' ? 'Mana' : 'Stamina'; $('#hPot2').textContent = $('#tPot2N').textContent = String(save.potRes || 0); }catch(_){}
+  try{ document.documentElement.style.setProperty('--nc-pot2', window.ncPotUrl(ncRes() === 'mp' ? 'mp' : 'sp')); $('#hPot2L').textContent = ncRes() === 'mp' ? 'Mana' : save.cls === 'barbarian' ? 'Loucura' : 'Stamina'; $('#hPot2').textContent = $('#tPot2N').textContent = String(save.potRes || 0); }catch(_){}
   $('#tSk1').title = s0.full + ': ' + s0.desc; $('#tSk2').title = s1b.full + ': ' + s1b.desc;
   document.body.dataset.input = inputDev;
 }
@@ -13657,7 +13657,7 @@ function updateHUD(){
   { const left = [0, P.cd[ncSlot(0)], P.cd[ncSlot(1)], 0]; const txt = v => v > 0 ? (v < 1 ? v.toFixed(1) : String(Math.ceil(v))) : '';
     for(let i = 1; i < 3; i++){ const si = ncSlot(i - 1), lk = !ncSkLv(si), t = lk ? (ncLvOf(save.cls) < NC_SK_REQ[si] ? 'Nv' + NC_SK_REQ[si] : 'Bloq') : txt(left[i]), el = document.getElementById('sk' + i); if(el){ let n = el.querySelector('.cdn'); if(!n){ n = document.createElement('em'); n.className = 'cdn'; el.appendChild(n); } if(n.textContent !== t) n.textContent = t; el.classList.toggle('cding', !!t); }
       const tb = document.getElementById(i === 1 ? 'tSk1' : 'tSk2'); if(tb){ if(t) tb.setAttribute('data-cd', t); else if(tb.hasAttribute('data-cd')){ tb.removeAttribute('data-cd'); tb.classList.remove('nc-ready'); void tb.offsetWidth; tb.classList.add('nc-ready'); } } } }
-  $('#tMount').textContent = P.mounted ? 'Descer' : 'Cavalo'; { const n = String(save.potions || 0); if($('#tPotN').textContent !== n) $('#tPotN').textContent = n; const n2 = String(save.potRes || 0); if($('#tPot2N').textContent !== n2){ $('#tPot2N').textContent = n2; $('#hPot2').textContent = n2; $('#hPot2L').textContent = ncRes() === 'mp' ? 'Mana' : 'Stamina'; } }
+  $('#tMount').textContent = P.mounted ? 'Descer' : 'Cavalo'; { const n = String(save.potions || 0); if($('#tPotN').textContent !== n) $('#tPotN').textContent = n; const n2 = String(save.potRes || 0); if($('#tPot2N').textContent !== n2){ $('#tPot2N').textContent = n2; $('#hPot2').textContent = n2; $('#hPot2L').textContent = ncRes() === 'mp' ? 'Mana' : save.cls === 'barbarian' ? 'Loucura' : 'Stamina'; } }
 }
 let mmTick = 0, revealT = 0;
 function updateStage(dt){
