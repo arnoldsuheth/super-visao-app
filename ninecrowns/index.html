@@ -2,7 +2,8 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<style>/* 27/11 (Arnold): antes de carregar ficava tela branca. Fundo escuro com aviso aparece na hora */html{background:#07061a url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20300%20200%22%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%23f2c14e%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Crect%20x%3D%22128%22%20y%3D%2220%22%20width%3D%2244%22%20height%3D%2276%22%20rx%3D%227%22/%3E%3Cpath%20d%3D%22M190%2040a40%2040%200%200%201%2010%2040l-6-5m6%205%206-5%22/%3E%3C/g%3E%3Ctext%20x%3D%22150%22%20y%3D%22140%22%20text-anchor%3D%22middle%22%20font-family%3D%22Georgia%2Cserif%22%20font-size%3D%2226%22%20fill%3D%22%23f2c14e%22%20letter-spacing%3D%223%22%3ENINE%20CROWNS%3C/text%3E%3Ctext%20x%3D%22150%22%20y%3D%22172%22%20text-anchor%3D%22middle%22%20font-family%3D%22system-ui%2Csans-serif%22%20font-size%3D%2214%22%20fill%3D%22%23cfc9e6%22%3ECarregando...%20deixe%20o%20celular%20deitado%3C/text%3E%3C/svg%3E") center/min(320px,80vw) auto no-repeat;min-height:100%}body{background:transparent}</style>
+<style>/* 27/11 (Arnold): antes de carregar ficava tela branca. Fundo escuro com aviso aparece na hora */html{background:#07061a url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20300%20200%22%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%23f2c14e%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Crect%20x%3D%22128%22%20y%3D%2220%22%20width%3D%2244%22%20height%3D%2276%22%20rx%3D%227%22/%3E%3Cpath%20d%3D%22M190%2040a40%2040%200%200%201%2010%2040l-6-5m6%205%206-5%22/%3E%3C/g%3E%3Ctext%20x%3D%22150%22%20y%3D%22140%22%20text-anchor%3D%22middle%22%20font-family%3D%22Georgia%2Cserif%22%20font-size%3D%2226%22%20fill%3D%22%23f2c14e%22%20letter-spacing%3D%223%22%3ENINE%20CROWNS%3C/text%3E%3Ctext%20x%3D%22150%22%20y%3D%22172%22%20text-anchor%3D%22middle%22%20font-family%3D%22system-ui%2Csans-serif%22%20font-size%3D%2214%22%20fill%3D%22%23cfc9e6%22%3ECarregando...%20deixe%20o%20celular%20deitado%3C/text%3E%3C/svg%3E") center/min(320px,80vw) auto no-repeat!important;min-height:100%}body{opacity:0}</style>
+<script>/* 27/11: só mostra o jogo depois que a página inteira chegou (antes aparecia pela metade com internet fraca) */document.addEventListener("DOMContentLoaded",function(){document.body.style.opacity="1"});</script>
 <script>/* 27/11/2026 (Arnold): o iPhone não deixa site travar a tela deitada. No celular o jogo roda dentro de uma moldura:
    com o celular em pé, a moldura gira o jogo (já aparece deitado); com o celular deitado, ocupa a tela normal */
 (function(){ try{ if(self !== top || /[?&]nci=1/.test(location.search) || /nctest/.test(location.hash) || !matchMedia('(pointer:coarse)').matches) return;
@@ -16524,6 +16525,42 @@ body.nc-crhide #ncCriar{display:none!important}
 #hud .hud-lv::before{content:"";position:absolute;inset:4px;border-radius:50%;background:radial-gradient(circle at 35% 25%,#4a3a8a,#17122e 62%,#0c0a1a);box-shadow:inset 0 0 0 1.5px rgba(255,211,106,.7),inset 0 2px 6px rgba(255,255,255,.12)}
 #hud .hud-lv::after{content:"NÍVEL";position:absolute;left:0;right:0;top:12px;text-align:center;font:800 7px/1 system-ui,sans-serif;letter-spacing:.14em;color:#d8c8ff;z-index:1}
 #hud .hud-lv b{position:relative;z-index:1;margin-top:9px;font-family:var(--f-display)!important;font-size:21px!important;line-height:1!important;color:#ffe08a!important;font-weight:700!important;text-shadow:0 0 8px rgba(255,190,60,.55),0 1px 2px #000!important}
+
+/* 27/11/2026 (Arnold aprovou): Mochila, Ferreiro, Mercador e Missões compactos no celular deitado */
+@media (orientation:landscape) and (max-height:500px){
+  html body.nc-l #hub>aside.panel>.nc-head,html body.nc-r #hub>#rightPanel>.nc-head{padding:4px 16px 4px!important;min-height:0!important;top:-6px!important}
+  html body.nc-l #hub>aside.panel>.nc-head b,html body.nc-r #hub>#rightPanel>.nc-head b{font-size:16px!important}
+  html body.nc-l #hub>aside.panel>.nc-head .nc-x,html body.nc-r #hub>#rightPanel>.nc-head .nc-x{width:30px!important;height:30px!important;font-size:15px!important}
+  html body #hub>:is(aside.panel,#rightPanel){font-size:13px}
+  html body #hub>:is(aside.panel,#rightPanel) .chipb{padding:4px 10px!important;font-size:12.5px!important;min-height:0!important;height:28px!important}
+  html body #hub>:is(aside.panel,#rightPanel) :is(.ftabs,.fsel,.filters){gap:4px!important;margin:4px 0!important;padding:2px!important}
+  html body #hub>:is(aside.panel,#rightPanel) .ncw{padding:6px 10px!important;margin:4px 0!important}
+  html body #hub>:is(aside.panel,#rightPanel) .ncw-top{font-size:12px!important}
+  html body #hub>:is(aside.panel,#rightPanel) .ncw-top b,html body #hub>:is(aside.panel,#rightPanel) .ncw-ad{font-size:15px!important}
+  html body #hub>:is(aside.panel,#rightPanel) .ncw-g{gap:4px!important;margin-top:4px!important}
+  html body #hub>:is(aside.panel,#rightPanel) .ncw-c{height:22px!important;min-height:0!important;padding:0 8px!important;font-size:11.5px!important}
+  html body #hub>:is(aside.panel,#rightPanel) .evbox{padding:5px 10px!important;margin:4px 0!important;font-size:12px!important}
+  html body #hub>:is(aside.panel,#rightPanel) .evbox b{font-size:13px!important}
+  html body #hub>:is(aside.panel,#rightPanel) .frow{padding:6px 8px!important;gap:8px!important}
+  html body #hub>:is(aside.panel,#rightPanel) .frow .pimg,html body #hub>:is(aside.panel,#rightPanel) .ncpot,html body #hub>:is(aside.panel,#rightPanel) .ncpot svg{width:34px!important;height:34px!important}
+  html body #hub>:is(aside.panel,#rightPanel) .btn{padding:5px 12px!important;font-size:12px!important;min-height:0!important}
+  html body #hub>:is(aside.panel,#rightPanel) .btn.sm{padding:4px 10px!important;font-size:11.5px!important}
+  html body #hub>:is(aside.panel,#rightPanel) .iact .btn{height:auto!important}
+  html body #hub>:is(aside.panel,#rightPanel) .istat{font-size:11.5px!important}
+  html body #hub>:is(aside.panel,#rightPanel) .eqgrid{grid-template-columns:repeat(5,1fr)!important;gap:4px!important}
+  html body #hub>:is(aside.panel,#rightPanel) .eq{padding:4px 2px!important;gap:1px!important;font-size:10px!important}
+  html body #hub>:is(aside.panel,#rightPanel) .eq .pimg,html body #hub>:is(aside.panel,#rightPanel) .eq .ncimg{width:34px!important;height:34px!important}
+  html body #hub>:is(aside.panel,#rightPanel) .eq small{font-size:9px!important;line-height:1.1}
+  html body #hub>:is(aside.panel,#rightPanel) .bgrid{grid-template-columns:repeat(auto-fill,minmax(44px,1fr))!important;gap:4px!important}
+  html body #hub>:is(aside.panel,#rightPanel) .bcell .pimg,html body #hub>:is(aside.panel,#rightPanel) .bcell .ncimg{width:80%!important;height:80%!important}
+  html body #hub>:is(aside.panel,#rightPanel) .fpanel{padding:6px 8px!important}
+  html body #hub>:is(aside.panel,#rightPanel) .row{padding:4px 0!important;min-height:0!important}
+  html body #hub>:is(aside.panel,#rightPanel) .nc-i{min-height:0!important;padding:3px 8px!important;font-size:12px!important;margin:2px 0!important}
+  html body #hub>:is(aside.panel,#rightPanel) .cgrid{grid-template-columns:repeat(3,1fr)!important;gap:4px!important}
+  html body #hub>:is(aside.panel,#rightPanel) .cbtn{padding:5px 6px!important;min-height:0!important;gap:2px!important}
+  html body #hub>:is(aside.panel,#rightPanel) .cbtn .cb-ic{width:26px!important;height:26px!important}
+  html body #hub>:is(aside.panel,#rightPanel) .cbtn b{font-size:12px!important}html body #hub>:is(aside.panel,#rightPanel) .cbtn small{font-size:10px!important}
+}
 </style>
 </body>
 </html>
