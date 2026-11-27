@@ -5880,7 +5880,7 @@ function itemName(it){
   if(it.slot === 'weapon') return WVAR[it.wtype][it.v].n + ' ' + TIERS[it.tier].pre + u;
   return SLOT_INFO[it.slot].n + ' ' + TIERS[it.tier].pre + u;
 }
-function itemStats(it){ const b = Object.assign({}, itemStatsBase(it)); if(it.slot === 'boots' && it.up) b.spdPct = (b.spdPct || 0) + .005*it.up; if(it.tier >= 6) b.atkPct = (b.atkPct || 0) + .04*(it.tier - 5); if(it.sa){ const o = ncSaOpt(it); b[o.f] = (b[o.f] || 0) + o.v; }
+function itemStats(it){ const b = Object.assign({}, itemStatsBase(it)); if(it.slot === 'boots' && it.up) b.spdPct = (b.spdPct || 0) + .005*it.up; if(it.tier >= 6) b.atkPct = (b.atkPct || 0) + .04*(it.tier - 5); for(const k of ncSas(it)){ const D = NC_SA2[k]; b[D.f] = (b[D.f] || 0) + ncSaVal(k, it); }
   const u = it.up || 0, xk = it.ex ? (it.ex.startsWith('boss:') ? 1.12 : 1.1) : 1; if(u || xk > 1){ const k = (1 + .08*u)*xk, add = {hp:6, def:1, atk:2};   /* 25/11/2026 (Arnold: evoluir não mudava nada): cada +1 dá +8% e no mínimo +2 ataque, +1 defesa, +6 vida */ ['hp','def','atk'].forEach(n => { if(b[n]) b[n] = Math.round(b[n]*k) + add[n]*u; }); } return b; }
 function itemStatsBase(it){
   const t = it.tier, m = TIERS[t].mult, r = Math.round, f = v => Math.round(v*100)/100;
@@ -6410,10 +6410,11 @@ function bonuses(){
 function stats(){
   const L = (save.level - 1)*NC_LV_K, c = CLS();
   const s = {hp:100 + L*24, atk:10 + L*3.2, def:2 + Math.floor(L*.9), spd:5.8*NC_BAL2.andar, aspd:0, crit:.05 + c.crit, critMult:2, block:.05, range:0, regen:0,
-             atkPct:0, leech:0, stunCh:0, multi:0, elem:null, freezeCh:0, chainCh:0, burn:false, hpPct:0, defPct:0, spdPct:0, dmgRes:0, elemRes:0, pen:0, luck:0};
+             atkPct:0, leech:0, stunCh:0, saStun:0, saSil:0, saPara:0, saLento:0, saAcu:0, saMana:0, multi:0, elem:null, freezeCh:0, chainCh:0, burn:false, hpPct:0, defPct:0, spdPct:0, dmgRes:0, elemRes:0, pen:0, luck:0};
   const addG = (k, v) => s[k] = (s[k] || 0) + v;
   for(const slot of SLOTS){ const it = equipped(slot); if(!it) continue; const b = itemStats(it); for(const k in b){ if(k === 'elem') s.elem = b.elem; else s[k] += b[k]; } gemFx(it, addG); }
   if(ncDual()){ const o = equipped('off'); if(o && o.id !== save.eq.weapon){ const b = itemStats(o); for(const k in b){ if(k === 'elem'){ if(!s.elem) s.elem = b.elem; } else if(typeof b[k] === 'number') s[k] = (s[k] || 0) + b[k]*NC_OFF_K; else s[k] = s[k] || b[k]; } gemFx(o, addG); } }   // 25/11: adaga da mão esquerda
+  s.aspd += ncRes() === 'mp' ? s.saAcu : s.saAcu*.5;   // Acumen: magia mais rápida (classes de mana pegam inteiro)
   s.hp *= c.hp*(1 + s.hpPct); s.atk *= c.atk*(1 + s.atkPct); s.def *= c.def*(1 + s.defPct); s.spd *= c.spd*(1 + s.spdPct); s.block += c.block;
   const sp = ncSpec(); if(sp) sp.fx(s);
   try{ const pd = ncPetOn(); if(pd) pd.fx(s); }catch(e){}
@@ -8367,9 +8368,40 @@ function upHTML(){
 const saCost = it => [0, 25, 50, 75, 150, 200][GR_OF[it.tier]] || 0;   /* SA do Grade D para cima (Arnold). D = 25 (sugestão) */   // 22/11 tabela: C 50, B 75, A 150, S 200 Lesser Blue
 /* SA: o jogador escolhe 1 atributo na hora. Valores por grade (C, B, A, S) - sugestão do Claude, sem desbalancear */
 const NC_SA = {atk:{n:'Ataque', f:'atkPct', v:[.04,.06,.08,.10,.12]}, crit:{n:'Crítico', f:'crit', v:[.03,.04,.05,.06,.08]}, aspd:{n:'Velocidade de ataque', f:'aspd', v:[.04,.05,.06,.08,.10]}, leech:{n:'Roubo de vida', f:'leech', v:[.015,.02,.025,.03,.04]}};   // D, C, B, A, S
+/* 26/11/2026 (Arnold aprovou): 14 SA, qualquer classe escolhe qualquer um. Até 3 por arma: o 1º abre no Grade D, o 2º no C e o 3º no B.
+   Valores por grade [D, C, B, A, S]. Controle (Stun, Silêncio, Paralisia, Lentidão): chefe fica metade do tempo e o mesmo monstro não trava de novo por 5 s. */
+const NC_SA2 = {
+  stun: {n:'Stun', d:'chance de atordoar 1,5 s', f:'saStun', v:[.03,.045,.06,.08,.10], cor:0xffd23a},
+  sil:  {n:'Silêncio', d:'chance de calar 3 s (sem ataque de longe)', f:'saSil', v:[.03,.045,.06,.08,.10], cor:0xa060ff},
+  para: {n:'Paralisia', d:'chance de prender no lugar 2 s', f:'saPara', v:[.03,.045,.06,.08,.10], cor:0x3ac8ff},
+  acu:  {n:'Acumen', d:'magia mais rápida', f:'saAcu', v:[.04,.05,.06,.08,.10], cor:0x8ad8ff},
+  des:  {n:'Destreza', d:'ataque mais rápido', f:'aspd', v:[.04,.05,.06,.08,.10], cor:0x5ee08a},
+  agi:  {n:'Agilidade', d:'anda mais rápido', f:'spdPct', v:[.03,.04,.05,.06,.08], cor:0xf4f6fb},
+  foco: {n:'Foco', d:'chance de crítico', f:'crit', v:[.03,.04,.05,.06,.08], cor:0xff9a3a},
+  furia:{n:'Fúria Crítica', d:'crítico mais forte', f:'critMult', v:[.10,.15,.20,.25,.30], cor:0xff6a1a},
+  perf: {n:'Perfurar', d:'ignora defesa de elite e chefe', f:'pen', v:[.05,.07,.09,.12,.15], cor:0xc8d0d8},
+  vamp: {n:'Vampiro', d:'cada golpe devolve vida', f:'leech', v:[.015,.02,.025,.03,.04], cor:0xff3a3a},
+  mana: {n:'Sugar Mana', d:'mana por golpe', f:'saMana', v:[1,1.5,2,2.5,3], cor:0x2a5ae0, abs:1},
+  vida: {n:'Vida Extra', d:'mais vida máxima', f:'hpPct', v:[.04,.06,.08,.10,.12], cor:0xff8ad8},
+  lento:{n:'Lentidão', d:'chance de deixar lento 3 s', f:'saLento', v:[.03,.045,.06,.08,.10], cor:0xbfe8ff},
+  sorte:{n:'Sorte', d:'mais drop e mais Adena', f:'luck', v:[.05,.08,.10,.12,.15], cor:0xfff0a0},
+  atk:  {n:'Ataque', d:'mais ataque', f:'atkPct', v:[.04,.06,.08,.10,.12], cor:0xffffff, velho:1}};
+const NC_SA_VELHO = {crit:'foco', aspd:'des', leech:'vamp', atk:'atk'};
+function ncSas(it){ if(!it) return []; if(Array.isArray(it.sas)) return it.sas.filter(k => NC_SA2[k]); return it.sa ? [NC_SA_VELHO[it.sa] || (NC_SA2[it.sa] ? it.sa : 'atk')] : []; }
+const ncSaMax = it => { const g = GR_OF[it.tier] || 0; return g >= 3 ? 3 : g >= 2 ? 2 : g >= 1 ? 1 : 0; };
+const ncSaVal = (k, it) => NC_SA2[k].v[Math.max(0, Math.min(4, (GR_OF[it.tier] || 1) - 1))];
+const ncSaTxt2 = (k, it) => { const D = NC_SA2[k], v = ncSaVal(k, it); return D.n + ' ' + (D.abs ? '+' + String(v).replace('.', ',') : '+' + String(Math.round(v*1000)/10).replace('.', ',') + '%'); };
 function ncSaOpt(it){ const k = NC_SA[it.sa] ? it.sa : 'atk', D = NC_SA[k], gi = Math.max(0, Math.min(4, GR_OF[it.tier] - 1)); return {k, n:D.n, f:D.f, v:D.v[gi]}; }
 const ncSaTxt = (k, it) => { const o = ncSaOpt(Object.assign({}, it, {sa:k})); return '+' + String(Math.round(o.v*1000)/10).replace('.', ',') + '% ' + o.n.toLowerCase(); };
-function saHTML(){ const ws = save.inv.filter(i => i.slot === 'weapon' && GR_OF[i.tier] >= 1);
+function saHTML(){ const ws = save.inv.filter(i => i.slot === 'weapon' && GR_OF[i.tier] >= 1), have = save.mats.lblue || 0;
+  let h = '<p class="lede">Use <b>Lesser Blue</b> para pôr <b>SA</b> na arma. Cada arma tem até <b>3 SA</b>: o 1º abre no Grade D, o 2º no C e o 3º no B. Cada SA deixa a arma mais brilhante, e as cores se misturam.</p>';
+  if(!ws.length) return h + '<div class="empty">Você não tem arma de Grade D ou acima.</div>';
+  return h + '<div class="blist">' + ws.map(it => { const L = ncSas(it), max = ncSaMax(it), c = Math.round(saCost(it)*(1 + L.length*.5)), livre = L.length < max;
+    return '<div class="frow ncsa-row" style="--tc:' + TIERS[it.tier].css + '">' + itemImg(it, 'ps-row') + '<div><div class="fn">' + itemName(it) + '</div>'
+      + '<div class="ncsa-slots">' + [0, 1, 2].map(i => { const k = L[i]; return k ? '<span class="ncsa-on" style="--sc:#' + NC_SA2[k].cor.toString(16).padStart(6, '0') + '">' + ncSaTxt2(k, it) + '</span>' : '<span class="ncsa-off">' + (i < max ? 'SA ' + (i + 1) + ' livre' : 'SA ' + (i + 1) + ' abre no Grade ' + ['D','C','B'][i]) + '</span>'; }).join('') + '</div>'
+      + (livre ? '<div class="istat">Próximo SA: Lesser Blue ' + have + '/' + c + '</div><div class="ncsa-pick">' + Object.keys(NC_SA2).filter(k => !NC_SA2[k].velho && !L.includes(k)).map(k => '<button class="btn sm" data-fsa="' + it.id + '" data-sak="' + k + '" ' + (have >= c ? '' : 'disabled') + ' title="' + NC_SA2[k].d + '" style="--sc:#' + NC_SA2[k].cor.toString(16).padStart(6, '0') + '">' + ncSaTxt2(k, it) + '</button>').join('') + '</div>' : '')
+      + '</div></div>'; }).join('') + '</div>'; }
+function saHTMLVelho(){ const ws = save.inv.filter(i => i.slot === 'weapon' && GR_OF[i.tier] >= 1);
   let h = '<p class="lede">Use <b>Lesser Blue</b> para dar o <b>SA</b> na arma: só a arma brilha, e você <b>escolhe 1 atributo</b>. Só armas de Grade D para cima (D 25, C 50, B 75, A 150, S 200).</p>';
   if(!ws.length) return h + '<div class="empty">Você não tem arma de Grade D ou acima.</div>';
   return h + '<div class="blist">' + ws.map(it => { const c = saCost(it), have = save.mats.lblue || 0;
@@ -8977,8 +9009,35 @@ function ncSwordSwap(h){ const x = h && h.mx; if(!x) return; x.swds = x.swds || 
         if(/^pw:/.test(name)){ src.scale.multiplyScalar(1.35); src.position.y -= (nb.max.y - nb.min.y)*k*.35*.5; }   /* 24/11: armas novas do Xamã e Sacerdote um pouco maiores para aparecer na mão */
         hold.position.copy(o.position); hold.rotation.copy(o.rotation); hold.scale.copy(o.scale); o.parent.add(hold); o.visible = false; x.swds[key] = hold;
         try{ ncWeaponFx(x.m); }catch(e){} }); }); }); }
+/* 26/11/2026 (Arnold aprovou): brilho do SA. 1 e 2 SA = estilo C (raios elétricos nas cores dos SA, piscando em volta da lâmina).
+   3 SA = estilo B + C (lâmina incandescente com as cores misturadas pulsando, faíscas subindo e raios). */
+let ncSpkTex = null;
+function ncSaFx(root, w){ const L = ncSas(w); if(!ncSpkTex){ const c = document.createElement('canvas'); c.width = c.height = 32; const g = c.getContext('2d'), r = g.createRadialGradient(16, 16, 0, 16, 16, 16); r.addColorStop(0, 'rgba(255,255,255,1)'); r.addColorStop(.3, 'rgba(255,255,255,.7)'); r.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = r; g.fillRect(0, 0, 32, 32); ncSpkTex = new T.CanvasTexture(c); }
+  root.traverse(o => { if(!o.isMesh || !/Sword|Axe|Wand|Staff|Crossbow|Knife|Scythe_Blade|NC_Fist|Bow/.test(o.name)) return;
+    (o.userData.ncSa || []).forEach(sp => { o.remove(sp); sp.material.dispose(); }); o.userData.ncSa = [];
+    if(!L.length || !o.visible) return;
+    if(!o.geometry.boundingBox) o.geometry.computeBoundingBox(); const b = o.geometry.boundingBox, sz = b.getSize(new T.Vector3()), ax = sz.y >= sz.x && sz.y >= sz.z ? 'y' : sz.x >= sz.z ? 'x' : 'z', Lx = sz[ax], c0 = b.getCenter(new T.Vector3());
+    const cores = L.map(k => new T.Color(NC_SA2[k].cor)), add = sp => { sp.renderOrder = 6; o.add(sp); o.userData.ncSa.push(sp); };
+    const n = L.length >= 3 ? 9 : 4*L.length;
+    for(let i = 0; i < n; i++){ const col = cores[i % cores.length], sp = new T.Sprite(new T.SpriteMaterial({map:ncSpkTex, color:col, blending:T.AdditiveBlending, depthWrite:false, transparent:true, opacity:.9}));
+      const ph = Math.random()*10, s0 = Lx*(.035 + Math.random()*.03);
+      sp.onBeforeRender = () => { const t = performance.now()/1000; const on = Math.sin(t*23 + ph*7) > .15; sp.material.opacity = on ? .95 : 0;
+        if(on && Math.random() < .25){ sp.position.copy(c0); sp.position[ax] = b.min[ax] + Lx*(.15 + Math.random()*.85); const off = ['x','y','z'].filter(q => q !== ax); off.forEach(q => sp.position[q] += (Math.random() - .5)*sz[q]*2.2); }
+        sp.scale.set(s0*(on ? .8 + Math.random()*.5 : 1), s0*(on ? 1 + Math.random()*1.4 : 1), 1); };
+      sp.position.copy(c0); add(sp); }
+    if(L.length >= 3 && o.material && o.material.emissive){ const mix = cores.reduce((a, c) => a.add(c), new T.Color(0)).multiplyScalar(1/cores.length);
+      const ph = Math.random()*6; for(let i = 0; i < 6; i++){ const col = cores[i % cores.length], sp = new T.Sprite(new T.SpriteMaterial({map:ncSpkTex, color:col, blending:T.AdditiveBlending, depthWrite:false, transparent:true, opacity:.8}));
+        const base = new T.Vector3().copy(c0); base[ax] = b.min[ax] + Lx*(.2 + .8*i/5); const v = 1.2 + Math.random(), s0 = Lx*.05;
+        sp.onBeforeRender = () => { const f = (performance.now()/1000*v + ph + i*.17) % 1; sp.position.copy(base); sp.position.y += f*Lx*.35; sp.scale.setScalar(s0*(1 - f*.7)); sp.material.opacity = .9*(1 - f); }; add(sp); }
+      /* lâmina incandescente: a cor passa de um SA para o outro, sem halo grande (o halo grande deixava o boneco branco) */
+      const tmp = new T.Color(); o.material.emissiveIntensity = .55; o.material.userData.ncSaCores = cores;
+      const pulso = new T.Sprite(new T.SpriteMaterial({map:ncSpkTex, color:cores[0], blending:T.AdditiveBlending, depthWrite:false, transparent:true, opacity:.25}));
+      pulso.position.copy(c0); pulso.scale.set(Lx*.12, Lx*.75, 1);
+      pulso.onBeforeRender = () => { const t = performance.now()/900, i0 = Math.floor(t) % cores.length, i1 = (i0 + 1) % cores.length; tmp.copy(cores[i0]).lerp(cores[i1], t % 1);
+        pulso.material.color.copy(tmp); pulso.material.opacity = .18 + Math.sin(t*6.3 + ph)*.08; o.material.emissive.copy(tmp); o.material.userData.baseE = tmp.clone(); }; add(pulso); } }); }
 function ncWeaponFx(root){
-  const w = equipped('weapon'), U = w ? ncUp(Math.min(NC_UP_MAX, (w.up || 0) + (w.sa ? 3 : 0))) : null;
+  const w = equipped('weapon'), U = w ? ncUp(Math.min(NC_UP_MAX, w.up || 0)) : null;   // 26/11: o brilho do SA agora é próprio (ncSaFx); aqui só a evolução
+  try{ setTimeout(() => ncSaFx(root, w), 0); }catch(_){}
   if(!ncFlameTex){ const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'), r = g.createRadialGradient(32, 38, 2, 32, 34, 30); r.addColorStop(0, 'rgba(255,255,255,1)'); r.addColorStop(.35, 'rgba(255,255,255,.55)'); r.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = r; g.fillRect(0, 0, 64, 64); ncFlameTex = new T.CanvasTexture(c); }
   root.traverse(o => { if(!o.isMesh || !/Sword|Axe|Wand|Staff|Crossbow|Knife|Scythe_Blade|NC_Fist/.test(o.name) || !o.material || !o.material.emissive) return;
     (o.userData.ncFl || []).forEach(sp => { o.remove(sp); sp.material.dispose(); }); o.userData.ncFl = [];
@@ -12057,6 +12116,12 @@ function hitEnemy(e, mult, o){
     if(S.freezeCh && Math.random() < S.freezeCh) freeze = Math.max(freeze, 1.4);
     if(S.stunCh && Math.random() < S.stunCh) stun = Math.max(stun, 1);
     if(S.burn){ e.burnT = 3; e.burnDps = Math.max(e.burnDps || 0, S.atk*.3); e.burnCol = S.elem === 'poison' ? 0x7aff6a : 0xff7a2a; }
+    if(clock > (e.ncCCImm || 0)){ const sb = e.kind === 'boss';   // 26/11: SA de controle
+      if(S.saStun && Math.random() < S.saStun){ if(sb) e.slowT = Math.max(e.slowT || 0, .75); else stun = Math.max(stun, 1.5); e.ncCCImm = clock + 5; floatText(e.pos, 'Atordoado', 'crit'); }
+      else if(S.saPara && Math.random() < S.saPara){ e.ncParaAte = clock + (sb ? 1 : 2); e.ncCCImm = clock + 5; floatText(e.pos, 'Paralisado', 'zap'); }
+      else if(S.saSil && Math.random() < S.saSil){ e.ncSilAte = clock + (sb ? 1.5 : 3); e.ncCCImm = clock + 5; floatText(e.pos, 'Silenciado', 'block'); }
+      else if(S.saLento && Math.random() < S.saLento){ e.ncLentoAte = clock + (sb ? 1.5 : 3); if(sb) e.slowT = Math.max(e.slowT || 0, 1.5); e.ncCCImm = clock + 5; floatText(e.pos, 'Lento', 'block'); } }
+    if(S.saMana && ncRes() === 'mp'){ try{ ncResInit(); P.res = Math.min(ncResMax(), P.res + S.saMana); }catch(_){} }
   }
   if(e.kind === 'minion'){ if(stun) e.stunT = Math.max(e.stunT, stun); if(freeze) e.frozenT = Math.max(e.frozenT, freeze); }
   else if(freeze) e.slowT = Math.max(e.slowT, freeze + .5);
@@ -12817,6 +12882,7 @@ const PGEO = {arrow:new T.BoxGeometry(.05, .05, .78), bolt:new T.BoxGeometry(.08
 const PCOL = {arrow:0xe8d8b0, bolt:0xc8d0d8, axe:0xb8b8c4};
 function fireProj(from, ang, spd, dmg, y, kind){
   if(ncAiPeer) return;
+  if(from && enemies.some(e => clock < (e.ncSilAte || 0) && Math.hypot(e.pos.x - from.x, e.pos.z - from.z) < 2.2)) return;   // 26/11: SA Silêncio: monstro calado não atira
   const m = new T.Mesh(kind ? PGEO[kind] : projGeo, bmat(kind ? PCOL[kind] : curStage.proj));
   m.position.set(from.x + Math.sin(ang)*1.2, (from.y || 0) + (y || 1.2), from.z + Math.cos(ang)*1.2);
   if(kind && kind !== 'axe') m.rotation.y = ang;
@@ -13129,6 +13195,7 @@ function updateEnemies(dt){
     e.pos.addScaledVector(e.kb, dt); e.kb.multiplyScalar(Math.pow(.001, dt));
     let frozen = false;
     if(e.frozenT > 0){ e.frozenT -= dt; frozen = true; if(e.flashT <= 0) e.cr.mats.forEach(m => m.emissive.copy(ICE)); if(e.frozenT <= 0) e.cr.mats.forEach(m => m.emissive.copy(m.userData.baseE)); }
+    { const pa = clock < (e.ncParaAte || 0), le = clock < (e.ncLentoAte || 0); if(pa || le){ if(e.ncSpdB == null) e.ncSpdB = e.spd; e.spd = e.ncSpdB*(pa ? 0 : 1)*(le ? .5 : 1); } else if(e.ncSpdB != null){ e.spd = e.ncSpdB; e.ncSpdB = null; } }   // 26/11: Paralisia e Lentidão
     if(e.stunT > 0){ e.stunT -= dt; frozen = true; cr.body.rotation.y = Math.sin(clock*12)*.2; if(e.stunT <= 0) cr.body.rotation.y = 0; }
     if(dist > 45 && !e.elite && !e.post && !DF().noLeash){ e.awake = false; e.bar.g.visible = false; continue; }
     if(frozen || P.dead){ e.windT = 0; }
@@ -13773,7 +13840,7 @@ $('#rightPanel').addEventListener('click', e => {
   if(d.sell){ const it = byId(+d.sell); if(it){ save.gold += sellValue(it); returnGems(it); ncUnEq(it); save.inv = save.inv.filter(i => i !== it); SFX.coin(); ncBagRefresh(); } return; }
   if(d.forge){ forge(d.forge); return; }
   if(d.ftab){ forgeTab = d.ftab; renderHub(); return; }
-  if(d.fsa){ const it = byId(+d.fsa) || byId(d.fsa); if(it && !it.sa){ const c = saCost(it); if(c && (save.mats.lblue || 0) >= c){ save.mats.lblue -= c; it.sa = NC_SA[b.dataset.sak] ? b.dataset.sak : 'atk'; persist(); try{ SFX.drop(); banner('Brilho na arma!', itemName(it) + ' brilha mais e ganhou +8% de ataque.'); }catch(_){} if(isEquipped(it)){ P && (P.S = stats()); applyGear(hero); } } } renderHub(); return; }
+  if(d.fsa){ const it = byId(+d.fsa) || byId(d.fsa), L = it ? ncSas(it) : [], k = b.dataset.sak; if(it && NC_SA2[k] && L.length < ncSaMax(it) && !L.includes(k)){ const c = Math.round(saCost(it)*(1 + L.length*.5)); if(c && (save.mats.lblue || 0) >= c){ save.mats.lblue -= c; it.sas = L.concat(k); it.sa = it.sas[0]; persist(); try{ SFX.drop(); banner('SA ' + it.sas.length + ' na arma!', itemName(it) + ' ganhou ' + ncSaTxt2(k, it) + ' e brilha mais.'); }catch(_){} if(isEquipped(it)){ P && (P.S = stats()); applyGear(hero); } } } renderHub(); return; }
   if(d.fsel){ forgeSel = +d.fsel; renderHub(); return; }
   if(d.fopt){ forgeOpt[d.fopt] = !forgeOpt[d.fopt]; renderHub(); return; }
   const fit = byId(forgeSel);
@@ -16102,6 +16169,9 @@ body.nc-ov #ncXp2{display:none}
 .ncpetb{margin-top:3px;pointer-events:auto;cursor:pointer}.ncpetb b{display:block;font:700 11px/1.2 system-ui,sans-serif;color:#e8d8ff;text-shadow:0 1px 2px #000}
 .ncpetb .bar.pet,#hud .ncpetb .bar.pet{height:12px!important;border-width:3px!important}.ncpetb .bar.pet i{background:linear-gradient(90deg,#3ad06a,#9aff8a)}.ncpetb.caido .bar.pet i{background:#666}.ncpetb .bar.pet span{font-size:9.5px}
 .ncpetb[hidden]{display:none}
+.ncsa-slots{display:flex;flex-wrap:wrap;gap:5px;margin:5px 0}.ncsa-on{border:1px solid var(--sc);color:var(--sc);border-radius:8px;padding:2px 7px;font:700 12px/1.3 system-ui;box-shadow:0 0 8px color-mix(in srgb,var(--sc) 45%,transparent)}
+.ncsa-off{border:1px dashed #6a6490;color:#9a94c0;border-radius:8px;padding:2px 7px;font:600 12px/1.3 system-ui}
+.ncsa-pick{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}.ncsa-pick .btn{border-color:var(--sc)!important;color:#fff;min-height:34px}.ncsa-row{align-items:flex-start}
 .pimg.nci>span.ncimg{position:absolute;left:11%;top:9%;width:78%;height:78%;display:block;background-repeat:no-repeat;background-position:center;background-size:contain;z-index:1;pointer-events:none;-webkit-transform:translateZ(0)}.pimg.nci>span.ncimg.w{left:8%;top:6%;width:84%;height:84%}
 .pimg.nci>img.nca{display:block;width:calc(var(--s)*.78)!important;height:calc(var(--s)*.78)!important;position:relative;z-index:1;filter:drop-shadow(0 2px 2px rgba(0,0,0,.55))}
 .pimg.nci>img.wico{display:block;width:calc(var(--s)*.84)!important;height:calc(var(--s)*.84)!important;object-fit:contain}
