@@ -877,6 +877,7 @@ body.nc-swap #joyZone{left:auto;right:0}
     <div class="bar hp"><i id="hHp"></i><span id="hHpT">100/100</span></div>
     <div class="bar mp" id="hMpB"><i id="hMp"></i><span id="hMpT"></span></div>
     <div class="bar xp"><i id="hXp"></i><span id="hXpT"></span></div>
+    <div class="ncpetb" id="hPet" hidden><b id="hPetN"></b><div class="bar pet"><i id="hPetI"></i><span id="hPetT"></span></div></div>
     <div class="obj" id="hObj"></div>
   </div>
   <div class="feed" id="feed"></div>
@@ -900,6 +901,8 @@ body.nc-swap #joyZone{left:auto;right:0}
       <button type="button" data-hb="hero"><svg viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg><span>Herói</span></button>
       <button type="button" data-hb="smith"><svg viewBox="0 0 24 24"><path d="M4 20h16M7 20v-4h10v4M9 16v-3h6v3"/><path d="M14 4l6 6-2 2-6-6Z"/><path d="M12 8 4 16"/></svg><span>Forja</span></button>
       <button type="button" data-hb="fest"><svg viewBox="0 0 24 24"><path d="M12 2l3 6H9Z"/><path d="M7 9h10l-2 5H9Z"/><path d="M5 15h14l-2 5H7Z"/><path d="M12 20v2"/></svg><span>Festivos</span></button>
+      <button type="button" data-hb="skills"><svg viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg><span>Habilidades</span></button>
+      <button type="button" data-hb="pet"><svg viewBox="0 0 24 24"><circle cx="7" cy="9" r="2"/><circle cx="12" cy="6" r="2"/><circle cx="17" cy="9" r="2"/><path d="M8 17c0-3 2-5 4-5s4 2 4 5c0 2-2 3-4 3s-4-1-4-3z"/></svg><span>Pet</span></button>
       <button type="button" data-hb="dg"><svg viewBox="0 0 24 24"><path d="M4 21V10a8 8 0 0 1 16 0v11"/><path d="M9 21v-6a3 3 0 0 1 6 0v6"/><path d="M2 21h20"/></svg><span>Masmorra</span></button>
       <button type="button" data-hb="merch"><svg viewBox="0 0 24 24"><path d="M4 9h16l-1 11H5Z"/><path d="M4 9l2-5h12l2 5"/><path d="M10 13h4"/></svg><span>Mercador</span></button>
     </nav>
@@ -8411,6 +8414,49 @@ const NC_PETISCO_P = 300, NC_PETISCO_ICO = '<svg viewBox="0 0 24 24" width="34" 
 document.addEventListener('click', ev => { const b = ev.target.closest && ev.target.closest('[data-petbuy],[data-petfeed]'); if(!b) return;
   if(b.dataset.petbuy && save.gold >= NC_PETISCO_P){ save.gold -= NC_PETISCO_P; save.petisco = (save.petisco || 0) + 1; persist(); try{ SFX.coin(); }catch(_){} renderShop(); }
   if(b.dataset.petfeed && (save.petisco || 0) > 0 && save.petDead){ save.petisco--; save.petDead = false; persist(); try{ banner('Mascote de pé!', 'Ele voltou a lutar ao seu lado', 'gold'); }catch(_){} if(mode === 'stage') ncPetSpawn(); else try{ ncHubPet(); }catch(_){} try{ bagSel = null; ncBagRefresh(); ncPopDraw(); }catch(_){} } });
+/* 26/11/2026 (Arnold): menu do pet. O pet aparece com nome, nível e vida, e embaixo um inventário de 8 espaços.
+   Petisco é comprado no Mercador (ou aqui), vai para a Mochila; "Colocar" passa para o inventário do pet; tocar no espaço = ele come.
+   Caído: o petisco revive. De pé: o petisco cura metade da vida dele. */
+const NC_PET_SLOTS = 8;
+const ncPetNome = k => ((NC_PETS.find(x => x[0] === k) || [])[1]) || 'Pet';
+function ncPetInv(){ save.petInv = Array.isArray(save.petInv) ? save.petInv.slice(0, NC_PET_SLOTS) : []; while(save.petInv.length < NC_PET_SLOTS) save.petInv.push(0); return save.petInv; }
+function ncPetVida(){ if(!save.pet || !ncPetLv(save.pet)) return null; if(save.petDead) return {hp:0, max:1, caido:true}; if(ncPet && ncPet.maxHp) return {hp:Math.max(0, ncPet.hp), max:ncPet.maxHp}; return {hp:1, max:1}; }
+function ncPetComer(i){ const inv = ncPetInv(); if(!inv[i]) return; const v = ncPetVida();
+  if(save.petDead){ inv[i]--; save.petDead = false; persist(); try{ banner('Pet de pé!', ncPetNome(save.pet) + ' comeu o petisco e voltou a lutar', 'gold'); }catch(_){} if(mode === 'stage') ncPetSpawn(); else try{ ncHubPet(); }catch(_){} }
+  else if(ncPet && ncPet.hp < ncPet.maxHp){ inv[i]--; ncPet.hp = Math.min(ncPet.maxHp, ncPet.hp + ncPet.maxHp*.5); persist(); try{ floatText(ncPet.root.position, 'Nham!', 'heal'); }catch(_){} }
+  else { try{ banner(ncPetNome(save.pet) + ' está bem', 'Guarde o petisco para quando ele cair'); }catch(_){} }
+  ncPetMenu(true, true); }
+function ncPetMenu(open, re){ let el = document.getElementById('ncPetPop');
+  if(!el){ el = document.createElement('div'); el.id = 'ncPetPop'; el.hidden = true; document.body.appendChild(el);
+    el.addEventListener('click', e => { const t = e.target;
+      if(t === el || t.closest('[data-ptx]')){ ncPetMenu(false); return; }
+      const sl = t.closest('[data-pslot]'); if(sl){ ncPetComer(+sl.dataset.pslot); return; }
+      if(t.closest('[data-pput]')){ const inv = ncPetInv(), i = inv.indexOf(0); if((save.petisco || 0) > 0 && i >= 0){ save.petisco--; inv[i] = 1; persist(); try{ SFX.item(); }catch(_){} } ncPetMenu(true, true); return; }
+      if(t.closest('[data-pbuy]')){ if(save.gold >= NC_PETISCO_P){ save.gold -= NC_PETISCO_P; save.petisco = (save.petisco || 0) + 1; persist(); try{ SFX.coin(); }catch(_){} } ncPetMenu(true, true); return; } }); }
+  if(!open){ el.hidden = true; if(mode === 'stage' && !re && P && !P.dead && $('#pause').hidden) running = true; return; }
+  if(!re && mode === 'stage'){ running = false; try{ unlockMouse(); }catch(_){} }
+  el.hidden = false; const k = save.pet && ncPetLv(save.pet) ? save.pet : '', inv = ncPetInv(), v = ncPetVida(), D = k ? NC_PET_DEF[k] : null;
+  const pct = v ? Math.round(v.hp/v.max*100) : 0;
+  el.innerHTML = '<div class="pp-box" role="dialog" aria-label="Pet"><div class="pp-top"><h2>Pet</h2><button type="button" class="pp-x" data-ptx aria-label="Fechar">×</button></div>'
+    + (k ? '<div class="pp-pet"><img id="ppImg" alt=""><div><b>' + ncPetNome(k) + ' · nv ' + ncPetLv(k) + '</b><small>' + (D ? D.b : '') + '</small>'
+        + '<div class="pp-hp' + (v && v.caido ? ' caido' : '') + '"><i style="width:' + pct + '%"></i><span>' + (v && v.caido ? 'Caído' : 'Vida ' + pct + '%') + '</span></div></div></div>'
+      : '<p class="pp-vazio">Você ainda não tem pet. Compre um no Estábulo.</p>')
+    + '<div class="pp-sub">Inventário do pet <small>toque num petisco para ele comer</small></div><div class="pp-grid">'
+    + inv.map((n, i) => '<button type="button" class="pp-slot' + (n ? ' tem' : '') + '" data-pslot="' + i + '"' + (n ? '' : ' disabled') + ' aria-label="' + (n ? 'Petisco' : 'Vazio') + '">' + (n ? NC_PETISCO_ICO : '') + '</button>').join('') + '</div>'
+    + '<div class="pp-acts"><button type="button" class="btn sm" data-pput' + ((save.petisco || 0) > 0 && inv.includes(0) ? '' : ' disabled') + '>Colocar petisco (' + (save.petisco || 0) + ' na mochila)</button>'
+    + '<button type="button" class="btn sm primary" data-pbuy' + (save.gold >= NC_PETISCO_P ? '' : ' disabled') + '>Comprar petisco · ' + adenaTxt(NC_PETISCO_P) + '</button></div></div>';
+  if(k) try{ ncPetThumb(k).then(u => { const im = document.getElementById('ppImg'); if(im && u) im.src = u; }); }catch(_){} }
+window.ncPetMenu = ncPetMenu;
+/* vida do pet embaixo da vida do herói */
+setInterval(() => { try{ const b = document.getElementById('hPet'); if(!b) return; const v = mode === 'stage' ? ncPetVida() : null; b.hidden = !v; if(!v) return;
+  document.getElementById('hPetN').textContent = ncPetNome(save.pet) + ' · nv ' + ncPetLv(save.pet); const pc = Math.round(v.hp/v.max*100);
+  document.getElementById('hPetI').style.width = pc + '%'; document.getElementById('hPetT').textContent = v.caido ? 'Caído · toque' : Math.ceil(v.hp) + '/' + Math.ceil(v.max); b.classList.toggle('caido', !!v.caido); }catch(_){} }, 300);
+document.addEventListener('click', e => { if(e.target.closest && e.target.closest('#hPet')) ncPetMenu(true); });
+/* 26/11/2026: com muita Adena, a carteira crescia por baixo do botão Menu (celular deitado). O Menu anda para a esquerda da carteira. */
+setInterval(() => { try{ const nv = document.querySelector('.nc-hb'), g = document.getElementById('hGold'); if(!nv || !g) return;
+  if(!(innerWidth > innerHeight && innerHeight <= 560)){ if(nv.style.right) nv.style.right = ''; return; }
+  nv.style.right = ''; const a = nv.getBoundingClientRect(), b = g.getBoundingClientRect(); if(!b.width) return;
+  if(a.right > b.left - 6 && a.top < b.bottom && b.top < a.bottom) nv.style.right = (innerWidth - b.left + 8) + 'px'; }catch(_){} }, 500);
 function renderShop(){
   const E = curEvent();
   let h = ncWalletHTML(NC_GEMS4);
@@ -14087,12 +14133,14 @@ $('#pauseX').onclick = () => togglePause(false);
 let ncInst = false;
 function ncStagePanel(k){ if(mode !== 'stage' || !P || P.dead || !running) return; running = false; unlockMouse(); for(const q in keys) keys[q] = false; attackHeld = false;
   ncInst = true; document.body.classList.add('nc-inst'); $('#hub').hidden = false; renderHub();
-  try{ if(k === 'dg') window.ncWorldView = 'dg'; const M = {smith:['r','forge'], merch:['r','shop'], bag:['r','gear'], hero:['l','hero'], set:['l','set'], dg:['r','stages']}[k] || ['r','gear']; window.ncMenu.toggle(M[0], M[1]); if(k === 'smith' || k === 'merch') window.ncMenu.npc(k); }catch(_){} }
+  try{ if(k === 'dg') window.ncWorldView = 'dg'; const M = {smith:['r','forge'], merch:['r','shop'], bag:['r','gear'], hero:['l','hero'], set:['l','set'], dg:['r','stages'], missions:['r','missions']}[k] || ['r','gear']; window.ncMenu.toggle(M[0], M[1]); if(k === 'smith' || k === 'merch') window.ncMenu.npc(k); }catch(_){} }
 new MutationObserver(() => { if(ncInst && !document.body.classList.contains('nc-r') && !document.body.classList.contains('nc-l')){ ncInst = false; document.body.classList.remove('nc-inst'); $('#hub').hidden = true; if(mode === 'stage' && $('#pause').hidden && !P.dead) running = true; } }).observe(document.body, {attributes:true, attributeFilter:['class']});
 document.querySelector('.nc-hb').addEventListener('click', e => { const b = e.target.closest('[data-hb]'); if(!b) return; const k = b.dataset.hb;
   { const nv = document.querySelector('.nc-hb'); if(k === 'menu'){ const o = nv.classList.toggle('open'); b.setAttribute('aria-expanded', String(o)); return; } nv.classList.remove('open'); nv.querySelector('[data-hb=menu]').setAttribute('aria-expanded', 'false'); }   /* 23/11 (Arnold aprovou): atalhos dentro do botão Menu */
   if(k === 'party'){ try{ ncCoop.friends(); }catch(_){} return; }
   if(k === 'fest'){ try{ window.ncFest(true); }catch(_){} return; }
+  if(k === 'skills'){ try{ window.ncSkillsPop(true); }catch(_){} return; }
+  if(k === 'pet'){ try{ ncPetMenu(true); }catch(_){} return; }
   if(!$('#pause').hidden) togglePause(false);
   ncStagePanel(k); });
 $('#ncBag').onclick = () => { if(!$('#pause').hidden) togglePause(false); ncStagePanel('bag'); };
@@ -15046,9 +15094,12 @@ function ncNtGo(kind){ try{
   const clica = nomes => { const els = [...document.querySelectorAll('button,[role=button]')].filter(b => b.getClientRects().length && !b.closest('#ncBellPop'));
     for(const n of nomes){ const b = els.find(x => (x.innerText || '').trim().replace(/\s+/g, ' ') === n || (x.getAttribute('aria-label') || '') === n); if(b){ b.click(); return true; } } return false; };
   if(kind === 'daily'){ if(window.ncDaily) window.ncDaily(true); return; }
-  if(kind === 'miss'){ if(!clica(['Missões', 'Missão'])) banner('Missões', 'Volte para a cidade e toque em Missões para receber.'); return; }
-  if(kind === 'skill'){ if(!clica(['Habilidades'])) clica(['Herói']); return; }
-  if(kind === 'pet' || kind === 'bag' || kind === 'chest'){ clica(['Mochila']); return; }
+  /* 26/11/2026 (Arnold: o sino não levava para as missões): abre a tela direto, na cidade ou dentro da fase */
+  const painel = (k, lado, aba) => { if(mode === 'stage'){ if(!$('#pause').hidden) togglePause(false); ncStagePanel(k); } else window.ncMenu.toggle(lado, aba); };
+  if(kind === 'miss'){ painel('missions', 'r', 'missions'); return; }
+  if(kind === 'skill'){ window.ncSkillsPop(true); return; }
+  if(kind === 'pet'){ ncPetMenu(true); return; }
+  if(kind === 'bag' || kind === 'chest'){ painel('bag', 'r', 'gear'); return; }
   if(kind === 'party' || kind === 'friend'){ if(!clica(['Grupo', 'Conexão'])) try{ ncCoop.friends(); }catch(_){} return; }
   if(kind === 'event'){ clica(['Festivos']); return; }
 }catch(e){ console.warn('ncNtGo', e); } }
@@ -15826,7 +15877,7 @@ const K={hero:['heroi',C.azul],skills:['habilid',C.azul],play:['progresso',C.azu
  bag:['mochila',C.marrom],gear:['mochila',C.marrom],smith:['forja',C.laranja],forge:['forja',C.laranja],
  merch:['mercador',C.ouro],shop:['mercador',C.ouro],fest:['festivos',C.ouro],
  party:['grupo',C.verde],conn:['grupo',C.verde],stable:['estabulo',C.teal],
- stages:['mapa',C.roxo],portal:['portal',C.roxo],dg:['portal',C.roxo],missions:['missao',C.verm],set:['ajustes',C.cinza],music:['musica',C.cinza],bell:['sino',C.ambar],bau:['bau',C.marrom]};
+ stages:['mapa',C.roxo],portal:['portal',C.roxo],dg:['portal',C.roxo],pet:['estabulo',C.teal],missions:['missao',C.verm],set:['ajustes',C.cinza],music:['musica',C.cinza],bell:['sino',C.ambar],bau:['bau',C.marrom]};
 const BYNAME={'Mundo':'stages','Progresso':'play','Ajustes':'set','Música':'music'};
 const svg=k=>`<svg class="nc-mg" viewBox="0 0 100 100" fill="currentColor" aria-hidden="true">${G[k]}</svg>`;
 function med(key){const k=K[key];if(!k)return '';return `<span class="nc-med" style="--c:${k[1]}" aria-hidden="true"><i class="r"></i><i class="n"></i><i class="g"></i><i class="f"></i>${svg(k[0])}</span>`}
@@ -16033,6 +16084,24 @@ body.nc-ov #ncXp2{display:none}
 .pimg.nci{width:var(--s)!important;height:var(--s)!important;min-width:var(--s);min-height:var(--s)}
 .pimg.nci>svg{display:block;width:calc(var(--s)*.78)!important;height:calc(var(--s)*.78)!important;min-width:calc(var(--s)*.78);flex:none}
 #ncElmoBtn{margin:-4px 0 10px;min-height:36px}
+#ncPetPop{position:fixed;inset:0;z-index:120;background:rgba(6,4,16,.6);display:grid;place-items:center;padding:12px}
+#ncPetPop[hidden]{display:none}
+#ncPetPop .pp-box{width:min(420px,100%);max-height:92vh;overflow:auto;background:linear-gradient(#211a44,#15112e);border:1px solid #f2c14e88;border-radius:16px;padding:14px;color:#f4efe2;font:500 14px/1.4 system-ui,sans-serif}
+#ncPetPop .pp-top{display:flex;align-items:center;justify-content:space-between}#ncPetPop h2{margin:0;font:700 20px/1 Cinzel,serif;color:#f2c14e;letter-spacing:.04em}
+#ncPetPop .pp-x{width:40px;height:40px;border-radius:50%;border:1px solid #6a5acd;background:#2a2150;color:#fff;font-size:22px;cursor:pointer}
+#ncPetPop .pp-pet{display:flex;gap:12px;align-items:center;margin:12px 0;background:#0e0b22;border:1px solid #3a3070;border-radius:12px;padding:10px}
+#ncPetPop .pp-pet img{width:84px;height:84px;object-fit:contain;flex:none;background:radial-gradient(#3a2f70,#0e0b22 70%);border-radius:12px}
+#ncPetPop .pp-pet b{display:block;font-size:16px}#ncPetPop .pp-pet small{display:block;color:#b9b2d8;margin:2px 0 8px}
+#ncPetPop .pp-hp{position:relative;height:16px;border-radius:8px;background:#2a1830;overflow:hidden;border:1px solid #000}#ncPetPop .pp-hp i{position:absolute;inset:0 auto 0 0;background:linear-gradient(90deg,#3ad06a,#9aff8a)}
+#ncPetPop .pp-hp.caido i{background:#6a6a6a}#ncPetPop .pp-hp span{position:relative;display:block;text-align:center;font:700 11px/16px system-ui;text-shadow:0 1px 2px #000}
+#ncPetPop .pp-sub{font-weight:700;margin:6px 0 8px}#ncPetPop .pp-sub small{font-weight:500;color:#b9b2d8;margin-left:6px}
+#ncPetPop .pp-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+#ncPetPop .pp-slot{aspect-ratio:1;border-radius:10px;border:1px solid #3a3070;background:#0e0b22;display:grid;place-items:center;cursor:pointer;padding:0}
+#ncPetPop .pp-slot.tem{border-color:#e8a85a;box-shadow:inset 0 0 0 1px #e8a85a55}#ncPetPop .pp-slot:disabled{cursor:default;opacity:.6}
+#ncPetPop .pp-acts{display:grid;gap:8px;margin-top:12px}#ncPetPop .pp-vazio{color:#b9b2d8}
+.ncpetb{margin-top:3px;pointer-events:auto;cursor:pointer}.ncpetb b{display:block;font:700 11px/1.2 system-ui,sans-serif;color:#e8d8ff;text-shadow:0 1px 2px #000}
+.ncpetb .bar.pet,#hud .ncpetb .bar.pet{height:12px!important;border-width:3px!important}.ncpetb .bar.pet i{background:linear-gradient(90deg,#3ad06a,#9aff8a)}.ncpetb.caido .bar.pet i{background:#666}.ncpetb .bar.pet span{font-size:9.5px}
+.ncpetb[hidden]{display:none}
 .pimg.nci>span.ncimg{position:absolute;left:11%;top:9%;width:78%;height:78%;display:block;background-repeat:no-repeat;background-position:center;background-size:contain;z-index:1;pointer-events:none;-webkit-transform:translateZ(0)}.pimg.nci>span.ncimg.w{left:8%;top:6%;width:84%;height:84%}
 .pimg.nci>img.nca{display:block;width:calc(var(--s)*.78)!important;height:calc(var(--s)*.78)!important;position:relative;z-index:1;filter:drop-shadow(0 2px 2px rgba(0,0,0,.55))}
 .pimg.nci>img.wico{display:block;width:calc(var(--s)*.84)!important;height:calc(var(--s)*.84)!important;object-fit:contain}
