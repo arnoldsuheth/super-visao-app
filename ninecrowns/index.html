@@ -283,7 +283,7 @@ kbd{font-family:var(--f-display);font-size:12px;background:var(--panel-2);border
 #ncEvArc{position:fixed;z-index:4;border-radius:50%;pointer-events:none;-webkit-mask:radial-gradient(circle,transparent 62%,#000 63%,#000 70%,transparent 71%);mask:radial-gradient(circle,transparent 62%,#000 63%,#000 70%,transparent 71%);filter:drop-shadow(0 0 6px var(--c));animation:ncEvBrilho 1.6s ease-in-out infinite}
 #ncEvArc[hidden],#ncEvTag[hidden]{display:none}
 @keyframes ncEvBrilho{0%,100%{opacity:.65}50%{opacity:1}}
-#ncEvTag{position:fixed;z-index:4;transform:translate(-100%,-50%);pointer-events:none;text-align:right;font:700 10.5px/1.25 system-ui,sans-serif;color:#fff;text-shadow:0 1px 2px #000,0 0 4px #000;white-space:nowrap}
+#ncEvTag{position:fixed;z-index:4;transform:translate(-100%,-50%);pointer-events:auto;cursor:pointer;text-align:right;font:700 10.5px/1.25 system-ui,sans-serif;color:#fff;text-shadow:0 1px 2px #000,0 0 4px #000;white-space:nowrap}
 #ncEvTag b{display:block;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;opacity:.85}#ncEvTag span{display:block}
 body.nc-l #ncEvArc,body.nc-r #ncEvArc,body.nc-l #ncEvTag,body.nc-r #ncEvTag{display:none}
 #mm{width:132px;height:auto;aspect-ratio:1;border:3px solid #a8741f;border-radius:50%;background:#0e1222;box-shadow:0 4px 14px #0008;opacity:.95;transition:opacity .2s;pointer-events:auto;cursor:zoom-in}
@@ -612,6 +612,7 @@ body.nc-swap #joyZone{left:auto;right:0}
 </style>
 </head>
 <body>
+<div id="ncGire" role="alert"><svg viewBox="0 0 24 24" fill="none" stroke="#f2c14e" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg><b>Gire o celular</b><span>O Nine Crowns é jogado com o celular deitado.</span></div>
 <!-- ===== NINE CROWNS: abertura (apresentação) ===== -->
 <style id="nc-splash-css">
 #ncSplash{position:fixed;inset:0;z-index:9999;overflow:hidden;background:radial-gradient(120% 90% at 50% 38%,#1a1f4a 0%,#0c0f26 45%,#05060d 100%);color:#f1e9d2;font-family:"Pixelify Sans",ui-monospace,"Courier New",monospace;display:grid;place-items:center;transition:opacity .9s ease,filter .9s ease,transform 1.1s cubic-bezier(.6,0,.2,1)}
@@ -6160,6 +6161,13 @@ function ncEvArcos(){ const mm = document.getElementById('mm'); let el = documen
     tg.style.left = (r.right + 4) + 'px'; tg.style.top = (y + 6) + 'px'; tg.style.transform = 'translate(-100%,0)'; }
   else { tg.style.left = (r.left - pad - 8) + 'px'; tg.style.top = (r.top + r.height/2) + 'px'; tg.style.transform = ''; } }
 setInterval(() => { try{ ncEvArcos(); }catch(_){} }, 1000);
+setInterval(() => { try{ document.querySelectorAll('#hub>.panel,#hub>aside.panel,#hub>#rightPanel').forEach(p => { const h = p.querySelector(':scope>.nc-head'); const cs = getComputedStyle(p), v = h && h.getClientRects().length ? Math.max(0, Math.round(h.getBoundingClientRect().bottom - p.getBoundingClientRect().top - parseFloat(cs.paddingTop) - parseFloat(cs.borderTopWidth) - 2)) + 'px' : '0px'; if(p.style.getPropertyValue('--nchead') !== v) p.style.setProperty('--nchead', v); }); }catch(_){} }, 400);   // 26/11: abas fixas logo abaixo do título do painel
+/* 26/11/2026 (Arnold): tocar no nome do evento mostra o que ele dá e até quando vai */
+document.addEventListener('click', e => { if(!e.target.closest || !e.target.closest('#ncEvTag')) return; const L = ncEvAtivos(), d = new Date();
+  const ate = x => x.dias ? 'o dia todo' : 'até ' + String(x.h1 % 24).padStart(2, '0') + ':00';
+  let el = document.getElementById('ncEvPop'); if(!el){ el = document.createElement('div'); el.id = 'ncEvPop'; document.body.appendChild(el); el.addEventListener('click', ev => { if(ev.target === el || ev.target.closest('[data-evx]')) el.hidden = true; }); }
+  el.innerHTML = '<div class="ev-box"><div class="ev-top"><h2>Evento ativo</h2><button type="button" data-evx aria-label="Fechar">×</button></div>' + L.map(x => '<div class="ev-it" style="--c:' + x.css + '"><b>' + x.n + '</b><small>' + ate(x) + '</small><p>' + x.d + '</p></div>').join('') + (curEvent() ? '<div class="ev-it" style="--c:' + curEvent().css + '"><b>' + curEvent().n + ' (evento da semana)</b><p>' + curEvent().d + '</p></div>' : '') + '</div>';
+  el.hidden = false; });
 const evEnds = () => { const ms = 6048e5 - (Date.now() % 6048e5); return Math.ceil(ms/864e5); };
 
 /* ===== RECOMPENSAS EM CAMPO ===== */
@@ -10618,7 +10626,7 @@ function makeChestQ(x, z, gold){
   chests.push({g, lid, x, z, open:empty, t:empty ? 1 : 0, gold, sparkle, seen:false, key, glow, empty});
 }
 const ZOOMS = [{n:'Primeira pessoa', k:.7, close:true, fp:true}, {n:'Close', k:.7, close:true}, {n:'Perto', k:.75}, {n:'Normal', k:1}, {n:'Longe', k:1.35}, {n:'Muito longe', k:1.75}, {n:'Visão de águia', k:2.3}];
-const zoomK = () => (ZOOMS[save.zoom] || ZOOMS[4]).k;
+const zoomK = () => (ZOOMS[(typeof COARSE !== 'undefined' && COARSE) ? Math.min(save.zoom ?? 4, 4) : save.zoom] || ZOOMS[4]).k;
 function camOffset(){ const a = innerWidth/innerHeight; const k = (a < .8 ? 1.5 : a < 1.2 ? 1.2 : 1)*(P && P.mounted ? 1.18 : 1)*zoomK(); const yw = mode === 'stage' ? closeYaw : 0, D = Math.hypot(13, 10)*k, el = clamp(Math.atan2(13, 10) + (mode === 'stage' ? camTilt : 0), .22, 1.48);
   return new T.Vector3(Math.sin(yw)*Math.cos(el)*D, Math.sin(el)*D, Math.cos(yw)*Math.cos(el)*D); }
 function applyZoom(){
@@ -10630,8 +10638,11 @@ function applyZoom(){
 let camLblT = null;
 function flashCamLabel(){ const cb = $('#hCam'); if(!cb) return; cb.textContent = (ZOOMS[save.zoom] || ZOOMS[4]).n; cb.hidden = false; clearTimeout(camLblT); camLblT = setTimeout(() => cb.hidden = true, 1400); }
 let closeYaw = 0;
+try{ document.addEventListener('fullscreenchange', () => { try{ if(document.fullscreenElement && screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(() => {}); }catch(_){} }); }catch(_){}   // 26/11: Android trava deitado na tela cheia
+const NC_ZOOM_MAX_CEL = 4;   // 26/11/2026 (Arnold): no celular o zoom vai no máximo até "Longe" (a distância que ele joga); fica mais leve
 function setZoom(i, announce){
   const was = (ZOOMS[save.zoom] || {}).close;
+  if(COARSE && i > NC_ZOOM_MAX_CEL) i = (save.zoom >= NC_ZOOM_MAX_CEL ? 0 : NC_ZOOM_MAX_CEL);
   save.zoom = clamp(i, 0, ZOOMS.length - 1); persist(); applyZoom();
   if(!ZOOMS[save.zoom].fp) fpPitch = 0;
   if(mode === 'stage') flashCamLabel();
@@ -11042,9 +11053,9 @@ const NC_NM_COR = {comum:'#ffffff', elite:'#ffd23a', dg:'#ff9a2a', chefe:'#ff4a3
 const NC_ELITE_T = ['Capitão', 'Veterano', 'Guardião', 'Campeão', 'Carrasco', 'Senhor de Guerra'];
 const ncNmCache = {};
 function ncNmSprite(txt, cor){ const k = txt + '|' + cor; let tx = ncNmCache[k];
-  if(!tx){ const c = document.createElement('canvas'); c.width = 512; c.height = 72; const g = c.getContext('2d'); g.font = '700 40px system-ui,sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
-    g.lineWidth = 9; g.strokeStyle = 'rgba(0,0,0,.85)'; g.strokeText(txt, 256, 38); g.fillStyle = cor; g.fillText(txt, 256, 38);
-    tx = ncNmCache[k] = new T.CanvasTexture(c); }
+  if(!tx){ const c = document.createElement('canvas'); c.width = 1024; c.height = 144; const g = c.getContext('2d'); g.font = '800 70px system-ui,-apple-system,Segoe UI,sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.lineJoin = 'round'; g.lineWidth = 16; g.strokeStyle = 'rgba(0,0,0,.92)'; g.strokeText(txt, 512, 76); g.fillStyle = cor; g.fillText(txt, 512, 76);   // 26/11: o dobro de resolução, letra mais grossa (estava borrado)
+    tx = ncNmCache[k] = new T.CanvasTexture(c); tx.minFilter = T.LinearFilter; tx.generateMipmaps = false; try{ tx.anisotropy = renderer.capabilities.getMaxAnisotropy(); }catch(_){} }
   const sp = new T.Sprite(new T.SpriteMaterial({map:tx, transparent:true, depthWrite:false, depthTest:false})); sp.renderOrder = 999; return sp; }
 function ncNomeMonstro(e){ const st = curStage; if(!st) return ['', NC_NM_COR.comum];
   const V = typeof ncDG !== 'undefined' && ncDG ? ncDgVar() : null, mn = st.minion.name, ty = e.home && e.home.type && ETYPE[e.home.type] ? ' ' + ETYPE[e.home.type].label : '';
@@ -16279,6 +16290,16 @@ body.nc-ov #ncXp2{display:none}
 #ncNivel.on{opacity:1;transform:translate(-50%,0) scale(1)}
 #ncNivel .nv-t{font:800 clamp(34px,9vw,56px)/1 Cinzel,serif;color:#ffd86a;letter-spacing:.06em;text-shadow:0 0 18px #ffb02a,0 2px 4px #000}
 #ncNivel .nv-g{font:700 15px/1.4 system-ui,sans-serif;margin-top:6px;color:#fff3c8}#ncNivel .nv-l{font:700 14px/1.4 system-ui,sans-serif;color:#9affb0}
+#ncEvPop{position:fixed;inset:0;z-index:130;background:rgba(6,4,16,.55);display:grid;place-items:center;padding:12px}#ncEvPop[hidden]{display:none}
+#ncEvPop .ev-box{width:min(380px,100%);max-height:90vh;overflow:auto;background:linear-gradient(#211a44,#15112e);border:1px solid #f2c14e88;border-radius:14px;padding:12px 14px;color:#f4efe2;font:500 14px/1.4 system-ui,sans-serif}
+#ncEvPop .ev-top{display:flex;justify-content:space-between;align-items:center}#ncEvPop h2{margin:0;font:700 18px Cinzel,serif;color:#f2c14e}
+#ncEvPop .ev-top button{width:38px;height:38px;border-radius:50%;border:1px solid #6a5acd;background:#2a2150;color:#fff;font-size:20px}
+#ncEvPop .ev-it{border-left:4px solid var(--c);background:#0e0b22;border-radius:8px;padding:8px 10px;margin-top:8px}#ncEvPop .ev-it b{color:var(--c);display:block}#ncEvPop .ev-it small{color:#b9b2d8}#ncEvPop .ev-it p{margin:4px 0 0}
+#ncGire{display:none}
+@media (orientation:portrait) and (pointer:coarse){#ncGire{display:flex;position:fixed;inset:0;z-index:9999;background:#07061a;color:#f4efe2;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;font:600 17px/1.4 system-ui,sans-serif;padding:24px}
+ #ncGire svg{width:84px;height:84px;animation:ncGira 2.2s ease-in-out infinite}#ncGire b{font:700 22px Cinzel,serif;color:#f2c14e}}
+@keyframes ncGira{0%,20%{transform:rotate(0)}50%,80%{transform:rotate(-90deg)}100%{transform:rotate(-90deg)}}
+.nc-tabs.nc-herotabs,.fsel.nc-tabs{position:sticky;top:var(--nchead,0px);z-index:5;background:#1c163c;box-shadow:0 8px 10px -6px #0009;padding-top:6px;padding-bottom:8px}
 .pimg.nci>span.ncimg{position:absolute;left:11%;top:9%;width:78%;height:78%;display:block;background-repeat:no-repeat;background-position:center;background-size:contain;z-index:1;pointer-events:none;-webkit-transform:translateZ(0)}.pimg.nci>span.ncimg.w{left:8%;top:6%;width:84%;height:84%}
 .pimg.nci>img.nca{display:block;width:calc(var(--s)*.78)!important;height:calc(var(--s)*.78)!important;position:relative;z-index:1;filter:drop-shadow(0 2px 2px rgba(0,0,0,.55))}
 .pimg.nci>img.wico{display:block;width:calc(var(--s)*.84)!important;height:calc(var(--s)*.84)!important;object-fit:contain}
