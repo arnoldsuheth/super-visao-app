@@ -10819,13 +10819,49 @@ function ncDgTrapTick(dt){ const D = ncDG; if(!D || !D.traps || !D.traps.length)
       if(up && Math.abs(px - t.x) < .95 && Math.abs(pz - t.z) < .95){ try{ hurtPlayer(Math.round(P.S.hp*.09)); }catch(_){} } }
     if(t.kind === 'blade'){ t.a += dt*2.2; t.bl.rotation.y = t.a; const dx = px - t.x, dz = pz - t.z, r = Math.hypot(dx, dz);
       if(r < 2.8 && r > .3){ const ang = Math.atan2(dz, dx), arm = ((ang + t.a) % (Math.PI/2) + Math.PI/2) % (Math.PI/2); if(arm < .22 || arm > Math.PI/2 - .22){ try{ hurtPlayer(Math.round(P.S.hp*.12)); }catch(_){} } } } } }
+
+/* 26/11/2026 (Arnold aprovou): cada masmorra com cara própria (cor, tamanho e um tipo de monstro exclusivo) e salas com 3 ondas.
+   Elites a partir da sala 2. O chefe da masmorra é mais leve que o chefe do mapa. XP 3 vezes e Adena 2 vezes dentro da masmorra. */
+const NC_DG_VAR = [
+  {n:'de Cristal', cor:0x6ad8ff, esc:1.15, tipo:'shaman'},  {n:'Sombrio', cor:0x7a3ab0, esc:1.25, tipo:'brute'},
+  {n:'de Brasa', cor:0xff6a2a, esc:1.2, tipo:'bomber'},     {n:'Gélido', cor:0xbfe8ff, esc:1.3, tipo:'spear'},
+  {n:'Venenoso', cor:0x7aff4a, esc:1.15, tipo:'archer'},    {n:'Dourado', cor:0xffd23a, esc:1.4, tipo:'crossbow'}];
+const NC_DG_ONDAS = 3, NC_DG_XP = 3, NC_DG_ADENA = 2, NC_DG_CHEFE = {hp:.7, dmg:.85};
+const ncDgVar = () => { const D = ncDG; if(!D) return null; return NC_DG_VAR[((curStage ? curStage.id : 0) + (D.duo ? 3 : 0)) % NC_DG_VAR.length]; };
+function ncDgOnda(){ const D = ncDG, st = curStage, V = ncDgVar(); D.wave = (D.wave || 0) + 1;
+  const n = 3 + D.room, el = D.room >= 2 ? (D.wave === NC_DG_ONDAS ? D.room - 1 : D.wave === 2 && D.room >= 3 ? 1 : 0) : 0, amb = D.wave === 1 && D.room >= 2 ? 2 : 0;
+  for(let i = 0; i < n + el; i++){ const inC = i < amb, elite = i >= n;
+    const x = D.C.x + (inC ? (Math.random() - .5)*2 : (Math.random() - .5)*(NC_DG_W - 4)), z = D.C.z + (inC ? NC_DG_CZ + 2 + Math.random()*3 : -NC_DG_L/2 + 2 + Math.random()*(NC_DG_L/2 + NC_DG_CZ - 4));
+    const tipo = !elite && V && Math.random() < .4 ? V.tipo : null;
+    const e = spawnMinion(st, x, z, true, elite, tipo); e.hp = e.maxHp = Math.round(e.maxHp*D.mult); e.dmg *= D.mult;
+    if(V){ e.dgCor = V.cor; e.cr.root.scale.multiplyScalar(V.esc*(elite ? 1.1 : 1)); e.barY *= V.esc; }
+    D.live.push(e); }
+  if(D.wave > 1) banner('Onda ' + D.wave + ' de ' + NC_DG_ONDAS, D.wave === NC_DG_ONDAS && el ? 'Elites chegando!' : 'Mais monstros!', el ? 'danger' : ''); }
+function ncDgPintar(){ const D = ncDG; if(!D) return; const t = performance.now(); if(t - (D.pintT || 0) < 500) return; D.pintT = t;
+  const pinta = (root, cor) => root.traverse(o => { if(!o.isMesh || !o.material || o.userData.dgT) return; const ms = Array.isArray(o.material) ? o.material : [o.material];
+    o.material = ms.length > 1 ? ms.map(m => { const c = m.clone(); if(c.color) c.color.lerp(new T.Color(cor), .45); return c; }) : (() => { const c = ms[0].clone(); if(c.color) c.color.lerp(new T.Color(cor), .45); return c; })(); o.userData.dgT = 1; });
+  for(const e of D.live) if(!e.dead && e.dgCor) pinta(e.cr.root, e.dgCor); }
+/* nomes em cima da vida: comum branco, elite amarelo, chefe da masmorra laranja, chefe do mapa vermelho */
+const NC_NM_COR = {comum:'#ffffff', elite:'#ffd23a', dg:'#ff9a2a', chefe:'#ff4a3a'};
+const NC_ELITE_T = ['Capitão', 'Veterano', 'Guardião', 'Campeão', 'Carrasco', 'Senhor de Guerra'];
+const ncNmCache = {};
+function ncNmSprite(txt, cor){ const k = txt + '|' + cor; let tx = ncNmCache[k];
+  if(!tx){ const c = document.createElement('canvas'); c.width = 512; c.height = 72; const g = c.getContext('2d'); g.font = '700 40px system-ui,sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.lineWidth = 9; g.strokeStyle = 'rgba(0,0,0,.85)'; g.strokeText(txt, 256, 38); g.fillStyle = cor; g.fillText(txt, 256, 38);
+    tx = ncNmCache[k] = new T.CanvasTexture(c); }
+  const sp = new T.Sprite(new T.SpriteMaterial({map:tx, transparent:true, depthWrite:false, depthTest:false})); sp.renderOrder = 999; return sp; }
+function ncNomeMonstro(e){ const st = curStage; if(!st) return ['', NC_NM_COR.comum];
+  const V = typeof ncDG !== 'undefined' && ncDG ? ncDgVar() : null, mn = st.minion.name, ty = e.home && e.home.type && ETYPE[e.home.type] ? ' ' + ETYPE[e.home.type].label : '';
+  if(e.elite) return [NC_ELITE_T[st.id % NC_ELITE_T.length] + ' ' + mn + (V ? ' ' + V.n : ''), NC_NM_COR.elite];
+  return [mn + ty + (V ? ' ' + V.n : ''), NC_NM_COR.comum]; }
+function ncNomeTag(e){ if(e.ncNm || !e.bar || !e.bar.g) return; const [t, c] = ncNomeMonstro(e); if(!t) return; const sp = ncNmSprite(t, c); sp.scale.set(3.6, .5, 1); sp.position.y = .42; e.bar.g.add(sp); e.ncNm = sp; }
+function ncNomeChefe(b, st){ try{ const dg = typeof ncDG !== 'undefined' && ncDG, V = dg ? ncDgVar() : null, t = dg ? st.boss + (V ? ' ' + V.n : '') + ' das Profundezas' : (worldFight ? 'Chefe Mundial · ' : '') + st.boss;
+  const sp = ncNmSprite(t, dg ? NC_NM_COR.dg : NC_NM_COR.chefe), k = b.cr.root.scale.x || 1; sp.scale.set(4.2/k, .6/k, 1); sp.position.y = 2.9; b.cr.root.add(sp); b.ncNm = sp;
+  if(dg && V){ const ring = new T.Mesh(new T.RingGeometry(1.1, 1.45, 32), bmat(V.cor, Object.assign({opacity:.55, side:T.DoubleSide}, ADD))); ring.rotation.x = -Math.PI/2; ring.position.y = .06; b.cr.root.add(ring); b.ncAura = ring; } }catch(_){} }
 function ncDgRoom(){ const D = ncDG, st = curStage; D.room++; try{ save.dgBest = save.dgBest || {}; const bk = (D.duo ? 'd' : 's') + st.id; save.dgBest[bk] = Math.max(save.dgBest[bk] || 0, D.room - 1); }catch(_){} D.door = false; if(D.gate) D.gate.visible = true; if(D.portal) D.portal.visible = false; if(D.stairs) D.stairs.visible = false;
   const pal = (D.th && D.th.flame) || NC_DG_COL, col = pal[(D.room - 1) % pal.length]; if(ncDgG) ncDgG.traverse(o => { if(o.userData.dgFlame){ o.material.color.setHex(col); o.material.emissive.setHex(col); } }); (D.lights || []).forEach(l => l.color.setHex(col)); if(D.portal) D.portal.material.color.setHex(col);
   P.pos.set(D.C.x, heightAt(D.C.x, D.C.z), D.C.z + NC_DG_L/2 - 1.5); P.face = P.targetFace = Math.PI;
-  const n = 4 + D.room*2, el = D.room >= 3 ? D.room - 2 : 0, amb = D.room >= 2 ? 2 : 0; D.live = [];
-  for(let i = 0; i < n + el; i++){ const inC = i < amb;   // emboscada no corredor
-    const x = D.C.x + (inC ? (Math.random() - .5)*2 : (Math.random() - .5)*(NC_DG_W - 4)), z = D.C.z + (inC ? NC_DG_CZ + 2 + Math.random()*3 : -NC_DG_L/2 + 2 + Math.random()*(NC_DG_L/2 + NC_DG_CZ - 4));
-    const e = spawnMinion(st, x, z, true, i >= n, null); e.hp = e.maxHp = Math.round(e.maxHp*D.mult); e.dmg *= D.mult; D.live.push(e); }
+  D.live = []; D.wave = 0; ncDgOnda();
   ncDgTraps();
   banner((D.duo ? 'Masmorra de dupla' : 'Masmorra') + ' · Sala ' + D.room + ' de ' + (D.rooms + 1), D.room >= 2 ? 'Cuidado com as armadilhas. Derrote todos para abrir a porta' : 'Derrote todos os monstros para abrir a porta', D.room >= D.rooms ? 'danger' : ''); }
 function ncDgClamp(p, door){ const D = ncDG, C = D.C, hw = NC_DG_W/2 - .7, hl = NC_DG_L/2 - .7, cw = NC_DG_CW - .7, cz = C.z + NC_DG_CZ - .7;
@@ -10839,7 +10875,9 @@ function ncDgTick(dt){ const D = ncDG; if(!D || mode !== 'stage' || !D.C) return
     const atDoor = D.door && Math.abs(dx) < 1.6 && dz < -lim + 1.5;
     ncDgClamp(P.pos, atDoor);
     for(const e of D.live) if(!e.dead) ncDgClamp(e.pos, false);
-    if(!D.door && D.live.every(e => e.dead || e.hp <= 0)){ D.door = true; if(D.gate) D.gate.visible = false; const last = D.room >= D.rooms; if(last && D.stairs) D.stairs.visible = true; else if(D.portal) D.portal.visible = true; SFX.drop && SFX.drop(); banner('Sala limpa!', last ? 'A escada para o chefe abriu' : 'A porta abriu: siga para a próxima sala'); }
+    ncDgPintar();
+    if(!D.door && D.live.every(e => e.dead || e.hp <= 0) && (D.wave || NC_DG_ONDAS) < NC_DG_ONDAS){ D.live = D.live.filter(e => !e.dead); ncDgOnda(); }
+    else if(!D.door && D.live.every(e => e.dead || e.hp <= 0)){ D.door = true; if(D.gate) D.gate.visible = false; const last = D.room >= D.rooms; if(last && D.stairs) D.stairs.visible = true; else if(D.portal) D.portal.visible = true; SFX.drop && SFX.drop(); banner('Sala limpa!', last ? 'A escada para o chefe abriu' : 'A porta abriu: siga para a próxima sala'); }
     if(D.portal && D.portal.visible) D.portal.material.opacity = .55 + Math.sin(performance.now()/180)*.2;
     const goZ = D.room >= D.rooms ? -lim - 2.5 : -lim + .6;   // na escada, desce um pouco antes de trocar
     if(D.door && dz < goZ && Math.abs(dx) < 1.6){
@@ -10847,7 +10885,7 @@ function ncDgTick(dt){ const D = ncDG; if(!D || mode !== 'stage' || !D.C) return
       setTimeout(() => { if(!ncDG) return; D.busy = false; if(D.room < D.rooms) ncDgRoom(); else ncDgBoss(); setTimeout(() => $('#fade').classList.remove('on'), 150); }, 380);
       D.door = false; }
     if(D.door && D.room >= D.rooms && dz < -lim){ try{ P.pos.y = heightAt(P.pos.x, P.pos.z) - Math.min(2.4, (-lim - dz)*.42); }catch(_){} } }
-  else if(!D.boosted && boss){ D.boosted = true; boss.hp = boss.maxHp = Math.round(boss.maxHp*D.mult); boss.dmg *= D.mult; } }
+  else if(!D.boosted && boss){ D.boosted = true; boss.hp = boss.maxHp = Math.round(boss.maxHp*NC_DG_CHEFE.hp); boss.dmg *= NC_DG_CHEFE.dmg; } }
 function ncDgBoss(){ const D = ncDG; D.boss = true; ncDgBuild(); ncDgTraps();
   try{ save.dgBest = save.dgBest || {}; const bk = (D.duo ? 'd' : 's') + curStage.id; save.dgBest[bk] = Math.max(save.dgBest[bk] || 0, 5); persist(); }catch(_){}
   if(!boss || boss.dead || boss.dying){ try{ spawnBoss(curStage); D.boosted = false; }catch(_){} }   /* 26/11/2026 (Arnold: a sala do chefe ficou vazia): o chefe é criado de novo se não existir */ if(D.gate) D.gate.visible = true; if(D.portal) D.portal.visible = false;
@@ -10962,6 +11000,7 @@ function spawnBoss(st){
   cr.root.scale.setScalar(M.sc*ncBossK());
   if(M.e) cr.mats.forEach(m => { m.userData.baseE = C(M.e); m.emissive.copy(m.userData.baseE); });
   monAttach(cr, monPick(st, 'boss'), {boss:true});
+  ncNomeChefe(boss, st);
   boss.nid = ++ncNid; enemies.push(boss);
 }
 
@@ -11889,7 +11928,7 @@ const NC_ESQ = {guard:.9, guardCd:1, reach:8, charge:.3, chargeDmg:.8, stun:1.2}
 /* 26/11/2026 (Arnold): esquiva própria das outras 7 classes (sugestões do Claude) */
 const NC_ESQ2 = {warrior:{dmg:.4, kb:13}, archer:{range:12, espinho:.5, lento:1.5, dura:4}, mage:{rad:3.5, frio:1.6}, necro:{segura:2, rad:5, maxPorGrade:[1, 2, 3, 4, 5, 5]}, shaman:{rad:5, lobo:2, rapido:1.8}, priest:{cura:.08}, monk:{dmg:1.2, kb:10, alc:2.8}};   // esquivas: escudo do Paladino (s), alcance do avanço da Assassina (m), investida do Bárbaro (s, dano, atordoar s)
 const NC_STAB = {back:1.6, bleed:.2, bleedT:4, afterShadow:1.5};   // estocada: pelas costas 60% a mais; sangramento = 20% do ataque por segundo, 4 s
-const Y_TOL = 1.6;
+const Y_TOL = 1.6, NC_ALTO = {erro:.35};   // 26/11: acima da tolerância de altura, 35% de chance de errar
 const yOk = (ey, oy, tol) => Math.abs(ey - oy) <= (tol || Y_TOL);
 /* 26/11/2026: esquiva de cada classe. Guerreiro investida que empurra; Arqueira salto para trás e flecha; Mago piscar com gelo;
    Necromante névoa que atravessa e suga vida; Xamã raízes que prendem; Sacerdote asas para trás e cura; Monge desliza e chuta. */
@@ -11924,7 +11963,8 @@ function ncEsquiva(cls){
 function hitEnemy(e, mult, o){
   o = o || {};
   if(e.dead || e.dying) return false;
-  if(e.kind !== 'boss' && !o.anyY && !yOk(e.pos.y, o.y !== undefined ? o.y : P.pos.y, o.ytol)) return false;
+  if(e.kind !== 'boss' && !o.anyY && !yOk(e.pos.y, o.y !== undefined ? o.y : P.pos.y, o.ytol)){   /* 26/11/2026 (Arnold): monstro no alto do morro pode ser acertado, mas às vezes erra */
+    if(Math.random() < NC_ALTO.erro){ if(clock - (e.ncErrT || 0) > .6){ e.ncErrT = clock; floatText(e.pos, 'Errou', 'block'); } return false; } }
   const S = P.S, crit = o.crit || Math.random() < S.crit;
   if(o.skm) mult *= o.skm; else if(ncInSkill || P.skill) mult *= ncSkMul(P.skLvI || 0)*(ncSkLv(P.skLvI || 0) >= 3 ? 1.15 : 1)*(ncEcho ? .6 : 1);
   if(P.cryT > 0) mult *= 1.2;
@@ -12028,7 +12068,10 @@ function firePlayer(o){
   const ox = o.from ? o.from.x : mz ? mz.x : P.pos.x + Math.sin(o.ang)*.8, oz = o.from ? o.from.z : mz ? mz.z : P.pos.z + Math.cos(o.ang)*.8, oy = o.from ? o.from.y : mz ? Math.max(P.pos.y + .9, Math.min(P.pos.y + 1.7, mz.y)) : P.pos.y + 1.3;
   m.position.set(ox, oy, oz); m.rotation.y = o.ang;
   scene.add(m);
-  pprojs.push(Object.assign({m, vx:Math.sin(o.ang)*o.spd, vz:Math.cos(o.ang)*o.spd, hit:new Set(), y0:oy - 1.3}, o));
+  let vy = 0; try{ let t = null, bd = 22; for(const e of enemies){ if(e.dead || e.dying || (e.kind === 'boss' && !e.awake)) continue; const dx = e.pos.x - ox, dz = e.pos.z - oz, d = Math.hypot(dx, dz);
+      if(d < bd && angDiff(Math.atan2(dx, dz), o.ang) < .35){ bd = d; t = e; } }
+    if(t && bd > .5) vy = clamp(((t.pos.y + 1.0) - oy)/(bd/o.spd), -10, 10); }catch(_){}   // 26/11: mira a altura do monstro (morro acima ou abaixo)
+  pprojs.push(Object.assign({m, vx:Math.sin(o.ang)*o.spd, vz:Math.cos(o.ang)*o.spd, vy, hit:new Set(), y0:oy - 1.3}, o));
 }
 const NC_SKFX = {pheal:{t:"buff", heal:0.25, c:0xfff2a0}, pshield:{t:"buff", wall:6, c:0xfff0c0}, psmite:{t:"tgt", R:3.2, m:3, c:0xfff0a0, d:0.3, bolt:1, stun:1.2}, pbless:{t:"buff", cry:10, c:0xffe28a}, prenew:{t:"buff", hot:8, c:0xbfffb0}, pchoir:{t:"self", R:6, m:3.6, c:0xfff6c0, heal:0.4},
   stotem:{t:"buff", hot:8, totem:1, c:0x7aff9a}, schain:{t:"tgt", R:3.4, m:0.9, c:0x8ad8ff, waves:4, gap:0.12, bolt:1}, sfury:{t:"buff", rage:10, c:0xff8a3a}, squake:{t:"self", R:4.5, m:1.8, c:0xc8a060, stun:1.5}, swolf:{t:"buff", ally:1, c:0x9ad8ff}, sstorm:{t:"tgt", R:6, m:1.3, c:0x8ad8ff, waves:7, gap:0.35, bolt:1},
@@ -12243,8 +12286,9 @@ function killMinion(e){
   burst(e.pos, curStage.minion.color, 12, 6, 6);
   const id = curStage.id, k = e.elite ? 5 : 1;
   /* 22/11 (Arnold): jogo para ~80 h; comum dá pouco XP, elite dá muito, para puxar o jogador às áreas de elite e ao Boss */
-  gainXP(Math.round(10*Math.pow(1.2, id)*(e.elite ? NC_XP.elite : NC_XP.minion)));
-  spawnPickup('gold', e.pos, Math.round((2 + Math.random()*3)*Math.pow(1.15, id))*k*NC_PREMIO.monstro);
+  const dgK = typeof ncDG !== 'undefined' && ncDG ? NC_DG_XP : 1;
+  gainXP(Math.round(10*Math.pow(1.2, id)*(e.elite ? NC_XP.elite : NC_XP.minion)*dgK));
+  spawnPickup('gold', e.pos, Math.round((2 + Math.random()*3)*Math.pow(1.15, id))*k*NC_PREMIO.monstro*(dgK > 1 ? NC_DG_ADENA : 1));
   const rw = Math.min(2, DF().reward)*LUCK(), sp = CFG.species[id] || 'metal', basic = id % 2 ? 'minerio' : 'metal', ev = evFx();
   save.cnt.kills = (save.cnt.kills || 0) + 1;
   if(e.elite){ save.cnt.elites = (save.cnt.elites || 0) + 1;
@@ -13073,7 +13117,7 @@ function updateEnemies(dt){
     e.pos.y = heightAt(e.pos.x, e.pos.z);
     unflash(e, cr.mats, dt);
     if(e.frozenT > 0 && e.flashT <= 0) e.cr.mats.forEach(m => m.emissive.copy(ICE));
-    e.bar.g.visible = e.hp < e.maxHp && cr.root.visible;
+    ncNomeTag(e); e.bar.g.visible = cr.root.visible && (e.hp < e.maxHp || dist < 18);   // 26/11: nome e vida aparecem de perto
     e.bar.g.position.set(e.pos.x, e.pos.y + e.barY, e.pos.z); e.bar.g.quaternion.copy(camera.quaternion);
     e.bar.fg.scale.x = Math.max(.001, e.bar.w*e.hp/e.maxHp);
   }
@@ -13096,11 +13140,11 @@ function updateWorld(dt){
     if(gone){ scene.remove(p.m); p.m.material.dispose(); projs.splice(i,1); }
   }
   for(let i = pprojs.length-1; i >= 0; i--){
-    const p = pprojs[i]; p.life -= dt; p.m.position.x += p.vx*dt; p.m.position.z += p.vz*dt;
+    const p = pprojs[i]; p.life -= dt; p.m.position.x += p.vx*dt; p.m.position.z += p.vz*dt; if(p.vy){ p.m.position.y += p.vy*dt; p.y0 = p.m.position.y - 1.3; }
     if(p.kind === 'fireball'){ p.m.rotation.x += dt*8; if(Math.random() < .7) burst(p.m.position, 0xff9a3a, 1, 1, 2, 0); }
     if((p.kind === 'bolt' || p.kind === 'dark') && Math.random() < .4) burst(p.m.position, p.kind === 'dark' ? (Math.random() < .5 ? 0x8a2cff : 0x1a0030) : (p.col || (P.S.elem ? ELEM_COL[P.S.elem] : 0x9ad0ff)), 1, .5, 1, 0);
     if(p.kind === 'shard') p.m.rotation.z += dt*12;
-    let gone = p.life <= 0 || p.m.position.y < heightAt(p.m.position.x, p.m.position.z) + .15;   // bateu no morro
+    let gone = p.life <= 0 || p.m.position.y < heightAt(p.m.position.x, p.m.position.z) - (p.vy > 0 ? .6 : -.15);   // bateu no morro (subindo, passa rente ao chão)
     if(!gone && ncSolidoTiro(p.m.position.x, p.m.position.z)){ gone = true; burst(p.m.position, 0xb8a888, 6, 2.5, 2.5, 0); if(!p.aoe) ncBloqueado(p.m.position); }   // 26/11: bateu na árvore, pedra ou parede
     for(const e of enemies){
       if(gone) break;
@@ -14401,8 +14445,20 @@ function ncNotify(tx, kind, key){ const day = new Date().toDateString(); key = k
   ncNt.list.unshift({id:++ncNt.n, tx, kind:kind || 'info', t:Date.now(), rd:false}); if(ncNt.list.length > 30) ncNt.list.pop(); ncBellDraw(); }
 window.ncNotify = ncNotify;
 const NT_IC = {};   /* 26/11/2026: os ícones agora são a cartinha (fechada ou aberta) */
-function ncBellDraw(){ let b = document.getElementById('ncBell'); if(!b){ b = document.createElement('button'); b.id = 'ncBell'; b.type = 'button'; b.setAttribute('aria-label', 'Notificações'); b.innerHTML = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><i></i>'; document.body.appendChild(b); b.addEventListener('click', () => ncBellPop(true)); }
+/* 26/11/2026 (Arnold): dá para arrastar o sino para qualquer lugar da tela; o lugar fica salvo */
+function ncBellPos(b){ const p = save.bellPos; if(!p) return; const x = Math.max(4, Math.min(innerWidth - 50, p.x*innerWidth)), y = Math.max(4, Math.min(innerHeight - 50, p.y*innerHeight));
+  b.style.left = x + 'px'; b.style.top = y + 'px'; b.style.bottom = 'auto'; b.style.right = 'auto'; }
+function ncBellArrastar(b){ let d = null;
+  b.addEventListener('pointerdown', e => { const r = b.getBoundingClientRect(); d = {x:e.clientX, y:e.clientY, ox:e.clientX - r.left, oy:e.clientY - r.top, m:0}; try{ b.setPointerCapture(e.pointerId); }catch(_){} });
+  b.addEventListener('pointermove', e => { if(!d) return; if(!d.m && Math.hypot(e.clientX - d.x, e.clientY - d.y) < 8) return; d.m = 1; e.preventDefault();
+    const x = Math.max(4, Math.min(innerWidth - 50, e.clientX - d.ox)), y = Math.max(4, Math.min(innerHeight - 50, e.clientY - d.oy));
+    b.style.left = x + 'px'; b.style.top = y + 'px'; b.style.bottom = 'auto'; b.style.right = 'auto'; });
+  const fim = () => { if(d && d.m){ const r = b.getBoundingClientRect(); save.bellPos = {x:r.left/innerWidth, y:r.top/innerHeight}; persist(); b.ncArrastou = 1; setTimeout(() => b.ncArrastou = 0, 300); } d = null; };
+  b.addEventListener('pointerup', fim); b.addEventListener('pointercancel', fim);
+  addEventListener('resize', () => ncBellPos(b)); ncBellPos(b); }
+function ncBellDraw(){ let b = document.getElementById('ncBell'); if(!b){ b = document.createElement('button'); b.id = 'ncBell'; b.type = 'button'; b.setAttribute('aria-label', 'Notificações'); b.innerHTML = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><i></i>'; document.body.appendChild(b); b.addEventListener('click', () => { if(b.ncArrastou){ b.ncArrastou = 0; return; } ncBellPop(true); }); ncBellArrastar(b); }
   const n = ncNt.list.filter(x => !x.rd).length; b.querySelector(':scope>i').textContent = n > 9 ? '9+' : n || ''; b.classList.toggle('has', n > 0);
+  b.classList.toggle('nc-sem', n === 0);   // 26/11/2026 (Arnold): o sino só aparece quando tem notificação não lida
   const el = document.getElementById('ncBellPop'); if(el && !el.hidden) ncBellPop(true, true); }
 /* 26/11/2026 (Arnold): cartinha fechada = não lida, aberta = lida. Tocar leva até o lugar e marca como lida.
    Dá para selecionar uma, várias ou todas e excluir. Sem emoji: só ícones de linha. */
@@ -15403,6 +15459,8 @@ body:not(.nc-play-ok) #ncBell{}
 .nc-ptag:not(.pty) .pb{display:none}.nc-ptag.pty b{color:#7dff8a}
 .cbtn .cb-ic{width:34px;height:34px;float:left;margin:0 8px 0 0;filter:drop-shadow(0 2px 3px #0009)}
 body.nc-l #ncBell,body.nc-r #ncBell{display:none}
+#ncBell.nc-sem{display:none!important}
+#ncBell{touch-action:none}
 @media (orientation:landscape) and (max-height:540px){#ncBell{left:calc(192px + env(safe-area-inset-left,0px))}}   /* 26/11/2026 (Arnold): celular deitado, o sino ficava em cima do quadro do grupo */
 @keyframes ncSuper{0%{box-shadow:0 0 0 2px #ffe08a,0 0 8px 2px #ffb83a}50%{box-shadow:0 0 0 3px #fff2b0,0 0 16px 5px #ffd23a}100%{box-shadow:0 0 0 2px #ffe08a,0 0 8px 2px #ffb83a}}
 .tnode.super>i{animation:ncSuper 1.4s ease-in-out infinite;border-radius:10px}.tnode.super b::after{content:" · SUPER";color:#ffd23a;font-size:11px}
