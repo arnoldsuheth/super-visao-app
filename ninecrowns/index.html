@@ -2,6 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
+<style>/* 27/11 (Arnold): antes de carregar ficava tela branca. Fundo escuro com aviso aparece na hora */html{background:#07061a url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20300%20200%22%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%23f2c14e%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Crect%20x%3D%22128%22%20y%3D%2220%22%20width%3D%2244%22%20height%3D%2276%22%20rx%3D%227%22/%3E%3Cpath%20d%3D%22M190%2040a40%2040%200%200%201%2010%2040l-6-5m6%205%206-5%22/%3E%3C/g%3E%3Ctext%20x%3D%22150%22%20y%3D%22140%22%20text-anchor%3D%22middle%22%20font-family%3D%22Georgia%2Cserif%22%20font-size%3D%2226%22%20fill%3D%22%23f2c14e%22%20letter-spacing%3D%223%22%3ENINE%20CROWNS%3C/text%3E%3Ctext%20x%3D%22150%22%20y%3D%22172%22%20text-anchor%3D%22middle%22%20font-family%3D%22system-ui%2Csans-serif%22%20font-size%3D%2214%22%20fill%3D%22%23cfc9e6%22%3ECarregando...%20deixe%20o%20celular%20deitado%3C/text%3E%3C/svg%3E") center/min(320px,80vw) auto no-repeat;min-height:100%}body{background:transparent}</style>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Nine Crowns</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -15,7 +16,7 @@
 <meta name="apple-mobile-web-app-title" content="Nine Crowns">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&family=Barlow+Semi+Condensed:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&family=Barlow+Semi+Condensed:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <style>
 /* Layout: full-bleed 3D canvas; game HUD pinned to the corners; the map screen flanks the hero with two panels (stacked on phones) */
 :root{
@@ -454,7 +455,7 @@ canvas.ncgrabok{cursor:grab}canvas.ncgrab,canvas.ncgrabok.ncgrab{cursor:grabbing
   #banner{top:18%} #banner .b-main{font-size:22px} #banner .b-sub{font-size:12px}
   #joy{width:104px;height:104px;bottom:calc(14px + env(safe-area-inset-bottom,0px))}
   #knob{width:46px;height:46px;margin:-23px 0 0 -23px}
-  .tbtns{bottom:calc(8px + env(safe-area-inset-bottom,0px));transform:scale(.78);transform-origin:right bottom}
+  .tbtns{bottom:calc(8px + env(safe-area-inset-bottom,0px));transform:scale(.88);transform-origin:right bottom}
   #pause{background:linear-gradient(90deg,rgba(6,7,12,0) 30%,rgba(6,7,12,.55));align-items:center;justify-content:flex-end}
   #pause .mbox{margin:0 0 0 auto;width:min(440px,58vw);max-height:calc(100vh - 12px);padding:14px}
   #pause .mbox h3{font-size:24px}
@@ -10658,7 +10659,9 @@ function flashCamLabel(){ const cb = $('#hCam'); if(!cb) return; cb.textContent 
 let closeYaw = 0;
 try{ document.addEventListener('fullscreenchange', () => { try{ if(document.fullscreenElement && screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(() => {}); }catch(_){} }); }catch(_){}   // 26/11: Android trava deitado na tela cheia
 const NC_ZOOM_MAX_CEL = 4;   // 26/11/2026 (Arnold): no celular o zoom vai no máximo até "Longe" (a distância que ele joga); fica mais leve
-function setZoom(i, announce){
+/* 27/11/2026 (Arnold): câmera travada no "Close" (atrás do herói); sem outras opções. Dá para girar para os lados e olhar para cima e para baixo */
+const NC_CAM_FIX = 1;
+function setZoom(i, announce){ i = NC_CAM_FIX; if(save.zoom === NC_CAM_FIX){ applyZoom(); return; }
   const was = (ZOOMS[save.zoom] || {}).close;
   if(COARSE && i > NC_ZOOM_MAX_CEL) i = (save.zoom >= NC_ZOOM_MAX_CEL ? 0 : NC_ZOOM_MAX_CEL);
   save.zoom = clamp(i, 0, ZOOMS.length - 1); persist(); applyZoom();
@@ -11073,8 +11076,24 @@ const ncNmCache = {};
 function ncNmSprite(txt, cor){ const k = txt + '|' + cor; let tx = ncNmCache[k];
   if(!tx){ const c = document.createElement('canvas'); c.width = 1024; c.height = 144; const g = c.getContext('2d'); g.font = '800 70px system-ui,-apple-system,Segoe UI,sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
     g.lineJoin = 'round'; g.lineWidth = 16; g.strokeStyle = 'rgba(0,0,0,.92)'; g.strokeText(txt, 512, 76); g.fillStyle = cor; g.fillText(txt, 512, 76);   // 26/11: o dobro de resolução, letra mais grossa (estava borrado)
-    tx = ncNmCache[k] = new T.CanvasTexture(c); tx.minFilter = T.LinearFilter; tx.generateMipmaps = false; try{ tx.anisotropy = renderer.capabilities.getMaxAnisotropy(); }catch(_){} }
-  const sp = new T.Sprite(new T.SpriteMaterial({map:tx, transparent:true, depthWrite:false, depthTest:false})); sp.renderOrder = 999; return sp; }
+    tx = ncNmCache[k] = new T.CanvasTexture(c); tx.userData = {t:txt, c:cor}; tx.minFilter = T.LinearFilter; tx.generateMipmaps = false; try{ tx.anisotropy = renderer.capabilities.getMaxAnisotropy(); }catch(_){} }
+  const sp = new T.Sprite(new T.SpriteMaterial({map:tx, transparent:true, depthWrite:false, depthTest:false})); sp.renderOrder = 999; sp.userData.nm = {t:txt, c:cor}; sp.visible = false; return sp; }
+/* 27/11/2026 (Arnold): o nome desenhado no 3D ficava borrado no iPhone. Agora o nome é texto da página, preso em cima do monstro: sempre nítido */
+const ncNmDom = new Map(), _nmv = new T.Vector3(); let ncNmBox = null;
+const ncVisUp = o => { while(o){ if(!o.visible) return false; o = o.parent; } return true; };
+function ncNmFrame(){ requestAnimationFrame(ncNmFrame); try{ if(!ncNmBox){ ncNmBox = document.createElement('div'); ncNmBox.id = 'ncNmBox'; document.body.appendChild(ncNmBox); }
+  const seen = new Set();
+  if(mode === 'stage' && camera && !document.body.classList.contains('nc-ov')){ const L = []; try{ enemies.forEach(e => { if(e.ncNm && !e.dead) L.push([e.ncNm, 0]); }); }catch(_){} try{ if(boss && boss.ncNm && !boss.dead) L.push([boss.ncNm, 1]); }catch(_){}
+    const W = innerWidth, H = innerHeight;
+    const I = []; for(const [sp, chefe] of L){ if(!ncVisUp(sp.parent)) continue; (chefe ? sp : sp.parent).getWorldPosition(_nmv); _nmv.project(camera); if(_nmv.z > 1 || _nmv.z < -1) continue;
+      const x = (_nmv.x + 1)/2*W, y = (1 - _nmv.y)/2*H - (chefe ? 0 : 12); if(x < -100 || x > W + 100 || y < -40 || y > H + 40) continue; I.push({sp, chefe, x, y, z:chefe ? -9 : _nmv.z}); }
+    I.sort((a, b) => a.z - b.z); const pos = [];   // o mais perto primeiro; os de trás sobem um pouco ou somem para não ficar um nome em cima do outro
+    for(const it of I){ const sp = it.sp; let d = ncNmDom.get(sp); if(!d){ d = document.createElement('div'); d.className = 'ncnm' + (it.chefe ? ' ch' : ''); d.textContent = sp.userData.nm.t; d.style.color = sp.userData.nm.c; ncNmBox.appendChild(d); ncNmDom.set(sp, d); d._w = d.offsetWidth || 90; }
+      let y = it.y, ok = false; for(let t = 0; t < 3 && !ok; t++){ ok = !pos.some(p => Math.abs(p.x - it.x) < (p.w + d._w)/2 + 2 && Math.abs(p.y - y) < 14); if(!ok) y -= 15; }
+      seen.add(sp); if(!ok){ d.style.visibility = 'hidden'; continue; } d.style.visibility = ''; pos.push({x:it.x, y, w:d._w});
+      d.style.transform = 'translate(' + Math.round(it.x) + 'px,' + Math.round(y) + 'px) translate(-50%,-50%)'; } }
+  for(const [sp, d] of ncNmDom) if(!seen.has(sp)){ d.remove(); ncNmDom.delete(sp); } }catch(_){} }
+requestAnimationFrame(ncNmFrame);
 function ncNomeMonstro(e){ const st = curStage; if(!st) return ['', NC_NM_COR.comum];
   const V = typeof ncDG !== 'undefined' && ncDG ? ncDgVar() : null, mn = st.minion.name, ty = e.home && e.home.type && ETYPE[e.home.type] ? ' ' + ETYPE[e.home.type].label : '';
   if(e.elite) return [NC_ELITE_T[st.id % NC_ELITE_T.length] + ' ' + mn + (V ? ' ' + V.n : ''), NC_NM_COR.elite];
@@ -12766,8 +12785,8 @@ function ncBuffTick(dt){ if(!P || P.dead || mode !== 'stage') return; const A = 
   /* Bárbaro: barra de Loucura (no lugar da stamina). Quanto mais cheia, mais vida volta, de leve: até 1,2% da vida por segundo com a barra cheia */
   if(save.cls === 'barbarian' && ncRes() === 'sp' && P.res > 0 && P.hp < P.S.hp){ const f = P.res/ncResMax(); P.hp = Math.min(P.S.hp, P.hp + P.S.hp*.012*f*dt); } }
 function ncBuffStats(s){ const A = ncBuffAtivos(); for(const k in A){ const d = A[k].d, m = 1 + (A[k].lv - 1)*.1; for(const f in d.fx){ if(f === 'burn'){ s.burn = true; if(!s.elem) s.elem = 'poison'; } else s[f] = (s[f] || 0) + d.fx[f]*m; } } }
-function ncBuffHud(){ let el = document.getElementById('hBuff');
-  if(!el){ el = document.createElement('div'); el.id = 'hBuff'; document.body.appendChild(el); }
+function ncBuffHud(){ let el = document.getElementById('hBuff'); const hl = document.querySelector('#hud .hud-l'); if(!hl) return;
+  if(!el || el.parentNode !== hl){ if(el) el.remove(); el = document.createElement('div'); el.id = 'hBuff'; hl.appendChild(el); }
   const A = ncBuffAtivos(), ks = Object.keys(A); el.hidden = !ks.length || mode !== 'stage'; if(el.hidden) return; const t = Date.now();
   el.innerHTML = ks.map(k => { const b = A[k], r = Math.max(0, Math.round((b.ate - t)/1000)), mm = Math.floor(r/60), ss = String(r % 60).padStart(2, '0');
     return '<span class="hb" style="--c:' + b.d.c + '" title="' + b.d.n + (b.de && b.de !== save.name ? ' (de ' + b.de + ')' : '') + '"><i style=\'background-image:' + ncBuffIc(k) + '\'></i>' + mm + ':' + ss + '</span>'; }).join('')
@@ -12777,8 +12796,8 @@ setInterval(() => { try{ ncBuffHud(); }catch(_){} }, 500);
 setInterval(() => { try{ const tb = document.querySelector('.tbtns'); if(!tb) return; const land = innerWidth > innerHeight && innerHeight < 560;
   if(!land || mode !== 'stage' || document.body.classList.contains('nc-swap')){ if(tb.style.transform){ tb.style.transform = ''; } return; }
   let bot = 0; ['#mm', '#ncEvArc', '#mmTag'].forEach(q => { const e = document.querySelector(q); if(!e || !e.getClientRects().length) return; const r = e.getBoundingClientRect(); if(r.height && r.right > innerWidth - 260) bot = Math.max(bot, r.bottom); });
-  const r = tb.getBoundingClientRect(), k0 = parseFloat((tb.style.transform.match(/scale\(([\d.]+)/) || [0, 0])[1]) || .78, alto = r.height/k0, base = innerHeight - r.bottom;
-  const k = Math.max(.5, Math.min(.78, (innerHeight - bot - 6 - base)/alto)); if(Math.abs(k - k0) > .005 || !tb.style.transform) tb.style.transform = 'scale(' + k.toFixed(3) + ')'; }catch(_){} }, 400);
+  const r = tb.getBoundingClientRect(), k0 = parseFloat((tb.style.transform.match(/scale\(([\d.]+)/) || [0, 0])[1]) || .88, alto = r.height/k0, base = innerHeight - r.bottom;
+  const k = Math.max(.5, Math.min(.88, (innerHeight - bot - 6 - base)/alto)); if(Math.abs(k - k0) > .005 || !tb.style.transform) tb.style.transform = 'scale(' + k.toFixed(3) + ')'; }catch(_){} }, 400);
 
 function ncResTick(dt){ try{ ncBuffTick(dt); }catch(_){} if(!P) return; ncResInit(); const m = ncResMax(); if(ncRes() === 'sp'){ if(P.res > 0 && clock - Math.max(P.atkT || 0, P.resT || 0) > 6) P.res = Math.max(0, P.res - m*.03*dt); return; } if(P.res < m && clock - (P.resT || 0) > .6) P.res = Math.min(m, P.res + ncResRegen()*dt); }
 function usePotion(){
@@ -13695,7 +13714,7 @@ function updateHUD(){
   $('#hHp').style.width = (P.hp/S.hp*100) + '%';
   $('#hHpT').textContent = Math.ceil(P.hp) + '/' + S.hp;
   { ncResInit(); const m = ncResMax(), b = $('#hMpB'); b.classList.toggle('sp', ncRes() === 'sp'); $('#hMp').style.width = (P.res/m*100) + '%'; const t = Math.floor(P.res) + '/' + m; if($('#hMpT').textContent !== t) $('#hMpT').textContent = t; }
-  { const pc = save.level >= NC_MAX_LV ? 100 : Math.min(100, save.xp/xpNeed(save.level)*100); $('#hXp').style.width = pc + '%'; const t = save.level >= NC_MAX_LV ? 'XP máx.' : 'XP ' + pc.toFixed(1).replace('.', ',') + '%'; if($('#hXpT').textContent !== t) $('#hXpT').textContent = t; }
+  { const pc = save.level >= NC_MAX_LV ? 100 : Math.min(100, save.xp/xpNeed(save.level)*100); $('#hXp').style.width = pc + '%'; try{ document.querySelector('#hud .hud-lv').style.setProperty('--xp', pc.toFixed(1)); }catch(_){} const t = save.level >= NC_MAX_LV ? 'XP máx.' : 'XP ' + pc.toFixed(1).replace('.', ',') + '%'; if($('#hXpT').textContent !== t) $('#hXpT').textContent = t; }
   $('#hGold').innerHTML = adenaHTML(save.gold);
   $('#hPot').textContent = save.potions;
   if(boss && bossActive) $('#bHp').style.width = Math.max(0, boss.hp/boss.maxHp*100) + '%';
@@ -13934,7 +13953,7 @@ function startStage(id, onlyBoss, world, o){
   curStage = st; bossOnly = !!onlyBoss; worldFight = !!world; hubRegion = st.region;
   hideModals(); $('#hub').hidden = true;
   camera.clearViewOffset(); camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix();
-  closeYaw = 0; fpPitch = 0; camTilt = 0; buildStage(st, bossOnly); if(!worldFight) buildWorldBits(st, o.entry); dnStart(st); wxStart(st); warmStage();
+  closeYaw = 0; fpPitch = 0; camTilt = 0; save.zoom = NC_CAM_FIX; buildStage(st, bossOnly); if(!worldFight) buildWorldBits(st, o.entry); dnStart(st); wxStart(st); warmStage();
   // chegou por um portão ou pela viagem rápida: posição, vida e o que já tinha sido coletado
   if(o.entry === 'N'){ P.pos.set(GATE_N.x, heightAt(GATE_N.x, GATE_N.z + 4), GATE_N.z + 4); P.face = P.targetFace = 0; gateOpen = true; barrier.visible = false; }
   else if(o.entry === 'S'){ P.pos.set(GATE_S.x, 0, GATE_S.z - 4); }
@@ -14033,7 +14052,7 @@ function renderPauseGear(){
   const fl = [['all','Todos'], ...ncSlots().map(s => [s, SLOT_INFO[s].n])];
   const list = save.inv.filter(i => !isEquipped(i) && (pFilter === 'all' || i.slot === pFilter))
     .sort((a, b) => (b.tier - a.tier) || (b.q - a.q) || (SLOTS.indexOf(a.slot) - SLOTS.indexOf(b.slot)));
-  $('#pauseGear').innerHTML = `<h2>Câmera</h2><div class="filters">${ZOOMS.map((z, i) => `<button class="chipb" data-pzoom="${i}" aria-pressed="${(save.zoom ?? 4) === i}">${z.n}</button>`).join('')}</div>`;   // 22/11: equipamento e mochila ficam só na Mochila
+  $('#pauseGear').innerHTML = '';   // 22/11: equipamento e mochila ficam só na Mochila
 }
 function refreshGearInStage(){
   const ratio = P.hp/P.S.hp; P.S = stats(); P.hp = Math.max(1, Math.min(P.S.hp, Math.round(P.S.hp*ratio)));
@@ -16475,6 +16494,23 @@ body.nc-crhide #ncCriar{display:none!important}
   #ncTreeBox .arv-lock{padding:5px 8px!important;font-size:11.5px!important}
   #ncTreeBox .arv-lock .btn{padding:4px 12px!important;font-size:12px!important}
 }
+
+/* 27/11 (Arnold): câmera única, sem botões de trocar */
+#camBtn,#hCamBtn,#hCam{display:none!important}
+/* nomes dos monstros nítidos (texto da página) */
+#ncNmBox{position:fixed;inset:0;pointer-events:none;z-index:4;overflow:hidden}
+#ncNmBox .ncnm{position:absolute;left:0;top:0;white-space:nowrap;font:800 12px/1 system-ui,-apple-system,"Segoe UI",sans-serif;letter-spacing:.1px;text-shadow:0 0 2px #000,0 1px 2px #000,1px 0 1px #000,-1px 0 1px #000;will-change:transform}
+#ncNmBox .ncnm.ch{font-size:14px}
+/* buffs ao lado da vida, lá em cima: imagem com o tempo */
+#hud .hud-l{position:relative}
+#hBuff{position:absolute!important;left:calc(100% + 10px)!important;top:0!important;bottom:auto!important;transform:none!important;display:flex;gap:5px;z-index:3}
+#hBuff .hb i{width:26px!important;height:26px!important;border-radius:6px!important}
+#hBuff .hb{font-size:9.5px!important}
+/* nível: medalhão com anel de XP em volta (o anel enche conforme a XP) */
+#hud .hud-lv{width:54px!important;height:54px!important;top:-4px!important;border-radius:50%!important;clip-path:none!important;background:conic-gradient(from -90deg,#ffe08a 0,#ffb020 calc(var(--xp,0)*1%),rgba(255,255,255,.14) calc(var(--xp,0)*1%))!important;box-shadow:0 0 0 1.5px #6a4a10,0 0 12px rgba(255,190,60,.4),0 3px 10px rgba(0,0,0,.5)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+#hud .hud-lv::before{content:"";position:absolute;inset:4px;border-radius:50%;background:radial-gradient(circle at 35% 25%,#4a3a8a,#17122e 62%,#0c0a1a);box-shadow:inset 0 0 0 1.5px rgba(255,211,106,.7),inset 0 2px 6px rgba(255,255,255,.12)}
+#hud .hud-lv::after{content:"NÍVEL";position:absolute;left:0;right:0;top:12px;text-align:center;font:800 7px/1 system-ui,sans-serif;letter-spacing:.14em;color:#d8c8ff;z-index:1}
+#hud .hud-lv b{position:relative;z-index:1;margin-top:9px;font-family:var(--f-display)!important;font-size:21px!important;line-height:1!important;color:#ffe08a!important;font-weight:700!important;text-shadow:0 0 8px rgba(255,190,60,.55),0 1px 2px #000!important}
 </style>
 </body>
 </html>
