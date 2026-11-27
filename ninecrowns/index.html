@@ -5621,7 +5621,7 @@ const TIERS = [
 ];
 /* NINE CROWNS: grades no lugar das estrelas. As 10 faixas do jogo viram 6 grades; o "+" marca a faixa mais forte dentro do mesmo grade.
    Cada grade pede um nivel minimo para equipar: sem grade 0, D 15, C 30, B 50, A 65, S 80. */
-const GR_OF = [0,0,1,1,2,2,3,4,4,5], GR_N = ['No\u00a0Grade','Grade\u00a0D','Grade\u00a0C','Grade\u00a0B','Grade\u00a0A','Grade\u00a0S'], GR_LV = [0,15,30,50,65,80], NC_MAX_LV = 80, NC_LV_K = 43/79;
+const GR_OF = [0,0,1,1,2,2,3,4,4,5], GR_N = ['No\u00a0Grade','Grade\u00a0D','Grade\u00a0C','Grade\u00a0B','Grade\u00a0A','Grade\u00a0S'], GR_LV = [0,15,29,42,56,70] /* 26/11/2026 (Arnold: 1 grade a cada 3 mapas): nível de cada grade = nível do 1º mapa do grade */, NC_MAX_LV = 80, NC_LV_K = 43/79;
 const GR = t => { t = Math.max(0, Math.min(9, Math.round(t))); return GR_N[GR_OF[t]]; };
 const grLv = t => GR_LV[GR_OF[Math.max(0, Math.min(9, Math.round(t)))]];
 TIERS.forEach((t, i) => { t.name = t.model; t.star = i + 1; t.s = GR(i); t.sc = GR(i); t.m = 1; t.img = IMG['a' + i]; });
@@ -5644,6 +5644,11 @@ const ENEMY_MAX = id => Math.min(6, Math.floor(id/2.6));
 const ELITE_MAX = id => Math.min(8, 1 + Math.floor(id/2.2));
 const BOSS_BASE = id => Math.min(8, 2 + Math.floor(id/2.4));
 const reqStar = st => Math.min(9, 1 + Math.round(st.id*.5));
+/* 26/11/2026 (Arnold aprovou): 1 grade a cada 3 mapas. Mapas 1-3 No Grade, 4-6 D, 7-9 C, 10-12 B, 13-15 A, 16-18 S.
+   Pedras: mapas 1-3 nenhuma; 4-6 Lesser Blue (SA); 7-9 + Silver Coin; 10-12 + Green Coin e Lesser Gold; 13 em diante + Gold Coin. */
+const NC_ZONA = st => Math.min(5, Math.floor(((st && st.id) || 0)/3));
+const NC_GT = g => [GR_OF.indexOf(g), GR_OF.lastIndexOf(g)];
+const NC_ZMAT = [[], ['lblue'], ['lblue','scoin'], ['lblue','scoin','gcoin','lgold'], ['lblue','scoin','gcoin','lgold','ocoin'], ['lblue','scoin','gcoin','lgold','ocoin']];
 function rollTier(min, max, bias){ const k = .42 + (bias || 0)*.12; let t = min; while(t < max && Math.random() < k) t++; return t; }
 const ARMOR = ['helmet','chest','shoulders','bracers','greaves','boots'];
 const GATE_ARMOR = ['helmet','chest','bracers','greaves','boots']; // trava das fases de arma (mantém o progresso antigo)
@@ -6097,7 +6102,12 @@ const evEnds = () => { const ms = 6048e5 - (Date.now() % 6048e5); return Math.ce
 let runMats = {}, runGems = {}, runFrags = {}, runCoins = 0;
 /* 22/11 (tabela da forja): o que cai agora. Restos baratos não caem mais (prata é Adena). Coins seguem a área: Silver (área 8+), Green (13+), Gold (16+). Lesser Blue cai em todo lugar. */
 const NC_CHEAP = {metal:1, minerio:1, cristal:1, essencia:1, refino:1, prata:1};
-function ncCoinFor(k){ if(NC_CHEAP[k]) return null; if(['ancestral','bencao','lblue'].includes(k)) return 'lblue'; if(['divina','lgold'].includes(k)) return 'lgold';
+function ncCoinFor(k){ if(NC_CHEAP[k]) return null;
+  if(typeof mode !== 'undefined' && mode === 'stage' && typeof curStage !== 'undefined' && curStage){ const A = NC_ZMAT[NC_ZONA(curStage)];
+    const w = ['ancestral','bencao','lblue'].includes(k) ? 'lblue' : ['divina','lgold'].includes(k) ? 'lgold' : ['scoin','gcoin','ocoin'].includes(k) ? k : null;
+    if(w) return A.includes(w) ? w : null;
+    if(!A.length || Math.random() > .3) return null;   // pedra é rara: só 3 em cada 10 chances viram pedra
+    let r = Math.random()*A.reduce((t, _, i) => t + 1/(i + 1), 0); for(let i = 0; i < A.length; i++){ r -= 1/(i + 1); if(r <= 0) return A[i]; } return A[0]; } if(['ancestral','bencao','lblue'].includes(k)) return 'lblue'; if(['divina','lgold'].includes(k)) return 'lgold';
   if(['scoin','gcoin','ocoin'].includes(k)) return k; const r = Math.random();
   return r < .55 ? 'scoin' : r < .8 ? 'gcoin' : r < .9 ? 'ocoin' : 'lgold'; }   // 22/11: qualquer área; quanto melhor a coin, mais rara
 function giveMat(k, n, pos){ k = ncCoinFor(k); if(!k) return; n = (n || 1)*(['scoin','gcoin','ocoin','lgold'].includes(k) ? 3 : 1); n = Math.max(1, Math.round((n || 1)*(evFx().mat || 1)*(evFx().stone || 1))); save.mats[k] = (save.mats[k] || 0) + n; runMats[k] = (runMats[k] || 0) + n; feed('+' + n + ' ' + MATS[k].n, MATS[k].css); if(pos) floatText(pos, MATS[k].n, 'gold'); }
@@ -6178,8 +6188,8 @@ window.NC = {coroas:() => ncCoroasGanhas()};   // usado pelo menu novo, que fica
  ['Alpaquim','Rei Alpaking Aurel'],['Glub','Glub Ancião'],['Abelha de Ferro','Rei Dino Ferrak'],['Visitante','Visitante Mestre'],['Hywirl','Demônio Azul'],['Diabrete','Rei Demônio Kaoz']].forEach((n, i) => { if(ST_DEF[i]){ ST_DEF[i].mn = n[0]; ST_DEF[i].boss = n[1]; } });
 const STAGES = ST_DEF.map((d, i) => Object.assign({}, d, {
   id:i, region:Math.floor(i/6), itier:BOSS_BASE(i), slot:PIECE_ORDER[i%6], lvl:Math.min(NC_MAX_LV, 1 + Math.round(i*2.5/NC_LV_K)),
-  minion:{name:d.mn, color:d.mc, ranged:!!d.mr, hp:Math.round(30*Math.pow(1.27,i)*2.5), dmg:Math.round(7*Math.pow(1.2,i)*2), spd:3.2 + i*.05, scale:.8},
-  bossCfg:{id:i, hp:Math.round(380*Math.pow(1.3,i)*(1 + i*.06)*1.3), dmg:Math.round(14*Math.pow(1.2,i)*(1 + i*.03)*1.25), spd:3 + i*.04, scale:d.bs, color:d.bc, acc:d.ba,
+  minion:{name:d.mn, color:d.mc, ranged:!!d.mr, hp:Math.round(30*Math.pow(1.27,i)*2.5*(1 + i*.12)), dmg:Math.round(7*Math.pow(1.2,i)*2*(1 + i*.06)),   /* 26/11 (Arnold: passei dos mapas rápido demais): cada mapa +12% vida e +6% dano */ spd:3.2 + i*.05, scale:.8},
+  bossCfg:{id:i, hp:Math.round(380*Math.pow(1.3,i)*(1 + i*.06)*1.3*(1 + i*.12)), dmg:Math.round(14*Math.pow(1.2,i)*(1 + i*.03)*1.25*(1 + i*.06)), spd:3 + i*.04, scale:d.bs, color:d.bc, acc:d.ba,
     attacks:d.att.concat(i >= 3 ? ['dash3'] : [], i >= 6 ? ['meteor'] : [], i >= 9 ? ['laser'] : [], i >= 12 ? ['blink'] : [])},
 }));
 
@@ -7756,8 +7766,8 @@ function updateAmbient(dt, cx, cz){
 /* ================= WORLD STATE ================= */
 let mode = 'hub', running = false, inputLocked = false;
 let curStage = null, bossOnly = false, worldFight = false;
-const bossRange = st => { const hi = Math.min(CFG.caps.boss, st.itier + 3); return [Math.min(st.itier, hi), hi]; };
-const worldRange = r => [Math.min(9, 3 + r*2), Math.min(CFG.caps.world, 7 + r)];
+const bossRange = st => NC_GT(NC_ZONA(st));   // 26/11: o chefe dá o grade do mapa
+const worldRange = r => NC_GT(Math.min(5, 2*r + 2));   // 26/11: chefe mundial do ato dá o grade do próximo trecho
 let hero = null, P = null, boss = null, bossActive = false;
 let allies = [];
 let ncNid = 0, ncAiPeer = false;   // ncNid: número de cada monstro (o mesmo em todos os aparelhos da sala)
@@ -9543,6 +9553,9 @@ function buildStage(st, onlyBoss){
   if(RMED) medDress(st);
   barrier.visible = !gateOpen;
   if(!gateOpen && !runes.length) gateOpen = true;   // segurança: fase sem postos
+  try{ const L = (save.postos || {})[st.id] || []; if(!gateOpen && L.length){ runes.forEach(r => { if(!L.includes(r.idx)) return; r.taken = true; removeObj(r.g);   // 26/11 (Arnold): o que já foi libertado continua libertado
+      enemies.forEach(e => { if(e.post === r && !e.dead){ e.dead = true; removeObj(e.cr.root); removeObj(e.bar.g); } }); });
+    if(runes.every(r => r.taken)) gateOpen = true; } }catch(_){}
   barrier.visible = !gateOpen;
   spawnBoss(st);
   bossActive = false;
@@ -10356,7 +10369,8 @@ function markGuard(e, r){ e.post = r; r.guards++;
 function postFreed(r){
   r.taken = true; SFX.rune(); burst({x:r.x, z:r.z, y:heightAt(r.x, r.z) + 1.4}, 0xc8a8ff, 30, 6, 8, 1); fxRing(r.x, r.z, 6, 0xc8a8ff, .5); addShake(.25); removeObj(r.g);
   for(let i=0;i<5;i++) spawnPickup('gold', {x:r.x, z:r.z}, Math.round(4*Math.pow(1.15, curStage.id)));
-  if(Math.random() < .35*LUCK()) dropLoot({x:r.x, z:r.z}, rollRar('elite', 0, Math.min(CFG.caps.elite, ELITE_MAX(curStage.id))));
+  if(Math.random() < .35*LUCK()) dropLoot({x:r.x, z:r.z}, rollRar('elite', NC_GT(NC_ZONA(curStage))[0], NC_GT(NC_ZONA(curStage))[1]));
+  try{ save.postos = save.postos || {}; const L = save.postos[curStage.id] = save.postos[curStage.id] || []; if(!L.includes(r.idx)) L.push(r.idx); persist(); }catch(_){}   // 26/11 (Arnold): posto libertado fica salvo até vencer o chefe
   const n = runes.filter(q => q.taken).length, need = runes.length;
   if(n >= need){ gateOpen = true; barrier.visible = false; banner('Todos os postos libertados!', 'O portal do chefe se abriu: a arena fica no extremo norte', 'rune'); SFX.drop(); }
   else banner('Posto libertado! (' + n + ' de ' + need + ')', 'O selo quebrou. Siga os feixes roxos até os outros postos', 'rune');
@@ -10830,9 +10844,12 @@ function ncDgBoss(){ const D = ncDG; D.boss = true; ncDgBuild(); ncDgTraps();
   banner('Sala 5 de 5 · Chefe', 'Vença ' + curStage.boss + ' para abrir o baú da masmorra', 'danger'); }
 function C2(c){ return new T.Color(c); }
 function ncDgReward(st){ const D = ncDG; if(!D) return null; const [lo, hi] = bossRange(st), out = [];
-  const it = newItem(randomSlot(), Math.min(hi, lo + (Math.random() < .35 ? 1 : 0)), {wtype:CLS().wtype}); if(addItem(it)){ out.push(it); runLoot.push(it); }
-  if(D.duo){ const it2 = newItem(randomSlot(), hi, {wtype:CLS().wtype}); if(addItem(it2)){ out.push(it2); runLoot.push(it2); } }
-  try{ giveMat('scoin', 2 + st.region); if(st.region >= 1) giveMat('gcoin', 1 + st.region); if(st.region >= 2) giveMat('lblue', 2); }catch(_){}
+  /* 26/11/2026 (Arnold aprovou): o chefe da masmorra dá 1 peça garantida do grade de cima (mapa 1 dá Grade D), pedras do grade e Adena dobrada */
+  const z = NC_ZONA(st), up = NC_GT(Math.min(5, z + 1))[0];
+  const it = newItem(randomSlot(), up, {wtype:CLS().wtype}); if(addItem(it)){ out.push(it); runLoot.push(it); }
+  if(D.duo){ const it2 = newItem(randomSlot(), up, {wtype:CLS().wtype}); if(addItem(it2)){ out.push(it2); runLoot.push(it2); } }
+  try{ NC_ZMAT[Math.min(5, z + 1)].forEach((k, i) => { save.mats[k] = (save.mats[k] || 0) + Math.max(1, 3 - i); runMats[k] = (runMats[k] || 0) + Math.max(1, 3 - i); }); }catch(_){}
+  try{ const ad = Math.round(60*Math.pow(1.2, st.id)*(D.duo ? 1.5 : 1)); save.gold += ad; }catch(_){}
   save.dgWins = save.dgWins || {}; const k = (D.duo ? 'd' : 's') + st.id; save.dgWins[k] = (save.dgWins[k] || 0) + 1; save.dgBest = save.dgBest || {}; save.dgBest[k] = 6;
   banner('Baú da masmorra!', out.length ? 'Ganhou ' + out.map(itemName).join(' e ') : 'Bolsa cheia: libere espaço', 'gold'); ncDG = null; return out; }
 function spawnMinion(st, x, z, awake, elite, type){
@@ -12195,13 +12212,13 @@ function killMinion(e){
   save.cnt.kills = (save.cnt.kills || 0) + 1;
   if(e.elite){ save.cnt.elites = (save.cnt.elites || 0) + 1;
     for(let i=0;i<3;i++) spawnPickup('gold', e.pos, Math.round(3*Math.pow(1.15, id))); spawnPickup('heart', e.pos, .35);
-    if(Math.random() < CFG.itemCh.elite*LUCK()*(ev.item || 1)) dropLoot(e.pos, rollRar('elite', 0, Math.min(CFG.caps.elite, ELITE_MAX(id))));
+    if(Math.random() < CFG.itemCh.elite*LUCK()*(ev.item || 1)) dropLoot(e.pos, rollRar('elite', NC_GT(NC_ZONA(curStage))[0], NC_GT(NC_ZONA(curStage))[1]));
     if(Math.random() < CFG.matCh.elite) giveMat(basic, 1 + (Math.random() < .5 ? 1 : 0)); if(Math.random() < .4*rw) giveMat(sp);
     if(Math.random() < .7) giveMat('refino', 1 + (Math.random() < .4 ? 1 : 0)); if(Math.random() < .08*rw) giveMat('superior'); if(Math.random() < .1) giveMat('broca');
     if(Math.random() < CFG.stoneCh.elite*rw*(ev.stone || 1)*(ev.stoneElite || 1)) giveGem(rndGem(id), stoneRoll('elite'), e.pos);
-    if(Math.random() < CFG.fragCh.elite*rw) giveFrag(rollRar('elite', 0, Math.min(CFG.caps.elite, ELITE_MAX(id))), 1); }
+    if(Math.random() < CFG.fragCh.elite*rw) giveFrag(NC_GT(NC_ZONA(curStage))[0], 1); }
   else { if(Math.random() < .12*DF().hearts) spawnPickup('heart', e.pos, .25);
-    if(Math.random() < CFG.itemCh.minion*rw*(ev.item || 1)) dropLoot(e.pos, rollRar('minion', 0, Math.min(CFG.caps.minion, ENEMY_MAX(id))));
+    if(Math.random() < CFG.itemCh.minion*rw*(ev.item || 1)) dropLoot(e.pos, NC_GT(NC_ZONA(curStage))[0]);
     if(Math.random() < CFG.matCh.minion*rw) giveMat(basic); if(Math.random() < CFG.matCh.special*rw) giveMat(sp);
     if(Math.random() < .08*rw) giveMat('refino'); if(Math.random() < CFG.stoneCh.minion*rw*(ev.stone || 1)) giveGem(rndGem(id), stoneRoll('minion'), e.pos); }
 }
@@ -12680,7 +12697,7 @@ function bossDefeated(b){
   const st = curStage, id = st.id;
   const ncFirst = !(save.beaten[id] > 0);
   try{ if(ncDG && ncDG.boss) ncDgReward(st); }catch(_){ ncDG = null; }
-  save.beaten[id] = (save.beaten[id]||0) + 1; ncKingFall(id, ncFirst);
+  save.beaten[id] = (save.beaten[id]||0) + 1; ncKingFall(id, ncFirst); try{ if(save.postos) delete save.postos[id]; }catch(_){}
   const hadSet = ownsSet(st.region*2 + 2);
   let main;
   const M = BMODS[b.mod || 'normal'], world = b.mod === 'mundial', chance = world ? 1 : Math.min(1, chanceFor(id) + M.ch);
@@ -12689,7 +12706,7 @@ function bossDefeated(b){
   if(Math.random() < chance){ if(!world) save.pity[id] = 0; const it = newItem(world ? ARMOR[Math.floor(Math.random()*ARMOR.length)] : st.slot, rollRar(world ? 'world' : 'boss', lo, hi, DF().qb*.3 + M.bias*.3), {wtype:CLS().wtype, boss:true}); addItem(it); runLoot.push(it); main = {type:'piece', chance, item:it}; }
   else { save.pity[id] = (save.pity[id]||0) + 1; main = {type:'miss', chance, next:chanceFor(id)}; }
   const extra = [];
-  const ex = newItem(randomSlot(), rollTier(0, Math.max(0, st.itier - 2), .5)); if(addItem(ex)){ extra.push(ex); runLoot.push(ex); }
+  const ex = newItem(randomSlot(), NC_GT(NC_ZONA(st))[0]); if(addItem(ex)){ extra.push(ex); runLoot.push(ex); }
   // relíquia exclusiva do chefe (anti-azar próprio)
   if(!world){ if(Math.random() < exChance(id)){ save.pityEx[id] = 0; const rel = newItem(st.slot, rollRar('boss', lo, hi, 1), {wtype:CLS().wtype, boss:true}); rel.ex = 'boss:' + id; if(addItem(rel)){ extra.push(rel); runLoot.push(rel); } }
     else save.pityEx[id] = (save.pityEx[id] || 0) + 1; }
@@ -13154,10 +13171,10 @@ function updateWorld(dt){
       giveMat(curStage.id % 2 ? 'minerio' : 'metal', ch.gold ? 3 : 1);
       if(Math.random() < (ch.gold ? CFG.stoneCh.goldChest : CFG.stoneCh.chest)*(evFx().stone || 1)*LUCK()) giveGem(rndGem(curStage.id), stoneRoll(ch.gold ? 'boss' : 'elite'), {x:ch.x, z:ch.z});
       if(ch.gold){
-        dropLoot({x:ch.x, z:ch.z}, rollRar('elite', Math.min(2, ELITE_MAX(curStage.id), CFG.caps.elite), Math.min(CFG.caps.elite, ELITE_MAX(curStage.id))));
-        if(Math.random() < .3) dropLoot({x:ch.x, z:ch.z}, rollRar('elite', 0, Math.min(CFG.caps.elite, ELITE_MAX(curStage.id))));
+        dropLoot({x:ch.x, z:ch.z}, NC_GT(NC_ZONA(curStage))[1]);
+        if(Math.random() < .3) dropLoot({x:ch.x, z:ch.z}, NC_GT(NC_ZONA(curStage))[0]);
         banner('Tesouro escondido!', 'Itens caíram no chão');
-      } else if(Math.random() < CFG.itemCh.chest*LUCK()) dropLoot({x:ch.x, z:ch.z}, rollRar('elite', 0, Math.min(CFG.caps.elite, Math.max(ENEMY_MAX(curStage.id), ELITE_MAX(curStage.id) - 1))));
+      } else if(Math.random() < CFG.itemCh.chest*LUCK()) dropLoot({x:ch.x, z:ch.z}, NC_GT(NC_ZONA(curStage))[0]);
       gainXP(Math.round((ch.gold ? 50 : 20)*Math.pow(1.2, curStage.id)));
     }
   }
