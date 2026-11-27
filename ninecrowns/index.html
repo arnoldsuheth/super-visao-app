@@ -671,7 +671,7 @@ body.nc-swap #joyZone{left:auto;right:0}
 @keyframes ncsShine{0%{background-position:130% 0}100%{background-position:-130% 0}}
 @keyframes ncsBlink{0%,100%{opacity:1}50%{opacity:.55}}
 @keyframes ncsFlash{0%{opacity:0}25%{opacity:.9}100%{opacity:0}}
-@media (max-height:460px){.ncs-stage{flex-direction:row;flex-wrap:wrap;justify-content:center;column-gap:26px;row-gap:8px;width:96vw}.ncs-ecl{--s:104px;margin:34px 40px}.ncs-txt{display:flex;flex-direction:column;align-items:center;gap:8px}.ncs-logo{font-size:clamp(28px,7vw,54px)}.ncs-foot{flex-direction:row;padding:8px 16px;margin-top:0;flex-basis:auto}.ncs-st{display:none}.ncs-bar{width:120px}.ncs-go{padding:8px 30px;font-size:14px}}
+@media (max-height:460px){.ncs-stage{display:grid!important;grid-template-columns:auto auto;grid-template-areas:'m t' 'm f';align-items:center;justify-content:center;column-gap:30px;row-gap:10px;width:96vw}.ncs-ecl{grid-area:m}.ncs-txt{grid-area:t}.ncs-foot{grid-area:f;justify-self:center;align-self:start}.ncs-ecl{--s:104px;margin:34px 40px}.ncs-txt{display:flex;flex-direction:column;align-items:center;gap:8px}.ncs-logo{font-size:clamp(28px,7vw,54px)}.ncs-foot{flex-direction:column;gap:6px;padding:8px 18px;margin-top:0;flex-basis:auto}.ncs-st{font-size:11px}.ncs-bar{width:min(320px,42vw)}.ncs-go{padding:8px 30px;font-size:14px}}
 @media (prefers-reduced-motion:reduce){#ncSplash *{animation:none!important}}
 </style>
 <div id="ncSplash" role="dialog" aria-label="Nine Crowns">
@@ -925,8 +925,8 @@ body.nc-swap #joyZone{left:auto;right:0}
     <button id="tPot2" aria-label="Poção de mana ou stamina"><b id="tPot2N">2</b></button>
     <button id="tMount">Cavalo</button>
     <button id="tBuff" aria-label="Buffs"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V6M6 12l6-6 6 6M6 19h12"/></svg></button>
-    <button id="tPotA" class="ncauto" aria-label="Poção de vida automática">A</button>
-    <button id="tPot2A" class="ncauto" aria-label="Poção de mana automática">A</button>
+    <button id="tPotA" class="ncauto" aria-label="Poção de vida automática" role="switch"><i></i></button>
+    <button id="tPot2A" class="ncauto" aria-label="Poção de mana automática" role="switch"><i></i></button>
     <button id="tDash">Esquiva</button>
     <button id="tSk2">H2</button>
     <button id="tSk1">H1</button>
@@ -11516,7 +11516,7 @@ $('#tBuff').addEventListener('pointerdown', e => { e.preventDefault(); ncBuffUsa
 const NC_AUTO_PCT = .3;
 const ncAuto = () => (save.autoPot = save.autoPot || {hp:false, res:false});
 ['tPotA', 'tPot2A'].forEach(id => $('#' + id).addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); const A = ncAuto(), k = id === 'tPotA' ? 'hp' : 'res'; A[k] = !A[k]; persist(); try{ floatText(P.pos, 'Poção automática ' + (A[k] ? 'ligada' : 'desligada'), A[k] ? 'heal' : 'block'); }catch(_){} }));
-setInterval(() => { try{ const A = ncAuto(), a1 = $('#tPotA'), a2 = $('#tPot2A'); a1.classList.toggle('on', !!A.hp); a2.classList.toggle('on', !!A.res); a2.hidden = ncRes() !== 'mp';
+setInterval(() => { try{ const A = ncAuto(), a1 = $('#tPotA'), a2 = $('#tPot2A'); a1.classList.toggle('on', !!A.hp); a2.classList.toggle('on', !!A.res); a1.setAttribute('aria-checked', String(!!A.hp)); a2.setAttribute('aria-checked', String(!!A.res)); a2.hidden = ncRes() !== 'mp';
   $('#tPot').classList.toggle('vazio', !(save.potions > 0)); $('#tPot2').classList.toggle('vazio', !(save.potRes > 0));
   if(mode !== 'stage' || !P || P.dead || !running) return;
   if(A.hp && save.potions > 0 && !(P.potT > 0) && P.hp <= P.S.hp*NC_AUTO_PCT) usePotion();
@@ -16389,9 +16389,11 @@ body.nc-ov #ncXp2{display:none}
 #hBuff .hb i{font-style:normal;display:inline-grid;place-items:center;width:16px;height:16px;border-radius:50%;background:var(--c);color:#111;font-size:8.5px;text-shadow:none}
 .arv-h{grid-column:1/-1;font:700 13px/1.2 Cinzel,serif;color:#f2c14e;letter-spacing:.06em;margin:10px 0 2px;text-transform:uppercase}
 .arv-lock{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;border:1px dashed #6a6490;border-radius:10px;padding:8px 10px;color:#c8c2e8;font:600 13px/1.3 system-ui,sans-serif}
-.ncauto,#touch .ncauto,#touch button.ncauto{width:26px!important;height:26px!important;min-width:0!important;padding:0!important;border-radius:50%!important;clip-path:none!important;background:#2a2440!important;border:2px solid #6a6490!important;color:#b9b2d8!important;font:800 11px/1 system-ui,sans-serif!important;z-index:6}
-.ncauto.on,#touch .ncauto.on,#touch button.ncauto.on{background:#2a8a4a!important;border-color:#7aff9a!important;color:#fff!important;box-shadow:0 0 8px #7aff9a}.ncauto[hidden]{display:none!important}
-#tPotA{right:98px;bottom:206px}#tPot2A{right:160px;bottom:196px}
+/* 26/11/2026 (Arnold): chave de liga/desliga de verdade em cima das poções */
+.ncauto,#touch .ncauto,#touch button.ncauto{width:36px!important;height:19px!important;min-width:0!important;padding:0!important;border-radius:10px!important;clip-path:none!important;background:#3a3450!important;border:1.5px solid #8a84a8!important;z-index:6;transition:background .2s}
+#touch .ncauto i{position:absolute;top:1.5px;left:2px;width:13px;height:13px;border-radius:50%;background:#d8d2ee;box-shadow:0 1px 2px #0008;transition:left .2s}
+.ncauto.on,#touch .ncauto.on,#touch button.ncauto.on{background:#2fae5a!important;border-color:#9affb0!important;box-shadow:0 0 8px #7aff9a}#touch .ncauto.on i{left:19px;background:#fff}.ncauto[hidden]{display:none!important}
+#tPotA{right:92px;bottom:210px}#tPot2A{right:154px;bottom:200px}
 #tPot.vazio,#tPot2.vazio{background-image:none!important;opacity:.55}#tPot.vazio b,#tPot2.vazio b{opacity:.8}
 .cmpl{font:600 12.5px/1.45 system-ui,sans-serif;margin-top:4px;color:#d8d2f0}.cmpl .up1{color:#7aff9a}.cmpl .dn1{color:#ff7a6a}.cmpl em{font-style:normal;font-weight:800;margin-left:4px}.cmpl span{margin-right:6px;white-space:nowrap}
 .pimg.nci>span.ncimg{position:absolute;left:11%;top:9%;width:78%;height:78%;display:block;background-repeat:no-repeat;background-position:center;background-size:contain;z-index:1;pointer-events:none;-webkit-transform:translateZ(0)}.pimg.nci>span.ncimg.w{left:8%;top:6%;width:84%;height:84%}
