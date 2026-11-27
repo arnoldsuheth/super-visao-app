@@ -11046,7 +11046,7 @@ function removeObj(o){
 /* ================= INPUT ================= */
 const keys = {};
 /* Atalhos do teclado que o jogador pode trocar (pedido do Arnold, 20/11). Andar (WASD/setas), Esc e Espaço ficam fixos. */
-const NC_BIND = [['atk','Atacar','KeyJ'],['s1','Habilidade 1','KeyE'],['s2','Habilidade 2','KeyR'],['dash','Esquiva','ShiftLeft'],['pot','Poção de vida','KeyQ'],['pot2','Poção de mana/stamina','KeyF'],['mount','Montaria','KeyG'],
+const NC_BIND = [['atk','Atacar','KeyJ'],['s1','Habilidade 1','Digit1'],['s2','Habilidade 2','Digit2']   /* 26/11/2026 (Arnold): os 2 lugares de habilidade se chamam 1 e 2 */,['dash','Esquiva','ShiftLeft'],['pot','Poção de vida','KeyQ'],['pot2','Poção de mana/stamina','KeyF'],['mount','Montaria','KeyG'],
   ['bag','Inventário (mochila)','Tab'],['hero','Personagem','KeyC'],['skills','Habilidades','KeyH'],['map','Mapa grande','KeyM'],['cam','Distância da câmera','KeyZ']];
 const NC_LOCKED = ['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Escape','Space'];
 const bindOf = a => (save.keys && save.keys[a]) || (NC_BIND.find(b => b[0] === a) || [])[2];
@@ -11126,8 +11126,9 @@ addEventListener('keydown', e => {
   if(isKey(e, 'pot')) usePotion();
   if(isKey(e, 'pot2')) usePotRes();
   if(isKey(e, 'mount')) toggleMount();
-  if(isKey(e, 's1') || e.code === 'Digit1') useSkill(0);
-  if(isKey(e, 's2') || e.code === 'Digit2') useSkill(1);
+  const livre = c => !NC_BIND.some(b => bindOf(b[0]) === c);   // E e R continuam funcionando no teclado se não estiverem em outra ação
+  if(isKey(e, 's1') || e.code === 'Digit1' || (e.code === 'KeyE' && livre('KeyE'))) useSkill(0);
+  if(isKey(e, 's2') || e.code === 'Digit2' || (e.code === 'KeyR' && livre('KeyR'))) useSkill(1);
   if(e.code.startsWith('Arrow')) e.preventDefault();
 });
 addEventListener('keyup', e => { keys[e.code] = false; });
