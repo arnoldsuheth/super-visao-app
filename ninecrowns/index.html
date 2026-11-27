@@ -8233,7 +8233,7 @@ function ncArtUrl(slot, wtype, g, tc){ const k = slot + '|' + wtype + '|' + g + 
 const ncArt = (slot, wtype, g) => '<svg viewBox="0 0 64 64" aria-hidden="true">' + ((NC_ART_G[slot] && g != null && NC_ART_G[slot][g]) || NC_ART[slot === 'weapon' ? (wtype || CLS().wtype) : slot] || NC_ART.sword) + '</svg>';
 function pieceImg(t, slot, cls, wtype, up, sa){ const U = ncUp(Math.min(NC_UP_MAX, (up || 0) + (sa ? 3 : 0)));   /* 22/11: SA também acende o ícone, e o brilho sobe com a evolução */
   const g = GR_OF[t] || 0, wi = slot === 'weapon' ? ncWIco(t, wtype || (CLASSES[save.cls] || {}).wtype) : null;   /* 22/11 (Arnold): moldura enfeitada (1 pedrinha por grade, brilho no A e no S) e foto da arma de verdade */
-  return `<span class="pimg nci g${g} ${cls || ''} ${U ? 'up' : ''} ${U && U.f ? 'fire' : ''}" ${up ? 'data-up="+' + up + '"' : ''} style="--tc:${TIERS[t].css}${U ? ';--uc:' + U.c + ';--ug:' + U.g + 'px;--fh:' + U.f + '%' : ''}" role="img" aria-label="${SLOT_INFO[slot].n}">${wi ? '<img class="wico" src="assets/icons/w/' + wi.replace('/', '_') + '.png" alt="">' : '<img class="nca" src="assets/icons/a/' + (slot === 'weapon' ? 'w_' + (wtype || (CLASSES[save.cls] || {}).wtype) : slot) + '_' + t + '.png" alt="">'   /* 24/11: ícones prontos em PNG (o iPhone mostra sempre) */}${g ? '<b class="ngm">' + '<i></i>'.repeat(g) + '</b>' : ''}</span>`; }
+  return `<span class="pimg nci g${g} ${cls || ''} ${U ? 'up' : ''} ${U && U.f ? 'fire' : ''}" ${up ? 'data-up="+' + up + '"' : ''} style="--tc:${TIERS[t].css}${U ? ';--uc:' + U.c + ';--ug:' + U.g + 'px;--fh:' + U.f + '%' : ''}" role="img" aria-label="${SLOT_INFO[slot].n}">${wi ? '<span class="ncimg w" style="background-image:url(assets/icons/w/' + wi.replace('/', '_') + '.png)"></span>' : '<span class="ncimg" style="background-image:url(assets/icons/a/' + (slot === 'weapon' ? 'w_' + (wtype || (CLASSES[save.cls] || {}).wtype) : slot) + '_' + t + '.png)"></span>'   /* 26/11/2026 (Arnold, 5ª vez): no iPhone a <img> com sombra dentro da moldura não aparecia (defeito do Safari). Agora a imagem é o fundo de um bloco simples, sem filtro */}${g ? '<b class="ngm">' + '<i></i>'.repeat(g) + '</b>' : ''}</span>`; }
 /* 25/11/2026 (Arnold: "as imagens dos itens demoram um século"): cada ícone era baixado só na hora de aparecer.
    Agora, logo depois de abrir o jogo, as imagens são baixadas em segundo plano (primeiro as da sua classe) e ficam guardadas no aparelho. */
 (function(){ let done = false; function go(){ if(done) return; done = true;
@@ -11751,7 +11751,7 @@ function nearestEnemy(range, from){
     const d = Math.hypot(e.pos.x - o.x, e.pos.z - o.z) - e.r; if(d < bd){ bd = d; best_ = e; } }
   return best_;
 }
-function aimAngle(range){ const t = ncTgtOk(); if(t && !t.e) return Math.atan2(t.x - P.pos.x, t.z - P.pos.z); const e = nearestEnemy(range); return e ? Math.atan2(e.pos.x - P.pos.x, e.pos.z - P.pos.z) : null; }
+function aimAngle(range){ const t = ncTgtOk(); if(t && !t.e) return Math.atan2(t.x - P.pos.x, t.z - P.pos.z); const e = ncNearVis(range); return e ? Math.atan2(e.pos.x - P.pos.x, e.pos.z - P.pos.z) : null; }
 function atkCooldown(){ return CLS().cd*NC_BAL2.golpe/(1 + Math.min(NC_BAL2.tetoDestreza, P.S.aspd) + (P.rageT > 0 ? .6 : 0)); }   /* 26/11/2026 (Arnold): todos batem 25% mais devagar; a Destreza (luvas, arma, pedras) acelera até +60% */
 /* 23/11/2026 (Arnold): o ataque do Xamã estava igual ao do Necromante (bola mágica). 3 opções novas, todas guiadas (acertam o alvo):
    terra = espinhos de pedra saem do chão embaixo do inimigo · vento = redemoinho que atravessa a fila de inimigos · cipo = chicote de cipó que puxa o inimigo.
@@ -11760,7 +11760,8 @@ function ncSangTick(){ for(const o of enemies){ const S = o.ncSang; if(!S) conti
     if(clock >= S.prox){ S.prox = clock + .5; hitEnemy(o, S.tick, {kb:0, noProc:true, anyY:1, quiet:'sang sang' + (window.ncSangV || save.sangV || 'A')}); burst({x:o.pos.x, y:o.pos.y + .8, z:o.pos.z}, 0xc81e2a, 4, 1.5, 2, .3); } } }
 const ncFx = []; function ncFxTick(dt){ try{ if(typeof enemies !== 'undefined') ncSangTick(); }catch(_){} for(let i = ncFx.length - 1; i >= 0; i--){ const f = ncFx[i]; f.t += dt; if(f.up(f.t, dt) === false){ f.end && f.end(); ncFx.splice(i, 1); } } }
 function ncShaLv(){ let m = 0; for(let i = 0; i < 6; i++) m = Math.max(m, ncSkLv(i)); return m; }
-function ncShamanAtk(tipo){ const t = ncTgtOk(); let e = t && t.e && !t.e.dead && !t.e.dying && Math.hypot(t.e.pos.x - P.pos.x, t.e.pos.z - P.pos.z) < 15 ? t.e : nearestEnemy(13);
+function ncShamanAtk(tipo){ const t = ncTgtOk(); let e = t && t.e && !t.e.dead && !t.e.dying && Math.hypot(t.e.pos.x - P.pos.x, t.e.pos.z - P.pos.z) < 15 ? t.e : ncNearVis(13);
+  if(e && !ncVe(P.pos.x, P.pos.z, e.pos.x, e.pos.z, e.r)){ ncBloqueado({x:e.pos.x, y:e.pos.y, z:e.pos.z}); e = null; }   // 26/11: atrás de obstáculo o ataque guiado não pega
   if(e) P.face = P.targetFace = Math.atan2(e.pos.x - P.pos.x, e.pos.z - P.pos.z); P.castT = .18; playAttackSfx();
   const lv = ncShaLv(), mz = mxMuzzle(P.face), ax = mz ? mz.x : P.pos.x + Math.sin(P.face)*.8, az = mz ? mz.z : P.pos.z + Math.cos(P.face)*.8, ay = mz ? Math.max(P.pos.y + .9, Math.min(P.pos.y + 1.8, mz.y)) : P.pos.y + 1.4;
   const vivos = () => enemies.filter(o => !o.dead && !o.dying && !(o.kind === 'boss' && !o.awake));
@@ -11831,7 +11832,7 @@ function doAttack(){
     let t = null, td = 1e9;
     for(const e of enemies){ if(e.dead || e.dying || (e.kind === 'boss' && !e.awake)) continue;
       const dx = e.pos.x - P.pos.x, dz = e.pos.z - P.pos.z, d = Math.hypot(dx, dz);
-      if(d < reach + e.r && (d < e.r + .6 || angDiff(Math.atan2(dx, dz), P.face) < arcW) && d < td){ t = e; td = d; } }
+      if(d < reach + e.r && (d < e.r + .6 || angDiff(Math.atan2(dx, dz), P.face) < arcW) && d < td && ncVe(P.pos.x, P.pos.z, e.pos.x, e.pos.z, e.r)){ t = e; td = d; } }
     if(t){ const dx = t.pos.x - P.pos.x, dz = t.pos.z - P.pos.z, d = Math.hypot(dx, dz) || 1;
       const ry = t.cr && t.cr.root ? t.cr.root.rotation.y : 0, back = angDiff(Math.atan2(-dx, -dz), ry) > 1.9 || (P.backE === t && clock < (P.backUntil || 0));   // herói atrás do monstro (mais de ~110° da frente dele)
       if(hitEnemy(t, back ? NC_STAB.back : 1, {nx:dx/d, nz:dz/d, kb:4}) !== false){ hitAny = true;
@@ -11844,7 +11845,7 @@ function doAttack(){
     if(e.dead || e.dying) continue;
     if(e.kind === 'boss' && !e.awake) continue;
     const dx = e.pos.x - P.pos.x, dz = e.pos.z - P.pos.z, d = Math.hypot(dx, dz);
-    if(d < reach + e.r && (d < e.r + .6 || angDiff(Math.atan2(dx, dz), P.face) < arcW)){
+    if(d < reach + e.r && (d < e.r + .6 || angDiff(Math.atan2(dx, dz), P.face) < arcW) && ncVe(P.pos.x, P.pos.z, e.pos.x, e.pos.z, e.r)){
       if(hitEnemy(e, 1, {nx:dx/(d||1), nz:dz/(d||1), kb:({slash:8, cleave:12, smash:10, stab:4, punch:5})[kind]}) !== false) hitAny = true;
     }
   }
@@ -12013,17 +12014,17 @@ function ncSkFx(f, i){ f = ncSkUp(f, ncSkLv(i)); const skm = ncSkMul(i), ox = P.
   const ring = (x, z, R) => { fxRing(x, z, R, f.c, .45); for(let q = 0; q < 10; q++){ const a2 = q/10*Math.PI*2; burst({x:x + Math.sin(a2)*R*.8, z:z + Math.cos(a2)*R*.8, y:oy}, f.c, 3, 2, 5, .35); } };
   const area = (x, z, R) => { aoe(x, z, R, f.m, Object.assign({}, o, {y:oy})); ring(x, z, R); if(f.bolt) bolt(x, oy + 9, z, x, oy, z, f.c); };
   const rep = fn => { const n = f.waves || 1; for(let k = 0; k < n; k++) setTimeout(() => { if(mode === 'stage') fn(k); }, ((f.d || 0) + k*(f.gap || 0))*1000); };
-  if(f.t === 'line' && f.fan){ const a0 = aimAngle(f.L) ?? P.face; [-.32, .32].forEach(da => setTimeout(() => { if(mode !== 'stage') return; const fx = Math.sin(a0 + da), fz = Math.cos(a0 + da);
-      for(const e of enemies.slice()){ if(e.dead || e.dying) continue; const dx = e.pos.x - P.pos.x, dz = e.pos.z - P.pos.z, al = dx*fx + dz*fz, sd = Math.abs(dx*fz - dz*fx); if(al > -.6 && al < f.L + e.r && sd < f.W + e.r) hitEnemy(e, f.m*.7, Object.assign({}, o, {nx:fx, nz:fz})); }
-      for(let k = 0; k <= f.L; k += 1.2) burst({x:P.pos.x + fx*k, z:P.pos.z + fz*k, y:P.pos.y + .8}, 0xffe08a, 2, 2, 5, .3); }, 180)); }
+  if(f.t === 'line' && f.fan){ const a0 = aimAngle(f.L) ?? P.face; [-.32, .32].forEach(da => setTimeout(() => { if(mode !== 'stage') return; const fx = Math.sin(a0 + da), fz = Math.cos(a0 + da), Lf = ncLivre(P.pos.x, P.pos.z, fx, fz, f.L);
+      for(const e of enemies.slice()){ if(e.dead || e.dying) continue; const dx = e.pos.x - P.pos.x, dz = e.pos.z - P.pos.z, al = dx*fx + dz*fz, sd = Math.abs(dx*fz - dz*fx); if(al > -.6 && al < Lf + e.r && sd < f.W + e.r) hitEnemy(e, f.m*.7, Object.assign({}, o, {nx:fx, nz:fz})); }
+      for(let k = 0; k <= Lf; k += 1.2) burst({x:P.pos.x + fx*k, z:P.pos.z + fz*k, y:P.pos.y + .8}, 0xffe08a, 2, 2, 5, .3); }, 180)); }
   if(f.t === 'line'){ const a = aimAngle(f.L); if(a !== null) P.face = P.targetFace = a; const fx = Math.sin(P.face), fz = Math.cos(P.face);
-    rep(() => { for(const e of enemies.slice()){ if(e.dead || e.dying) continue; const dx = e.pos.x - P.pos.x, dz = e.pos.z - P.pos.z, al = dx*fx + dz*fz, sd = Math.abs(dx*fz - dz*fx);
-        if(al > -.6 && al < f.L + e.r && sd < f.W + e.r) hitEnemy(e, f.m, Object.assign({}, o, {nx:fx, nz:fz})); }
-      for(let k = 0; k <= f.L; k += 1.2) burst({x:P.pos.x + fx*k, z:P.pos.z + fz*k, y:P.pos.y + .8}, f.c, 2, 2, 5, .3); }); }
-  if(f.t === 'tgt'){ const tg = nearestEnemy(14); const x = tg ? tg.pos.x : ox + Math.sin(P.face)*6, z = tg ? tg.pos.z : oz + Math.cos(P.face)*6;
+    rep(() => { const Lf = ncLivre(P.pos.x, P.pos.z, fx, fz, f.L); for(const e of enemies.slice()){ if(e.dead || e.dying) continue; const dx = e.pos.x - P.pos.x, dz = e.pos.z - P.pos.z, al = dx*fx + dz*fz, sd = Math.abs(dx*fz - dz*fx);
+        if(al > -.6 && al < Lf + e.r && sd < f.W + e.r) hitEnemy(e, f.m, Object.assign({}, o, {nx:fx, nz:fz})); }
+      for(let k = 0; k <= Lf; k += 1.2) burst({x:P.pos.x + fx*k, z:P.pos.z + fz*k, y:P.pos.y + .8}, f.c, 2, 2, 5, .3); }); }
+  if(f.t === 'tgt'){ let tg = ncNearVis(14); if(tg && !ncVe(ox, oz, tg.pos.x, tg.pos.z, tg.r)) tg = null; const dl = Math.min(6, ncLivre(ox, oz, Math.sin(P.face), Math.cos(P.face), 6)), x = tg ? tg.pos.x : ox + Math.sin(P.face)*dl, z = tg ? tg.pos.z : oz + Math.cos(P.face)*dl;
     if(f.fall) for(let k = 0; k < 6; k++) setTimeout(() => burst({x, z, y:oy + 8 - k*1.3}, f.c, 4, 1, 3, .25), k*100);
     fxRing(x, z, f.R, f.c, .3); rep(k => { const jx = f.waves > 1 ? (Math.random() - .5)*f.R : 0, jz = f.waves > 1 ? (Math.random() - .5)*f.R : 0; area(x + jx, z + jz, f.waves > 1 ? f.R*.6 : f.R); });
-    if(f.multi){ const others = enemies.filter(e => !e.dead && !e.dying && e !== tg && Math.hypot(e.pos.x - ox, e.pos.z - oz) < 16).sort((a, b) => Math.hypot(a.pos.x - ox, a.pos.z - oz) - Math.hypot(b.pos.x - ox, b.pos.z - oz)).slice(0, f.multi);
+    if(f.multi){ const others = enemies.filter(e => !e.dead && !e.dying && e !== tg && Math.hypot(e.pos.x - ox, e.pos.z - oz) < 16 && ncVe(ox, oz, e.pos.x, e.pos.z, e.r)).sort((a, b) => Math.hypot(a.pos.x - ox, a.pos.z - oz) - Math.hypot(b.pos.x - ox, b.pos.z - oz)).slice(0, f.multi);
       others.forEach((e, k) => setTimeout(() => { if(mode === 'stage' && !e.dead) area(e.pos.x, e.pos.z, f.R*.75); }, 150 + k*120)); } }
   if(f.t === 'self') rep(() => area(P.pos.x, P.pos.z, f.R));
   if(f.t === 'dash'){ const a = f.D > 0 ? (aimAngle(10) ?? P.face) : P.face; P.face = P.targetFace = a; const d = f.D, fx = Math.sin(a), fz = Math.cos(a);
@@ -12649,6 +12650,22 @@ function fireProj(from, ang, spd, dmg, y, kind){
   scene.add(m); projs.push({m, vx:Math.sin(ang)*spd, vz:Math.cos(ang)*spd, vy, dmg, life:3, kind});
 }
 function solidAt(x, z){ const a = grid.get(gkey(Math.floor(x/CELL), Math.floor(z/CELL))); if(a) for(const c of a) if(Math.hypot(x - c.x, z - c.z) < c.r*.85) return true; return false; }
+/* 26/11/2026 (Arnold: "magos e arqueiros atacam por dentro dos obstáculos"): árvore, pedra, coluna e parede da masmorra seguram flecha e magia.
+   ncSolidoTiro = tem obstáculo neste ponto? · ncVe = dá para ver o alvo em linha reta? · ncLivre = até onde a linha vai sem bater em nada. */
+function ncSolidoTiro(x, z){ const ci = Math.floor(x/CELL), cj = Math.floor(z/CELL);   // olha também os quadradinhos vizinhos (a árvore pode estar registrada no do lado)
+  for(let i = ci - 1; i <= ci + 1; i++) for(let j = cj - 1; j <= cj + 1; j++){ const a = grid.get(gkey(i, j)); if(a) for(const c of a) if(Math.hypot(x - c.x, z - c.z) < c.r*.85) return true; }
+  if(typeof ncDG !== 'undefined' && ncDG && ncDG.C && mode === 'stage'){ const q = {x, z}; ncDgClamp(q, false); if(Math.abs(q.x - x) > .75 || Math.abs(q.z - z) > .75) return true; }
+  return false; }
+function ncVe(x0, z0, x1, z1, rFim){ const dx = x1 - x0, dz = z1 - z0, d = Math.hypot(dx, dz), fim = d - (rFim || 0) - .2; if(fim <= .9) return true;
+  for(let k = .9; k < fim; k += .5) if(ncSolidoTiro(x0 + dx/d*k, z0 + dz/d*k)) return false; return true; }
+function ncLivre(x0, z0, fx, fz, L){ for(let k = .9; k < L; k += .5) if(ncSolidoTiro(x0 + fx*k, z0 + fz*k)) return k; return L; }
+function ncNearVis(range){ const t = ncTgtOk(); if(t && t.e && Math.hypot(t.e.pos.x - P.pos.x, t.e.pos.z - P.pos.z) - t.e.r < range + 6) return t.e;
+  let b = null, bd = range; for(const e of enemies){ if(e.dead || e.dying || (e.kind === 'boss' && !e.awake)) continue;
+    const d = Math.hypot(e.pos.x - P.pos.x, e.pos.z - P.pos.z) - e.r; if(d < bd && ncVe(P.pos.x, P.pos.z, e.pos.x, e.pos.z, e.r)){ bd = d; b = e; } }
+  return b || nearestEnemy(range); }
+let ncBloqT = 0;
+function ncBloqueado(pos){ if(clock - ncBloqT < 1.2) return; ncBloqT = clock; floatText(pos, 'Bloqueado', 'block'); }
+
 function bossDefeated(b){
   try{ if(!b.rem) ncCoop.sendKill(b); }catch(_){}
   b.dying = 1.5; b.hp = 0; bossActive = false;
@@ -13029,6 +13046,7 @@ function updateWorld(dt){
     if((p.kind === 'bolt' || p.kind === 'dark') && Math.random() < .4) burst(p.m.position, p.kind === 'dark' ? (Math.random() < .5 ? 0x8a2cff : 0x1a0030) : (p.col || (P.S.elem ? ELEM_COL[P.S.elem] : 0x9ad0ff)), 1, .5, 1, 0);
     if(p.kind === 'shard') p.m.rotation.z += dt*12;
     let gone = p.life <= 0 || p.m.position.y < heightAt(p.m.position.x, p.m.position.z) + .15;   // bateu no morro
+    if(!gone && ncSolidoTiro(p.m.position.x, p.m.position.z)){ gone = true; burst(p.m.position, 0xb8a888, 6, 2.5, 2.5, 0); if(!p.aoe) ncBloqueado(p.m.position); }   // 26/11: bateu na árvore, pedra ou parede
     for(const e of enemies){
       if(gone) break;
       if(e.dead || e.dying || p.hit.has(e) || (e.kind === 'boss' && !e.awake)) continue;
@@ -15869,6 +15887,7 @@ body.nc-ov #ncXp2{display:none}
 /* 24/11 (Arnold: ícones sumiram no iPhone): o desenho do ícone ganha tamanho fixo em pixels (o Safari às vezes zera a altura em %) */
 .pimg.nci{width:var(--s)!important;height:var(--s)!important;min-width:var(--s);min-height:var(--s)}
 .pimg.nci>svg{display:block;width:calc(var(--s)*.78)!important;height:calc(var(--s)*.78)!important;min-width:calc(var(--s)*.78);flex:none}
+.pimg.nci>span.ncimg{position:absolute;left:11%;top:9%;width:78%;height:78%;display:block;background-repeat:no-repeat;background-position:center;background-size:contain;z-index:1;pointer-events:none;-webkit-transform:translateZ(0)}.pimg.nci>span.ncimg.w{left:8%;top:6%;width:84%;height:84%}
 .pimg.nci>img.nca{display:block;width:calc(var(--s)*.78)!important;height:calc(var(--s)*.78)!important;position:relative;z-index:1;filter:drop-shadow(0 2px 2px rgba(0,0,0,.55))}
 .pimg.nci>img.wico{display:block;width:calc(var(--s)*.84)!important;height:calc(var(--s)*.84)!important;object-fit:contain}
 #ncFriends.fr-d .pop-box{left:50%!important;right:auto!important;top:auto!important;bottom:calc(8px + env(safe-area-inset-bottom,0px))!important;width:min(400px,calc(100vw - 16px))!important;max-height:min(46dvh,400px)!important;overflow-y:auto!important;border-radius:14px!important;border:1px solid #e8c36a99!important;translate:-50% 0;margin:0!important;font-size:13px!important;padding:10px 12px!important}
