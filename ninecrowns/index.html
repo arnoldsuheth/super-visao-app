@@ -7992,7 +7992,11 @@ function hubCamera(){
   if(narrow && h > w){   // celular em pe: heroi inteiro entre o nome do jogo e o botao Jogar; com gaveta aberta, sobe para a parte livre
     const open = document.body.classList.contains('nc-l') || document.body.classList.contains('nc-r');
     camera.position.set(0, 1.6 + .6*k + py, 6.6*k*(open ? 1.55 : 1.1)); camera.lookAt(0, ly - .05, 0); camera.setViewOffset(w, h, 0, h*(open ? .33 : .07), w, h); }
-  else if(narrow){ camera.position.set(0, 1.6 + .6*k + py, 6.6*k); camera.lookAt(0, ly - .05, 0); camera.setViewOffset(w, h, 0, h*.3, w, h); }
+  else if(narrow){ camera.position.set(0, 1.6 + .6*k + py, 6.6*k); camera.lookAt(0, ly - .05, 0);
+    /* 28/11/2026 (Arnold: "como vou ver a mudança no herói se ele não aparece?"): celular deitado com janela aberta à direita, o herói vai para o meio da parte livre (esquerda) */
+    const open = document.body.classList.contains('nc-l') || document.body.classList.contains('nc-r'); let ox = 0;
+    if(open){ const pn = document.querySelector('body.nc-r #hub>#rightPanel, body.nc-l #hub>aside.panel'); const L = pn ? pn.getBoundingClientRect().left : w*.53; ox = Math.max(0, (w - Math.max(120, L))/2); }
+    camera.setViewOffset(w, h, ox, h*(open ? .14 : .3), w, h); }
   else { camera.clearViewOffset(); camera.position.set(0, 1.7 + .6*k + py, 6.2*k); camera.lookAt(0, ly, 0); }
   camera.updateProjectionMatrix();
 }
@@ -15715,7 +15719,7 @@ body.nc-l #hub>aside.panel::before,body.nc-r #hub>#rightPanel::before{transform:
   var cur={l:null,r:null};
   function mark(){[rl,rr].forEach(function(r,i){var s=i?'r':'l';r.querySelectorAll('.nc-b').forEach(function(b){b.classList.toggle('on',cur[s]===b.dataset.nc)})})}
   function close(s){cur[s]=null;document.body.classList.remove('nc-'+s);mark();cam()}
-  function cam(){try{if(innerWidth<=900)dispatchEvent(new Event('resize'))}catch(e){}}
+  function cam(){try{if(innerWidth<=900){dispatchEvent(new Event('resize'));setTimeout(function(){dispatchEvent(new Event('resize'))},450)}}catch(e){}}   /* 28/11: de novo depois que a janela termina de abrir */
   function toggle(s,k){
     if(cur[s]===k){close(s);return}
     var src=s==='l'?L.querySelector('.stabs.main button[data-sec="'+k+'"]'):R.querySelector('.vtab[data-view="'+k+'"]');if(src)src.click();
@@ -16743,6 +16747,9 @@ html body :is(.pop-x,.nc-x,.nf-x,.pp-x,.lt-x,.mf-x,#pauseX)::before,html body #h
 .btn:has(>small),button:has(>small.adnw){display:inline-flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;line-height:1.1!important;gap:1px}
 .btn>small .adnx,.btn>small.adnx{font-size:inherit}
 .btn>small{text-transform:none!important;letter-spacing:0!important;font-family:system-ui,sans-serif!important;font-weight:700!important}
+
+/* 28/11/2026 (Arnold: "a janela está se movendo por dentro"): o conteúdo da janela só rola para cima e para baixo, sem escorregar para os lados nem puxar a tela */
+html body #hub>:is(aside.panel,#rightPanel){overflow-x:hidden!important;overscroll-behavior:contain!important;touch-action:pan-y!important}
 </style>
 
 <script>/* 28/11/2026 (Arnold): textos longos dos menus viram um botão "i". Toque no "i" para ler, toque de novo para esconder.
