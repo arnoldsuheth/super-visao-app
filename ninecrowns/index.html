@@ -166,6 +166,10 @@ kbd{font-family:var(--f-display);font-size:12px;background:var(--panel-2);border
 .bon.on{border-color:var(--tc,var(--gold));background:color-mix(in srgb,var(--tc,var(--gold)) 10%,#0d1019);color:var(--ink)}
 .bon.on b{color:var(--tc,var(--gold-hi))}
 .bon small{display:block;color:var(--mute);font-size:12px}
+.frow.ncx{align-items:flex-start}.frow.ncx>div{min-width:0;flex:1}
+.ncx-l{display:flex;align-items:center;gap:5px;margin-top:5px;flex-wrap:wrap}.ncx-l>b{width:62px;font-size:11.5px;color:var(--mute);font-weight:600}
+.ncx-l .btn{display:flex;flex-direction:column;align-items:center;line-height:1.15;min-width:64px;padding:3px 8px;font-size:11px}.ncx-l .btn small{font-size:9.5px;opacity:.9}
+.ncx-i .mico{width:30px;height:30px}
 .ncs{border:1px solid var(--line);border-radius:6px;padding:8px 10px;background:#0d1019}
 .ncs.cheio{border-color:#3ddc84}
 .ncs-h{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}
@@ -8548,6 +8552,8 @@ const SHOP = [
 ];
 if(NC_NOGEMS) for(let i = SHOP.length - 1; i >= 0; i--) if(/^Pedra /.test(SHOP[i].n)) SHOP.splice(i, 1);
 const shopPrice = p => Math.max(1, Math.round(p*CFG.shopMult*NC_ECON));
+/* 28/11/2026 (Arnold): preço de 1 unidade em Adena (bronze; 100 = 1 prata). Vender = metade */
+const NC_MAT_P = {scoin:30, gcoin:80, ocoin:250, lblue:300, lgold:5000}, NC_MR_P = 100000, NC_VENDA = .5;
 /* 22/11 (Arnold): o Mercador vende em ADENA (Moeda Real é a moeda especial). Preço em prata, um pouco acima da Forja (lá precisa de material) */
 const NC_SHOP_PRATA = [2, 4, 9, 15, 20, 32, 45, 120];
 const piecePrice = t => Math.round((NC_SHOP_PRATA[t] || 120)*100);
@@ -8617,7 +8623,11 @@ function renderShop(){
       + row(rk, ncPotResName(), rk === 'mp' ? 'Recupera 60% da mana.' : 'Recupera 60% da stamina.', save.potRes || 0, 'res')
       + `<div class="frow" style="--tc:#e8a85a"><span class="ncpot">${NC_PETISCO_ICO}</span><div><div class="fn">Petisco <small style="color:var(--mute)">× ${save.petisco || 0}</small></div><div class="istat">Revive o mascote caído (use na Mochila).</div></div><button class="btn sm primary" data-petbuy="1" ${save.gold >= NC_PETISCO_P ? '' : 'disabled'}>Comprar<small>${adenaTxt(NC_PETISCO_P)}</small></button></div>` + `</div>`; }
   /* 22/11 (Arnold): troca 10 de ouro em Adena = 1 Moeda Real */
-  h += `<h2>Trocar Adena</h2><div class="blist"><div class="frow" style="--tc:#ffd24a"><span class="ncpot"><svg viewBox="0 0 24 24" width="34" height="34"><circle cx="12" cy="12" r="10" fill="#ffd24a" stroke="#8a5a10" stroke-width="1.5"/><path d="M7 15l1-6 2.5 3L12 8l1.5 4L16 9l1 6Z" fill="#8a5a10"/></svg></span><div><div class="fn">1 Moeda Real <small style="color:var(--mute)">você tem ${save.coins}</small></div><div class="istat">Use nos Itens Festivos e no Mercador.</div></div><div class="iact"><button class="btn sm primary" data-ncreal="1" ${save.gold >= 100000 ? '' : 'disabled'}>×1<small>${adenaTxt(100000)}</small></button><button class="btn sm" data-ncreal="10" ${save.gold >= 1000000 ? '' : 'disabled'}>×10<small>${adenaTxt(1000000)}</small></button></div></div></div>`;
+  /* 28/11/2026 (Arnold): Moeda Real compra com Adena e também volta a virar Adena (metade do preço) */
+  { const P1 = NC_MR_P, V1 = Math.round(NC_MR_P*NC_VENDA), mr = save.coins || 0;
+    h += `<h2>Moedas Reais</h2><div class="blist"><div class="frow ncx" style="--tc:#ffd24a"><span class="ncpot"><svg viewBox="0 0 24 24" width="34" height="34"><circle cx="12" cy="12" r="10" fill="#ffd24a" stroke="#8a5a10" stroke-width="1.5"/><path d="M7 15l1-6 2.5 3L12 8l1.5 4L16 9l1 6Z" fill="#8a5a10"/></svg></span><div><div class="fn">Moeda Real <small style="color:var(--mute)">você tem ${mr}</small></div><div class="istat">Use nos Itens Festivos e no Mercador.</div>`
+      + `<div class="ncx-l"><b>Comprar</b>${[1, 10, 50].map(q => `<button class="btn sm primary" data-ncreal="${q}" ${save.gold >= P1*q ? '' : 'disabled'}>×${q}<small>${adenaTxt(P1*q)}</small></button>`).join('')}</div>`
+      + `<div class="ncx-l"><b>Vender</b>${[1, 10, 50].map(q => `<button class="btn sm" data-ncrealv="${q}" ${mr >= q ? '' : 'disabled'}>×${q}<small>${adenaTxt(V1*q)}</small></button>`).join('')}</div></div></div></div>`; }
   // 22/11: a peça semanal do evento saiu do Mercador (armadura só na Forja)
 
   /* 22/11 (Arnold): o Mercador NÃO vende armas nem armaduras; isso é só na Forja (NPC ferreiro) */
@@ -8626,7 +8636,11 @@ function renderShop(){
     return `<div class="frow" style="--tc:${T.css}">${pieceImg(t, 'chest', 'ps-row')}<div><div class="fn" style="color:${T.css}">Fragmentos ${T.pre} · ${T.sc}</div>
       ${need ? `<div class="pbar"><i style="width:${Math.min(100, have/need*100)}%"></i><span>${have} / ${need}</span></div>` : `<div class="istat">Você tem ${have}. A ${T.model} não pode ser trocada: só cai de Chefes Mundiais ou é fabricada com Lesser Gold.</div>`}</div>
       <button class="btn sm ${need && have >= need ? 'primary' : ''}" data-fragx="${t}" ${need && have >= need ? '' : 'disabled'}>Trocar</button></div>`; }).join('') + '</div>';
-  h += `<h2>Materiais</h2><div class="blist">${SHOP.map((o, i) => `<div class="frow"><span></span><div class="fn">${o.n}</div><button class="btn sm" data-mbuy="${i}" ${save.gold >= o.a ? '' : 'disabled'}>${adenaHTML(o.a)}</button></div>`).join('')}</div>`;
+  /* 28/11/2026 (Arnold): materiais com Comprar e Vender (×1, ×10, ×50). Vender devolve metade do preço em Adena */
+  h += `<h2>Materiais</h2><div class="blist">${NC_GEMS4.map(k => { const pc = NC_MAT_P[k], pv = Math.max(1, Math.round(pc*NC_VENDA)), tem = save.mats[k] || 0;
+    return `<div class="frow ncx" style="--tc:${MATS[k].css}"><span class="ncpot ncx-i">${MAT_ICO(k)}</span><div><div class="fn">${MATS[k].n} <small style="color:var(--mute)">você tem ${tem}</small></div><div class="istat">${(NC_MAT_D[k] || '').split('.')[0]}.</div>`
+      + `<div class="ncx-l"><b>Comprar</b>${[1, 10, 50].map(q => `<button class="btn sm primary" data-mtx="${k}|${q}|c" ${save.gold >= pc*q ? '' : 'disabled'}>×${q}<small>${adenaTxt(pc*q)}</small></button>`).join('')}</div>`
+      + `<div class="ncx-l"><b>Vender</b>${[1, 10, 50].map(q => `<button class="btn sm" data-mtx="${k}|${q}|v" ${tem >= q ? '' : 'disabled'}>×${q}<small>${adenaTxt(pv*q)}</small></button>`).join('')}</div></div></div>`; }).join('')}</div>`;
   $('#shopBody').innerHTML = ncTabify(h, 'shop');
 }
 /* 22/11 (Arnold: "não estão separados por abas dentro dos menus"): cada título <h2> do menu vira uma aba; mostra uma seção por vez */
@@ -14227,7 +14241,12 @@ $('#rightPanel').addEventListener('click', e => {
   if(d.sslot){ shopSlot = d.sslot; renderHub(); return; }
   if(d.sbuy !== undefined){ const t = +d.sbuy, p = piecePrice(t); if(save.gold >= p && t <= CFG.shopMaxTier && ncRoom(shopSlot)){ save.gold -= p; buyPiece(t); } ncBagRefresh(); return; }
   if(d.mbuy !== undefined){ const o = SHOP[+d.mbuy], p = o.a; if(save.gold >= p){ save.gold -= p; o.g(); persist(); SFX.coin(); } renderHub(); return; }
-  if(d.ncreal){ const n = +d.ncreal, c = n*100000; if(save.gold >= c){ save.gold -= c; save.coins = (save.coins || 0) + n; SFX.coin(); persist(); feed('+' + n + ' Moeda Real', '#ffd24a'); } renderHub(); return; }
+  if(d.mtx){ const [k, q0, op] = d.mtx.split('|'), q = +q0, pc = NC_MAT_P[k]; if(!pc) return;
+    if(op === 'c'){ const c = pc*q; if(save.gold >= c){ save.gold -= c; ncAddMat(k, q); SFX.coin(); persist(); } }
+    else { const v = Math.max(1, Math.round(pc*NC_VENDA))*q; if((save.mats[k] || 0) >= q){ save.mats[k] -= q; save.gold += v; SFX.coin(); persist(); feed('-' + q + ' ' + MATS[k].n + ' · +' + adenaPlain(v), MATS[k].css); } }
+    renderHub(); return; }
+  if(d.ncrealv){ const n = +d.ncrealv, v = Math.round(NC_MR_P*NC_VENDA)*n; if((save.coins || 0) >= n){ save.coins -= n; save.gold += v; SFX.coin(); persist(); feed('-' + n + ' Moeda Real · +' + adenaPlain(v), '#ffd24a'); } renderHub(); return; }
+  if(d.ncreal){ const n = +d.ncreal, c = n*NC_MR_P; if(save.gold >= c){ save.gold -= c; save.coins = (save.coins || 0) + n; SFX.coin(); persist(); feed('+' + n + ' Moeda Real', '#ffd24a'); } renderHub(); return; }
   if(d.buypot){ const pp = NC_POT_P, k = d.buypot === 'hp' ? 'potions' : 'potRes', q = Math.min(+d.q || 1, Math.floor(save.gold/pp)); if(q > 0){ save.gold -= pp*q; save[k] = (save[k] || 0) + q; SFX.coin(); persist(); } renderHub(); return; }
   if(d.evbuy){ const E = curEvent(), p = shopPrice(60); if(E && save.coins >= p && !save.evBought[evKey()] && ncRoom(shopSlot)){ save.coins -= p; save.evBought[evKey()] = 1; const t = clamp(Math.round(gearPower()) - 1, 1, CFG.shopMaxTier); buyPiece(t, 'ev:' + E.id); } renderHub(); return; }
   if(d.fragx !== undefined){ const t = +d.fragx, need = CFG.frag[t]; if(need && (save.frags[t] || 0) >= need && ncRoom(shopSlot)){ save.frags[t] -= need; buyPiece(t); } ncBagRefresh(); return; }
