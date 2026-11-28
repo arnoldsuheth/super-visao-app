@@ -10889,7 +10889,8 @@ function monAttach(cr, key, o){
     const model = monClone(g.scene), base = cr.mats[0] && cr.mats[0].userData.baseE, mats = [];
     const lite = COARSE && !o.boss;   // celular: monstros comuns dividem um material so e nao fazem sombra
     model.traverse(n => { if(n.isMesh){ let m;
-      if(lite){ const mk = n.isSkinnedMesh ? 'ms' : 'mm'; m = MON[mk] || (MON[mk] = new T.MeshLambertMaterial({map:monTex(), skinning:!!n.isSkinnedMesh})); n.material = m; n.castShadow = false; }
+      if(o.kk){ m = n.material; if(m && m.emissive){ m.userData.baseE = new T.Color(0x000000); mats.push(m); } n.castShadow = !COARSE; n.frustumCulled = false; }   /* 28/11/2026: caveiras KayKit do Necro mantêm a cor original */
+      else if(lite){ const mk = n.isSkinnedMesh ? 'ms' : 'mm'; m = MON[mk] || (MON[mk] = new T.MeshLambertMaterial({map:monTex(), skinning:!!n.isSkinnedMesh})); n.material = m; n.castShadow = false; }
       else { m = new T.MeshStandardMaterial({map:monTex(), skinning:!!n.isSkinnedMesh, roughness:.78, metalness:0});
         m.userData.baseE = base ? base.clone() : new T.Color(o.elite ? 0x3a2a04 : 0x000000); m.emissive.copy(m.userData.baseE); n.material = m; mats.push(m); n.castShadow = true; } } });
     { const dead = []; cr.body.traverse(n => { if(n.isMesh) dead.push(n); }); dead.forEach(n => { n.visible = false; n.castShadow = false; n.matrixAutoUpdate = false; if(n.parent) n.parent.remove(n); }); }   /* 23/11 desempenho: o corpo antigo (escondido) sai da cena; antes o jogo recalculava ~40 peças invisíveis por monstro a cada quadro */
@@ -10898,7 +10899,7 @@ function monAttach(cr, key, o){
     model.scale.setScalar(k); model.position.y = -g.box.min.y*k + (fly ? .55 : 0); cr.body.add(model);
     mats.forEach(m => cr.mats.push(m));
     const mixer = new T.AnimationMixer(model), find = re => g.animations.find(c => re.test(c.name)), acts = {};
-    [['idle', /^(Idle|Flying_Idle)$/], ['move', /^(Run|Walk|Fast_Flying)$/], ['atk', /^(Punch|Bite_Front|Weapon|Headbutt)$/], ['hit', /^Hit/], ['death', /^Death$/]].forEach(([n, re]) => { const c = find(re); if(c) acts[n] = mixer.clipAction(c); });
+    (o.kk ? [['idle', /^Idle$/], ['move', /^Running_A$/], ['atk', o.atk], ['death', /^Death_A$/]] : [['idle', /^(Idle|Flying_Idle)$/], ['move', /^(Run|Walk|Fast_Flying)$/], ['atk', /^(Punch|Bite_Front|Weapon|Headbutt)$/], ['hit', /^Hit/], ['death', /^Death$/]]).forEach(([n, re]) => { const c = find(re); if(c) acts[n] = mixer.clipAction(c); });
     ['atk', 'hit', 'death'].forEach(n => { if(acts[n]){ acts[n].setLoop(T.LoopOnce, 1); acts[n].clampWhenFinished = true; } });
     cr.mon = {model, mixer, acts, cur:null, lock:0, lg:0, mvT:0, fl:0, fly, y0:model.position.y, ph:Math.random()*6};
     monPlay(cr.mon, 'idle'); mixer.update(Math.random());
@@ -12306,7 +12307,7 @@ function doAttack(){
    Na rampa a diferença é pequena e o golpe pega. o.y = altura de onde saiu o golpe (padrão: o herói); o.anyY ignora. */
 const NC_ESQ = {guard:.9, guardCd:1, reach:8, charge:.3, chargeDmg:.8, stun:1.2};
 /* 26/11/2026 (Arnold): esquiva própria das outras 7 classes (sugestões do Claude) */
-const NC_ESQ2 = {warrior:{dmg:.4, kb:13}, archer:{range:12, espinho:.5, lento:1.5, dura:4}, mage:{rad:3.5, frio:1.6}, necro:{segura:2, rad:5, maxPorGrade:[1, 2, 3, 4, 5, 5]}, shaman:{rad:5, lobo:2, rapido:1.8}, priest:{cura:.08}, monk:{dmg:1.2, kb:10, alc:2.8}};   // esquivas: escudo do Paladino (s), alcance do avanço da Assassina (m), investida do Bárbaro (s, dano, atordoar s)
+const NC_ESQ2 = {warrior:{dmg:.4, kb:13}, archer:{range:12, espinho:.5, lento:1.5, dura:4}, mage:{rad:3.5, frio:1.6}, necro:{segura:2, rad:5, maxPorGrade:[1, 2, 3, 4, 5, 5], cd:30, maxCav:5, cavHp:.5, cavAtk:.6},   /* 28/11/2026 (Arnold): esquiva do Necro carrega em 30 s, vai para frente e solta caveira que só some quando morre (até 5) */ shaman:{rad:5, lobo:2, rapido:1.8}, priest:{cura:.08}, monk:{dmg:1.2, kb:10, alc:2.8}};   // esquivas: escudo do Paladino (s), alcance do avanço da Assassina (m), investida do Bárbaro (s, dano, atordoar s)
 const NC_STAB = {back:1.6, bleed:.2, bleedT:4, afterShadow:1.5};   // estocada: pelas costas 60% a mais; sangramento = 20% do ataque por segundo, 4 s
 const Y_TOL = 1.6, NC_ALTO = {erro:.35};   // 26/11: acima da tolerância de altura, 35% de chance de errar
 const yOk = (ey, oy, tol) => Math.abs(ey - oy) <= (tol || Y_TOL);
@@ -12326,9 +12327,9 @@ function ncEsquiva(cls){
     P.pos.x += P.dashDir.x*6.5; P.pos.z += P.dashDir.z*6.5; clampPos(P.pos, bossActive);
     burst(P.pos, 0x9fe8ff, 14, 3, 4, 1); P.inv = Math.max(P.inv, .35); P.dashCd = .9; floatText(P.pos, 'Gelo!', 'block'); SFX.bolt(); }
   else if(cls === 'necro'){   /* 26/11 (Arnold escolheu B): recua e deixa um esqueleto no lugar, que segura os monstros perto por 2 s */
-    const ox = P.pos.x, oz = P.pos.z, b = longe(nearestEnemy(8)); try{ spawnAlly(ox, oz); }catch(_){}
+    const ox = P.pos.x, oz = P.pos.z, b = {x:fw.x, z:fw.z}; try{ spawnAlly(ox, oz, true); }catch(_){}
     for(const e of enemies){ if(e.dead || e.dying || (e.kind === 'boss' && !e.awake)) continue; if(Math.hypot(e.pos.x - ox, e.pos.z - oz) < E.rad + e.r) hitEnemy(e, .05, {stun:E.segura, freeze:E.segura, kb:0, noProc:true, quiet:true}); }
-    P.dashDir.set(b.x, 0, b.z); P.dashT = .22; P.dashCd = 1; P.inv = Math.max(P.inv, .45); burst(P.pos, 0x8a3dff, 16, 3, 4, 1.2); floatText(P.pos, 'Levante-se!', 'heal'); SFX.dash(); }
+    P.dashDir.set(b.x, 0, b.z); P.dashT = .22; P.dashCd = E.cd; P.inv = Math.max(P.inv, .45); burst(P.pos, 0x8a3dff, 16, 3, 4, 1.2); floatText(P.pos, 'Levante-se! ' + allies.filter(a => a.cav).length + '/' + E.maxCav, 'heal'); SFX.dash(); }
   else if(cls === 'shaman' && E.lobo){   /* 26/11 (Arnold escolheu B): vira lobo espiritual e corre bem rápido por 2 s */
     P.loboT = E.lobo; P.dashCd = 1.4; P.inv = Math.max(P.inv, .3); burst(P.pos, 0x7ad9a0, 20, 4, 4, 1.3); floatText(P.pos, 'Lobo espiritual!', 'block'); SFX.dash(); }
   else if(cls === 'shaman'){ let n = 0;
@@ -12617,15 +12618,22 @@ function useSkill(j){
   }
   ncTech();
 }
-function spawnAlly(x, z){
+function spawnAlly(x, z, cav){
   const p = new T.Vector3(x, 0, z); clampPos(p, bossActive);
   const cr = makeCreature(0xd8d2c0, .78, null); cr.mats.forEach(m => { m.emissive.copy(C(0x103a20)); m.userData.baseE = m.emissive.clone(); });
   cr.root.position.set(p.x, heightAt(p.x, p.z), p.z); scene.add(cr.root); burst(cr.root.position, 0x6aff9a, 12, 3, 5, .3);
-  monAttach(cr, 'f_Ghost_Skull', {boss:true});
-  allies.push({cr, pos:cr.root.position, life:12, atkT:.5, walk:0});
-  /* 26/11/2026 (Arnold): Necromante tem no máximo 1 esqueleto no No Grade e libera mais 1 a cada grade da arma, até 5 */
-  if(save.cls === 'necro'){ let g = 0; try{ const w = equipped('weapon'); g = w ? GR_OF[w.tier] || 0 : 0; }catch(_){} const mx = NC_ESQ2.necro.maxPorGrade[g] || 1;
-    while(allies.length > mx){ const o = allies.shift(); burst(o.pos, 0x6aff9a, 8, 3, 4, .5); removeObj(o.cr.root); } }
+  /* 28/11/2026 (Arnold escolheu): caveira da esquiva muda com o nível. Até 19 = caveira simples, 20 a 59 = guerreiro de chifre, 60+ = encapuzado que solta magia */
+  const cavT = cav ? (save.level >= 60 ? 2 : save.level >= 20 ? 1 : 0) : -1;
+  if(cav) monAttach(cr, 'kk_cav' + cavT, {boss:true, kk:true, atk:cavT === 2 ? /^Spellcast_Shoot$/ : cavT === 1 ? /^1H_Melee_Attack_Chop$/ : /^Unarmed_Melee_Attack_Punch_A$/});
+  else monAttach(cr, 'f_Ghost_Skull', {boss:true});
+  const A = {cr, pos:cr.root.position, life:12, atkT:.5, walk:0, mago:cavT === 2};
+  if(cav){ const N = NC_ESQ2.necro; A.cav = true; A.life = Infinity; A.hp = A.maxHp = Math.round(P.S.hp*N.cavHp); A.hurtT = 1; A.bar = makeBar(.9); A.bar.fg.material = bmat(0x6aff9a); A.bar.g.visible = true; }   /* 28/11/2026 (Arnold): caveira da esquiva tem vida própria (cresce com o nível) e só some quando morre */
+  allies.push(A);
+  const tira = o => { burst(o.pos, 0x6aff9a, 8, 3, 4, .5); removeObj(o.cr.root); if(o.bar) removeObj(o.bar.g); allies.splice(allies.indexOf(o), 1); };
+  if(cav){ const cs = allies.filter(a => a.cav); while(cs.length > NC_ESQ2.necro.maxCav) tira(cs.shift()); }
+  /* 26/11/2026 (Arnold): Necromante tem no máximo 1 esqueleto (das habilidades) no No Grade e libera mais 1 a cada grade da arma, até 5 */
+  else if(save.cls === 'necro'){ let g = 0; try{ const w = equipped('weapon'); g = w ? GR_OF[w.tier] || 0 : 0; }catch(_){} const mx = NC_ESQ2.necro.maxPorGrade[g] || 1;
+    const ss = allies.filter(a => !a.cav); while(ss.length > mx) tira(ss.shift()); }
 }
 /* 26/11/2026: armadilha de espinhos da Arqueira: fica 4 s no chão; quem pisar leva dano e fica lento */
 const ncTraps = [];
@@ -12661,19 +12669,34 @@ function ncTrapsUpdate(dt){ try{ ncArmasUpdate(dt); }catch(_){} for(let i = ncTr
     if(tr.t <= 0 || P.dead){ removeObj(tr.g); ncTraps.splice(i, 1); continue; } if(tr.t < 1) tr.g.visible = Math.floor(tr.t*10) % 2 === 0;
     for(const e of enemies){ if(e.dead || e.dying || tr.hit.has(e) || (e.kind === 'boss' && !e.awake)) continue;
       if(Math.hypot(e.pos.x - tr.x, e.pos.z - tr.z) < 1.1 + e.r){ tr.hit.add(e); hitEnemy(e, NC_ESQ2.archer.espinho, {freeze:NC_ESQ2.archer.lento, kb:0, noProc:true}); burst(e.pos, 0xd8e0e8, 6, 2, 3, 1); } } } }
+/* 28/11/2026: bola de magia da caveira encapuzada (nível 60+) */
+const ncCavBolas = [];
+function ncCavMagia(a, tg){ const m = new T.Mesh(new T.SphereGeometry(.22, 10, 8), bmat(0xb06aff, Object.assign({opacity:.95}, ADD))); m.position.set(a.pos.x, a.pos.y + 1.2, a.pos.z); scene.add(m); ncCavBolas.push({m, tg, t:0}); }
+function ncCavBolasTick(dt){ for(let i = ncCavBolas.length - 1; i >= 0; i--){ const b = ncCavBolas[i], tg = b.tg; b.t += dt;
+    if(!tg || tg.dead || tg.dying || b.t > 2 || P.dead){ removeObj(b.m); ncCavBolas.splice(i, 1); continue; }
+    const dx = tg.pos.x - b.m.position.x, dy = (tg.pos.y + 1) - b.m.position.y, dz = tg.pos.z - b.m.position.z, d = Math.hypot(dx, dy, dz) || .001, v = 16*dt;
+    if(d <= v + .3){ hitEnemy(tg, NC_ESQ2.necro.cavAtk*1.2, {noProc:true, kb:1, quiet:'dot', y:tg.pos.y}); burst(tg.pos, 0xb06aff, 8, 3, 4, .5); removeObj(b.m); ncCavBolas.splice(i, 1); continue; }
+    b.m.position.x += dx/d*v; b.m.position.y += dy/d*v; b.m.position.z += dz/d*v; if(Math.random() < dt*20) burst(b.m.position, 0x8a3dff, 1, .5, 2, .4); } }
 function updateAllies(dt){
+  try{ ncCavBolasTick(dt); }catch(_){}
   try{ ncTrapsUpdate(dt); }catch(_){}
   for(let i = allies.length-1; i >= 0; i--){
     const a = allies[i], cr = a.cr; a.life -= dt; a.atkT -= dt; monUpdate(a, dt);
-    if(a.life <= 0 || P.dead){ burst(a.pos, 0x6aff9a, 10, 3, 4, .5); removeObj(cr.root); allies.splice(i, 1); continue; }
+    if(a.cav){ a.hurtT -= dt; if(a.hurtT <= 0){ a.hurtT = 1; let dano = 0;   /* monstro colado na caveira bate nela */
+        for(const e of enemies){ if(e.dead || e.dying || (e.kind === 'boss' && !e.awake)) continue; if(Math.hypot(e.pos.x - a.pos.x, e.pos.z - a.pos.z) < (e.r || .8) + 1.2) dano += (e.dmg || 10)*.6; }
+        if(dano > 0){ a.hp -= Math.round(dano); floatText(a.pos, '-' + Math.round(dano), 'hurt'); } }
+      if(a.hp <= 0) a.life = 0;
+      a.bar.g.position.set(a.pos.x, a.pos.y + 2.1, a.pos.z); a.bar.g.quaternion.copy(camera.quaternion); a.bar.fg.scale.x = Math.max(.001, a.bar.w*Math.max(0, a.hp)/a.maxHp); }
+    if(a.life <= 0 || P.dead){ burst(a.pos, 0x6aff9a, 10, 3, 4, .5); removeObj(cr.root); if(a.bar) removeObj(a.bar.g); allies.splice(i, 1); continue; }
     let tg = null, bd = 14;
     for(const e of enemies){ if(e.dead || e.dying || (e.kind === 'boss' && !e.awake)) continue; const d = Math.hypot(e.pos.x - a.pos.x, e.pos.z - a.pos.z) - e.r; if(d < bd){ bd = d; tg = e; } }
     let tx = P.pos.x, tz = P.pos.z, near = 2.5;
-    if(tg){ tx = tg.pos.x; tz = tg.pos.z; near = tg.r + 1.1; }
+    if(tg){ tx = tg.pos.x; tz = tg.pos.z; near = a.mago ? 8 : tg.r + 1.1; }
     const dx = tx - a.pos.x, dz = tz - a.pos.z, d = Math.hypot(dx, dz) || .001;
     cr.root.rotation.y = lerpAngle(cr.root.rotation.y, Math.atan2(dx, dz), Math.min(1, dt*8));
     if(d > near){ a.pos.x += dx/d*5.5*dt; a.pos.z += dz/d*5.5*dt; a.walk += dt*11; cr.legL.rotation.x = Math.sin(a.walk)*.7; cr.legR.rotation.x = -Math.sin(a.walk)*.7; }
-    else if(tg && a.atkT <= 0){ a.atkT = .8; cr.armR.rotation.x = -2; setTimeout(() => cr.armR.rotation.x = 0, 150); hitEnemy(tg, .45, {noProc:true, kb:3, quiet:'dot', y:a.pos.y}); }
+    else if(tg && a.atkT <= 0 && a.mago){ a.atkT = 1.1; cr.armR.rotation.x = -2; setTimeout(() => cr.armR.rotation.x = 0, 150); ncCavMagia(a, tg); }   /* encapuzado: bola de magia roxa de longe */
+    else if(tg && a.atkT <= 0){ a.atkT = .8; cr.armR.rotation.x = -2; setTimeout(() => cr.armR.rotation.x = 0, 150); hitEnemy(tg, a.cav ? NC_ESQ2.necro.cavAtk : .45, {noProc:true, kb:3, quiet:'dot', y:a.pos.y}); }
     clampPos(a.pos, bossActive && Math.hypot(a.pos.x, a.pos.z - ARENA_Z) < ARENA_R, .4); a.pos.y = heightAt(a.pos.x, a.pos.z);
     if(a.life < 2) cr.root.visible = Math.floor(a.life*10) % 2 === 0;
   }
@@ -13830,7 +13853,7 @@ function updateHUD(){
     (ncDG && ncDG.C) ? (ncDG.door ? 'Porta aberta: <b>siga em frente</b>' : (ncDG.boss ? `Sala <b>${ncDG.rooms + 1}/${ncDG.rooms + 1}</b> · <b>Chefe</b>` : `Sala <b>${ncDG.room}/${ncDG.rooms + 1}</b> · onda <b>${ncDG.wave || 1}/${NC_DG_ONDAS}</b> · monstros: <b>${ncDG.live.filter(e => !e.dead).length}</b>`)) :
     gateOpen ? 'Portal aberto: siga para a <b>arena no norte</b>' :
     `Postos libertados <b>${nR}/${runes.length}</b>` + (near ? (nd < 22 ? `<br>Guardas neste posto: <b>${near.guards}</b>` : '<br>Siga os feixes roxos e derrote os guardas marcados') : '');
-  const fr = [Math.max(0, P.atkCd)/atkCooldown(), P.cd[ncSlot(0)]/(c.skills[ncSlot(0)].cd*ncSkFast(ncSlot(0))), P.cd[ncSlot(1)]/(c.skills[ncSlot(1)].cd*ncSkFast(ncSlot(1))), Math.max(0, P.dashCd)/(c.attack === 'bolt' || c.attack === 'dark' ? .9 : .7), 0];
+  const fr = [Math.max(0, P.atkCd)/atkCooldown(), P.cd[ncSlot(0)]/(c.skills[ncSlot(0)].cd*ncSkFast(ncSlot(0))), P.cd[ncSlot(1)]/(c.skills[ncSlot(1)].cd*ncSkFast(ncSlot(1))), Math.max(0, P.dashCd)/(save.cls === 'necro' ? NC_ESQ2.necro.cd : c.attack === 'bolt' || c.attack === 'dark' ? .9 : .7), 0];
   for(let i=0;i<5;i++){ const el = document.getElementById('sk' + i); if(el){ el.firstChild.style.setProperty('--p', fr[i]); if(i > 0 && i < 3 && el._f > 0 && fr[i] <= 0){ el.classList.remove('nc-ready'); void el.offsetWidth; el.classList.add('nc-ready'); } el._f = fr[i]; el.classList.toggle('ready', fr[i] <= 0 && i > 0 && i < 4); } }
   const s2 = document.getElementById('sk2'); if(s2) s2.classList.toggle('on', P.rageT > 0 || P.aegisT > 0);
   const s4 = document.getElementById('sk4'); if(s4) s4.classList.toggle('on', P.mounted);
