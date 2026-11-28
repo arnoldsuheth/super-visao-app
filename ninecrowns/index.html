@@ -12929,9 +12929,11 @@ function ncTombMake(){ try{ if(!curStage) return; const eqIds = new Set(Object.v
   const keep = [], drop = []; (save.inv || []).forEach(it => (eqIds.has(it.id) ? keep : drop).push(it));
   const old = save.tomb && Array.isArray(save.tomb.items) ? save.tomb.items : [];
   if(!drop.length && !old.length) return; save.inv = keep;
-  save.tomb = {st:curStage.id, x:+P.pos.x.toFixed(2), z:+P.pos.z.toFixed(2), items:old.concat(drop), nm:ncName(), at:Date.now()};   // at: 1 min só o dono pega (vale no jogo junto)
+  const dgk = ncDG && ncDG.C ? (ncDG.duo ? 'd' : 's') + curStage.id : null;   /* 28/11/2026 (Arnold): morreu na masmorra = itens ficam lá dentro, no salão da 1ª sala */
+  save.tomb = {st:curStage.id, x:dgk ? ncDG.C.x : +P.pos.x.toFixed(2), z:dgk ? ncDG.C.z - 3 : +P.pos.z.toFixed(2), dg:dgk, items:old.concat(drop), nm:ncName(), at:Date.now()};   // at: 1 min só o dono pega (vale no jogo junto)
   ncTombSpawn(); }catch(e){} }
 function ncTombSpawn(){ try{ if(ncTombG){ removeObj(ncTombG); ncTombG = null; } const t = save.tomb; if(!t || !curStage || t.st !== curStage.id || !t.items || !t.items.length) return;
+  const dgAgora = ncDG && ncDG.C ? (ncDG.duo ? 'd' : 's') + curStage.id : null; if((t.dg || null) !== dgAgora) return;
   const g = new T.Group(), stone = mat(0x6a6a78, {roughness:.85}), dark = mat(0x2e2a36, {roughness:.9}), gold = mat(0xd8a838, {metalness:.8, roughness:.3, emissive:0x5a3a00, emissiveIntensity:.4});
   const bone = mat(0xe8e0cc, {roughness:.7}), red = mat(0xff2a2a, {emissive:0xff1a1a, emissiveIntensity:2.2});
   const base = new T.Mesh(new T.CylinderGeometry(.95, 1.05, .2, 8), dark); base.position.y = .1; g.add(base);
@@ -12959,7 +12961,7 @@ function ncTombSpawn(){ try{ if(ncTombG){ removeObj(ncTombG); ncTombG = null; } 
   g.userData = {beam, beam2, pl, gem};
   g.traverse(o => { if(o.isMesh) o.castShadow = true; });
   g.position.set(t.x, heightAt(t.x, t.z), t.z); scene.add(g); ncTombG = g;
-  setTimeout(() => { try{ banner('Sua lápide está nesta área', t.items.length + ' itens esperando. Siga o feixe dourado.', 'rune'); }catch(_){} }, 2500); }catch(e){} }
+  setTimeout(() => { try{ banner(t.dg ? 'Sua lápide está nesta masmorra' : 'Sua lápide está nesta área', t.items.length + ' itens esperando. Siga o feixe dourado.', 'rune'); }catch(_){} }, 2500); }catch(e){} }
 function ncTombTick(dt){ if(!ncTombG || !P || P.dead) return; const u = ncTombG.userData; u.beam.rotation.y += dt; u.gem.rotation.y += dt*2; u.pl.intensity = 1.8 + Math.sin(clock*4)*.6;
   if(Math.random() < dt*10){ const v = ncTombG.position.clone(); v.x += (Math.random() - .5)*1.4; v.z += (Math.random() - .5)*1.4; v.y += .3; burst(v, Math.random() < .5 ? 0xffd36a : 0xff3a2a, 1, .5, 2.4, .9); }
   const t = save.tomb; if(!t || Math.hypot(P.pos.x - t.x, P.pos.z - t.z) > 1.8) return;
@@ -14065,7 +14067,7 @@ function startStage(id, onlyBoss, world, o){
   if(WORLD.busy){ WORLD.busy = false; setTimeout(() => $('#fade').classList.remove('on'), 150); }
   if(o.carry){ const c = o.carry; P.hp = Math.max(1, Math.round(P.S.hp*Math.min(1, c.hp))); runLoot = c.runLoot; runMats = c.runMats; runGems = c.runGems; runFrags = c.runFrags; runCoins = c.runCoins; }
   mode = 'stage'; running = true; inputLocked = false; resultT = deadT = -1; timeScale = 1; shake = 0;
-  if(ncDG && ncDG.st === id && !ncDG.C) setTimeout(ncDgSetup, 250); else if(ncDG && ncDG.st !== id) ncDG = null;
+  if(ncDG && ncDG.st === id && !ncDG.C) setTimeout(ncDgSetup, 250); else if(ncDG){ ncDG = null; window.ncDgFlat = null; if(ncDgG){ try{ ncDgG.parent && ncDgG.parent.remove(ncDgG); }catch(_){} ncDgG = null; } }
   attackHeld = attackPressed = dashPressed = false;
   renderSkillbar(); playMusic(themeNow());
   $('#hud').hidden = false; $('#touch').hidden = inputDev !== 'touch'; $('#skillbar').hidden = inputDev === 'touch'; $('#bossBar').hidden = true; $('#bossBar').classList.remove('rage');
@@ -14125,11 +14127,12 @@ function showDead(){
   inputLocked = true;
   const bossPct = boss && boss.awake && !boss.dead ? Math.ceil(boss.hp/boss.maxHp*100) : null;
   $('#deadBox').innerHTML = `<h3 class="lose">Você caiu</h3>
-    <p>${bossPct !== null ? `O ${curStage.boss} ficou com ${bossPct}% de vida.` : `Os inimigos de ${curStage.name} venceram desta vez.`} ${P.goldLost ? `A dificuldade ${DF().name} cobrou <b style="color:#f2c14e">${adenaTxt(P.goldLost)}</b>. ` : ''}A experiência e os ${runLoot.length} itens que você pegou ficam com você.</p>
+    <p>${bossPct !== null ? `O ${curStage.boss} ficou com ${bossPct}% de vida.` : `Os inimigos de ${curStage.name} venceram desta vez.`} ${P.goldLost ? `A dificuldade ${DF().name} cobrou <b style="color:#f2c14e">${adenaTxt(P.goldLost)}</b>. ` : ''}A experiência e os ${runLoot.length} itens que você pegou ficam com você.${ncDG && ncDG.C && save.tomb && save.tomb.dg ? ' O resto da mochila ficou numa lápide dentro desta masmorra: entre de novo para pegar.' : ''}</p>
     ${save.level < curStage.lvl ? `<p>Nível sugerido para esta fase: ${curStage.lvl}. Explore fases anteriores para subir de nível e achar peças melhores.</p>` : ''}
     <div class="mact">
-      <button class="btn primary" data-act="retry">Tentar de novo</button>
-      <button class="btn" data-act="hub">Voltar ao mapa</button>
+      ${ncDG && ncDG.C ? `<button class="btn primary" data-act="hub">Voltar ao mapa</button>
+      <button class="btn" data-act="dgagain">Entrar de novo na masmorra</button>` : `<button class="btn primary" data-act="retry">Tentar de novo</button>
+      <button class="btn" data-act="hub">Voltar ao mapa</button>`}
     </div>`;
   $('#dead').hidden = false;
 }
@@ -14536,7 +14539,8 @@ $('#result').addEventListener('click', e => {
 });
 $('#dead').addEventListener('click', e => {
   const b = e.target.closest('button'); if(!b) return;
-  if(b.dataset.act === 'retry') startStage(curStage.id, bossOnly); else goHub();
+  if(b.dataset.act === 'dgagain'){ const duo = !!(ncDG && ncDG.duo), id = curStage.id; ncDG = null; window.ncDgFlat = null; if(ncDgG){ try{ ncDgG.parent && ncDgG.parent.remove(ncDgG); }catch(_){} ncDgG = null; } ncDgStart(id, duo); }
+  else if(b.dataset.act === 'retry') startStage(curStage.id, bossOnly); else goHub();
 });
 $('#resumeBtn').onclick = () => togglePause(false);
 $('#quitBtn').onclick = () => goHub();
