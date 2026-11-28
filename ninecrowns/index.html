@@ -5709,7 +5709,7 @@ const reqStar = st => Math.min(9, 1 + Math.round(st.id*.5));
    Pedras: mapas 1-3 nenhuma; 4-6 Lesser Blue (SA); 7-9 + Silver Coin; 10-12 + Green Coin e Lesser Gold; 13 em diante + Gold Coin. */
 /* 26/11/2026 (Arnold: juntar 1 de ouro estava quase impossível). Valores em bronze (100 bronze = 1 prata, 100 prata = 1 ouro), no mapa 1; sobem a cada mapa.
    Meta: cerca de 1 a 2 de ouro no fim do Ato 1, sem ficar fácil. */
-const NC_PREMIO = {monstro:2, elite:2, posto:20, postos3:300, chefe:400, masmorra:600};
+const NC_PREMIO = {monstro:2, elite:2, posto:20, postos3:300, chefe:10000, masmorra:5000, eliteDg:5};   /* 28/11/2026 (Arnold): chefe do mapa 1 paga 1 ouro; baú da masmorra 50 pratas; elite da masmorra paga 5x */
 const NC_ZONA = st => Math.min(5, Math.floor(((st && st.id) || 0)/3));
 const NC_GT = g => [GR_OF.indexOf(g), GR_OF.lastIndexOf(g)];
 const NC_ZMAT = [[], ['lblue'], ['lblue','scoin'], ['lblue','scoin','gcoin','lgold'], ['lblue','scoin','gcoin','lgold','ocoin'], ['lblue','scoin','gcoin','lgold','ocoin']];
@@ -11234,6 +11234,22 @@ function ncDgBoss(){ const D = ncDG; D.boss = true; ncDgBuild(); ncDgTraps();
   if(boss){ boss.dead = false; boss.dying = 0; boss.awake = true; try{ wakeBoss(boss); }catch(_){} }
   banner('Sala 5 de 5 · Chefe', 'Vença ' + curStage.boss + ' para abrir o baú da masmorra', 'danger'); }
 function C2(c){ return new T.Color(c); }
+/* 28/11/2026 (Arnold): fim da masmorra. Dá o baú e XP, mostra o prêmio e leva de volta para o mesmo mapa (não abre o próximo) */
+function ncDgFim(st){ const g0 = save.gold, D = ncDG, duo = !!(D && D.duo); window.ncDgUltDuo = duo; let out = [];
+  try{ out = ncDgReward(st) || []; }catch(_){ ncDG = null; }
+  const xp = Math.round(120*Math.pow(1.2, st.id)*(duo ? 1.5 : 1)); try{ gainXP(xp); }catch(_){}
+  const ad = save.gold - g0; persist();
+  setTimeout(() => { inputLocked = true; attackHeld = false; timeScale = 1;
+    const its = out.map(it => `<span style="--tc:${TIERS[it.tier].css}">${itemName(it)}</span>`).join('');
+    $('#resultBox').innerHTML = `<div class="vr"><h3 class="win">Masmorra concluída!</h3><p class="vr-sub">${st.name} · ${duo ? 'Dupla' : 'Solo'}</p>
+      <div class="vr-chips"><span class="vr-chip">✨ +${xp} XP</span><span class="vr-chip">+${adenaHTML(ad)}</span></div>
+      ${its ? `<div class="eyebrow vr-ey">Baú da masmorra</div><div class="loot">${its}</div>` : ''}
+      <p class="vr-sub">Você volta para ${st.name}. O próximo mapa abre com as missões e o chefe do mapa.</p>
+      <div class="vr-act"><button class="btn primary" data-dgfim="mapa">Voltar para o mapa ${st.id + 1}</button><button class="btn" data-dgfim="denovo">Entrar de novo</button></div></div>`;
+    $('#result').hidden = false; }, 1800); }
+document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-dgfim]'); if(!b) return; e.stopPropagation();
+  const id = curStage.id, duo = !!window.ncDgUltDuo; $('#result').hidden = true; ncDG = null; window.ncDgFlat = null; if(ncDgG){ try{ ncDgG.parent && ncDgG.parent.remove(ncDgG); }catch(_){} ncDgG = null; }
+  if(b.dataset.dgfim === 'denovo') ncDgStart(id, duo); else startStage(id); }, true);
 function ncDgReward(st){ const D = ncDG; if(!D) return null; const [lo, hi] = bossRange(st), out = [];
   /* 26/11/2026 (Arnold aprovou): o chefe da masmorra dá 1 peça garantida do grade de cima (mapa 1 dá Grade D), pedras do grade e Adena dobrada */
   const z = NC_ZONA(st), up = NC_GT(Math.min(5, z + 1))[0];
@@ -12739,7 +12755,7 @@ function killMinion(e){
   const rw = Math.min(2, DF().reward)*LUCK(), sp = CFG.species[id] || 'metal', basic = id % 2 ? 'minerio' : 'metal', ev = evFx();
   save.cnt.kills = (save.cnt.kills || 0) + 1;
   if(e.elite){ save.cnt.elites = (save.cnt.elites || 0) + 1;
-    for(let i=0;i<3;i++) spawnPickup('gold', e.pos, Math.round(3*Math.pow(1.15, id)*NC_PREMIO.elite)); spawnPickup('heart', e.pos, .35);
+    for(let i=0;i<3;i++) spawnPickup('gold', e.pos, Math.round(3*Math.pow(1.15, id)*NC_PREMIO.elite*(ncDG ? NC_PREMIO.eliteDg : 1))); spawnPickup('heart', e.pos, .35);
     if(Math.random() < CFG.itemCh.elite*LUCK()*(ev.item || 1)) dropLoot(e.pos, rollRar('elite', NC_GT(NC_ZONA(curStage))[0], NC_GT(NC_ZONA(curStage))[1]));
     if(Math.random() < CFG.matCh.elite) giveMat(basic, 1 + (Math.random() < .5 ? 1 : 0)); if(Math.random() < .4*rw) giveMat(sp);
     if(Math.random() < .7) giveMat('refino', 1 + (Math.random() < .4 ? 1 : 0)); if(Math.random() < .08*rw) giveMat('superior'); if(Math.random() < .1) giveMat('broca');
@@ -13303,7 +13319,7 @@ function bossDefeated(b){
   for(const e of enemies) if(e.kind === 'minion' && !e.dead && Math.hypot(e.pos.x, e.pos.z - ARENA_Z) < ARENA_R + 6){ burst(e.pos, curStage.minion.color, 8, 5, 5); e.dead = true; removeObj(e.cr.root); removeObj(e.bar.g); }
   const st = curStage, id = st.id;
   const ncFirst = !(save.beaten[id] > 0);
-  try{ if(ncDG && ncDG.boss) ncDgReward(st); }catch(_){ ncDG = null; }
+  if(ncDG && ncDG.boss){ ncDgFim(st); return; }   /* 28/11/2026 (Arnold): masmorra não conta como chefe do mapa (o mapa 2 só abre com as missões e o chefe de verdade) */
   save.beaten[id] = (save.beaten[id]||0) + 1; ncKingFall(id, ncFirst); try{ if(save.postos) delete save.postos[id]; }catch(_){}
   const hadSet = ownsSet(st.region*2 + 2);
   let main;
