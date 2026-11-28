@@ -10681,7 +10681,7 @@ const NC_ZOOM_MAX_CEL = 4;   // 26/11/2026 (Arnold): no celular o zoom vai no m�
 const NC_CAM_FIX = 1;
 /* 27/11/2026 (Arnold): o Close ficou perto demais. Continua atrás do herói, mas com 3 distâncias: Perto, Médio (padrão) e Longe.
    Pinça (dois dedos), rodinha do mouse, + e - e o botão da câmera trocam a distância. */
-const NC_CLOSE_LV = [{n:'Perto', R:6.5, lift:3.2}, {n:'Médio', R:9.5, lift:4.3}, {n:'Longe', R:13, lift:5.6}];
+const NC_CLOSE_LV = [{n:'Perto', R:6.5, lift:3.2}, {n:'Médio', R:10.8, lift:4.8}, {n:'Longe', R:13, lift:5.6}];
 const ncCloseLv = () => NC_CLOSE_LV[clamp(save.closeLv ?? 1, 0, NC_CLOSE_LV.length - 1)];
 function ncCamLv(lv, announce){ save.closeLv = clamp(lv, 0, NC_CLOSE_LV.length - 1); save.zoom = NC_CAM_FIX; persist(); applyZoom(); if(announce) flashCamLabel(); }
 function ncCamCiclo(announce){ ncCamLv(((save.closeLv ?? 1) + 1) % NC_CLOSE_LV.length, announce); }
@@ -16608,6 +16608,107 @@ body.nc-crhide #ncCriar{display:none!important}
   #ncSkPop .arv-h{font-size:12px!important;margin:6px 0 2px!important}#ncSkPop .arv-lock{padding:4px 8px!important;font-size:11.5px!important}
   #ncSkPop .eyebrow{font-size:10px!important;margin:0!important}
 }
+
+/* 28/11/2026 (Arnold: "não tem necessidade do menu desse tamanho; muita letra, muito espaço; texto pode ser retrátil ou virar botãozinho de informação; rever em todos").
+   Celular deitado: janelas menores, botões mais baixos, menos espaço. Textos longos ficam escondidos atrás de um botão "i" (toque para ler). */
+.nci-b{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;min-width:20px;padding:0;margin:0 0 0 8px;border-radius:50%;border:1.5px solid #f2c14e;background:rgba(242,193,78,.12);color:#ffd36a;font:italic 700 12px/1 Georgia,serif;cursor:pointer;vertical-align:middle;flex:none;box-shadow:none;clip-path:none;text-transform:none;letter-spacing:0}
+.nci-b::before,.nci-b::after{display:none!important}
+.nci-b[aria-expanded=true]{background:#f2c14e;color:#1c1430}
+.nci-solo{display:flex;justify-content:flex-end;margin:0;height:0;position:relative;z-index:2}.nci-solo .nci-b{position:absolute;right:2px;top:-24px}.nci-solo.nci-row{height:auto;margin:3px 0 0}.nci-solo.nci-row .nci-b{position:static}
+[role=tablist]>.nci-b,.nc-tabs>.nci-b,.ftabs>.nci-b,.filters>.nci-b,.stabs>.nci-b{align-self:center;margin-left:auto}
+.nci-t:not(.nci-on){display:none!important}
+.nci-t.nci-on{font-size:12px!important;line-height:1.35!important;margin:4px 0!important;padding:6px 9px!important;border-radius:8px;background:rgba(242,193,78,.08);border-left:2px solid #f2c14e}
+@media (orientation:landscape) and (max-height:560px){
+  /* Pausa */
+  #pause .mbox{width:min(400px,52vw)!important;padding:8px 10px!important;max-height:calc(100dvh - 12px)!important}
+  #pause .mbox h3{font-size:18px!important;margin:0!important;line-height:30px}
+  #pause .pz-x{width:30px!important;height:30px!important;font-size:15px!important;top:8px!important;right:8px!important}
+  #pause .pbtns{margin-top:6px!important;gap:6px!important}
+  #pause .pbtns .btn,#pause .pbtns #resumeBtn,#pause .pbtns #quitBtn,#pause .pbtns #pSetBtn{height:38px!important;padding:0 6px 0 28px!important;font-size:12px!important;background-size:16px!important;background-position:8px center!important;white-space:nowrap!important;justify-content:flex-start!important}
+  #pause .eyebrow{font-size:10px!important;margin:6px 0 3px!important}
+  #pause .trow{padding:5px 9px!important}#pause .trow b{font-size:13px}#pause .trow small{font-size:11px!important}
+  #pause hr,#pause .sep{margin:6px 0!important}
+  /* Janelas centrais (resultado, morte, etc.) */
+  .modal .mbox{padding:10px 12px!important}
+  .modal .mbox h3{font-size:18px!important}
+  /* Estábulo */
+  .nc-stbox{width:min(560px,94vw)!important;max-height:calc(100dvh - 12px)!important;padding:8px 10px!important}
+  .nc-stbox .nc-head{margin-bottom:4px!important}.nc-stbox .nc-head b{font-size:17px!important}
+  .nc-stbox .nc-x{width:30px!important;height:30px!important;font-size:15px!important}
+  .nc-sttabs{gap:6px!important;margin-bottom:4px!important}.nc-sttabs .chipb{height:28px!important;min-height:0!important;padding:3px 12px!important;font-size:12px!important}
+  .nc-stbox .mats{margin:2px 0!important;font-size:12px}
+  .nc-mlist{grid-template-columns:1fr 1fr!important;gap:5px!important;margin:5px 0!important}
+  .nc-mcard{padding:4px 6px!important;gap:7px!important}
+  .nc-mcard img{width:44px!important;height:44px!important;border-radius:8px!important}
+  .nc-minfo b{font-size:12.5px!important}.nc-minfo small{font-size:10.5px!important}
+  .nc-mcard .btn{padding:3px 8px!important;font-size:11px!important;min-height:0!important}.nc-mcard .btn small{font-size:9.5px!important}
+  /* Itens festivos */
+  #ncFest .nf-box{width:min(560px,94vw)!important;max-height:calc(100dvh - 12px)!important;padding:8px 10px!important}
+  #ncFest .nf-hd h2{font-size:17px!important;margin:0!important}
+  #ncFest .nf-x{width:30px!important;height:30px!important;font-size:16px!important}
+  #ncFest .nf-ev{font-size:12px!important;margin:4px 0!important}
+  #ncFest .nf-list{grid-template-columns:1fr 1fr!important;gap:5px!important}
+  #ncFest .nf-it{padding:4px 6px!important;gap:7px!important}
+  #ncFest .nf-it img{width:40px!important;height:40px!important}
+  #ncFest .nf-it b{font-size:12.5px!important}#ncFest .nf-it span{font-size:10.5px!important}
+  #ncFest .nf-it .btn{padding:3px 8px!important;font-size:11px!important;min-height:0!important}#ncFest .nf-it .btn small{font-size:9.5px!important}
+  /* Painéis da cidade */
+  html body #hub>:is(aside.panel,#rightPanel) .note{padding:5px 9px!important;margin:4px 0!important;font-size:12px!important}
+  html body #hub>:is(aside.panel,#rightPanel) .card{padding:6px 10px!important;margin:4px 0!important}
+  html body #hub>:is(aside.panel,#rightPanel) .card h3,html body #hub>:is(aside.panel,#rightPanel) .card .cname{font-size:14px!important}
+  html body #hub>:is(aside.panel,#rightPanel) .cmeta{font-size:11px!important;line-height:1.3!important}
+  html body #hub>:is(aside.panel,#rightPanel) .card .acts .btn{min-width:0!important;font-size:12px!important}
+  html body #hub>:is(aside.panel,#rightPanel) .actsel button,html body #hub>:is(aside.panel,#rightPanel) .ato{padding:4px 6px!important;min-height:0!important}
+  html body #hub>:is(aside.panel,#rightPanel) .frow [data-buypot],html body #hub>:is(aside.panel,#rightPanel) .frow [data-ncreal]{min-width:0!important;padding:3px 8px!important;font-size:11px!important}
+  html body #hub>:is(aside.panel,#rightPanel) .frow [data-buypot] small,html body #hub>:is(aside.panel,#rightPanel) .frow [data-ncreal] small{font-size:9.5px!important}
+  html body #hub>:is(aside.panel,#rightPanel) .frow .iact:has([data-buypot]){display:flex!important;flex-direction:row!important;gap:4px!important;flex-wrap:nowrap!important}
+  html body #hub>:is(aside.panel,#rightPanel) .frow [data-buypot]{clip-path:none!important;border-radius:8px!important;height:auto!important;padding:3px 7px!important;max-width:none!important}
+  html body #hub>:is(aside.panel,#rightPanel) .frow [data-buypot]::before,html body #hub>:is(aside.panel,#rightPanel) .frow [data-buypot]::after{display:none!important}
+  html body #hub>:is(aside.panel,#rightPanel) .frow:has([data-buypot]){flex-wrap:wrap!important;row-gap:4px!important}
+  html body #hub>:is(aside.panel,#rightPanel) .frow:has([data-buypot])>div:not(.iact){flex:1 1 150px!important;min-width:150px!important}
+  html body #hub>:is(aside.panel,#rightPanel) .frow .iact:has([data-buypot]){margin-left:auto!important}
+  html body #hub>:is(aside.panel,#rightPanel) [data-region]{padding:4px 6px!important;min-height:0!important;font-size:13px!important;line-height:1.1!important}
+  html body #hub>:is(aside.panel,#rightPanel) [data-region] small{font-size:10px!important}
+  html body #hub>:is(aside.panel,#rightPanel) details>summary{padding:3px 8px!important;font-size:12px!important}
+  /* Habilidades, pet e outras janelinhas */
+  .pop-box{padding:8px 10px!important}
+  #ncPetPop .pp-box{width:min(460px,70vw)!important;max-height:calc(100dvh - 12px)!important;padding:8px 10px!important}
+  #ncPetPop h2{font-size:17px!important}#ncPetPop .pp-x{width:30px!important;height:30px!important;font-size:16px!important}
+  #ncPetPop .pp-pet{margin:6px 0!important;padding:6px!important;gap:8px!important}#ncPetPop .pp-pet img{width:52px!important;height:52px!important}
+  #ncPetPop .pp-pet b{font-size:14px!important}#ncPetPop .pp-pet small{margin:1px 0 4px!important;font-size:11px!important}
+  #ncPetPop .pp-sub{margin:4px 0!important;font-size:12.5px!important}
+  #ncPetPop .pp-grid{grid-template-columns:repeat(8,1fr)!important;gap:4px!important}
+  #ncPetPop .pp-acts{margin-top:6px!important;gap:5px!important}#ncPetPop .pp-acts .btn{padding:5px 10px!important;font-size:12px!important;min-height:0!important}
+}
 </style>
+
+<script>/* 28/11/2026 (Arnold): textos longos dos menus viram um botão "i". Toque no "i" para ler, toque de novo para esconder.
+   Vale para todas as janelas (cidade, pausa, estábulo, festivos, habilidades, pet, itens). */
+(function(){
+  var JAN='#hub>aside.panel,#hub>#rightPanel,.modal,.pop-box,.skp-box,#ncStable,#ncFest,#ncPetPop,#ncEvPop,#ncFriends,#ncParty';
+  var FORA='button,select,input,textarea,label,.row,.cmeta,.trow,.frow,.nc-mcard,.nf-it,.eq,.bcell,.tnode,.istat.cmpl,.cmpl,[data-noinfo],.nci-b,.ncw,#hud,.feed,#pickCards';
+  var INL=/^(B|STRONG|EM|SPAN|SMALL|I|A|BR|U|SUP|SUB)$/;
+  function cabe(el){ if(el.closest(FORA)) return false; if(!el.closest(JAN)) return false;
+    for(var i=0;i<el.children.length;i++) if(!INL.test(el.children[i].tagName)) return false;
+    var t=(el.textContent||'').replace(/\s+/g,' ').trim(); return t.length>=60; }
+  /* onde pôr o "i": no título mais perto acima (até 4 irmãos para trás); senão no fim da fileira de abas logo acima; senão numa linha fininha */
+  var TIT='h1,h2,h3,h4,.eyebrow,.nf-hd h2,.phead h3';
+  function titulo(el){ var p=el.previousElementSibling, n=0;
+    while(p && n<4){ if(p.matches(TIT)) return p; var q=p.querySelector && p.querySelector(':scope>h1,:scope>h2,:scope>h3,:scope>h4,:scope>.eyebrow'); if(q) return q;
+      if(n===0 && p.matches('[role=tablist],.nc-tabs,.ftabs,.filters,.stabs,.nc-sttabs')) return p; p=p.previousElementSibling; n++; }
+    return null; }
+  function faz(el){ if(el.dataset.nci) return; el.dataset.nci='1'; el.classList.add('nci-t');
+    var b=document.createElement('button'); b.type='button'; b.className='nci-b'; b.textContent='i'; b.setAttribute('aria-label','Informação'); b.setAttribute('aria-expanded','false');
+    b.addEventListener('click',function(ev){ ev.stopPropagation(); ev.preventDefault(); var on=el.classList.toggle('nci-on'); b.setAttribute('aria-expanded',on?'true':'false'); });
+    var h=titulo(el); if(h){ h.appendChild(b); } else { var w=document.createElement('div'), pv=el.previousElementSibling; w.className='nci-solo' + (pv && (pv.matches('button,.btn') || pv.querySelector(':scope>button,:scope>.btn')) ? ' nci-row' : ''); w.appendChild(b); el.parentNode.insertBefore(w,el); } }
+  function varre(){ if(!(matchMedia('(orientation:landscape) and (max-height:560px)').matches)) return;
+    document.querySelectorAll(JAN).forEach(function(j){ if(j.hidden || j.offsetParent===null && getComputedStyle(j).position!=='fixed') return;
+      j.querySelectorAll('p,.note,.istat,.cinfo,.spec-lock,.nc-note,.nf-lede,.hint,.muted,.desc,small,div').forEach(function(el){ if(!el.dataset.nci && el.offsetParent!==null && cabe(el)) faz(el); }); }); }
+  var t=0; function agenda(L){ /* só olha quando a mudança foi dentro de uma janela (no meio da luta não gasta nada) */
+    if(L){ var ok=false; for(var i=0;i<L.length && !ok;i++){ var n=L[i].target; if(n && n.nodeType===1 && (n.closest(JAN) || (n.matches && n.matches(JAN)) || n===document.body || n.id==='hub')) ok=true; } if(!ok) return; }
+    clearTimeout(t); t=setTimeout(varre,150); }
+  function liga(){ new MutationObserver(agenda).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['hidden']}); agenda(); }
+  if(document.body) liga(); else document.addEventListener('DOMContentLoaded',liga);
+})();</script>
 </body>
 </html>
