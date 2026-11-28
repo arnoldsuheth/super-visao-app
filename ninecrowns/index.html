@@ -6336,7 +6336,7 @@ const freshSave = () => ({ncEp:NC_EP, level:1, xp:0, gold:0, potions:3, inv:[], 
   mats:{refino:3, superior:0, ancestral:0, selo:0, bencao:0, broca:1, metal:5}, gems:{}, gemPity:{}, frags:[0,0,0,0,0,0,0,0,0,0], coins:5, cnt:{}, mq:{}, seq:{step:0, lvl:0}, pityEx:{}, evBought:{}, worldWins:{}});
 let save = loadSave();
 /* Configurações ficam guardadas por aparelho (chave nc-prefs): entrar com código, a nuvem ou restaurar cópia não desconfiguram mais gráfico, som, câmera e controles */
-const NC_PREF_KEYS = ['keys','gfx','gfxAuto','gfxV4','gfxV5','gfxo','ncAuto','zoom','muted','vol','rt','real','perf','swapCtl'];
+const NC_PREF_KEYS = ['keys','closeLv','gfx','gfxAuto','gfxV4','gfxV5','gfxo','ncAuto','zoom','muted','vol','rt','real','perf','swapCtl'];
 try{ const pf = JSON.parse(localStorage.getItem('nc-prefs')); if(pf) NC_PREF_KEYS.forEach(k => { if(k in pf) save[k] = pf[k]; }); }catch(e){}
 function ncPrefSave(){ try{ const pf = {}; NC_PREF_KEYS.forEach(k => { if(save[k] !== undefined) pf[k] = save[k]; }); localStorage.setItem('nc-prefs', JSON.stringify(pf)); return true; }catch(e){ return false; } }
 if(!save.nc80){ save.level = Math.min(80, Math.max(1, Math.round(1 + ((save.level || 1) - 1)*79/43))); save.nc80 = 1; }
@@ -10666,16 +10666,22 @@ function applyZoom(){
   const k = zoomK();
   if(mode === 'stage' && scene.fog){ const fm = curStage ? (SCENE[curStage.id].fog || 1) : 1; scene.fog.near = (36 + (k - 1)*30)*fm; scene.fog.far = (95 + (k - 1)*45)*fm; scene.fog._n0 = scene.fog.near; scene.fog._f0 = scene.fog.far; }
   if(dirLight && mode === 'stage'){ const ar = Q().area*Math.max(1, k*.9), c = dirLight.shadow.camera; c.left = -ar; c.right = ar; c.top = ar; c.bottom = -ar; c.far = 100 + (k - 1)*40; c.updateProjectionMatrix(); }
-  const lbl = 'Câmera: ' + (ZOOMS[save.zoom] || ZOOMS[4]).n; const hb = $('#camBtn'); if(hb) hb.textContent = lbl;
+  const lbl = 'Câmera: ' + (save.zoom === NC_CAM_FIX ? ncCloseLv().n : (ZOOMS[save.zoom] || ZOOMS[4]).n); const hb = $('#camBtn'); if(hb) hb.textContent = lbl;
 }
 let camLblT = null;
-function flashCamLabel(){ const cb = $('#hCam'); if(!cb) return; cb.textContent = (ZOOMS[save.zoom] || ZOOMS[4]).n; cb.hidden = false; clearTimeout(camLblT); camLblT = setTimeout(() => cb.hidden = true, 1400); }
+function flashCamLabel(){ const cb = $('#hCam'); if(!cb) return; cb.textContent = save.zoom === NC_CAM_FIX ? 'Câmera: ' + ncCloseLv().n : (ZOOMS[save.zoom] || ZOOMS[4]).n; cb.hidden = false; clearTimeout(camLblT); camLblT = setTimeout(() => cb.hidden = true, 1400); }
 let closeYaw = 0;
 try{ document.addEventListener('fullscreenchange', () => { try{ if(document.fullscreenElement && screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(() => {}); }catch(_){} }); }catch(_){}   // 26/11: Android trava deitado na tela cheia
 const NC_ZOOM_MAX_CEL = 4;   // 26/11/2026 (Arnold): no celular o zoom vai no máximo até "Longe" (a distância que ele joga); fica mais leve
 /* 27/11/2026 (Arnold): câmera travada no "Close" (atrás do herói); sem outras opções. Dá para girar para os lados e olhar para cima e para baixo */
 const NC_CAM_FIX = 1;
-function setZoom(i, announce){ i = NC_CAM_FIX; if(save.zoom === NC_CAM_FIX){ applyZoom(); return; }
+/* 27/11/2026 (Arnold): o Close ficou perto demais. Continua atrás do herói, mas com 3 distâncias: Perto, Médio (padrão) e Longe.
+   Pinça (dois dedos), rodinha do mouse, + e - e o botão da câmera trocam a distância. */
+const NC_CLOSE_LV = [{n:'Perto', R:6.5, lift:3.2}, {n:'Médio', R:9.5, lift:4.3}, {n:'Longe', R:13, lift:5.6}];
+const ncCloseLv = () => NC_CLOSE_LV[clamp(save.closeLv ?? 1, 0, NC_CLOSE_LV.length - 1)];
+function ncCamLv(lv, announce){ save.closeLv = clamp(lv, 0, NC_CLOSE_LV.length - 1); save.zoom = NC_CAM_FIX; persist(); applyZoom(); if(announce) flashCamLabel(); }
+function ncCamCiclo(announce){ ncCamLv(((save.closeLv ?? 1) + 1) % NC_CLOSE_LV.length, announce); }
+function setZoom(i, announce){ if(save.zoom === NC_CAM_FIX){ const lv = save.closeLv ?? 1; if(i > NC_CAM_FIX) ncCamLv(lv + 1, announce); else if(i < NC_CAM_FIX) ncCamLv(lv - 1, announce); else applyZoom(); return; } i = NC_CAM_FIX;
   const was = (ZOOMS[save.zoom] || {}).close;
   if(COARSE && i > NC_ZOOM_MAX_CEL) i = (save.zoom >= NC_ZOOM_MAX_CEL ? 0 : NC_ZOOM_MAX_CEL);
   save.zoom = clamp(i, 0, ZOOMS.length - 1); persist(); applyZoom();
@@ -11465,7 +11471,7 @@ addEventListener('keydown', e => {
   if(e.code === 'Tab') e.preventDefault();
   if(isKey(e, 'bag') || isKey(e, 'hero')){ if(running && !inputLocked) ncStagePanel(isKey(e, 'bag') ? 'bag' : 'hero'); return; }
   if(isKey(e, 'skills')){ ncSkillsPop(); return; }
-  if(isKey(e, 'cam')){ setZoom(((save.zoom ?? 4) + 1) % ZOOMS.length, true); return; }
+  if(isKey(e, 'cam')){ ncCamCiclo(true); return; }
   if(e.code === 'Minus' || e.code === 'NumpadSubtract'){ setZoom((save.zoom ?? 4) + 1, true); return; }
   if(e.code === 'Equal' || e.code === 'NumpadAdd'){ setZoom((save.zoom ?? 4) - 1, true); return; }
   if(!running || inputLocked) return;
@@ -13849,7 +13855,7 @@ function updateCamera(dt){
     camPos.set(P.pos.x, hy + eye + (P.mounted ? 0 : Math.abs(Math.cos(P.walk))*.05), P.pos.z);
     camLook.set(P.pos.x - Math.sin(closeYaw)*cp*10, camPos.y - Math.sin(fpPitch)*10, P.pos.z - Math.cos(closeYaw)*cp*10);
   } else if(paused || Z.close){
-    const yaw = paused ? inspect.yaw : closeYaw, R = paused ? inspect.dist : 4.4*(P.mounted ? 1.3 : 1), hy = hero.root.position.y, lift = paused ? 1.6 : 2.3*(P.mounted ? 1.4 : 1);
+    const yaw = paused ? inspect.yaw : closeYaw, CL = ncCloseLv(), R = paused ? inspect.dist : CL.R*(P.mounted ? 1.3 : 1), hy = hero.root.position.y, lift = paused ? 1.6 : CL.lift*(P.mounted ? 1.4 : 1);
     if(paused) _v.set(P.pos.x + Math.sin(yaw)*R, hy + lift, P.pos.z + Math.cos(yaw)*R);
     else { const ly = P.mounted ? 2.4 : 1.25, D = Math.hypot(R, lift - ly), el = clamp(Math.atan2(lift - ly, R) + camTilt, -.25, 1.25);
       _v.set(P.pos.x + Math.sin(yaw)*Math.cos(el)*D, hy + ly + Math.sin(el)*D, P.pos.z + Math.cos(yaw)*Math.cos(el)*D); _v.y = Math.max(_v.y, heightAt(_v.x, _v.z) + .45); }
@@ -14475,8 +14481,8 @@ document.addEventListener('input', e => { const el = e.target; if(!el.dataset ||
 document.addEventListener('change', e => { if(e.target.dataset && e.target.dataset.vol){ persist(); if(e.target.dataset.vol === 'sfx') SFX.coin(); } });
 const toggleMute = () => { save.muted = !save.muted; persist(); audio(); applyVolume(); renderHub(); };
 $('#muteBtn').onclick = toggleMute;
-$('#camBtn').onclick = () => setZoom(((save.zoom ?? 4) + 1) % ZOOMS.length);
-$('#hCamBtn').onclick = () => setZoom(((save.zoom ?? 4) + 1) % ZOOMS.length, true);
+$('#camBtn').onclick = () => ncCamCiclo(false);
+$('#hCamBtn').onclick = () => ncCamCiclo(true);
 function setGfx(k){ if(COARSE && (k === 'alto' || k === 'ultra')) k = 'medio';   /* 23/11 (Arnold escolheu A): no celular o máximo é o Médio */
   save.gfxo = null; save.ncAuto = null; if(k === 'auto'){ save.gfxAuto = true; save.gfx = CHIP.preset; } else { save.gfxAuto = false; save.gfx = k; } persist(); setupFX(); resize(); realLoad(); if(mode === 'hub') goHub(); else renderGfxUI(); }
 /* ================= ABAS (mapa e pausa) =================
@@ -14742,7 +14748,7 @@ function pollPad(dt){
     if(pressed(4) || pressed(6)) usePotion();
     if(pressed(8)) toggleMount();
     if(pressed(11)) mmFullShow(!mmFullOpen());
-    if(pressed(10)) setZoom(((save.zoom ?? 4) + 1) % ZOOMS.length, true);
+    if(pressed(10)) ncCamCiclo(true);
     if(pressed(9)){ togglePause(true); setTimeout(() => menuMove(0), 0); }
   }
   padPrev = now;
