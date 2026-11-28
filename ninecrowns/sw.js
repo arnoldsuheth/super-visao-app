@@ -18,7 +18,12 @@ self.addEventListener('fetch', e => {
     /* 27/11/2026 (Arnold): a versão nova ficava presa até abrir o jogo duas vezes. Agora, se a cópia baixada por trás for diferente,
        avisa o jogo, que recarrega sozinho quando não está no meio de uma fase */
     const avisa = (velha, nova) => Promise.all([velha.text(), nova.text()]).then(([a, b]) => { if(a.length && b.length && a !== b) return self.clients.matchAll({type:'window'}).then(L => L.forEach(cl => cl.postMessage({nc:'nova'}))); }).catch(() => {});
-    e.respondWith(caches.match(chave).then(c => { if(c){ const velha = c.clone(); e.waitUntil(rede.then(x => x.ok ? avisa(velha, x.clone()) : 0).catch(() => {})); return c; } return rede.catch(() => caches.match(r, {ignoreSearch:true}).then(x => x || caches.match('./'))); }));
+    /* 28/11/2026 (Arnold: "fechar e abrir 2x toda vez, não"): com internet boa a versão nova abre direto (espera até 2,5 s pela rede);
+       com internet fraca abre a cópia salva na hora e, quando a nova chegar, o jogo recarrega sozinho fora da fase */
+    e.respondWith(caches.match(chave).then(c => { if(c){ const velha = c.clone(); let usouCopia = false;
+      const espera = new Promise(r => setTimeout(() => { usouCopia = true; r(c); }, 2500));
+      e.waitUntil(rede.then(x => (usouCopia && x.ok) ? avisa(velha, x.clone()) : 0).catch(() => {}));
+      return Promise.race([rede.then(x => x.ok ? x : espera).catch(() => (usouCopia = true, c)), espera]); } return rede.catch(() => caches.match(r, {ignoreSearch:true}).then(x => x || caches.match('./'))); }));
     return;
   }
   e.respondWith(caches.match(r).then(x => x || fetch(r).then(y => { if(y.ok){ const c = y.clone(); caches.open(V).then(h => h.put(r, c)); } return y; })));   // assets: cache primeiro
