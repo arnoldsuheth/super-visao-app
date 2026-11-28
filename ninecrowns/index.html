@@ -166,6 +166,23 @@ kbd{font-family:var(--f-display);font-size:12px;background:var(--panel-2);border
 .bon.on{border-color:var(--tc,var(--gold));background:color-mix(in srgb,var(--tc,var(--gold)) 10%,#0d1019);color:var(--ink)}
 .bon.on b{color:var(--tc,var(--gold-hi))}
 .bon small{display:block;color:var(--mute);font-size:12px}
+.ncs{border:1px solid var(--line);border-radius:6px;padding:8px 10px;background:#0d1019}
+.ncs.cheio{border-color:#3ddc84}
+.ncs-h{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}
+.ncs-h b{color:var(--gold-hi,#ffd77a);font-size:14px}
+.ncs-c{font-size:13px;font-weight:700;color:#fff;background:#1c2236;border-radius:10px;padding:2px 9px}
+.ncs.cheio .ncs-c{background:#3ddc84;color:#06210f}
+.ncs-l{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px}
+.ncs-p{display:grid;grid-template-columns:16px 1fr;align-items:baseline;font-size:12.5px;color:#fff;line-height:1.25}
+.ncs-p b{font-weight:600;color:#fff}
+.ncs-p small{grid-column:2;color:var(--mute);font-size:11px}
+.ncs-p.ok,.ncs-p.ok b{color:#3ddc84}
+.ncs-m{font-weight:800}
+.ncs-b{margin-top:7px;font-size:12.5px;color:var(--mute)}
+.ncs-b b{color:#fff}
+.ncs.cheio .ncs-b b{color:#3ddc84}
+.ncs-mais{margin-top:6px}
+#bonusList .nci-solo{display:none}
 .filters{display:flex;gap:5px;flex-wrap:wrap}
 .chipb{background:#0d1019;border:1px solid var(--line);border-radius:12px;padding:3px 10px;font-size:12.5px;color:var(--mute)}
 .chipb[aria-pressed="true"]{border-color:var(--gold);color:var(--gold-hi)}
@@ -872,7 +889,7 @@ body.nc-swap #joyZone{left:auto;right:0}
       <div class="filters bag-f" id="invFilters"></div>
       <div class="invlist" id="invList"></div>
       <div id="bagList" hidden></div>
-      <details class="nc-more"><summary>Conjuntos e combinações</summary><div class="blist" id="bonusList"></div></details>
+      <details class="nc-more"><summary>Conjuntos e combinações</summary><div class="blist" id="bonusList" data-noinfo></div></details>
       <button class="btn" id="sellIron" hidden>Vender todos os itens de Ferro da mochila</button>
     </div>
     <div id="vForge" class="panel" style="padding:0;border:0;background:none;backdrop-filter:none" hidden>
@@ -8121,6 +8138,22 @@ function itemRow(it, actions){
   const ic = itemImg(it, 'ps-row');
   return `<div class="irow" style="--tc:${css};--rc:${TIERS[it.tier].css}">${ic}<div style="min-width:0"><div class="iname ${it.tier === 9 ? 'prism' : ''}">${itemName(it)}${skDots(it)}<small>${TIERS[it.tier].s} ${TIERS[it.tier].n}</small></div><div class="istat">${statText(itemStats(it))}</div>${isEquipped(it) ? '' : cmpText(it)}</div><div class="iact">${actions}</div></div>`;
 }
+/* 28/11/2026 (Arnold): painel do conjunto na Mochila. As 6 peças de armadura do mesmo grade dão o bônus.
+   Verde = peça vestida que já combina; branco = peça que falta ou de outro grade. */
+const NC_SET_BON_TXT = {Heavy:'+10% de defesa e +5% de vida', Light:'+8% de velocidade e +5% de crítico', Robe:'+10% de mana e +8% de dano de magia'};
+function ncSetPainel(){
+  const tipo = NC_SET_TIPO[save.cls] || 'Heavy', gs = ARMOR.map(sl => { const it = equipped(sl); return it ? GR_OF[it.tier] : -1; });
+  const cont = [0,0,0,0,0,0]; gs.forEach(g => { if(g >= 1) cont[g]++; });
+  let alvo = 0; for(let g = 5; g >= 1; g--) if(cont[g] > cont[alvo] || (!alvo && cont[g])) alvo = g;
+  if(!alvo){ alvo = 1; for(let g = 1; g <= 5; g++) if(save.level >= GR_LV[g]) alvo = g; }
+  const ok = gs.filter(g => g === alvo).length, cheio = ok === ARMOR.length;
+  const linhas = ARMOR.map((sl, i) => { const it = equipped(sl), certo = gs[i] === alvo, alvoN = NC_SET_PECA[sl] + ' ' + NC_SET_N[alvo] + ' ' + tipo;
+    const agora = it ? itemName(it) : 'vazio';
+    return `<div class="ncs-p ${certo ? 'ok' : ''}"><span class="ncs-m">${certo ? '✓' : '·'}</span><b>${alvoN}</b>${certo ? '' : `<small>Você usa: ${agora}</small>`}</div>`; }).join('');
+  return `<div class="ncs ${cheio ? 'cheio' : ''}" data-noinfo><div class="ncs-h"><b>Conjunto ${NC_SET_N[alvo]} ${tipo}</b><span class="ncs-c">${ok} de ${ARMOR.length}</span></div>
+    <div class="ncs-l">${linhas}</div>
+    <div class="ncs-b">${cheio ? 'Bônus ativo' : 'Complete as ' + ARMOR.length + ' peças para ganhar'}: <b>${NC_SET_BON_TXT[tipo]}</b></div></div>`;
+}
 function renderGear(){
   $('#eqGrid').innerHTML = ncEqSlots().map(slot => {
     const it = equipped(slot);
@@ -8130,7 +8163,7 @@ function renderGear(){
   let bl = `<div class="bon"><b>Peças vestidas:</b> ${TIERS.map((t, i) => c[i] ? `<span style="color:${t.css}">${c[i]} ${t.name}</span>` : '').filter(Boolean).join(' · ') || 'nenhuma'}<small>As combinações misturam peças de grades diferentes: Grade C, Grade B ou A e Ródio (A) ou Rutênio (S).</small></div>`;
   bl += [9,8,7,6,5,4,3,2,1,0].map(t => `<div class="bon ${B.sets.includes(t) ? 'on' : ''}" style="--tc:${TIERS[t].css}"><b>${SET_NAMES[t]} completa</b> (6 peças iguais): ${SET_TEXT[t]}.</div>`).join('');
   bl += COMBOS.map(k => `<div class="bon ${B.combos.includes(k.id) ? 'on' : ''}" style="--tc:${k.css}"><b>${k.name}</b>: ${k.desc}<small>Precisa de ${k.req}.</small></div>`).join('');
-  $('#bonusList').innerHTML = bl;
+  $('#bonusList').innerHTML = ncSetPainel() + `<details class="nc-more ncs-mais"><summary>Ver todos os bônus</summary><div class="blist">${bl}</div></details>`;   /* 28/11/2026 (Arnold): mostra as 6 peças do conjunto, verde = certa, branco = falta */
   $('#bagList').innerHTML = bagHTML();
   const fl = [['all','Todos'], ...ncSlots().map(s => [s, SLOT_INFO[s].n])];
   $('#invFilters').innerHTML = fl.map(([k, n]) => [k, NC_SHORT[k] || n]).map(([k, n]) => `<button class="chipb" data-filter="${k}" aria-pressed="${invFilter === k}">${n}</button>`).join('');
