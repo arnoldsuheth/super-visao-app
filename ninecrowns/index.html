@@ -615,7 +615,7 @@ canvas.ncgrabok{cursor:grab}canvas.ncgrab,canvas.ncgrabok.ncgrab{cursor:grabbing
 #pause .filters .chipb{min-height:44px!important;padding:6px 4px!important;font-size:13px!important;display:flex!important;align-items:center!important;justify-content:center!important;text-align:center!important}
 #pause .pbtns #resumeBtn,#pause .pbtns #quitBtn,#pause .pbtns #pSetBtn{background-repeat:no-repeat!important}
 #pause .pbtns #resumeBtn,#pause .pbtns #quitBtn,#pause .pbtns #pSetBtn{background-size:26px!important;background-position:center 14px!important}
-body:has(#pause:not([hidden])) #ncBell,body:has(#pause:not([hidden])) #ncChat{display:none!important}
+body:has(#pause:not([hidden])) #ncBell,body:has(#pause:not([hidden])) #ncChat,body:has(#dead:not([hidden])) #ncBell,body:has(#result:not([hidden])) #ncBell{display:none!important}
 
 /* 26/11/2026 (Arnold: "os botões têm espaçamento muito grande, tampam a tela"): as fileiras de escolha (peça, grade, abas) viram
    uma linha só, que desliza para o lado, com botões mais baixos e letra menor */
@@ -8117,7 +8117,7 @@ function renderStages(){
       if(save.level < st.lvl) pills.push(`<span class="pill warn">Nível sugerido ${st.lvl}</span>`);
       pills.push(`<span class="pill ${weak ? 'warn' : 'ok'}">Equipamento ${GR(rq - 1)}${weak ? ' · o seu é fraco' : ''}</span>`);
     }
-    const [blo, bhi] = bossRange(st), prize = (st.slot === 'weapon' ? 'arma da sua classe' : SLOT_INFO[st.slot].n) + ' ' + GR(blo) + '–' + GR(bhi) + '';
+    const [blo, bhi] = bossRange(st), prize = (st.slot === 'weapon' ? 'arma da sua classe' : SLOT_INFO[st.slot].n) + ' ' + (GR(blo) === GR(bhi) ? GR(blo) : GR(blo) + '–' + GR(bhi)) + '';   /* 28/11: sem 'No Grade–No Grade' */
     return `<div class="card ${un ? '' : 'locked'} ${has ? 'done' : ''}" style="--tc:${T0.css}">
       <div class="num">${st.id + 1}</div>
       <div class="cname">${st.name}</div>
@@ -14152,7 +14152,7 @@ function showResult(){
   const itDet = it => `<b style="color:${TIERS[it.tier].css}">${itemName(it)}</b><small>${GR(it.tier)} · ${TIERS[it.tier].n}</small><span>${statText(itemStats(it))}</span>`;
   let star = '';
   if(main.type === 'piece'){ const it = main.item; star = `<div class="vr-star" style="--tc:${TIERS[it.tier].css}"><div class="vr-big">${itemImg(it, 'ps-bag')}</div><div><div class="eyebrow">${lastResult.world ? 'Peça do Chefe Mundial' : 'Drop do chefe'}</div><b>${itemName(it)}</b><small>${GR(it.tier)} · ${TIERS[it.tier].n}</small><span>${statText(itemStats(it))}</span></div></div>`; }
-  else { const [lo, hi] = bossRange(st), prize = (st.slot === 'weapon' ? 'Arma' : SLOT_INFO[st.slot].n) + ' ' + GR(lo) + '–' + GR(hi);
+  else { const [lo, hi] = bossRange(st), prize = (st.slot === 'weapon' ? 'Arma' : SLOT_INFO[st.slot].n) + ' ' + (GR(lo) === GR(hi) ? GR(lo) : GR(lo) + '–' + GR(hi));
     star = `<div class="vr-pity"><span>${prize}</span><div class="vr-bar"><i style="width:${Math.min(100, main.next*100)}%"></i></div><b>${pct(main.next)}</b><small>Não caiu desta vez · garantido em ${Math.max(1, CFG.pity.hard - (save.pity[st.id] || 0))} vitória(s)</small></div>`; }
   const items = extra.concat(others).map(it => vcell(itemImg(it, 'ps-bag'), '', TIERS[it.tier].css, itDet(it))).join('');
   const mats = Object.keys(runMats).filter(k => runMats[k] && MATS[k]).map(k => vcell(MAT_ICO(k), runMats[k], MATS[k].css, `<b style="color:${MATS[k].css}">${MATS[k].n}</b><small>× ${runMats[k]}</small>`)).join('');
