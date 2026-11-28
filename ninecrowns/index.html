@@ -8403,7 +8403,7 @@ function craftHTML(){
     const lvOk = save.level >= grLv(t);
     const need = Object.keys(R.mats).map(m => { const q = Math.ceil(R.mats[m]*k), have = save.mats[m] || 0; return `<span class="${have >= q ? 'ok' : 'no'}" style="--tc:${MATS[m].css}">${MAT_ICO(m)}${q} ${MATS[m].n} (você tem ${have})</span>`; }).join('');
     const nmSet = (() => { try{ const pv = {slot:craftSlot, tier:t, wtype:CLS().wtype}; return ncNomeSet(pv); }catch(_){ return null; } })();
-    return `<div class="frow" style="--tc:${T.css}">${pieceImg(t, craftSlot, 'ps-row')}<div><div class="fn" style="color:${T.css}">${nmSet || ((craftSlot === 'weapon' ? 'Arma' : SLOT_INFO[craftSlot].n) + ' ' + T.pre)} · ${T.sc} <small style="color:var(--mute)">${T.n}</small></div>
+    return `<div class="frow" data-iteminfo="${craftSlot}:${t}" style="--tc:${T.css}">${pieceImg(t, craftSlot, 'ps-row')}<div><div class="fn" style="color:${T.css}">${nmSet || ((craftSlot === 'weapon' ? 'Arma' : SLOT_INFO[craftSlot].n) + ' ' + T.pre)} · ${T.sc} <small style="color:var(--mute)">${T.n}</small></div>
       <div class="istat" style="color:#f4efe2">${st || ''}</div>${(() => { try{ const pv = {id:-1, slot:craftSlot, tier:t, q:0, up:0, cls:save.cls}; if(craftSlot === 'weapon'){ pv.wtype = CLS().wtype; pv.v = 0; } return cmpText(pv); }catch(_){ return ''; } })()}<div class="istat" style="color:${lvOk ? 'var(--mute)' : '#ff7a6a'}">${lvOk ? 'Você já pode usar' : 'Para usar: nível ' + grLv(t)}</div>
       <div class="eyebrow" style="margin-top:6px">Custo</div><div class="need">${need}<span class="${save.gold >= Math.round(R.gold*k) ? 'ok' : 'no'}" style="--tc:#f2c14e">${adenaTxt(Math.round(R.gold*k))}</span></div></div>
       <button class="btn sm ${ok ? 'primary' : ''}" data-craft="${t}" ${ok ? '' : 'disabled'}>Fabricar</button></div>`; }).join('') + '</div>';
@@ -8666,6 +8666,22 @@ function nextDisc(){
 }
 /* 26/11/2026 (Arnold: "como vou saber se o item é melhor?"): compara todos os atributos com a peça que você está usando, verde melhora e vermelho piora */
 const NC_CMP = [['hp','vida',0],['atk','ataque',0],['def','defesa',0],['atkPct','ataque',1],['hpPct','vida',1],['defPct','defesa',1],['crit','crítico',1],['critMult','dano crítico',1],['aspd','destreza',1],['spdPct','velocidade',1],['leech','roubo de vida',1],['pen','perfurar',1],['luck','sorte',1],['block','bloqueio',1],['range','alcance',0],['saStun','stun',1],['saSil','silêncio',1],['saPara','paralisia',1],['saLento','lentidão',1],['saAcu','acumen',1],['saMana','mana por golpe',0]];
+/* 28/11/2026 (Arnold: "no ferreiro não dá pra ver os atributos e se o item é melhor"): tocar na peça abre a ficha com todos os atributos,
+   lado a lado com a peça que você usa (verde melhora, vermelho piora) */
+function ncItemInfo(it){ if(!it || !it.slot) return; const e = equipped(it.slot), a = itemStats(it), b = e ? itemStats(e) : {}, T = TIERS[it.tier] || {};
+  const fmt = (v, p) => v ? (p ? String(Math.round(v*1000)/10).replace('.', ',') + '%' : String(Math.round(v*10)/10).replace('.', ',')) : '—';
+  let up = 0, dn = 0; const linhas = NC_CMP.filter(([k]) => (a[k] || 0) || (b[k] || 0)).map(([k, n, p]) => { const d = (a[k] || 0) - (b[k] || 0); if(d > 1e-6) up++; else if(d < -1e-6) dn++;
+    return '<tr><td>' + n[0].toUpperCase() + n.slice(1) + '</td><td>' + fmt(b[k], p) + '</td><td class="' + (d > 1e-6 ? 'up1' : d < -1e-6 ? 'dn1' : '') + '">' + fmt(a[k], p) + (d > 1e-6 ? ' ▲' : d < -1e-6 ? ' ▼' : '') + '</td></tr>'; }).join('');
+  let nm = ''; try{ nm = ncNomeSet(it) || itemName(it); }catch(_){ try{ nm = itemName(it); }catch(__){ nm = 'Peça'; } }
+  const ver = !e ? '<p class="ski-m">Você não usa nada neste lugar: esta peça só soma.</p>' : '<p class="ski-m ' + (up > dn ? 'up1' : dn > up ? 'dn1' : '') + '">' + (up > dn ? 'Melhor que a sua' : dn > up ? 'Pior que a sua' : up ? 'Troca: ganha em uns, perde em outros' : 'Igual à sua') + '</p>';
+  const h = '<div class="ski-hd"><span class="ski-ic">' + pieceImg(it.tier, it.slot, 'ps-row', it.wtype) + '</span><div><b style="color:' + (T.css || '#ffd36a') + '">' + nm + '</b><small>' + (T.sc || '') + ' ' + (T.n || '') + (grLv(it.tier) ? ' · usa no nível ' + grLv(it.tier) : ' · qualquer nível') + '</small></div><button class="pop-x" data-skix aria-label="Fechar">✕</button></div>'
+    + ver + '<table class="ski-t"><tr><th></th><th>' + (e ? 'Sua peça' : 'Sua peça (vazio)') + '</th><th>Esta</th></tr>' + (linhas || '<tr><td colspan="3">Sem atributos</td></tr>') + '</table>'
+    + (e ? '<p class="ski-n">Sua peça: ' + itemName(e) + '</p>' : '');
+  let el = document.getElementById('ncSkInfo'); if(!el){ el = document.createElement('div'); el.id = 'ncSkInfo'; document.body.appendChild(el);
+    el.addEventListener('click', ev => { if(ev.target === el || ev.target.closest('[data-skix]')) el.hidden = true; }); }
+  el.innerHTML = '<div class="ski-box">' + h + '</div>'; el.hidden = false; }
+document.addEventListener('click', ev => { const r = ev.target.closest('[data-iteminfo]'); if(!r || ev.target.closest('button')) return; const [sl, t] = r.dataset.iteminfo.split(':');
+  const pv = {id:-1, slot:sl, tier:+t, q:0, up:0, cls:save.cls}; if(sl === 'weapon'){ pv.wtype = CLS().wtype; pv.v = 0; } ncItemInfo(pv); });
 function cmpText(it){ if(!it || !it.slot) return ''; const e = equipped(it.slot); if(e === it || (e && e.id === it.id && it.id !== -1)) return '';
   if(!e) return '<div class="cmpl"><b>Você não usa nada neste lugar:</b> tudo é ganho.</div>';
   const a = itemStats(it), b = itemStats(e), out = [];
@@ -11440,7 +11456,7 @@ function ncTreeHTML(){ const c = CLS(), u = window.ncIconUrl || (() => 'none'), 
     const sk = c.skills[i], l = ncSkLv(i), req = NC_SK_REQ[i], open = lv >= req && ncArvOpen(i < 6 ? 0 : 1);
     if(!sk){ h += '<div class="tnode soon"><i></i><div><b>Habilidade ' + (i + 1) + (i === 5 ? ' · Suprema' : '') + '</b><small>Nível ' + req + ' · chega na próxima atualização</small></div></div>'; continue; }
     const can = open && pts > 0 && l < NC_SK_MAX;
-    h += '<div class="tnode' + (l ? ' on' : '') + (l >= NC_SK_MAX ? ' super' : '') + (open ? '' : ' lock') + '"><i style=\'background-image:' + u(sk.id) + '\'>' + (l ? '<em>' + l + '</em>' : '') + '</i><div><b>' + sk.full + '</b><small>' + (open ? (l ? 'Nível ' + l + ' de ' + NC_SK_MAX + ' · dano ' + Math.round(ncSkMul(i)*100) + '% · recarga ' + (sk.cd*ncSkFast(i)).toFixed(1) + ' s' : 'Ainda não aprendida') : lv >= req ? 'Árvore não ativa' : 'Libera no nível ' + req) + '</small><span>' + sk.desc + '</span></div>'
+    h += '<div data-skinfo="' + i + '" class="tnode' + (l ? ' on' : '') + (l >= NC_SK_MAX ? ' super' : '') + (open ? '' : ' lock') + '"><i style=\'background-image:' + u(sk.id) + '\'>' + (l ? '<em>' + l + '</em>' : '') + '</i><div><b>' + sk.full + '</b><small>' + (open ? (l ? 'Nível ' + l + ' de ' + NC_SK_MAX + ' · dano ' + Math.round(ncSkMul(i)*100) + '% · recarga ' + (sk.cd*ncSkFast(i)).toFixed(1) + ' s' : 'Ainda não aprendida') : lv >= req ? 'Árvore não ativa' : 'Libera no nível ' + req) + '</small><span>' + sk.desc + '</span></div>'
       + '<div class="tbtn"><button class="btn sm' + (can ? ' primary' : '') + '" data-skup="' + i + '" ' + (can ? '' : 'disabled') + '>' + (l ? (l >= NC_SK_MAX ? 'Máx.' : '+1') : 'Aprender') + '</button>'
       + (l ? '<span class="tslot">' + [0, 1].map(j => '<button class="' + (ncSlot(j) === i ? 'on' : '') + '" data-skslot="' + j + ':' + i + '" title="Colocar no botão ' + keyLabel(bindOf(j ? 's2' : 's1')) + '">' + keyLabel(bindOf(j ? 's2' : 's1')) + '</button>').join('') + '</span>' : '') + '</div></div>'; }
   h += ncBuffTreeHTML();
@@ -11448,6 +11464,23 @@ function ncTreeHTML(){ const c = CLS(), u = window.ncIconUrl || (() => 'none'), 
   h += '</div>' + (used ? '<button class="btn sm" data-skreset style="margin-top:8px">Refazer pontos · ' + adenaTxt(ncSkResetCost()) + '</button>' : '');
   return h; }
 window.ncTreeDraw = () => ncTreeDraw();
+/* 28/11/2026 (Arnold): tocar numa habilidade mostra os atributos dela agora e no próximo nível (dano, recarga e gasto) */
+function ncSkInfo(i){ const c = CLS(), sk = c.skills[i]; if(!sk) return; const l = ncSkLv(i), u = window.ncIconUrl || (() => 'none'), req = NC_SK_REQ[i];
+  const mul = k => .6 + (Math.max(1, k) - 1)*.25, fast = k => 1 - (Math.max(1, k) - 1)*.065, res = ncRes() === 'mp' ? 'Mana' : 'Stamina';
+  const col = k => [Math.round(mul(k)*100) + '%', (sk.cd*fast(k)).toFixed(1) + ' s', Math.round(ncSkCost(sk)*fast(k)) + ''];
+  const agora = l ? col(l) : null, prox = l < NC_SK_MAX ? col(l + 1) : null;
+  const nome = ['Dano', 'Recarga', 'Gasto de ' + res];
+  const marco = k => k === 3 ? 'ganha melhoria' : k === NC_SK_MAX ? 'vira SUPER' : '';
+  let h = '<div class="ski-hd"><i style=\'background-image:' + u(sk.id) + '\'></i><div><b>' + sk.full + '</b><small>' + (l ? 'Nível ' + l + ' de ' + NC_SK_MAX : ncLvOf(save.cls) >= req ? 'Ainda não aprendida' : 'Libera no nível ' + req) + '</small></div><button class="pop-x" data-skix aria-label="Fechar">✕</button></div>'
+    + '<p class="ski-d">' + sk.desc[0].toUpperCase() + sk.desc.slice(1) + '.</p>'
+    + '<table class="ski-t"><tr><th></th><th>' + (l ? 'Agora (nv ' + l + ')' : 'Agora') + '</th><th>' + (prox ? 'Próximo (nv ' + (l + 1) + ')' : 'Máximo') + '</th></tr>'
+    + nome.map((n, k) => '<tr><td>' + n + '</td><td>' + (agora ? agora[k] : '—') + '</td><td class="nx">' + (prox ? prox[k] : '—') + '</td></tr>').join('') + '</table>'
+    + (prox && marco(l + 1) ? '<p class="ski-m">No nível ' + (l + 1) + ' a habilidade ' + marco(l + 1) + '.</p>' : '')
+    + '<p class="ski-n">Nível 3: ganha melhoria · Nível 5: vira SUPER</p>';
+  let el = document.getElementById('ncSkInfo'); if(!el){ el = document.createElement('div'); el.id = 'ncSkInfo'; document.body.appendChild(el);
+    el.addEventListener('click', e => { if(e.target === el || e.target.closest('[data-skix]')){ el.hidden = true; } }); }
+  el.innerHTML = '<div class="ski-box">' + h + '</div>'; el.hidden = false; }
+document.addEventListener('click', e => { const n = e.target.closest('[data-skinfo]'); if(!n || e.target.closest('button')) return; ncSkInfo(+n.dataset.skinfo); });
 function ncTreeDraw(){ const ni = document.getElementById('ncNameIn'); if(ni && document.activeElement !== ni) ni.value = save.name || ''; const b = document.getElementById('ncTreeBox'); if(b) b.innerHTML = ncTreeHTML(); const pp = document.getElementById('ncSkPop'); if(pp && !pp.hidden) ncSkillsPop(true); }
 document.addEventListener('click', e => { if(e.target.closest('[data-ncname]')){ const v = (document.getElementById('ncNameIn').value || '').replace(/[<>]/g, '').trim().slice(0, 14); save.name = v; persist(); try{ banner('Nome salvo', v || 'Sem nome: aparece o nome da classe'); ncCoop.track(); }catch(_){} return; } });
 document.addEventListener('click', e => { const b = e.target.closest('[data-arv2]'); if(!b) return; if(ncLvOf(save.cls) >= NC_ARV2_NV && save.gold >= NC_ARV2_CUSTO && !ncArv2On()){ save.gold -= NC_ARV2_CUSTO; save.arv2 = save.arv2 || {}; save.arv2[save.cls] = 1; persist(); try{ SFX.level(); banner('2ª árvore liberada!', (NC_ARV_NOMES[save.cls] || [])[1] || ''); }catch(_){} } ncTreeDraw(); try{ renderHub(); }catch(_){} });
@@ -11717,7 +11750,10 @@ const NC_MOUNTS = []; (() => { const seen = {}; CLASS_ORDER.forEach(c => (NC_MOU
   /* 27/11/2026 (Arnold): dinossauros (Quaternius, Dinosaur Animated Pack, CC0). Nomes, níveis e preços são um primeiro chute para ele ajustar */
   [{id:'dino0', nm:'Raptor', m:'Velociraptor', lv:20, p:8000, tier:1, seat:.62},
    {id:'dino1', nm:'Tricerátopo', m:'Triceratops', lv:30, p:15000, tier:1, seat:.7},
-   {id:'dino2', nm:'T-Rex', m:'TRex', lv:45, p:40000, tier:1, seat:.55, sc:1.25}].forEach(d => NC_MOUNTS.push(d));
+   {id:'dino2', nm:'T-Rex', m:'TRex', lv:45, p:40000, tier:1, seat:.55, sc:1.25},
+   /* 28/11/2026: pantera (feita no Blender a partir da raposa) e tartaruga (feita do zero no Blender). Preços e níveis provisórios */
+   {id:'pant0', nm:'Pantera Negra', m:'Panther', lv:20, p:9000, tier:1, seat:.74},
+   {id:'tart0', nm:'Tartaruga Anciã', m:'Turtle', lv:25, p:11000, tier:1, seat:1.0, sc:.95}].forEach(d => NC_MOUNTS.push(d));
   NC_MOUNTS.sort((a, b) => a.tier - b.tier || a.lv - b.lv); })();
 const ncMountById = id => NC_MOUNTS.find(m => m.id === id);
 const ncMountHave = id => !!(save.mounts && save.mounts[id] === 1);
@@ -16680,6 +16716,24 @@ body.nc-crhide #ncCriar{display:none!important}
   #ncPetPop .pp-grid{grid-template-columns:repeat(8,1fr)!important;gap:4px!important}
   #ncPetPop .pp-acts{margin-top:6px!important;gap:5px!important}#ncPetPop .pp-acts .btn{padding:5px 10px!important;font-size:12px!important;min-height:0!important}
 }
+
+/* 28/11/2026 (Arnold): detalhe da habilidade e botão de fechar vermelho em todas as janelas */
+#ncSkInfo{position:fixed;inset:0;z-index:9700;display:grid;place-items:center;padding:10px;background:rgba(6,4,16,.55)}#ncSkInfo[hidden]{display:none}
+#ncSkInfo .ski-box{width:min(380px,92vw);max-height:calc(100dvh - 20px);overflow:auto;background:linear-gradient(180deg,#2a2160,#17123a);border:1px solid #8a78e0;border-radius:14px;padding:10px 12px;color:#f4efe2;box-shadow:0 0 0 2px #05050c,0 0 0 3px #c9a24a,0 12px 40px rgba(0,0,0,.6);font:500 13px/1.35 system-ui,sans-serif}
+#ncSkInfo .ski-hd{display:flex;align-items:center;gap:10px}#ncSkInfo .ski-hd i{width:44px;height:44px;flex:none;border-radius:9px;background-size:cover;background-position:center;border:1px solid #c9a24a}
+#ncSkInfo .ski-hd div{flex:1;min-width:0}#ncSkInfo .ski-hd .pop-x{position:static!important;flex:none}#ncSkInfo .ski-hd b{display:block;font-size:15px;color:#ffd36a}#ncSkInfo .ski-hd small{color:#cfc6e6;font-size:11.5px}
+#ncSkInfo .ski-d{margin:8px 0 6px;color:#e8e2f6}
+#ncSkInfo .ski-t{width:100%;border-collapse:collapse;font-size:12.5px}#ncSkInfo .ski-t th{font-size:10.5px;font-weight:700;color:#b9b2d8;text-align:right;padding:3px 6px;letter-spacing:.04em}
+#ncSkInfo .ski-t td{padding:5px 6px;border-top:1px solid #ffffff14;text-align:right;font-weight:700}#ncSkInfo .ski-t td:first-child{text-align:left;font-weight:500;color:#cfc6e6}
+#ncSkInfo .ski-t td.nx{color:#7dff9a}
+#ncSkInfo .ski-m{margin:6px 0 0;color:#ffd36a;font-weight:700;font-size:12px}#ncSkInfo .ski-m.up1,#ncSkInfo td.up1{color:#7dff9a}#ncSkInfo .ski-m.dn1,#ncSkInfo td.dn1{color:#ff7a7a}
+#ncSkInfo .ski-ic{width:44px;height:44px;flex:none;display:grid;place-items:center}#ncSkInfo .ski-ic>*{max-width:44px;max-height:44px}[data-iteminfo]{cursor:pointer}#ncSkInfo .ski-n{margin:6px 0 0;color:#9a92bc;font-size:11px}
+[data-skinfo]{cursor:pointer}
+html body :is(.pop-x,.nc-x,.nf-x,.pp-x,.lt-x,.mf-x,#pauseX),html body #hub :is(.pop-x,.nc-x,.nf-x,.pp-x,.lt-x,.mf-x,#pauseX),html body #hub>#rightPanel>.nc-head :is(.pop-x,.nc-x,.nf-x,.pp-x,.lt-x,.mf-x,#pauseX),html body #hub>aside.panel>.nc-head :is(.pop-x,.nc-x,.nf-x,.pp-x,.lt-x,.mf-x,#pauseX){width:30px!important;height:30px!important;min-width:30px!important;padding:0!important;border-radius:50%!important;
+  background:radial-gradient(circle at 35% 30%,#ff7a84,#d6303e 55%,#8c1420)!important;border:1.5px solid #ffd0d4!important;color:#fff!important;font:900 14px/1 system-ui,sans-serif!important;
+  box-shadow:0 0 0 1.5px #5a0c14,0 2px 6px rgba(0,0,0,.45),inset 0 -2px 0 rgba(0,0,0,.25)!important;text-shadow:0 1px 1px rgba(0,0,0,.5)!important;display:inline-grid!important;place-items:center!important;clip-path:none!important;cursor:pointer;transition:transform .08s}
+html body :is(.pop-x,.nc-x,.nf-x,.pp-x,.lt-x,.mf-x,#pauseX):active,html body #hub :is(.pop-x,.nc-x,.nf-x,.pp-x,.lt-x,.mf-x,#pauseX):active,html body #hub>#rightPanel>.nc-head :is(.pop-x,.nc-x,.nf-x,.pp-x,.lt-x,.mf-x,#pauseX):active,html body #hub>aside.panel>.nc-head :is(.pop-x,.nc-x,.nf-x,.pp-x,.lt-x,.mf-x,#pauseX):active{transform:scale(.9)}
+html body :is(.pop-x,.nc-x,.nf-x,.pp-x,.lt-x,.mf-x,#pauseX)::before,html body #hub :is(.pop-x,.nc-x,.nf-x,.pp-x,.lt-x,.mf-x,#pauseX)::before,html body #hub>#rightPanel>.nc-head :is(.pop-x,.nc-x,.nf-x,.pp-x,.lt-x,.mf-x,#pauseX)::before,html body #hub>aside.panel>.nc-head :is(.pop-x,.nc-x,.nf-x,.pp-x,.lt-x,.mf-x,#pauseX)::before,html body :is(.pop-x,.nc-x,.nf-x,.pp-x,.lt-x,.mf-x,#pauseX)::after,html body #hub :is(.pop-x,.nc-x,.nf-x,.pp-x,.lt-x,.mf-x,#pauseX)::after,html body #hub>#rightPanel>.nc-head :is(.pop-x,.nc-x,.nf-x,.pp-x,.lt-x,.mf-x,#pauseX)::after,html body #hub>aside.panel>.nc-head :is(.pop-x,.nc-x,.nf-x,.pp-x,.lt-x,.mf-x,#pauseX)::after{display:none!important}
 </style>
 
 <script>/* 28/11/2026 (Arnold): textos longos dos menus viram um botão "i". Toque no "i" para ler, toque de novo para esconder.
