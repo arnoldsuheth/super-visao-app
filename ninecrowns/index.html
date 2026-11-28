@@ -12612,28 +12612,29 @@ function useSkill(j){
       if(tg){ P.face = P.targetFace = Math.atan2(tg.pos.x - P.pos.x, tg.pos.z - P.pos.z); P.skill = {id:'drain', t:0, dur:2.4, tg, ticks:0}; burst(P.pos, 0x8a2cff, 10, 3, 3, 1);
         { const n = ncSkLv(i) >= 5 ? 5 : ncSkLv(i) >= 3 ? 2 : 1; P.skill.extra = enemies.filter(e => e !== tg && !e.dead && !e.dying && Math.hypot(e.pos.x - P.pos.x, e.pos.z - P.pos.z) < 13).sort((a, b) => Math.hypot(a.pos.x - P.pos.x, a.pos.z - P.pos.z) - Math.hypot(b.pos.x - P.pos.x, b.pos.z - P.pos.z)).slice(0, n - 1); } }   // 22/11: nível 3 pega 2 monstros, nível 5 pega 5
       SFX.zap(); break; }
-    case 'army': burst(P.pos, 0x8a2cff, 18, 4, 5, .2); burst(P.pos, 0x14002a, 12, 3, 4, .2); for(let k=0;k<3;k++) spawnAlly(P.pos.x + Math.sin(P.face + k*2.1)*2, P.pos.z + Math.cos(P.face + k*2.1)*2); SFX.boss(); floatText(P.pos, 'Levantem-se!', 'heal'); break;
+    case 'army': burst(P.pos, 0x8a2cff, 18, 4, 5, .2); burst(P.pos, 0x14002a, 12, 3, 4, .2); for(let k=0;k<3;k++) spawnAlly(P.pos.x + Math.sin(P.face + k*2.1)*2, P.pos.z + Math.cos(P.face + k*2.1)*2, false, true); SFX.boss(); floatText(P.pos, 'Levantem-se!', 'heal'); break;
     case 'fan': { const a = aimAngle(14); if(a !== null) P.face = P.targetFace = a; P.castT = .2;
       for(let k=0;k<9;k++) firePlayer({kind:'dagger', ang:P.face - .6 + k*.15, spd:24, mult:.6, life:.45, r:.45}); SFX.stab(); SFX.bow(); break; }
   }
   ncTech();
 }
-function spawnAlly(x, z, cav){
+function spawnAlly(x, z, cav, exer){   /* 28/11/2026 (Arnold): exer = esqueletos do Exército dos Mortos (sempre 3, fora do limite por grade) */
   const p = new T.Vector3(x, 0, z); clampPos(p, bossActive);
   const cr = makeCreature(0xd8d2c0, .78, null); cr.mats.forEach(m => { m.emissive.copy(C(0x103a20)); m.userData.baseE = m.emissive.clone(); });
   cr.root.position.set(p.x, heightAt(p.x, p.z), p.z); scene.add(cr.root); burst(cr.root.position, 0x6aff9a, 12, 3, 5, .3);
   /* 28/11/2026 (Arnold escolheu): caveira da esquiva muda com o nível. Até 19 = caveira simples, 20 a 59 = guerreiro de chifre, 60+ = encapuzado que solta magia */
-  const cavT = cav ? (save.level >= 60 ? 2 : save.level >= 20 ? 1 : 0) : -1;
-  if(cav) monAttach(cr, 'kk_cav' + cavT, {boss:true, kk:true, atk:cavT === 2 ? /^Spellcast_Shoot$/ : cavT === 1 ? /^1H_Melee_Attack_Chop$/ : /^Unarmed_Melee_Attack_Punch_A$/});
+  const cavT = cav || exer ? (save.level >= 60 ? 2 : save.level >= 20 ? 1 : 0) : -1;
+  if(cav || exer) monAttach(cr, 'kk_cav' + cavT, {boss:true, kk:true, atk:cavT === 2 ? /^Spellcast_Shoot$/ : cavT === 1 ? /^1H_Melee_Attack_Chop$/ : /^Unarmed_Melee_Attack_Punch_A$/});
   else monAttach(cr, 'f_Ghost_Skull', {boss:true});
-  const A = {cr, pos:cr.root.position, life:12, atkT:.5, walk:0, mago:cavT === 2};
+  const A = {cr, pos:cr.root.position, life:12, atkT:.5, walk:0, mago:cavT === 2, exer:!!exer};
   if(cav){ const N = NC_ESQ2.necro; A.cav = true; A.life = Infinity; A.hp = A.maxHp = Math.round(P.S.hp*N.cavHp); A.hurtT = 1; A.bar = makeBar(.9); A.bar.fg.material = bmat(0x6aff9a); A.bar.g.visible = true; }   /* 28/11/2026 (Arnold): caveira da esquiva tem vida própria (cresce com o nível) e só some quando morre */
   allies.push(A);
   const tira = o => { burst(o.pos, 0x6aff9a, 8, 3, 4, .5); removeObj(o.cr.root); if(o.bar) removeObj(o.bar.g); allies.splice(allies.indexOf(o), 1); };
   if(cav){ const cs = allies.filter(a => a.cav); while(cs.length > NC_ESQ2.necro.maxCav) tira(cs.shift()); }
+  else if(exer){ const es = allies.filter(a => a.exer); while(es.length > 3) tira(es.shift()); }
   /* 26/11/2026 (Arnold): Necromante tem no máximo 1 esqueleto (das habilidades) no No Grade e libera mais 1 a cada grade da arma, até 5 */
   else if(save.cls === 'necro'){ let g = 0; try{ const w = equipped('weapon'); g = w ? GR_OF[w.tier] || 0 : 0; }catch(_){} const mx = NC_ESQ2.necro.maxPorGrade[g] || 1;
-    const ss = allies.filter(a => !a.cav); while(ss.length > mx) tira(ss.shift()); }
+    const ss = allies.filter(a => !a.cav && !a.exer); while(ss.length > mx) tira(ss.shift()); }
 }
 /* 26/11/2026: armadilha de espinhos da Arqueira: fica 4 s no chão; quem pisar leva dano e fica lento */
 const ncTraps = [];
