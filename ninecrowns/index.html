@@ -826,7 +826,7 @@ body.nc-swap #joyZone{left:auto;right:0}
       <div class="shop" hidden>   <!-- 22/11 (Arnold): poção só no Mercador; este bloco solto saiu do Progresso -->
         <div><div class="eyebrow">Adena</div><div class="gold" id="uGold">0</div></div>
         <div><div class="eyebrow">Poções</div><div class="gold" id="uPot" style="color:var(--ink)">0</div></div>
-        <button class="btn" id="buyPot">Comprar poção · 25 de bronze</button>
+        <button class="btn" id="buyPot">Comprar poção<small><span class="adnx"><span class="adn b">25</span></span></small></button>
       </div>
       <div hidden><div class="dgrid" id="diffGrid"></div><div class="cinfo" id="diffInfo"></div></div>
     </div>
@@ -5637,7 +5637,10 @@ const fmtGold = n => Math.floor(n || 0).toLocaleString('pt-BR');
 /* 23/11/2026 balanceamento medido (dano por segundo de cada classe contra 1 e 5 alvos): Bárbaro -9% de ataque e habilidades de área mais fracas; Assassina -25% nas habilidades de alvo único; Sacerdote +15% de ataque, Luz e Coro mais fortes; Arqueira Perfurar e Águia mais fortes */
 /* NINE CROWNS: a moeda e a Adena, em ouro, prata e bronze. 100 de bronze = 1 de prata; 100 de prata = 1 de ouro. O numero guardado no jogo e em bronze. */
 const adenaParts = n => { n = Math.max(0, Math.floor(n || 0)); return [Math.floor(n/10000), Math.floor(n/100)%100, n%100]; };
-const adenaTxt = n => { const [o, p, b] = adenaParts(n); return ((o ? o.toLocaleString('pt-BR') + ' de ouro ' : '') + (p ? p + ' de prata ' : '') + (b || (!o && !p) ? b + ' de bronze' : '')).trim(); };
+/* 28/11/2026 (Arnold): todo preço aparece com o símbolo da moeda (ouro, prata, bronze) em vez de "1 de prata". adenaPlain fica só para texto puro */
+const adenaPlain = n => { const [o, p, b] = adenaParts(n); return ((o ? o.toLocaleString('pt-BR') + ' de ouro ' : '') + (p ? p + ' de prata ' : '') + (b || (!o && !p) ? b + ' de bronze' : '')).trim(); };
+const adenaTxt = n => { const [o, p, b] = adenaParts(n), c = (v, k) => '<span class="adn ' + k + '">' + v.toLocaleString('pt-BR') + '</span>'; return '<span class="adnx">' + (o ? c(o, 'o') : '') + (p ? c(p, 'p') : '') + (b || (!o && !p) ? c(b, 'b') : '') + '</span>'; };
+const adenaTxtOld = n => { const [o, p, b] = adenaParts(n); return ((o ? o.toLocaleString('pt-BR') + ' de ouro ' : '') + (p ? p + ' de prata ' : '') + (b || (!o && !p) ? b + ' de bronze' : '')).trim(); };
 const adenaHTML = n => { const [o, p, b] = adenaParts(n), c = (v, k) => `<span class="adn ${k}">${v.toLocaleString('pt-BR')}</span>`; return (o ? c(o, 'o') : '') + (o || p ? c(p, 'p') : '') + c(b, 'b'); };
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const smooth = (a, b, x) => { const t = clamp((x - a)/(b - a), 0, 1); return t*t*(3 - 2*t); };
@@ -8486,7 +8489,7 @@ function gemsHTML(){
       <div class="row">${it.sk.length ? it.sk.map((c, i) => { const g = it.gm[i];
         if(!g) return `<span class="sockb" style="--c:${SKC.W.css}"><span class="dot"></span>Vazio</span>`;
         const [k, r] = g.split(':');
-        return `<button class="sockb" style="--c:${RAR[r - 1].css}" data-fpull="${i}" title="Tirar a pedra por ${adenaTxt(pullCost(g))}">${stoneImg(k, 20)}${stoneName(k, +r)} · tirar ${pullCost(g)}</button>`; }).join('') : '<span class="istat">Esta peça não tem encaixes.</span>'}</div>
+        return `<button class="sockb" style="--c:${RAR[r - 1].css}" data-fpull="${i}" title="Tirar a pedra por ${adenaPlain(pullCost(g))}">${stoneImg(k, 20)}${stoneName(k, +r)} · tirar ${pullCost(g)}</button>`; }).join('') : '<span class="istat">Esta peça não tem encaixes.</span>'}</div>
       <div class="row"><button class="btn sm" data-freroll="${it.id}" ${save.mats.scoin > 0 ? '' : 'disabled'}>Sortear encaixes de novo · Silver Coin (${save.mats.scoin || 0})</button><span class="istat">As pedras voltam para a bolsa.</span></div></div>`; }
   h += `<h2>Bolsa de pedras</h2><div class="fsel">${[['all','Todas'], ...GEM_KEYS.map(k => [k, GEMS[k].st])].map(([k, n]) => `<button class="chipb" data-sfilter="${k}" aria-pressed="${stoneFilter === k}">${n}</button>`).join('')}</div>`;
   const keys = Object.keys(save.gems).filter(k => save.gems[k] > 0 && GEMS[k.split(':')[0]] && (stoneFilter === 'all' || k.startsWith(stoneFilter + ':')))
@@ -8577,7 +8580,7 @@ function renderShop(){
       + row(rk, ncPotResName(), rk === 'mp' ? 'Recupera 60% da mana.' : 'Recupera 60% da stamina.', save.potRes || 0, 'res')
       + `<div class="frow" style="--tc:#e8a85a"><span class="ncpot">${NC_PETISCO_ICO}</span><div><div class="fn">Petisco <small style="color:var(--mute)">× ${save.petisco || 0}</small></div><div class="istat">Revive o mascote caído (use na Mochila).</div></div><button class="btn sm primary" data-petbuy="1" ${save.gold >= NC_PETISCO_P ? '' : 'disabled'}>Comprar<small>${adenaTxt(NC_PETISCO_P)}</small></button></div>` + `</div>`; }
   /* 22/11 (Arnold): troca 10 de ouro em Adena = 1 Moeda Real */
-  h += `<h2>Trocar Adena</h2><div class="blist"><div class="frow" style="--tc:#ffd24a"><span class="ncpot"><svg viewBox="0 0 24 24" width="34" height="34"><circle cx="12" cy="12" r="10" fill="#ffd24a" stroke="#8a5a10" stroke-width="1.5"/><path d="M7 15l1-6 2.5 3L12 8l1.5 4L16 9l1 6Z" fill="#8a5a10"/></svg></span><div><div class="fn">1 Moeda Real <small style="color:var(--mute)">você tem ${save.coins}</small></div><div class="istat">Use nos Itens Festivos e no Mercador.</div></div><div class="iact"><button class="btn sm primary" data-ncreal="1" ${save.gold >= 100000 ? '' : 'disabled'}>Trocar<small>10 de ouro</small></button><button class="btn sm" data-ncreal="10" ${save.gold >= 1000000 ? '' : 'disabled'}>×10<small>100 de ouro</small></button></div></div></div>`;
+  h += `<h2>Trocar Adena</h2><div class="blist"><div class="frow" style="--tc:#ffd24a"><span class="ncpot"><svg viewBox="0 0 24 24" width="34" height="34"><circle cx="12" cy="12" r="10" fill="#ffd24a" stroke="#8a5a10" stroke-width="1.5"/><path d="M7 15l1-6 2.5 3L12 8l1.5 4L16 9l1 6Z" fill="#8a5a10"/></svg></span><div><div class="fn">1 Moeda Real <small style="color:var(--mute)">você tem ${save.coins}</small></div><div class="istat">Use nos Itens Festivos e no Mercador.</div></div><div class="iact"><button class="btn sm primary" data-ncreal="1" ${save.gold >= 100000 ? '' : 'disabled'}>×1<small>${adenaTxt(100000)}</small></button><button class="btn sm" data-ncreal="10" ${save.gold >= 1000000 ? '' : 'disabled'}>×10<small>${adenaTxt(1000000)}</small></button></div></div></div>`;
   // 22/11: a peça semanal do evento saiu do Mercador (armadura só na Forja)
 
   /* 22/11 (Arnold): o Mercador NÃO vende armas nem armaduras; isso é só na Forja (NPC ferreiro) */
@@ -13662,7 +13665,7 @@ function updateWorld(dt){
       if(!ncFits(l.item)){ ncBagFull(); } else {
       const css = TIERS[l.item.tier].css;
       if(addItem(l.item)){ runLoot.push(l.item); feed(TIERS[l.item.tier].s + ' ' + itemName(l.item), TIERS[l.item.tier].css); itemCard(l.item); if(l.item.tier >= 4) discover(l.item); }
-      else feed('Mochila cheia: vendido por ' + adenaTxt(sellValue(l.item)), '#f2c14e');
+      else feed('Mochila cheia: vendido por ' + adenaPlain(sellValue(l.item)), '#f2c14e');
       SFX.item(); burst(l.g.position, TIERS[l.item.tier].hex, 10 + l.item.tier*3, 3, 4, 0);
       if(l.item.slot !== 'weapon' || l.item.wtype === CLS().wtype){ if(isEquipped(l.item)){ P.S = stats(); applyGear(hero); } }
       if(l.lid) ncCoop.send('pk', {lid:l.lid});   // peguei: some do chão dos outros
@@ -15033,7 +15036,7 @@ var ncCoop = {
       + '<div class="peer-sec"><b>Enviar item da mochila</b>' + (inv.length ? '<div class="bgrid">' + inv.map(it => '<button class="bcell" data-peeritem="' + id + ':' + it.id + '" title="' + itemName(it) + '">' + pieceImg(it.tier, it.slot, itemCls(it), it.wtype, it.up) + '</button>').join('') + '</div>' : '<small>Nenhum item livre na mochila.</small>') + '</div>'
       + '<small class="istat">O que você enviar sai da sua mochila na hora e vai para a de ' + (d.nm || 'seu amigo') + '.</small></div>'; },
   onGift(p){ if(!p || p.to !== this.id) return; const from = (this.peers[p.from] && this.peers[p.from].d && this.peers[p.from].d.nm) || 'Seu amigo';
-    if(p.gold){ save.gold += p.gold; persist(); try{ banner('Presente de ' + from, adenaTxt(p.gold) + ' de Adena'); SFX.coin(); }catch(_){} }
+    if(p.gold){ save.gold += p.gold; persist(); try{ banner('Presente de ' + from, adenaTxt(p.gold)); SFX.coin(); }catch(_){} }
     if(p.item){ const it = p.item; it.id = save.nextId++; save.inv.push(it); persist(); try{ banner('Presente de ' + from, itemName(it)); SFX.item(); }catch(_){} }
     try{ if(mode === 'hub') renderHub(); }catch(_){} },
   drop(id){ const q = this.peers[id]; if(!q) return; const pp = document.getElementById('ncParty'); if(pp) pp._h = ''; if(q.h && q.h.root.parent) q.h.root.parent.remove(q.h.root); if(q.tag) q.tag.remove(); delete this.peers[id]; },
@@ -15136,8 +15139,8 @@ var ncCoop = {
     const cell = (it, sel, act) => '<button class="bcell' + (sel ? ' sel' : '') + '"' + (act ? ' data-trit="' + it.id + '"' : '') + ' title="' + itemName(it) + '">' + pieceImg(it.tier, it.slot, itemCls(it), it.wtype, it.up) + '</button>';
     const inv = save.inv.filter(it => !isEquipped(it)), selIds = t.mine.map(i => i.id);
     el.hidden = false; el.innerHTML = '<div class="pop-bg"></div><div class="pop-box tr-box"><button class="pop-x" data-trx>✕</button><div class="eyebrow">Troca com ' + t.nm + '</div>'
-      + '<div class="tr-cols"><div class="tr-side' + (t.okMe ? ' ok' : '') + '"><b>Você dá</b><div class="bgrid">' + (t.mine.map(i => cell(i, true, false)).join('') || '<small>nada</small>') + '</div><small>' + adenaTxt(t.mineG) + ' de Adena</small>' + (t.okMe ? '<em>✓ aceitou</em>' : '') + '</div>'
-      + '<div class="tr-side' + (t.okHim ? ' ok' : '') + '"><b>' + t.nm + ' dá</b><div class="bgrid">' + (t.his.map(i => cell(i, false, false)).join('') || '<small>nada</small>') + '</div><small>' + adenaTxt(t.hisG) + ' de Adena</small>' + (t.okHim ? '<em>✓ aceitou</em>' : '') + '</div></div>'
+      + '<div class="tr-cols"><div class="tr-side' + (t.okMe ? ' ok' : '') + '"><b>Você dá</b><div class="bgrid">' + (t.mine.map(i => cell(i, true, false)).join('') || '<small>nada</small>') + '</div><small>' + adenaTxt(t.mineG) + '</small>' + (t.okMe ? '<em>✓ aceitou</em>' : '') + '</div>'
+      + '<div class="tr-side' + (t.okHim ? ' ok' : '') + '"><b>' + t.nm + ' dá</b><div class="bgrid">' + (t.his.map(i => cell(i, false, false)).join('') || '<small>nada</small>') + '</div><small>' + adenaTxt(t.hisG) + '</small>' + (t.okHim ? '<em>✓ aceitou</em>' : '') + '</div></div>'
       + '<div class="peer-sec"><b>Sua mochila (toque para pôr ou tirar)</b>' + (inv.length ? '<div class="bgrid">' + inv.map(it => cell(it, selIds.includes(it.id), true)).join('') + '</div>' : '<small>Nenhum item livre.</small>') + '</div>'
       + '<div class="peer-sec"><b>Adena</b><small>Você tem ' + adenaTxt(save.gold) + '</small><div class="peer-row">' + [0, 100, 1000, 10000, 100000].map(v => '<button class="btn sm' + (t.mineG === v ? ' primary' : '') + '" data-trg="' + v + '" ' + (save.gold >= v ? '' : 'disabled') + '>' + (v ? adenaTxt(v) : 'Nada') + '</button>').join('') + '</div></div>'
       + '<button class="btn primary" data-trok style="width:100%;margin-top:10px" ' + (t.okMe ? 'disabled' : '') + '>' + (t.okMe ? 'Esperando ' + t.nm + '…' : 'Aceitar troca') + '</button>'
@@ -15211,7 +15214,7 @@ document.addEventListener('click', e => {
   if(pb){ const d = pb.dataset, el = document.getElementById('ncPeerPop');
     if(d.ncpeer) ncCoop.menu(d.ncpeer);
     else if(d.peerclose !== undefined){ if(el) el.hidden = true; }
-    else if(d.peergold){ const [id, v] = d.peergold.split(':'); const g = +v; if(save.gold >= g){ save.gold -= g; persist(); ncCoop.send('gift', {to:id, from:ncCoop.id, gold:g}); try{ banner('Enviado', adenaTxt(g) + ' de Adena'); SFX.coin(); }catch(_){} ncCoop.menu(id); } }
+    else if(d.peergold){ const [id, v] = d.peergold.split(':'); const g = +v; if(save.gold >= g){ save.gold -= g; persist(); ncCoop.send('gift', {to:id, from:ncCoop.id, gold:g}); try{ banner('Enviado', adenaTxt(g)); SFX.coin(); }catch(_){} ncCoop.menu(id); } }
     else if(d.peeritem){ const [id, iid] = d.peeritem.split(':'); const it = byId(+iid); if(it && !isEquipped(it)){ save.inv = save.inv.filter(x => x !== it); persist(); ncCoop.send('gift', {to:id, from:ncCoop.id, item:Object.assign({}, it)}); try{ banner('Enviado', itemName(it)); SFX.item(); }catch(_){} ncCoop.menu(id); } }
     return; }
   const tb = e.target.closest('[data-trade],[data-trx],[data-trit],[data-trg],[data-trok]');
@@ -16734,6 +16737,12 @@ html body :is(.pop-x,.nc-x,.nf-x,.pp-x,.lt-x,.mf-x,#pauseX),html body #hub :is(.
   box-shadow:0 0 0 1.5px #5a0c14,0 2px 6px rgba(0,0,0,.45),inset 0 -2px 0 rgba(0,0,0,.25)!important;text-shadow:0 1px 1px rgba(0,0,0,.5)!important;display:inline-grid!important;place-items:center!important;clip-path:none!important;cursor:pointer;transition:transform .08s}
 html body :is(.pop-x,.nc-x,.nf-x,.pp-x,.lt-x,.mf-x,#pauseX):active,html body #hub :is(.pop-x,.nc-x,.nf-x,.pp-x,.lt-x,.mf-x,#pauseX):active,html body #hub>#rightPanel>.nc-head :is(.pop-x,.nc-x,.nf-x,.pp-x,.lt-x,.mf-x,#pauseX):active,html body #hub>aside.panel>.nc-head :is(.pop-x,.nc-x,.nf-x,.pp-x,.lt-x,.mf-x,#pauseX):active{transform:scale(.9)}
 html body :is(.pop-x,.nc-x,.nf-x,.pp-x,.lt-x,.mf-x,#pauseX)::before,html body #hub :is(.pop-x,.nc-x,.nf-x,.pp-x,.lt-x,.mf-x,#pauseX)::before,html body #hub>#rightPanel>.nc-head :is(.pop-x,.nc-x,.nf-x,.pp-x,.lt-x,.mf-x,#pauseX)::before,html body #hub>aside.panel>.nc-head :is(.pop-x,.nc-x,.nf-x,.pp-x,.lt-x,.mf-x,#pauseX)::before,html body :is(.pop-x,.nc-x,.nf-x,.pp-x,.lt-x,.mf-x,#pauseX)::after,html body #hub :is(.pop-x,.nc-x,.nf-x,.pp-x,.lt-x,.mf-x,#pauseX)::after,html body #hub>#rightPanel>.nc-head :is(.pop-x,.nc-x,.nf-x,.pp-x,.lt-x,.mf-x,#pauseX)::after,html body #hub>aside.panel>.nc-head :is(.pop-x,.nc-x,.nf-x,.pp-x,.lt-x,.mf-x,#pauseX)::after{display:none!important}
+
+/* 28/11/2026 (Arnold): preço com símbolo da moeda; botão com quantidade em cima e preço embaixo */
+.adnx{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;vertical-align:middle}.adnx .adn{margin-left:0!important}
+.btn:has(>small),button:has(>small.adnw){display:inline-flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;line-height:1.1!important;gap:1px}
+.btn>small .adnx,.btn>small.adnx{font-size:inherit}
+.btn>small{text-transform:none!important;letter-spacing:0!important;font-family:system-ui,sans-serif!important;font-weight:700!important}
 </style>
 
 <script>/* 28/11/2026 (Arnold): textos longos dos menus viram um botão "i". Toque no "i" para ler, toque de novo para esconder.
