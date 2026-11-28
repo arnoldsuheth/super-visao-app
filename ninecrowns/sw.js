@@ -15,7 +15,10 @@ self.addEventListener('fetch', e => {
     let p = VOO.get(chave);
     if(!p){ p = fetch(chave, {credentials:'same-origin'}).then(x => { if(x.ok){ const c = x.clone(); caches.open(V).then(h => h.put(chave, c)); } return x; }); VOO.set(chave, p); p.catch(() => {}).then(() => setTimeout(() => VOO.delete(chave), 15000)); }
     const rede = p.then(x => x.clone());
-    e.respondWith(caches.match(chave).then(c => { if(c){ e.waitUntil(rede.catch(() => {})); return c; } return rede.catch(() => caches.match(r, {ignoreSearch:true}).then(x => x || caches.match('./'))); }));
+    /* 27/11/2026 (Arnold): a versão nova ficava presa até abrir o jogo duas vezes. Agora, se a cópia baixada por trás for diferente,
+       avisa o jogo, que recarrega sozinho quando não está no meio de uma fase */
+    const avisa = (velha, nova) => Promise.all([velha.text(), nova.text()]).then(([a, b]) => { if(a.length && b.length && a !== b) return self.clients.matchAll({type:'window'}).then(L => L.forEach(cl => cl.postMessage({nc:'nova'}))); }).catch(() => {});
+    e.respondWith(caches.match(chave).then(c => { if(c){ const velha = c.clone(); e.waitUntil(rede.then(x => x.ok ? avisa(velha, x.clone()) : 0).catch(() => {})); return c; } return rede.catch(() => caches.match(r, {ignoreSearch:true}).then(x => x || caches.match('./'))); }));
     return;
   }
   e.respondWith(caches.match(r).then(x => x || fetch(r).then(y => { if(y.ok){ const c = y.clone(); caches.open(V).then(h => h.put(r, c)); } return y; })));   // assets: cache primeiro

@@ -5591,6 +5591,10 @@ body.nc-swap #joyZone{left:auto;right:0}
 (function(){
   if(!/^https?:$/.test(location.protocol)) return;
   try{ if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function(){}); }catch(e){}
+  /* 27/11/2026 (Arnold): versão nova do jogo entra sozinha. Fora da fase recarrega na hora; dentro da fase espera ele sair dela */
+  try{ if('serviceWorker' in navigator){ var ncNova = false, ncRec = function(){ try{ (window.top || window).location.reload(); }catch(_){ location.reload(); } };
+    navigator.serviceWorker.addEventListener('message', function(ev){ if(!ev.data || ev.data.nc !== 'nova' || ncNova) return; ncNova = true;
+      var t = setInterval(function(){ var emFase = false; try{ emFase = (typeof mode !== 'undefined' && mode === 'stage'); }catch(_){} if(!emFase){ clearInterval(t); ncRec(); } }, 1500); }); } }catch(e){}
   if(!window.caches || !window.fetch) return;
   var KEY = 'ads-cache-ok', ov = null, skip = false;
   function show(){
@@ -11683,7 +11687,7 @@ function ncMountBuild(cls, i, heroH){ const d = typeof cls === 'object' ? cls : 
     const b = new T.Box3().setFromObject(root), h = b.max.y - b.min.y, L = Math.max(b.max.x - b.min.x, b.max.z - b.min.z);
     const want = (heroH || 1.6)*(d.fly ? 1.35 : 1.15), k = want/Math.max(h, .001)*(d.sc || 1); root.scale.multiplyScalar(k); root.position.y = -b.min.y*k;
     const b2 = new T.Box3().setFromObject(root);
-    const mix = new T.AnimationMixer(root), clip = n => g.animations.find(c => c.name === n), acts = {};
+    const mix = new T.AnimationMixer(root), clip = n => g.animations.find(c => c.name === n || c.name.endsWith('_' + n)), acts = {};   // 27/11: dinossauros têm o nome do bicho antes (TRex_Walk)
     ['Idle', 'Walk', 'Gallop', 'Run', 'Flying_Idle', 'Fast_Flying'].forEach(n => { const c = clip(n); if(c) acts[n] = mix.clipAction(c); });
     const idle = acts.Idle || acts.Flying_Idle; if(idle) idle.play();
     wrap.userData = {def:d, mix, acts, cur:idle, seatY:b2.max.y*(d.seat || (d.fly ? .5 : /Fox/.test(d.m) ? .74 : .6)), fx:d.fx};
@@ -11710,7 +11714,11 @@ function toggleMount(force){
    Preços em Adena (100 = 1 de prata): simples 3 de prata, evoluída 25 de prata. As voadoras entram depois. */
 const NC_MOUNTS = []; (() => { const seen = {}; CLASS_ORDER.forEach(c => (NC_MOUNT_DEF[c] || []).forEach((d, i) => { if(d.fly || seen[d.nm]) return; seen[d.nm] = 1;
   NC_MOUNTS.push(Object.assign({}, d, {id:c + i, lv:i ? 30 : 10, p:i ? 15000 : 2000, tier:i})); }));
-  NC_MOUNTS.sort((a, b) => a.tier - b.tier); })();
+  /* 27/11/2026 (Arnold): dinossauros (Quaternius, Dinosaur Animated Pack, CC0). Nomes, níveis e preços são um primeiro chute para ele ajustar */
+  [{id:'dino0', nm:'Raptor', m:'Velociraptor', lv:20, p:8000, tier:1, seat:.62},
+   {id:'dino1', nm:'Tricerátopo', m:'Triceratops', lv:30, p:15000, tier:1, seat:.7},
+   {id:'dino2', nm:'T-Rex', m:'TRex', lv:45, p:40000, tier:1, seat:.55, sc:1.25}].forEach(d => NC_MOUNTS.push(d));
+  NC_MOUNTS.sort((a, b) => a.tier - b.tier || a.lv - b.lv); })();
 const ncMountById = id => NC_MOUNTS.find(m => m.id === id);
 const ncMountHave = id => !!(save.mounts && save.mounts[id] === 1);
 const ncMountSel = () => { const s = typeof save.mountSel === 'string' ? save.mountSel : null; if(s && ncMountHave(s)) return s; const o = NC_MOUNTS.filter(m => ncMountHave(m.id)); return o.length ? o[o.length - 1].id : null; };

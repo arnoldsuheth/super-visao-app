@@ -1,3 +1,6 @@
 Monstros 3D: pacote "Ultimate Monsters", de Quaternius (https://quaternius.com/packs/ultimatemonsters.html)
 Licenca: CC0 1.0 (dominio publico) - uso livre, inclusive comercial.
 Arquivos convertidos para .glb e com as animacoes reduzidas para o jogo.
+
+Montarias de dinossauro (Raptor, Tricerátopo, T-Rex), adicionadas em 27/11/2026:
+Dinosaur Animated Pack (Dez/2018) por Quaternius (https://quaternius.com), licença CC0 1.0 (domínio público).
